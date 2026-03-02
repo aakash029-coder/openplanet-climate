@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import logging
 import os
-import random
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, List, Dict, Any
 
@@ -97,35 +96,40 @@ def create_app() -> FastAPI:
             git_commit_hash=os.environ.get("GIT_COMMIT_SHA"),
         )
 
-    # --- 2. THE PREDICTION ROUTE (Updated with response_model & Deep AI Analysis) ---
+    # --- 2. THE PREDICTION ROUTE (100% STRICT EMPIRICAL HONESTY) ---
     @app.post("/api/predict", response_model=SimulationResponse, tags=["Dashboard"])
     async def predict(req: PredictionRequest):
-        # 1. Generate Hex Grid (Same logic)
-        hex_grid = []
-        for _ in range(8000):
-            lat_offset = random.gauss(0, 0.05)
-            lng_offset = random.gauss(0, 0.05)
-            hex_grid.append({"position": [req.lng + lng_offset, req.lat + lat_offset]})
-
-        # 2. Deep AI Analysis (Cause -> Effect -> Solution)
+        
+        # =====================================================================
+        # ARCHITECTURAL INTEGRATION POINT:
+        # This is where the actual satellite and climate model queries must go.
+        # e.g., ee.Initialize() 
+        # e.g., Fetching NASA NEX-GDDP downscaled projections for req.lat, req.lng
+        # e.g., Querying ECMWF ERA5 reanalysis for historical baselines
+        # =====================================================================
+        
+        # Because no actual meteorological database or ML inference pipeline is 
+        # executing here yet, we strictly enforce a zero-hallucination policy.
+        
         return {
             "metrics": {
-                "baseTemp": 36.8,
-                "temp": "38.8",
-                "deaths": "3,297",
-                "loss": "$59.3M",
-                "heatwave": "58"
+                "baseTemp": "N/A",
+                "temp": "N/A",
+                "deaths": "N/A",
+                "ci": "N/A",
+                "loss": "N/A",
+                "heatwave": "N/A"
             },
-            "hexGrid": hex_grid,  
+            "hexGrid": [],  # Dummy Gaussian clusters removed. Awaiting actual H3 resolution array from Earth Engine.
             "aiAnalysis": {
-                "mortality": f"**CAUSE:** Urban Heat Island (UHI) effect amplified by {req.ssp}. **EFFECT:** Projected 12% spike in cardiovascular admissions in {req.city}. **SOLUTION:** High-albedo pavement and immediate 20% increase in green corridors.",
-                "economic": "**CAUSE:** Thermal stress crossing the 35°C productivity threshold. **EFFECT:** Labor capacity loss in construction and logistics valued at $59M. **SOLUTION:** Mandatory shift to nocturnal operational cycles during heatwave windows.",
-                "infrastructure": "**CAUSE:** Peak cooling demand exceeding grid surge capacity. **EFFECT:** 12% higher probability of localized transformer failures. **SOLUTION:** Decentralized solar-plus-storage microgrids for critical health facilities.",
-                "mitigation": f"**CAUSE:** Current low canopy baseline. **EFFECT:** Radiant heat trapping in dense housing. **SOLUTION:** Your proposed {req.canopy}% canopy expansion creates a 2.1°C micro-cooling effect, saving approximately 400 lives annually."
+                "mortality": "**CAUSE:** N/A (Awaiting empirical mortality regression matrix) **EFFECT:** N/A **SOLUTION:** N/A",
+                "economic": "**CAUSE:** N/A (Awaiting labor decay productivity function) **EFFECT:** N/A **SOLUTION:** N/A",
+                "infrastructure": "**CAUSE:** N/A (Awaiting structural thermal threshold data) **EFFECT:** N/A **SOLUTION:** N/A",
+                "mitigation": "**CAUSE:** N/A (Awaiting physical albedo/shading physics model) **EFFECT:** N/A **SOLUTION:** N/A"
             },
             "charts": {
-                "heatwave": [{"year": "2030", "val": 12}, {"year": "2050", "val": 58}],
-                "economic": [{"year": "2030", "noAction": 15, "adapt": 10}, {"year": "2050", "noAction": 59, "adapt": 25}]
+                "heatwave": [], # Empty until actual decadal projection arrays are computed
+                "economic": []  # Empty until actual decadal projection arrays are computed
             }
         }
 
