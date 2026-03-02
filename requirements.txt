@@ -22,3 +22,6 @@ h3pandas>=0.2.0
 
 # ── Removed ───────────────────────────────────────────────────────────────────
 # duckdb — replaced by Postgres + PostGIS. No remaining references in codebase.
+
+# ── LLM Integration ───────────────────────────────────────────────────────────
+groq>=0.4.0
