@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env
+.env.local
+.venv/
+*.pyc
+__pycache__/
+dist/
+build/
+.DS_Store
+ops_shield.duckdb
+frontend/public/satellite-map.jpeg

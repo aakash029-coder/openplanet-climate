@@ -1,0 +1,16 @@
+/* This single line replaces all the old @tailwind directives in v4 */
+@import "tailwindcss";
+
+/* Force the institutional dark theme at the base level */
+html, body {
+  background-color: #020617;
+  color: #f8fafc;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Remove default link underlines to fix the "LET'S START" button */
+a {
+  text-decoration: none;
+}
