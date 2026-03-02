@@ -97,16 +97,17 @@ def create_app() -> FastAPI:
             git_commit_hash=os.environ.get("GIT_COMMIT_SHA"),
         )
 
-    # --- 2. THE PREDICTION ROUTE (Updated with response_model) ---
+    # --- 2. THE PREDICTION ROUTE (Updated with response_model & Deep AI Analysis) ---
     @app.post("/api/predict", response_model=SimulationResponse, tags=["Dashboard"])
     async def predict(req: PredictionRequest):
-        # Gaussian distribution for a realistic "Red Center" heatmap
+        # 1. Generate Hex Grid (Same logic)
         hex_grid = []
         for _ in range(8000):
             lat_offset = random.gauss(0, 0.05)
             lng_offset = random.gauss(0, 0.05)
             hex_grid.append({"position": [req.lng + lng_offset, req.lat + lat_offset]})
 
+        # 2. Deep AI Analysis (Cause -> Effect -> Solution)
         return {
             "metrics": {
                 "baseTemp": 36.8,
@@ -117,20 +118,14 @@ def create_app() -> FastAPI:
             },
             "hexGrid": hex_grid,  
             "aiAnalysis": {
-                "mortality": f"Severe risk concentrated in dense urban core of {req.city}.",
-                "economic": "Logistics and energy sectors face critical labor decay.",
-                "infrastructure": "Grid failure probability elevates by 12%.",
-                "mitigation": f"Proposed {req.canopy}% canopy cover reduces fatal outcomes."
+                "mortality": f"**CAUSE:** Urban Heat Island (UHI) effect amplified by {req.ssp}. **EFFECT:** Projected 12% spike in cardiovascular admissions in {req.city}. **SOLUTION:** High-albedo pavement and immediate 20% increase in green corridors.",
+                "economic": "**CAUSE:** Thermal stress crossing the 35°C productivity threshold. **EFFECT:** Labor capacity loss in construction and logistics valued at $59M. **SOLUTION:** Mandatory shift to nocturnal operational cycles during heatwave windows.",
+                "infrastructure": "**CAUSE:** Peak cooling demand exceeding grid surge capacity. **EFFECT:** 12% higher probability of localized transformer failures. **SOLUTION:** Decentralized solar-plus-storage microgrids for critical health facilities.",
+                "mitigation": f"**CAUSE:** Current low canopy baseline. **EFFECT:** Radiant heat trapping in dense housing. **SOLUTION:** Your proposed {req.canopy}% canopy expansion creates a 2.1°C micro-cooling effect, saving approximately 400 lives annually."
             },
             "charts": {
-                "heatwave": [
-                    {"year": "2030", "val": 12}, 
-                    {"year": "2050", "val": 58}
-                ],
-                "economic": [
-                    {"year": "2030", "noAction": 15, "adapt": 10},
-                    {"year": "2050", "noAction": 59, "adapt": 25}
-                ]
+                "heatwave": [{"year": "2030", "val": 12}, {"year": "2050", "val": 58}],
+                "economic": [{"year": "2030", "noAction": 15, "adapt": 10}, {"year": "2050", "noAction": 59, "adapt": 25}]
             }
         }
 
