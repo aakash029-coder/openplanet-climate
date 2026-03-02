@@ -8,7 +8,7 @@ import logging
 import os
 import random
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, List, Dict, Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,7 +26,7 @@ from climate_engine.version import ENGINE_VERSION
 logger = logging.getLogger(__name__)
 API_VERSION = "1.0.0"
 
-# --- 1. ADDED DATA MODEL FOR DASHBOARD ---
+# --- 1. SCHEMAS FOR STRICT DATA BINDING ---
 class PredictionRequest(BaseModel):
     city: str
     lat: float
@@ -36,6 +36,11 @@ class PredictionRequest(BaseModel):
     canopy: int
     coolRoof: int
 
+class SimulationResponse(BaseModel):
+    metrics: Dict[str, Any]
+    hexGrid: List[Dict[str, Any]]
+    aiAnalysis: Dict[str, str]
+    charts: Dict[str, List[Dict[str, Any]]]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -47,7 +52,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
     await close_db()
 
-
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Climate Mortality Engine API",
@@ -57,10 +61,10 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS — Updated to allow all origins temporarily for Vercel/HuggingFace bridge
+    # CORS — Essential for Next.js to communicate with Hugging Face
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"], # We use "*" for now until you get your exact Vercel URL
+        allow_origins=["*"], 
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -78,13 +82,11 @@ def create_app() -> FastAPI:
             db_reachable = True
         except Exception as exc:
             logger.warning("/health DB check failed: %s", exc)
-        return JSONResponse(
-            status_code=200 if db_reachable else 503,
-            content=HealthResponse(
-                status="ok" if db_reachable else "degraded",
-                env_mode=settings.ENV_MODE.value,
-                db_reachable=db_reachable,
-            ).model_dump(),
+        
+        return HealthResponse(
+            status="ok" if db_reachable else "degraded",
+            env_mode=settings.ENV_MODE.value,
+            db_reachable=db_reachable,
         )
 
     @app.get("/version", response_model=VersionResponse, tags=["System"])
@@ -95,18 +97,16 @@ def create_app() -> FastAPI:
             git_commit_hash=os.environ.get("GIT_COMMIT_SHA"),
         )
 
-    # --- 2. ADDED PREDICTION ROUTE FOR NEXT.JS MAP ---
-    @app.post("/api/predict")
+    # --- 2. THE PREDICTION ROUTE (Updated with response_model) ---
+    @app.post("/api/predict", response_model=SimulationResponse, tags=["Dashboard"])
     async def predict(req: PredictionRequest):
-        # Generate risk data points for Deck.gl around the requested lat/lng
-        # We use a Gaussian (bell curve) spread so the center is dense (Red) and edges are sparse (Green)
+        # Gaussian distribution for a realistic "Red Center" heatmap
         hex_grid = []
         for _ in range(8000):
             lat_offset = random.gauss(0, 0.05)
             lng_offset = random.gauss(0, 0.05)
             hex_grid.append({"position": [req.lng + lng_offset, req.lat + lat_offset]})
 
-        # Return the exact JSON structure the Next.js frontend expects
         return {
             "metrics": {
                 "baseTemp": 36.8,
@@ -135,6 +135,5 @@ def create_app() -> FastAPI:
         }
 
     return app
-
 
 app = create_app()

@@ -99,10 +99,15 @@ export default function Dashboard() {
     });
 
     try {
-      // ⚠️ EXACT HUGGING FACE ENDPOINT
+      // Use the DIRECT Hugging Face API URL
       const response = await fetch('https://albus2903-openplanet-engine.hf.space/api/predict', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          // Adding this ensures HF routes the request to the app, not the UI
+          'x-requested-with': 'XMLHttpRequest' 
+        },
         body: JSON.stringify({
           city: cityObj.name,
           lat: cityObj.lat,
@@ -114,34 +119,36 @@ export default function Dashboard() {
         })
       });
 
+      // This will tell us if it's a 404, 422 (Validation Error), or 500
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        const errorDetail = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorDetail}`);
       }
 
       const data = await response.json();
 
-      // STRICT DATA BINDING - No Mock Math Allowed
-      setHexData(data.hexGrid || []);
-      
-      setSimData({
-        baseTemp: data.metrics?.baseTemp || '--',
-        temp: data.metrics?.temp || '--',
-        deaths: data.metrics?.deaths || '--',
-        loss: data.metrics?.loss || '--',
-        heatwave: data.metrics?.heatwave || '--'
-      });
+      // Safety check: ensure the data has the fields we need
+      if (!data.metrics || !data.hexGrid) {
+         throw new Error("API returned success but missing required simulation data fields.");
+      }
 
+      // STRICT DATA BINDING - No Mock Math Allowed
+      setHexData(data.hexGrid);
+      setSimData(data.metrics);
       setAiAnalysis(data.aiAnalysis || null);
       
-      setChartData({
-        heatwave: data.charts?.heatwave || [],
-        economic: data.charts?.economic || []
-      });
+      if (data.charts) {
+        setChartData({
+          heatwave: data.charts.heatwave || [],
+          economic: data.charts.economic || []
+        });
+      }
 
       setIsInitialized(true);
+
     } catch (err: any) {
-      console.error("Backend fetch failed:", err);
-      setApiError("Failed to connect to Hugging Face simulation engine. Please verify the API is awake and formatting correctly.");
+      console.error("Simulation Engine Connectivity Failure:", err.message);
+      setApiError(`Engine Error: ${err.message}`);
       setIsInitialized(false);
     } finally {
       setIsLoading(false);
@@ -308,7 +315,7 @@ export default function Dashboard() {
               </div>
 
               {apiError ? (
-                <div className="bg-red-950/50 border border-red-800 p-4 rounded-xl text-red-400 text-xs font-mono leading-relaxed">
+                <div className="bg-red-950/50 border border-red-800 p-4 rounded-xl text-red-400 text-xs font-mono leading-relaxed break-words">
                   {apiError}
                 </div>
               ) : (
