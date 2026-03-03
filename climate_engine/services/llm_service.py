@@ -34,5 +34,12 @@ async def generate_strategic_analysis(city: str, ssp: str, year: str, canopy: in
         return json.loads(response.choices[0].message.content)
     except Exception as e:
         logger.error(f"Groq error: {e}")
-        msg = "**CAUSE:** LLM Generation Failed. **EFFECT:** Timeout or parsing error. **SOLUTION:** Check backend logs."
-        return {"mortality": msg, "economic": msg, "infrastructure": msg, "mitigation": msg}
+        # This will print the EXACT error from the server directly to your UI
+        error_msg = str(e).replace('"', "'")
+        msg = f"**CAUSE:** Pipeline Exception. **EFFECT:** {error_msg} **SOLUTION:** Check Hugging Face Logs."
+        return {
+            "mortality": msg, 
+            "economic": msg, 
+            "infrastructure": msg, 
+            "mitigation": msg
+        }
