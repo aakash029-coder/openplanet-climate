@@ -27,14 +27,13 @@ async def generate_strategic_analysis(city: str, ssp: str, year: str, canopy: in
     try:
         response = await client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",  # <--- FIX: Updated to the new active Groq model
             temperature=0.2,
             response_format={"type": "json_object"}
         )
         return json.loads(response.choices[0].message.content)
     except Exception as e:
         logger.error(f"Groq error: {e}")
-        # This will print the EXACT error from the server directly to your UI
         error_msg = str(e).replace('"', "'")
         msg = f"**CAUSE:** Pipeline Exception. **EFFECT:** {error_msg} **SOLUTION:** Check Hugging Face Logs."
         return {
