@@ -1,44 +1,50 @@
-import os
-import json
-import logging
-from groq import AsyncGroq
+// BULLETPROOF AI TEXT FORMATTER
+const formatAiText = (text: string, title: string) => {
+  if (!text) return null;
 
-logger = logging.getLogger(__name__)
-
-api_key = os.environ.get("GROQ_API_KEY")
-client = AsyncGroq(api_key=api_key) if api_key else None
-
-async def generate_strategic_analysis(city: str, ssp: str, year: str, canopy: int, cool_roof: int) -> dict:
-    if not client:
-        msg = "**CAUSE:** GROQ_API_KEY missing. **EFFECT:** N/A **SOLUTION:** Add key to environment."
-        return {"mortality": msg, "economic": msg, "infrastructure": msg, "mitigation": msg}
-
-    prompt = f"""
-    You are an expert institutional climate risk analyst. 
-    Generate a concise, data-driven climate risk assessment for the city of {city} in the year {year} under the {ssp} scenario.
-    Mitigation strategy: +{canopy}% canopy cover, +{cool_roof}% high-albedo cool roofs.
-
-    Output STRICTLY as a JSON object with four keys: 'mortality', 'economic', 'infrastructure', and 'mitigation'.
-    For each key, the value MUST be a single string formatted EXACTLY like this:
-    **CAUSE:** [1 technical sentence] **EFFECT:** [1 technical sentence] **SOLUTION:** [1 technical sentence]
+  // Check if it has EFFECT and SOLUTION tags (even if Groq renames CAUSE)
+  if (text.includes('**EFFECT:**') && text.includes('**SOLUTION:**')) {
     
-    Output ONLY valid JSON. No markdown blocks.
-    """
-    try:
-        response = await client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant",  # <--- FIX: Updated to the new active Groq model
-            temperature=0.2,
-            response_format={"type": "json_object"}
-        )
-        return json.loads(response.choices[0].message.content)
-    except Exception as e:
-        logger.error(f"Groq error: {e}")
-        error_msg = str(e).replace('"', "'")
-        msg = f"**CAUSE:** Pipeline Exception. **EFFECT:** {error_msg} **SOLUTION:** Check Hugging Face Logs."
-        return {
-            "mortality": msg, 
-            "economic": msg, 
-            "infrastructure": msg, 
-            "mitigation": msg
-        }
+    // Split the string into the three parts
+    const parts = text.split('**EFFECT:**');
+    const rawCause = parts[0];
+    const effectAndSolution = parts[1].split('**SOLUTION:**');
+    
+    // Clean out any rogue markdown asterisks (**) and leftover colons (:)
+    const cause = rawCause.replace(/\*\*.*?\*\*:?/g, '').replace(/^:\s*/, '').trim();
+    const effect = effectAndSolution[0].replace(/\*\*.*?\*\*:?/g, '').replace(/^:\s*/, '').trim();
+    const solution = effectAndSolution[1].replace(/\*\*.*?\*\*:?/g, '').replace(/^:\s*/, '').trim();
+    
+    return (
+      <div className="bg-[#050814] border border-slate-800 p-5 rounded-md h-full flex flex-col gap-4 shadow-inner">
+        <div className="border-b border-slate-800/80 pb-3">
+           <strong className="text-slate-200 font-mono text-[11px] tracking-[0.2em] uppercase">{title}</strong>
+        </div>
+        <div className="space-y-4 flex-grow">
+           <div>
+              <span className="font-mono text-[9px] text-red-500 uppercase tracking-[0.2em] flex items-center gap-2 mb-1.5"><div className="w-1 h-1 bg-red-500"></div> Cause</span>
+              <p className="text-slate-400 text-[11px] leading-relaxed font-sans">{cause}</p>
+           </div>
+           <div>
+              <span className="font-mono text-[9px] text-orange-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-1.5"><div className="w-1 h-1 bg-orange-400"></div> Effect</span>
+              <p className="text-slate-400 text-[11px] leading-relaxed font-sans">{effect}</p>
+           </div>
+           <div>
+              <span className="font-mono text-[9px] text-emerald-400 uppercase tracking-[0.2em] flex items-center gap-2 mb-1.5"><div className="w-1 h-1 bg-emerald-400"></div> Solution</span>
+              <p className="text-slate-400 text-[11px] leading-relaxed font-sans">{solution}</p>
+           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback for flat string from backend (cleans asterisks just in case)
+  return (
+    <div className="bg-[#050814] border border-slate-800 p-5 rounded-md h-full flex flex-col gap-4 shadow-inner">
+      <div className="border-b border-slate-800/80 pb-3">
+         <strong className="text-slate-200 font-mono text-[11px] tracking-[0.2em] uppercase">{title}</strong>
+      </div>
+      <p className="text-slate-400 text-[11px] leading-relaxed font-sans">{text.replace(/\*\*.*?\*\*:?/g, '').trim()}</p>
+    </div>
+  );
+};
