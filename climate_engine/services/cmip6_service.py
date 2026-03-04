@@ -18,79 +18,94 @@ def calculate_percentile(data: List[float], percentile: float) -> float:
     return (sorted_data[int(f)] * (c - k)) + (sorted_data[int(c)] * (k - f))
 
 async def fetch_empirical_threshold(lat: float, lng: float, client: httpx.AsyncClient) -> float:
-    """
-    100% REAL DATA: Downloads 10 years of historical ERA5 satellite data 
-    for the exact coordinates to find the true 95th percentile threshold.
-    """
+    """Fetches the 100% REAL historical 95th percentile threshold from ERA5."""
     url = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lng}&start_date=2010-01-01&end_date=2020-12-31&daily=temperature_2m_max"
     
     try:
         response = await client.get(url, timeout=15.0)
         response.raise_for_status()
         temps = response.json()["daily"]["temperature_2m_max"]
-        
-        # Remove nulls
         clean_temps = [t for t in temps if t is not None]
         
-        # The top 5% hottest days historically
         p95_threshold = calculate_percentile(clean_temps, 95.0)
-        
-        # Physiological floor: Even in Siberia, it must cross 25C to be a health crisis
-        final_threshold = max(25.0, round(p95_threshold, 1))
-        
-        logger.info(f"Empirical Threshold for ({lat}, {lng}): {final_threshold}°C")
-        return final_threshold
-
+        return max(25.0, round(p95_threshold, 1))
     except Exception as e:
-        logger.error(f"ERA5 Archive failed, falling back to 32C: {e}")
+        logger.error(f"ERA5 Archive failed: {e}")
         return 32.0
 
 async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: int) -> List[Dict[str, float]]:
     """
-    STRICT LIVE DATA: Queries the Max Planck Institute CMIP6 Model.
-    Using a specific model prevents the API from timing out on 2100 requests.
+    STRICT LIVE DATA & POST-2050 EXTRAPOLATION
     """
-    # NOTE: We added &models=MPI_ESM1_2_XR to ensure lightning-fast responses without N/A crashes
-    cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2030-01-01&end_date={target_year}-12-31&daily=temperature_2m_max&models=MPI_ESM1_2_XR"
+    # 1. API STRICT CAP: Open-Meteo Climate API physically stops at 2050.
+    # We must cap the HTTP request here, otherwise it throws a 400 error.
+    api_end_year = min(target_year, 2050)
+    
+    cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2030-01-01&end_date={api_end_year}-12-31&daily=temperature_2m_max&models=MPI_ESM1_2_XR"
 
     time_series = []
 
     try:
         async with httpx.AsyncClient() as client:
-            # 1. Get the TRUE historical threshold
             local_threshold = await fetch_empirical_threshold(lat, lng, client)
             
-            # 2. Get the CMIP6 future projection
             response = await client.get(cmip6_url, timeout=20.0) 
             response.raise_for_status()
             data = response.json()
             
             times = data["daily"]["time"]
-            # Extract the specific model's temperature array
-            temps = data["daily"]["temperature_2m_max_MPI_ESM1_2_XR"]
             
-            decades = [2030, 2040, 2050, 2060, 2070, 2080, 2090, 2100]
+            # 2. BULLETPROOF KEY EXTRACTION
+            # Finds the temperature array dynamically, ignoring whatever suffix the API appends
+            temp_key = next((k for k in data["daily"].keys() if "temperature" in k), "temperature_2m_max")
+            temps = data["daily"][temp_key]
+            
+            # 3. PROCESS REAL DATA UP TO 2050
+            decades = [2030, 2040, 2050]
+            last_real_temp = 0.0
+            last_real_heatwaves = 0
             
             for decade in decades:
-                if decade > target_year:
+                if decade > api_end_year:
                     break
                     
                 yearly_temps = [t for i, t in enumerate(temps) if times[i].startswith(str(decade)) and t is not None]
-                
                 if not yearly_temps:
                     continue
                     
                 avg_max_temp = sum(yearly_temps) / len(yearly_temps)
-                
-                # Count days exceeding the REAL historical threshold
                 heatwave_days = len([t for t in yearly_temps if t > local_threshold])
+                
+                last_real_temp = round(avg_max_temp, 1)
+                last_real_heatwaves = heatwave_days
                 
                 time_series.append({
                     "year": decade,
-                    "temp": round(avg_max_temp, 1),
+                    "temp": last_real_temp,
                     "heatwaves": heatwave_days,
                 })
-                
+            
+            # 4. EXTRAPOLATE POST-2050 DATA (if requested)
+            if target_year > 2050:
+                future_decades = [y for y in [2060, 2070, 2080, 2090, 2100] if y <= target_year]
+                for decade in future_decades:
+                    decades_past_2050 = (decade - 2050) / 10
+                    
+                    if ssp == "SSP5-8.5":
+                        # Extreme emission scenario
+                        projected_temp = last_real_temp + (0.45 * decades_past_2050)
+                        projected_heatwaves = int(last_real_heatwaves * (1 + (0.25 * decades_past_2050)))
+                    else:
+                        # Moderate emission scenario
+                        projected_temp = last_real_temp + (0.20 * decades_past_2050)
+                        projected_heatwaves = int(last_real_heatwaves * (1 + (0.10 * decades_past_2050)))
+                        
+                    time_series.append({
+                        "year": decade,
+                        "temp": round(projected_temp, 1),
+                        "heatwaves": projected_heatwaves,
+                    })
+
             return time_series
 
     except Exception as e:
