@@ -43,9 +43,9 @@ async def generate_strategic_analysis(
 
     try:
         completion = await client.chat.completions.create(
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",  # <-- NEW LIVE MODEL
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.2, # Very low temperature to prevent hallucinations
+            temperature=0.2,
             response_format={"type": "json_object"}
         )
         
