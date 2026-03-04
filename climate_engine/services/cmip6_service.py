@@ -40,7 +40,7 @@ async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: 
     api_end_year = min(target_year, 2050)
     
     # FIX 1: LOWERCASE MODEL NAME so the API doesn't reject it
-    cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2030-01-01&end_date={api_end_year}-12-31&daily=temperature_2m_max&models=mpi_esm1_2_xr"
+    cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2028-01-01&end_date={api_end_year + 2}-12-31&daily=temperature_2m_max&models=mpi_esm1_2_xr"
 
     time_series = []
     local_threshold = 32.0 # Default safe fallback
@@ -64,19 +64,37 @@ async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: 
                 if decade > api_end_year:
                     break
                     
-                yearly_temps = [t for i, t in enumerate(temps) if times[i].startswith(str(decade)) and t is not None]
+                # 1. 5-YEAR ROLLING WINDOW: Grab temps from 2 years before to 2 years after
+                # This eliminates random "mild" simulation years like a fake La Niña
+                window_temps = [
+                    t for i, t in enumerate(temps) 
+                    if str(decade - 2) <= times[i][:4] <= str(decade + 2) and t is not None
+                ]
                 
-                # If satellite returns null for an unknown village/ocean pixel, skip and let fallback handle it
-                if not yearly_temps:
+                if not window_temps:
                     continue
                     
-                avg_max_temp = sum(yearly_temps) / len(yearly_temps)
-                heatwave_days = len([t for t in yearly_temps if t > local_threshold])
+                # 2. TRUE PEAK Tx5d MATH: 
+                # Sort from hottest to coldest. We take the top 25 hottest days across the 5-year 
+                # window (which averages to the 5 hottest days per year) and find their mean.
+                window_temps.sort(reverse=True)
+                
+                # Safeguard: Ensure we have enough days to average, otherwise take what we have
+                days_to_avg = min(25, len(window_temps))
+                peak_tx5d = sum(window_temps[:days_to_avg]) / float(days_to_avg)
+                
+                # 3. AVERAGE ANNUAL HEATWAVES:
+                # Count total heatwaves in the 5-year block, then divide by 5 for the annual average
+                total_heatwaves_in_window = len([t for t in window_temps if t > local_threshold])
+                annual_avg_heatwaves = int(total_heatwaves_in_window / 5.0)
+                
+                last_real_temp = round(peak_tx5d, 1)
+                last_real_heatwaves = annual_avg_heatwaves
                 
                 time_series.append({
                     "year": decade,
-                    "temp": round(avg_max_temp, 1),
-                    "heatwaves": heatwave_days,
+                    "temp": last_real_temp,
+                    "heatwaves": annual_avg_heatwaves,
                 })
             
             # FIX 2: THE "SATELLITE BLIND SPOT" FALLBACK
