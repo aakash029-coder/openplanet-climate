@@ -38,8 +38,9 @@ async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: 
     api_end_year = min(target_year, 2050)
     fetch_end_year = min(api_end_year + 2, 2050) # HARD CAP TO PREVENT 400 ERRORS
     
-    # FIX 1: Timezone auto added
-    cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2028-01-01&end_date={fetch_end_year}-12-31&daily=temperature_2m_max&models=mpi_esm1_2_xr&timezone=auto"
+    # Inject the SSP Emission Scenario into the URL so the API knows what future to predict
+    ssp_key = ssp.lower().replace("-", "")
+    cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2028-01-01&end_date={fetch_end_year}-12-31&daily=temperature_2m_max&models=mpi_esm1_2_xr&{ssp_key}=true&timezone=auto"
 
     time_series = []
 
