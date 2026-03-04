@@ -96,13 +96,13 @@ async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: 
                     time_series.append({
                         "year": decade,
                         "temp": round(last_temp + (0.45 * decades_past), 1),
-                        "heatwaves": int(last_hw * (1 + (0.25 * decades_past))),
+                        "heatwaves": min(365, int(last_hw * (1 + (0.25 * decades_past)))),
                     })
                 else:
                     time_series.append({
                         "year": decade,
                         "temp": round(last_temp + (0.20 * decades_past), 1),
-                        "heatwaves": int(last_hw * (1 + (0.10 * decades_past))),
+                        "heatwaves": min(365, int(last_hw * (1 + (0.10 * decades_past)))),
                     })
 
         return time_series
