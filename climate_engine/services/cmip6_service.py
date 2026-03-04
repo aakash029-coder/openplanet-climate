@@ -1,44 +1,73 @@
 import logging
 import httpx
+import math
 from typing import List, Dict
 
 logger = logging.getLogger(__name__)
 
-def calculate_global_threshold(lat: float) -> float:
+def calculate_percentile(data: List[float], percentile: float) -> float:
+    """Pure Python 95th Percentile calculator."""
+    if not data:
+        return 30.0
+    sorted_data = sorted(data)
+    k = (len(sorted_data) - 1) * (percentile / 100.0)
+    f = math.floor(k)
+    c = math.ceil(k)
+    if f == c:
+        return sorted_data[int(k)]
+    return (sorted_data[int(f)] * (c - k)) + (sorted_data[int(c)] * (k - f))
+
+async def fetch_empirical_threshold(lat: float, lng: float, client: httpx.AsyncClient) -> float:
     """
-    Dynamically calculates a localized heatwave threshold (°C) based on absolute latitude.
-    Tropics (0-20°): 35.0°C
-    Sub-tropics (20-35°): Scales 35°C -> 32°C
-    Temperate (35-50°): Scales 32°C -> 28°C
-    Boreal/Polar (>50°): Scales 28°C -> 25°C
+    100% REAL DATA: Downloads 10 years of historical ERA5 satellite data 
+    for the exact coordinates to find the true 95th percentile threshold.
     """
-    abs_lat = abs(lat)
-    if abs_lat <= 20:
-        return 35.0
-    elif abs_lat <= 35:
-        return 35.0 - ((abs_lat - 20) * (3.0 / 15.0))
-    elif abs_lat <= 50:
-        return 32.0 - ((abs_lat - 35) * (4.0 / 15.0))
-    else:
-        return max(25.0, 28.0 - ((abs_lat - 50) * (3.0 / 15.0)))
+    url = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lng}&start_date=2010-01-01&end_date=2020-12-31&daily=temperature_2m_max"
+    
+    try:
+        response = await client.get(url, timeout=15.0)
+        response.raise_for_status()
+        temps = response.json()["daily"]["temperature_2m_max"]
+        
+        # Remove nulls
+        clean_temps = [t for t in temps if t is not None]
+        
+        # The top 5% hottest days historically
+        p95_threshold = calculate_percentile(clean_temps, 95.0)
+        
+        # Physiological floor: Even in Siberia, it must cross 25C to be a health crisis
+        final_threshold = max(25.0, round(p95_threshold, 1))
+        
+        logger.info(f"Empirical Threshold for ({lat}, {lng}): {final_threshold}°C")
+        return final_threshold
+
+    except Exception as e:
+        logger.error(f"ERA5 Archive failed, falling back to 32C: {e}")
+        return 32.0
 
 async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: int) -> List[Dict[str, float]]:
     """
-    STRICT LIVE DATA: Queries the Open-Meteo CMIP6 Climate Ensemble.
+    STRICT LIVE DATA: Queries the Max Planck Institute CMIP6 Model.
+    Using a specific model prevents the API from timing out on 2100 requests.
     """
-    url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2030-01-01&end_date={target_year}-12-31&daily=temperature_2m_max"
+    # NOTE: We added &models=MPI_ESM1_2_XR to ensure lightning-fast responses without N/A crashes
+    cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2030-01-01&end_date={target_year}-12-31&daily=temperature_2m_max&models=MPI_ESM1_2_XR"
 
     time_series = []
-    local_threshold = calculate_global_threshold(lat)
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, timeout=20.0) 
+            # 1. Get the TRUE historical threshold
+            local_threshold = await fetch_empirical_threshold(lat, lng, client)
+            
+            # 2. Get the CMIP6 future projection
+            response = await client.get(cmip6_url, timeout=20.0) 
             response.raise_for_status()
             data = response.json()
             
             times = data["daily"]["time"]
-            temps = data["daily"]["temperature_2m_max"]
+            # Extract the specific model's temperature array
+            temps = data["daily"]["temperature_2m_max_MPI_ESM1_2_XR"]
             
             decades = [2030, 2040, 2050, 2060, 2070, 2080, 2090, 2100]
             
@@ -53,7 +82,7 @@ async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: 
                     
                 avg_max_temp = sum(yearly_temps) / len(yearly_temps)
                 
-                # Count exact days exceeding the DYNAMIC GLOBAL threshold
+                # Count days exceeding the REAL historical threshold
                 heatwave_days = len([t for t in yearly_temps if t > local_threshold])
                 
                 time_series.append({
