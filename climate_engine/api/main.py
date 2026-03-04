@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 # STRICTLY ONLY THE 3 APPROVED APIS
 from climate_engine.services.ecmwf_service import fetch_historical_baseline
-from climate_engine.services.cmip6_service import fetch_cmip6_timeseries # UPDATED: cmip6_service
+from climate_engine.services.cmip6_service import fetch_cmip6_timeseries
 from climate_engine.services.socioeconomic_service import fetch_live_socioeconomics
 from climate_engine.services.llm_service import generate_strategic_analysis
 
@@ -51,7 +51,6 @@ def create_app() -> FastAPI:
             base_temp = await fetch_historical_baseline(req.lat, req.lng)
             target_year = int(req.year)
             
-            # UPDATED: We removed req.city because thresholds are now calculated mathematically by latitude!
             nasa_timeseries = await fetch_cmip6_timeseries(req.lat, req.lng, req.ssp, target_year)
             
             # 2. LIVE SOCIOECONOMICS (World Bank + Open-Meteo Geo)
@@ -102,12 +101,19 @@ def create_app() -> FastAPI:
                     loss_str = f"${round(final_loss_usd / 1000000, 1)}M"
             else:
                 final_temp, final_heatwaves, deaths_str, ci_lower, ci_upper, loss_str = "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
+                deaths, final_loss_usd = 0, 0.0 # Fallback safeguards for the AI prompt
 
             # 4. PURE MATH MAP GENERATION (Replaces Google Earth Engine API)
             hex_grid = [{"position": [req.lng + random.gauss(0, 0.06), req.lat + random.gauss(0, 0.06)]} for _ in range(1200)]
 
-            # 5. LIVE AI ANALYSIS (Groq)
-            ai_analysis = await generate_strategic_analysis(req.city, req.ssp, req.year, req.canopy, req.coolRoof)
+            # 5. LIVE AI ANALYSIS (Grounded in Physics Engine Math)
+            if nasa_timeseries:
+                ai_analysis = await generate_strategic_analysis(
+                    req.city, req.ssp, req.year, req.canopy, req.coolRoof,
+                    final_temp, final_heatwaves, deaths, final_loss_usd
+                )
+            else:
+                ai_analysis = None
 
             return {
                 "metrics": {
