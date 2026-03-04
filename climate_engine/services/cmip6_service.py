@@ -38,10 +38,9 @@ async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: 
     api_end_year = min(target_year, 2050)
     fetch_end_year = min(api_end_year + 2, 2050) # HARD CAP TO PREVENT 400 ERRORS
     
-    # Inject the SSP Emission Scenario into the URL so the API knows what future to predict
-    # FIX: Removes the decimal point so 'SSP2-4.5' becomes 'ssp245'
-    ssp_key = ssp.lower().replace("-", "").replace(".", "")
-    cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2028-01-01&end_date={fetch_end_year}-12-31&daily=temperature_2m_max&models=mpi_esm1_2_xr&{ssp_key}=true&timezone=auto"
+    # THE TRUE FIX: Open-Meteo physically does not accept SSP parameters for this model. 
+    # The MPI model is already an SSP5-8.5 baseline. We scale it mathematically later.
+    cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2028-01-01&end_date={fetch_end_year}-12-31&daily=temperature_2m_max&models=mpi_esm1_2_xr&timezone=auto"
 
     time_series = []
 
