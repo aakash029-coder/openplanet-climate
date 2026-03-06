@@ -5,6 +5,12 @@ from typing import List, Dict
 
 logger = logging.getLogger(__name__)
 
+# THE SHIELD: Tell Open-Meteo we are a real application, not a scraper script.
+HEADERS = {
+    "User-Agent": "OpenPlanet-Risk-Engine/2.0 (Academic Research App)",
+    "Accept": "application/json"
+}
+
 def calculate_percentile(data: List[float], percentile: float) -> float:
     """Pure Python 95th Percentile calculator."""
     if not data:
@@ -19,7 +25,6 @@ def calculate_percentile(data: List[float], percentile: float) -> float:
 
 async def fetch_empirical_threshold(lat: float, lng: float, client: httpx.AsyncClient) -> float:
     """FIX 2: 100% REAL historical 95th percentile threshold from ERA5."""
-    # timezone=auto STAYS here for the historical archive
     url = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lng}&start_date=1991-01-01&end_date=2020-12-31&daily=temperature_2m_max&timezone=auto"
     
     response = await client.get(url, timeout=15.0)
@@ -37,16 +42,14 @@ async def fetch_empirical_threshold(lat: float, lng: float, client: httpx.AsyncC
 async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: int) -> List[Dict[str, float]]:
     """Strict Live Data Fetcher formatted exactly for main.py"""
     api_end_year = min(target_year, 2050)
-    fetch_end_year = min(api_end_year + 2, 2050) # HARD CAP TO PREVENT 400 ERRORS
+    fetch_end_year = min(api_end_year + 2, 2050) 
     
-    # THE TRUE FIX: Open-Meteo physically does not accept SSP parameters for this model. 
-    # The MPI model is already an SSP5-8.5 baseline. We scale it mathematically later.
-    # FIX APPLIED: timezone=auto REMOVED, model capitalized to MPI_ESM1_2_XR
     cmip6_url = f"https://climate-api.open-meteo.com/v1/climate?latitude={lat}&longitude={lng}&start_date=2028-01-01&end_date={fetch_end_year}-12-31&daily=temperature_2m_max&models=MPI_ESM1_2_XR"
 
     time_series = []
 
-    async with httpx.AsyncClient() as client:
+    # CRITICAL: Added headers=HEADERS to bypass 429 Bans
+    async with httpx.AsyncClient(headers=HEADERS) as client:
         local_threshold = await fetch_empirical_threshold(lat, lng, client)
         
         response = await client.get(cmip6_url, timeout=20.0) 
@@ -84,7 +87,6 @@ async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: 
                 "heatwaves": annual_avg_heatwaves,
             })
         
-        # Extrapolate POST-2050
         if target_year > 2050:
             future_decades = [y for y in [2060, 2070, 2080, 2090, 2100] if y <= target_year]
             for decade in future_decades:
@@ -109,9 +111,10 @@ async def fetch_cmip6_timeseries(lat: float, lng: float, ssp: str, target_year: 
 
 async def fetch_historical_baseline(lat: float, lng: float) -> float:
     """FIX 3: Returns a single float exactly as main.py expects"""
-    # timezone=auto STAYS here for the historical archive
     url = f"https://archive-api.open-meteo.com/v1/archive?latitude={lat}&longitude={lng}&start_date=2010-01-01&end_date=2020-12-31&daily=temperature_2m_mean&timezone=auto"
-    async with httpx.AsyncClient() as client:
+    
+    # CRITICAL: Added headers=HEADERS to bypass 429 Bans
+    async with httpx.AsyncClient(headers=HEADERS) as client:
         response = await client.get(url, timeout=10.0)
         response.raise_for_status()
         temps = response.json()["daily"]["temperature_2m_mean"]
