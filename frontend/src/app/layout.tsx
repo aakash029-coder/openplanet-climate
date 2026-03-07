@@ -1,5 +1,6 @@
 import './globals.css';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar'; // 👈 Sahi import
 import { Providers } from '@/components/Providers'; 
 
 export const metadata = {
@@ -15,22 +16,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-[#020617] text-white">
       {/* 👇 YAHAN MAINE SATELLITE IMAGE PERMANENTLY ADD KAR DI HAI */}
-      <body className="font-mono min-h-screen flex flex-col selection:bg-indigo-500/30 bg-[url('/cybermap.jpeg')] bg-cover bg-center bg-fixed bg-no-repeat">
+      <body className="font-mono min-h-screen flex flex-col selection:bg-indigo-500/30 bg-[url('/satellite-map.jpeg')] bg-cover bg-center bg-fixed bg-no-repeat">
         
         <Providers>
           
           {/* ── HEADER ── */}
-          <header className="sticky top-0 z-50 bg-[#020617]/90 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 py-5 flex justify-between items-center shadow-lg">
-            <Link href="/" className="text-sm md:text-base font-bold uppercase tracking-[0.3em] text-white hover:text-indigo-400 transition-colors">
-              Open<span className="text-indigo-500">Planet</span>
-            </Link>
-            
-            <nav className="flex gap-6 md:gap-10 text-[10px] uppercase tracking-widest font-bold">
-              <Link href="/" className="text-slate-400 hover:text-white transition-colors">Home</Link>
-              <Link href="/discover" className="text-slate-400 hover:text-white transition-colors">Discover</Link>
-              <Link href="/about" className="text-slate-400 hover:text-white transition-colors">About</Link>
-            </nav>
-          </header>
+          <Navbar /> {/* 👈 Yahan Navbar har page par dikhega */}
 
           {/* ── MAIN CONTENT ── */}
           {/* Halki si black overlay di hai taaki text read karne mein problem na ho, par map piche dikhta rahega */}

@@ -388,12 +388,19 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
               </div>
             </div>
 
-            <button 
-              onClick={handleInitialize} 
-              disabled={!selectedCity || isLoading} 
-              className={`w-full py-4 font-mono text-[10px] uppercase tracking-[0.3em] font-bold transition-all rounded-sm shadow-xl ${!selectedCity ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : isLoading ? 'bg-indigo-600/50 text-white cursor-wait' : 'bg-indigo-600 text-white hover:bg-indigo-500 active:scale-[0.98]'}`}
+            <button
+              onClick={handleInitialize}
+              disabled={!selectedCity || isLoading}
+              className="w-full bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 py-4 text-[10px] font-mono uppercase tracking-[0.3em] rounded hover:bg-indigo-600/40 transition-colors shadow-[0_0_15px_rgba(99,102,241,0.2)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
-              Generate Climate Projection
+              {isLoading ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></span>
+                  GENERATING...
+                </>
+              ) : (
+                "GENERATE CLIMATE PROJECTION"
+              )}
             </button>
           </div>
 
@@ -536,4 +543,4 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
       </section>
     </div>
   );
-}  
+}

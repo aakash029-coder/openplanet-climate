@@ -31,22 +31,16 @@ const NEXT_TAB_MAP: Record<Tab, Tab | null> = {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<Tab>('Dashboard');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  
-  // THE MASTER LOCK: Holds the city generated in the Map Module
   const [targetCity, setTargetCity] = useState<string | null>(null);
 
   return (
-    // ── GLOBAL CYBERPUNK BACKGROUND WRAPPER ──
-    <main 
-      className="text-slate-200 font-sans overflow-x-hidden min-h-screen flex flex-col selection:bg-indigo-500/30 bg-fixed bg-center bg-cover"
-    >
+    // GAP COMPLETELY DESTROYED: pt-0 mt-0 ensures it sticks right to the top
+    <div className="text-slate-200 font-sans overflow-x-hidden flex flex-col w-full flex-grow pt-0 mt-0">
       
-      {/* ── COMMAND HEADER ── */}
-      <div className="pt-4 flex flex-col w-full flex-grow">
+      <div className="flex flex-col w-full flex-grow pt-0 mt-0">
         
-        {/* ── TACTICAL SUB-NAV ── */}
-        <nav className="w-full bg-black/60 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 flex flex-col lg:flex-row items-center justify-between sticky top-[76px] z-[450] shadow-xl">
+        {/* SUB-NAV FIXED: No emoji, clean text, sticks below header seamlessly */}
+        <nav className="w-full bg-black/60 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 flex flex-col lg:flex-row items-center justify-between sticky top-0 z-[450] shadow-xl m-0">
           <div className="flex gap-8 overflow-x-auto w-full lg:w-auto no-scrollbar py-4">
             {TABS.map((tab) => {
               const isLocked = !targetCity && tab !== 'Dashboard';
@@ -57,10 +51,11 @@ export default function DashboardPage() {
                   onClick={() => setActiveTab(tab)} 
                   className={`text-[9px] font-mono tracking-[0.2em] uppercase whitespace-nowrap transition-all flex items-center gap-2
                     ${activeTab === tab ? 'text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]' : ''}
-                    ${isLocked ? 'text-slate-500/50 cursor-not-allowed' : 'text-slate-400 hover:text-white'}
+                    ${isLocked ? 'text-slate-500/40 cursor-not-allowed' : 'text-slate-400 hover:text-white'}
                   `}
                 >
-                  {tab} {isLocked && <span className="text-slate-600 text-xs">🔒</span>}
+                  {/* SIRF TEXT, KOI EMOJI NAHI */}
+                  {tab}
                 </button>
               );
             })}
@@ -84,7 +79,6 @@ export default function DashboardPage() {
                 {activeTab === "Methodology" && <MethodologyModule />}
             </div>
 
-            {/* ── PROGRESSION ROUTER ── */}
             {targetCity && NEXT_TAB_MAP[activeTab] && (
               <div className="max-w-[1600px] w-full mx-auto px-6 md:px-12 pb-12 mt-auto">
                 <button 
@@ -98,7 +92,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── SYSTEM DISCLAIMER (ABOVE GLOBAL FOOTER) ── */}
+      {/* SYSTEM DISCLAIMER */}
       <div className="w-full border-t border-white/5 bg-[#020617]/80 backdrop-blur-md px-6 py-6 mt-auto">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest leading-relaxed">
@@ -108,6 +102,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-    </main>
+    </div>
   );
 }
