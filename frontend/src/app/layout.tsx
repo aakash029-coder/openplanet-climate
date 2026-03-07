@@ -9,35 +9,39 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="font-mono min-h-screen text-white selection:bg-indigo-500/30 bg-transparent">
+    <html lang="en" className="dark">
+      <body className="font-mono min-h-screen text-white bg-[#020617] relative selection:bg-indigo-500/30">
         
-        {/* ── 1. PHYSICAL BACKGROUND IMAGE (IMPOSSIBLE TO HIDE) ── */}
-        <img 
-          src="/satellite-map.jpeg" 
-          alt="Satellite Background" 
-          className="fixed inset-0 w-full h-full object-cover z-[-2]"
-        />
+        {/* ── 1. BACKGROUND IMAGE LAYER ── */}
+        <div className="fixed inset-0 z-[-2] pointer-events-none">
+          <img 
+            src="/satellite-map.jpeg" 
+            alt="" 
+            className="w-full h-full object-cover opacity-60"
+            /* Agar image 404 ho jaye toh error console mein aaye par UI white na ho */
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+        </div>
         
-        {/* ── 2. DARK OVERLAY (Taki text padhne me aasaani ho) ── */}
-        <div className="fixed inset-0 bg-[#020617]/70 z-[-1]"></div>
+        {/* ── 2. GRADIENT OVERLAY (For depth and readability) ── */}
+        <div className="fixed inset-0 bg-gradient-to-b from-[#020617]/90 via-transparent to-[#020617]/90 z-[-1] pointer-events-none"></div>
 
         {/* ── 3. MAIN CONTENT ── */}
         <Providers>
           <div className="flex flex-col min-h-screen relative z-10">
             <Navbar />
             
-            <main className="flex-1 flex flex-col backdrop-blur-sm">
+            <main className="flex-1 flex flex-col">
               {children}
             </main>
 
-            <footer className="border-t border-white/10 bg-[#050814]/90 backdrop-blur-md py-8 px-6 md:px-12 mt-auto">
-              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+            <footer className="border-t border-white/5 bg-[#050814]/80 backdrop-blur-md py-8 px-6 md:px-12 mt-auto">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold">
                 <div>© {new Date().getFullYear()} OpenPlanet Intelligence.</div>
                 <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-                  <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-                  <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
-                  <a href="/support" className="hover:text-white transition-colors">Support</a>
+                  <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+                  <Link href="/support" className="hover:text-white transition-colors">Support</Link>
                 </div>
               </div>
             </footer>
@@ -48,3 +52,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
+// Next.js Link import helper (agar missing ho toh layout me upar add kar dena)
+import Link from 'next/link';
