@@ -81,3 +81,34 @@ def _fallback_error(cause: str, effect: str) -> dict:
         "infrastructure": "**CAUSE:** N/A **EFFECT:** N/A **SOLUTION:** N/A",
         "mitigation": "**CAUSE:** N/A **EFFECT:** N/A **SOLUTION:** N/A"
     }
+
+# --- ADDED TO THE BOTTOM OF llm_service.py ---
+
+async def generate_strategic_analysis_raw(prompt: str) -> str:
+    """
+    Handles direct, raw prompts for the Research and Compare AI Auditor.
+    """
+    try:
+        # Initialize Groq client using the globally imported os and AsyncGroq
+        client = AsyncGroq(api_key=os.environ.get("GROQ_API_KEY"))
+        
+        response = await client.chat.completions.create(
+            model="llama3-8b-8192", # Fast and highly accurate model
+            messages=[
+                {
+                    "role": "system", 
+                    "content": "You are a senior climate risk auditor. Explain the physics and economics of the provided data concisely. Do not hallucinate. Keep it under 3-4 sentences."
+                },
+                {
+                    "role": "user", 
+                    "content": prompt
+                }
+            ],
+            temperature=0.3,
+            max_tokens=250
+        )
+        return response.choices[0].message.content.strip()
+        
+    except Exception as e:
+        logger.error(f"Groq Raw API Error: {str(e)}")
+        return "Expert AI reasoning is currently unavailable due to network processing load. Please refer to the raw telemetry metrics above."
