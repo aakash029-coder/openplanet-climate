@@ -93,7 +93,7 @@ async def generate_strategic_analysis_raw(prompt: str) -> str:
         client = AsyncGroq(api_key=os.environ.get("GROQ_API_KEY"))
         
         response = await client.chat.completions.create(
-            model="llama3-8b-8192", # Fast and highly accurate model
+            model="llama-3.1-8b-instant", # Fast and highly accurate model
             messages=[
                 {
                     "role": "system", 
