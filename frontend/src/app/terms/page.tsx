@@ -5,17 +5,6 @@ export default function TermsPage() {
     <div className="min-h-screen bg-[#020617] text-slate-300 font-sans selection:bg-white/10">
       
       {/* MINIMAL HEADER */}
-      <header className="w-full border-b border-white/5 bg-black/50 backdrop-blur-md px-6 md:px-12 py-4 sticky top-0 z-50">
-        <div className="flex items-center justify-between max-w-5xl mx-auto">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 border border-white/20 flex items-center justify-center bg-white/5 rounded-sm group-hover:bg-white/10 transition-colors">
-               <span className="text-white font-mono text-xs font-bold">OP</span>
-            </div>
-            <span className="text-white font-mono tracking-[0.3em] text-[10px] uppercase">Return Home</span>
-          </Link>
-          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Legal Framework</span>
-        </div>
-      </header>
 
       {/* CONTENT DOCUMENT */}
       <main className="max-w-3xl mx-auto px-6 py-24">

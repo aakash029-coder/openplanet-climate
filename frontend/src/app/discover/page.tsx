@@ -17,40 +17,6 @@ export default function DiscoverPage() {
     <div className="flex flex-col w-full min-h-screen">
       
       {/* 1. RIGID DISCOVER HEADER */}
-      <header className="fixed top-0 left-0 w-full flex items-center justify-between px-6 md:px-12 py-4 z-50 bg-black/60 backdrop-blur-md border-b border-white/10">
-        
-        {/* Left: Back to Home Button */}
-        <div className="flex items-center">
-          <Link href="/" className="flex items-center gap-3 text-slate-400 hover:text-white transition-colors group">
-            <div className="w-8 h-8 border border-white/20 flex items-center justify-center bg-white/5 rounded-sm group-hover:bg-white/10 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-            </div>
-            <span className="text-[10px] font-mono tracking-[0.2em] uppercase hidden sm:block">Return to Home</span>
-          </Link>
-        </div>
-
-        {/* Center: Module Indicator & Navigation Links */}
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 px-4 py-1.5 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-            <span className="text-blue-400 font-mono text-[10px] tracking-[0.3em] uppercase">Interactive Tour</span>
-          </div>
-          
-          <div className="hidden md:flex gap-8 items-center">
-            {/* THIS IS THE UPDATED ABOUT LINK */}
-            <Link href="/about" className="text-[10px] font-mono tracking-[0.2em] text-slate-400 hover:text-white transition-colors uppercase">About</Link>
-            <Link href="#support" className="text-[10px] font-mono tracking-[0.2em] text-slate-400 hover:text-white transition-colors uppercase">Support</Link>
-          </div>
-        </div>
-
-        {/* Right: Branding */}
-        <div className="flex items-center">
-          <span className="text-white font-mono tracking-[0.3em] text-[10px] uppercase opacity-50">OpenPlanet</span>
-        </div>
-      </header>
 
       {/* MAIN CONTENT WORKSPACE */}
       <main className="flex-grow w-full max-w-[1600px] mx-auto px-6 pt-28 pb-12 flex flex-col gap-6">
