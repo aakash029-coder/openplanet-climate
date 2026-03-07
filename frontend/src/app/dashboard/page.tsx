@@ -44,34 +44,13 @@ export default function DashboardPage() {
     <main 
       className="text-slate-200 font-sans overflow-x-hidden min-h-screen flex flex-col selection:bg-indigo-500/30 bg-fixed bg-center bg-cover"
       style={{
-        // Maine yahan naam change karke cybermap.jpeg kar diya hai
+        // Maine yahan naam change karke /cybermap.jpeg kar diya hai
         backgroundImage: `linear-gradient(to bottom, rgba(2, 6, 23, 0.85), rgba(5, 8, 20, 0.95)), url('/cybermap.jpeg')`
       }}
     >
       
       {/* ── COMMAND HEADER ── */}
       {/* Made slightly more transparent (bg-black/80) to let the background bleed through */}
-      <header className="fixed top-0 left-0 w-full flex items-center justify-between px-6 md:px-12 py-4 z-[500] bg-black/80 backdrop-blur-md border-b border-white/10 h-[72px]">
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-8 border border-indigo-500/50 flex items-center justify-center bg-indigo-500/10 rounded-sm">
-             <span className="text-indigo-400 font-mono text-xs font-bold tracking-tighter">OP</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-slate-100 font-mono tracking-[0.3em] text-[10px] uppercase">OpenPlanet</span>
-            <span className="text-slate-400 font-mono tracking-[0.2em] text-[8px] uppercase">Risk Intelligence</span>
-          </div>
-        </div>
-        <div className="flex items-center relative">
-          <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="flex items-center gap-3 px-4 py-2 border border-white/10 rounded-sm hover:border-white/30 transition-all bg-white/5">
-            <span className="text-[9px] font-mono text-slate-300 tracking-widest uppercase">{session?.user?.name?.split(' ')[0] || "USER"}</span>
-          </button>
-          {isDropdownOpen && (
-            <div className="absolute top-14 right-0 w-48 bg-black/90 backdrop-blur-xl border border-white/10 rounded-sm p-2 flex flex-col shadow-2xl">
-              <button onClick={() => signOut({ callbackUrl: '/' })} className="w-full text-left px-3 py-2 text-[10px] font-mono text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-sm uppercase tracking-widest transition-colors">Sign Out</button>
-            </div>
-          )}
-        </div>
-      </header>
 
       <div className="pt-[72px] flex flex-col w-full flex-grow">
         
@@ -129,9 +108,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <footer className="w-full border-t border-white/10 bg-black/60 backdrop-blur-md py-8 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between relative z-40 mt-auto">
-        <p className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">&copy; 2026 OPENPLANET. All rights reserved.</p>
-      </footer>
     </main>
   );
 }
