@@ -1,5 +1,5 @@
 """
-climate_engine/api/main.py — Final Bulletproof Architecture
+climate_engine/api/main.py — Final Bulletproof Architecture with AI Auditor
 """
 from __future__ import annotations
 import logging
@@ -15,12 +15,11 @@ from pydantic import BaseModel
 # SERVICES
 from climate_engine.services.cmip6_service import fetch_cmip6_timeseries, fetch_historical_baseline
 from climate_engine.services.socioeconomic_service import fetch_live_socioeconomics
-from climate_engine.services.llm_service import generate_strategic_analysis
+from climate_engine.services.llm_service import generate_strategic_analysis, generate_strategic_analysis_raw
 
 logger = logging.getLogger(__name__)
 
 # --- PERMANENT ILAAJ: GLOBAL SEMAPHORE ---
-# Ye line hamesha ke liye ensure karegi ki concurrent requests block na ho
 rate_limit_lock = asyncio.Semaphore(1) 
 
 # ─── DATA MODELS ────────────────────────────────────────────────────────
@@ -42,6 +41,12 @@ class ClimateRiskRequest(BaseModel):
     canopy_offset_pct: int
     albedo_offset_pct: int
     location_hint: str = ""
+
+# NEW: RESEARCH & COMPARE EXPERT AI REQUEST
+class ResearchAIRequest(BaseModel):
+    city_name: str
+    metrics: Dict[str, Any]
+    context: str # "Compare" or "DeepDive"
 
 class SimulationResponse(BaseModel):
     metrics: Dict[str, Any]
@@ -84,12 +89,39 @@ def create_app() -> FastAPI:
     async def root():
         return {"status": "OpenPlanet Risk Engine is Online"}
 
-    # 1. THE DASHBOARD API (Predict)
+    # --- NEW: RESEARCH & COMPARE EXPERT AI ENDPOINT ---
+    @app.post("/api/research-analysis")
+    async def research_analysis(req: ResearchAIRequest):
+        # Groq ko "Scientific Auditor" banayenge
+        prompt = f"""
+        [SYSTEM: SCIENTIFIC AUDIT MODE]
+        Analyze the climate risk for {req.city_name} based on these REAL coordinates/metrics:
+        - Peak Temp: {req.metrics.get('temp')}
+        - Elevation: {req.metrics.get('elevation')}m
+        - Heatwave Days: {req.metrics.get('heatwave')}
+        - Economic Loss: {req.metrics.get('loss')}
+        - Lat/Lng: {req.metrics.get('lat')}, {req.metrics.get('lng')}
+        
+        TASK: Explain WHY these numbers exist in a {req.context} context. 
+        1. If elevation is high, explain the Lapse Rate cooling effect.
+        2. If GDP loss is high, explain the Burke Productivity Decay model.
+        3. Explain if the geography (coastal vs inland) affects the thermal inertia.
+        4. Do NOT hallucinate. Use only the provided metrics.
+        5. Keep it professional and technical.
+        """
+        
+        try:
+            analysis = await generate_strategic_analysis_raw(prompt) 
+            return {"reasoning": analysis}
+        except Exception as e:
+            return {"reasoning": "Scientific reasoning currently unavailable due to thermal processing load."}
+
+    # 1. THE DASHBOARD API
     @app.post("/api/predict", response_model=SimulationResponse)
     async def predict(req: PredictionRequest):
         async with rate_limit_lock:
             try:
-                await asyncio.sleep(1.0) # Sabar
+                await asyncio.sleep(1.0)
                 annual_mean_temp = await fetch_historical_baseline(req.lat, req.lng)
                 historical_summer_peak = annual_mean_temp + 8.0 + (abs(req.lat) * 0.25)
                 
@@ -123,7 +155,6 @@ def create_app() -> FastAPI:
                 final_temp = max(historical_summer_peak, target_data.get("temp", historical_summer_peak) - total_cooling)
                 deaths = int((live_pop/1000) * (8.0/365.0) * 0.125 * final_hw * ssp_multiplier)
                 
-                # Enhanced Economic Decay
                 intensity_multiplier = 1.0 + (max(0.0, final_temp - historical_summer_peak) * 0.15)
                 final_loss_usd = live_gdp * (final_hw / 365.0) * 0.04 * intensity_multiplier * ssp_multiplier
 
@@ -143,12 +174,11 @@ def create_app() -> FastAPI:
             except Exception as e:
                 return {"metrics": {"baseTemp": "ERR", "temp": "ERR", "deaths": "ERR", "ci": "ERR", "loss": "ERR", "heatwave": "ERR"}, "hexGrid": [], "aiAnalysis": None, "charts": {"heatwave": [], "economic": []}}
 
-    # 2. THE RESEARCH ENGINE API (Climate Risk)
+    # 2. THE RESEARCH ENGINE API
     @app.post("/api/climate-risk")
     async def climate_risk(req: ClimateRiskRequest):
-        async with rate_limit_lock: # THE PERMANENT SHIELD
+        async with rate_limit_lock:
             try:
-                # 1. Baseline fetch (Sabar ke saath)
                 await asyncio.sleep(1.5) 
                 annual_mean_temp = await fetch_historical_baseline(req.lat, req.lng)
                 if annual_mean_temp is None: raise ValueError("Baseline feed unavailable")
@@ -165,7 +195,7 @@ def create_app() -> FastAPI:
 
                 for year in [2030, 2050, 2075, 2100]:
                     nasa_timeseries = None
-                    for attempt in range(5): # 5 baar try karega
+                    for attempt in range(5):
                         try:
                             wait_time = 2.0 + (attempt * 2.0)
                             await asyncio.sleep(wait_time) 
@@ -181,11 +211,9 @@ def create_app() -> FastAPI:
                     peak_temp = max(historical_summer_peak, target_data.get("temp", historical_summer_peak) - total_cooling)
                     hw_days = max(0, target_data.get("heatwaves", 0) - int(total_cooling * 4))
 
-                    # ENHANCED ECONOMICS (BURKE INSPIRED)
                     intensity_multiplier = 1.0 + (max(0.0, peak_temp - historical_summer_peak) * 0.15) 
                     econ_loss = gdp * (hw_days / 365.0) * 0.04 * intensity_multiplier * ssp_multiplier
 
-                    # Research Suite Metrics
                     wbt_max = round((peak_temp * 0.7) + 8.0, 2)
                     projections.append({
                         "year": year,
@@ -210,7 +238,7 @@ def create_app() -> FastAPI:
                 }
             except Exception as e:
                 logger.error(f"Permanent Shield Alert: {str(e)}")
-                return {"error": "Server is busy protecting your connection. Please wait 10 seconds."}
+                return {"error": "Server is busy protecting your connection."}
 
     return app
 
