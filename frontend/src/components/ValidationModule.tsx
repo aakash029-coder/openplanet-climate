@@ -76,7 +76,7 @@ export default function ValidationModule() {
     for (let i = 0; i < VALIDATION_CITIES.length; i++) {
       const c = VALIDATION_CITIES[i];
       try {
-        const resp = await fetch("http://127.0.0.1:8000/api/era5-threshold", {
+        const resp = await fetch("https://albus2903-openplanet-engine.hf.space/api/era5-threshold", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ lat: c.lat, lng: c.lng }),

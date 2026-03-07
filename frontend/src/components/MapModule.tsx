@@ -193,7 +193,7 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
     }));
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/predict', {
+      const response = await fetch('https://albus2903-openplanet-engine.hf.space/api/predict', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
