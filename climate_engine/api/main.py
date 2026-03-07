@@ -1,5 +1,5 @@
 """
-climate_engine/api/main.py — Final Pure API Architecture with Research Injection
+climate_engine/api/main.py — Final Architecture with Rate Limit Shield
 """
 from __future__ import annotations
 import logging
@@ -86,7 +86,6 @@ def create_app() -> FastAPI:
     async def root():
         return {"status": "OpenPlanet Risk Engine is Online"}
 
-    # 1. THE ORIGINAL MAP ENGINE API (Dashboard)
     @app.post("/api/predict", response_model=SimulationResponse)
     async def predict(req: PredictionRequest):
         try:
@@ -187,7 +186,6 @@ def create_app() -> FastAPI:
                 "charts": {"heatwave": [], "economic": []}
             }
 
-    # 2. THE CORE ENGINE API (Research & Compare)
     @app.post("/api/climate-risk")
     async def climate_risk(req: ClimateRiskRequest):
         try:
@@ -217,11 +215,27 @@ def create_app() -> FastAPI:
 
             projections = []
             for year in [2030, 2050, 2075, 2100]:
-                await asyncio.sleep(0.5) # Rate limit protection
-                nasa_timeseries = await fetch_cmip6_timeseries(req.lat, req.lng, req.ssp, year)
                 
+                # ─── NEW: EXPONENTIAL BACKOFF RETRY BLOCK ───
+                nasa_timeseries = None
+                for attempt in range(4): # 4 attempts total
+                    try:
+                        # Cumulative sleep: 1s, then 2.5s, then 4s, then 5.5s
+                        wait_time = 1.0 + (attempt * 1.5)
+                        await asyncio.sleep(wait_time) 
+                        
+                        nasa_timeseries = await fetch_cmip6_timeseries(req.lat, req.lng, req.ssp, year)
+                        if nasa_timeseries:
+                            break 
+                    except Exception as exc:
+                        if "429" in str(exc) and attempt < 3:
+                            logger.warning(f"Rate limit hit for {year}. Attempt {attempt+1}. Retrying...")
+                            continue 
+                        else:
+                            raise exc 
+
                 if not nasa_timeseries:
-                    continue
+                    continue 
                 
                 target_data = nasa_timeseries[-1] 
                 raw_hw = target_data.get("heatwaves", 0)
@@ -234,14 +248,9 @@ def create_app() -> FastAPI:
                 deaths = int(daily_baseline_deaths * 0.125 * hw_days * ssp_multiplier)
                 econ_loss = (daily_city_gdp * 0.002) * hw_days * ssp_multiplier
 
-                # ── RESEARCH SUITE INJECTION ──
-                # 1. Wet-Bulb Globe Temperature estimate (ISO 7243)
+                # ── RESEARCH SUITE CALCULATIONS ──
                 wbt_max = round((peak_temp * 0.7) + 8.0, 2)
-                
-                # 2. Urban Heat Island (UHI) Decomposition
                 uhi_val = round(peak_temp - annual_mean_temp, 2)
-                
-                # 3. Cooling Degree Days (CDD) - Grid Load
                 grid_stress = round((peak_temp - 18) * hw_days, 1)
 
                 projections.append({
@@ -252,8 +261,6 @@ def create_app() -> FastAPI:
                     "avg_excess_temp_c": round(excess_temp, 2),
                     "attributable_deaths": deaths,
                     "economic_decay_usd": econ_loss,
-                    
-                    # NEW RESEARCH KEYS
                     "wbt_max_c": wbt_max,
                     "uhi_intensity_c": uhi_val,
                     "grid_stress_factor": grid_stress,
