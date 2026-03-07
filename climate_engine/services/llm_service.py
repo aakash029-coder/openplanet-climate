@@ -89,23 +89,34 @@ async def generate_strategic_analysis_raw(prompt: str) -> str:
     Handles direct, raw prompts for the Research and Compare AI Auditor.
     """
     try:
-        # Initialize Groq client using the globally imported os and AsyncGroq
+        # Initialize Groq client
         client = AsyncGroq(api_key=os.environ.get("GROQ_API_KEY"))
         
+        # ── MASTER PROMPT: FORCING A SINGLE PARAGRAPH ──
+        system_msg = (
+            "You are a Senior Climate Risk Auditor writing for an institutional report. "
+            "CRITICAL RULES: "
+            "1. Write exactly ONE cohesive, flowing paragraph (max 3-4 sentences). "
+            "2. NEVER use numbered lists (1., 2.), bullet points, or newlines. "
+            "3. Do not use markdown asterisks. "
+            "4. Be authoritative and direct. Do not say 'cannot be evaluated' or 'is not applicable'. "
+            "5. Seamlessly weave the metrics into a narrative about thermal physiological limits, urban heat islands, and the resulting economic/productivity decay."
+        )
+        
         response = await client.chat.completions.create(
-            model="llama-3.1-8b-instant", # Fast and highly accurate model
+            model="llama-3.1-8b-instant",
             messages=[
                 {
                     "role": "system", 
-                    "content": "You are a senior climate risk auditor. Explain the physics and economics of the provided data concisely. Do not hallucinate. Keep it under 3-4 sentences."
+                    "content": system_msg
                 },
                 {
                     "role": "user", 
                     "content": prompt
                 }
             ],
-            temperature=0.3,
-            max_tokens=250
+            temperature=0.2, # Low temperature so it doesn't get creative with formatting
+            max_tokens=200   # Limits length so it never gets cut off mid-sentence
         )
         return response.choices[0].message.content.strip()
         
