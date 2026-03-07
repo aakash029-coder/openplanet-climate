@@ -40,16 +40,13 @@ export default function DashboardPage() {
     // ── GLOBAL CYBERPUNK BACKGROUND WRAPPER ──
     <main 
       className="text-slate-200 font-sans overflow-x-hidden min-h-screen flex flex-col selection:bg-indigo-500/30 bg-fixed bg-center bg-cover"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, rgba(2, 6, 23, 0.85), rgba(5, 8, 20, 0.95)), url('/cybermap.jpeg')`
-      }}
     >
       
       {/* ── COMMAND HEADER ── */}
-      <div className="pt-[72px] flex flex-col w-full flex-grow">
+      <div className="pt-4 flex flex-col w-full flex-grow">
         
         {/* ── TACTICAL SUB-NAV ── */}
-        <nav className="w-full bg-black/60 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 flex flex-col lg:flex-row items-center justify-between sticky top-[72px] z-[450] shadow-xl">
+        <nav className="w-full bg-black/60 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 flex flex-col lg:flex-row items-center justify-between sticky top-[76px] z-[450] shadow-xl">
           <div className="flex gap-8 overflow-x-auto w-full lg:w-auto no-scrollbar py-4">
             {TABS.map((tab) => {
               const isLocked = !targetCity && tab !== 'Dashboard';
