@@ -1,5 +1,5 @@
 """
-climate_engine/api/main.py — Final Architecture with Rate Limit Shield
+climate_engine/api/main.py — Final Architecture with Enhanced Economic Decay
 """
 from __future__ import annotations
 import logging
@@ -108,22 +108,24 @@ def create_app() -> FastAPI:
             heatwave_chart = []
             economic_chart = []
             
-            daily_city_gdp = live_gdp / 365.0
             daily_baseline_deaths = (live_pop / 1000) * (8.0 / 365.0)
+            ssp_multiplier = 1.5 if req.ssp == "SSP5-8.5" else 1.0
 
             for data_point in nasa_timeseries:
                 yr = str(data_point["year"])
-                adapted_heatwaves = max(0, data_point["heatwaves"] - int(total_mitigation * 4))
-                heatwave_chart.append({"year": yr, "val": adapted_heatwaves})
+                raw_hw = data_point["heatwaves"]
+                adapted_hw = max(0, raw_hw - int(total_mitigation * 4))
                 
-                ssp_multiplier = 1.5 if req.ssp == "SSP5-8.5" else 1.0
-                raw_econ_loss = (daily_city_gdp * 0.002) * data_point["heatwaves"] * ssp_multiplier
-                adapted_econ_loss = (daily_city_gdp * 0.002) * adapted_heatwaves * ssp_multiplier
+                # Apply Enhanced Economic Decay to the chart points
+                # Baseline intensity assumed as moderate for historical points
+                raw_loss_frac = (raw_hw / 365.0) * 0.04 * ssp_multiplier
+                adapted_loss_frac = (adapted_hw / 365.0) * 0.04 * ssp_multiplier
                 
+                heatwave_chart.append({"year": yr, "val": adapted_hw})
                 economic_chart.append({
                     "year": yr, 
-                    "noAction": round(raw_econ_loss / 1000000, 1), 
-                    "adapt": round(adapted_econ_loss / 1000000, 1)
+                    "noAction": round((live_gdp * raw_loss_frac) / 1000000, 1), 
+                    "adapt": round((live_gdp * adapted_loss_frac) / 1000000, 1)
                 })
             
             if nasa_timeseries:
@@ -132,10 +134,15 @@ def create_app() -> FastAPI:
                 final_temp = max(historical_summer_peak, target_data.get("temp", historical_summer_peak) - total_mitigation)
                 
                 deaths = int(daily_baseline_deaths * 0.125 * final_heatwaves * ssp_multiplier)
-                final_loss_usd = (daily_city_gdp * 0.002) * final_heatwaves * ssp_multiplier
                 
-                ci_lower, ci_upper = f"{int(deaths * 0.88):,}", f"{int(deaths * 1.15):,}"
+                # ── ENHANCED ECONOMICS (DASHBOARD) ──
+                excess_intensity = max(0.0, final_temp - historical_summer_peak)
+                intensity_multiplier = 1.0 + (excess_intensity * 0.15)
+                annual_loss_frac = (final_heatwaves / 365.0) * 0.04 * intensity_multiplier * ssp_multiplier
+                final_loss_usd = live_gdp * annual_loss_frac
+                
                 deaths_str = f"{deaths:,}"
+                ci_lower, ci_upper = f"{int(deaths * 0.88):,}", f"{int(deaths * 1.15):,}"
                 
                 if final_loss_usd > 1000000000:
                     loss_str = f"${round(final_loss_usd / 1000000000, 2)}B"
@@ -160,7 +167,7 @@ def create_app() -> FastAPI:
                     "baseTemp": str(round(historical_summer_peak, 1)),
                     "temp": f"{final_temp:.1f}" if isinstance(final_temp, float) else "N/A",
                     "deaths": deaths_str,
-                    "ci": f"{ci_lower} - {ci_upper}" if ci_lower != "N/A" else "N/A",
+                    "ci": f"{ci_lower} - {ci_upper}",
                     "loss": loss_str,
                     "heatwave": str(final_heatwaves)
                 },
@@ -173,18 +180,8 @@ def create_app() -> FastAPI:
             }
             
         except Exception as e:
-            logger.error(f"DASHBOARD 500 CRASH: {str(e)}")
-            return {
-                "metrics": {"baseTemp": "ERR", "temp": "ERR", "deaths": "ERR", "ci": "ERR", "loss": "ERR", "heatwave": "ERR"},
-                "hexGrid": [],
-                "aiAnalysis": {
-                    "mortality": f"**CAUSE:** SERVER CRASH **EFFECT:** {str(e)} **SOLUTION:** Review backend logs.",
-                    "economic": "**CAUSE:** N/A **EFFECT:** N/A **SOLUTION:** N/A",
-                    "infrastructure": "**CAUSE:** N/A **EFFECT:** N/A **SOLUTION:** N/A",
-                    "mitigation": "**CAUSE:** N/A **EFFECT:** N/A **SOLUTION:** N/A"
-                },
-                "charts": {"heatwave": [], "economic": []}
-            }
+            logger.error(f"DASHBOARD 500: {str(e)}")
+            return {"metrics": {"baseTemp": "ERR", "temp": "ERR", "deaths": "ERR", "ci": "ERR", "loss": "ERR", "heatwave": "ERR"}, "hexGrid": [], "aiAnalysis": None, "charts": {"heatwave": [], "economic": []}}
 
     @app.post("/api/climate-risk")
     async def climate_risk(req: ClimateRiskRequest):
@@ -194,61 +191,40 @@ def create_app() -> FastAPI:
             total_cooling = canopy_cooling + albedo_cooling
 
             city_name = req.location_hint.split(',')[0].strip() if req.location_hint else "Unknown"
-            try:
-                socio_data = await fetch_live_socioeconomics(city_name)
-            except:
-                socio_data = {}
-                
+            socio_data = await fetch_live_socioeconomics(city_name)
             pop, gdp = get_real_socioeconomics(city_name, socio_data)
 
-            # HISTORICAL BASELINE
             annual_mean_temp = await fetch_historical_baseline(req.lat, req.lng)
-            if annual_mean_temp is None:
-                raise ValueError("Satellite feed unavailable.")
-                
-            lat_swing = abs(req.lat) * 0.25
-            historical_summer_peak = annual_mean_temp + 8.0 + lat_swing
+            historical_summer_peak = annual_mean_temp + 8.0 + (abs(req.lat) * 0.25)
 
             ssp_multiplier = 1.6 if req.ssp == 'ssp585' else 1.0
-            daily_city_gdp = gdp / 365.0
             daily_baseline_deaths = (pop / 1000) * (8.0 / 365.0)
 
             projections = []
             for year in [2030, 2050, 2075, 2100]:
-                
-                # ─── NEW: EXPONENTIAL BACKOFF RETRY BLOCK ───
                 nasa_timeseries = None
-                for attempt in range(4): # 4 attempts total
+                for attempt in range(4):
                     try:
-                        # Cumulative sleep: 1s, then 2.5s, then 4s, then 5.5s
-                        wait_time = 1.0 + (attempt * 1.5)
-                        await asyncio.sleep(wait_time) 
-                        
+                        await asyncio.sleep(1.0 + (attempt * 1.5)) 
                         nasa_timeseries = await fetch_cmip6_timeseries(req.lat, req.lng, req.ssp, year)
-                        if nasa_timeseries:
-                            break 
+                        if nasa_timeseries: break 
                     except Exception as exc:
-                        if "429" in str(exc) and attempt < 3:
-                            logger.warning(f"Rate limit hit for {year}. Attempt {attempt+1}. Retrying...")
-                            continue 
-                        else:
-                            raise exc 
+                        if "429" in str(exc) and attempt < 3: continue 
+                        else: raise exc 
 
-                if not nasa_timeseries:
-                    continue 
+                if not nasa_timeseries: continue 
                 
                 target_data = nasa_timeseries[-1] 
-                raw_hw = target_data.get("heatwaves", 0)
-                raw_temp = target_data.get("temp", historical_summer_peak)
+                peak_temp = max(historical_summer_peak, target_data.get("temp", historical_summer_peak) - total_cooling)
+                hw_days = max(0, target_data.get("heatwaves", 0) - int(total_cooling * 4))
 
-                peak_temp = max(historical_summer_peak, raw_temp - total_cooling)
-                hw_days = max(0, raw_hw - int(total_cooling * 4))
-                excess_temp = max(0.0, peak_temp - historical_summer_peak)
+                # ── ENHANCED ECONOMIC DECAY (RESEARCH) ──
+                excess_intensity = max(0.0, peak_temp - historical_summer_peak)
+                intensity_multiplier = 1.0 + (excess_intensity * 0.15) 
+                annual_loss_fraction = (hw_days / 365.0) * 0.04 * intensity_multiplier * ssp_multiplier
+                econ_loss = gdp * annual_loss_fraction
 
-                deaths = int(daily_baseline_deaths * 0.125 * hw_days * ssp_multiplier)
-                econ_loss = (daily_city_gdp * 0.002) * hw_days * ssp_multiplier
-
-                # ── RESEARCH SUITE CALCULATIONS ──
+                # Research Suite Metrics
                 wbt_max = round((peak_temp * 0.7) + 8.0, 2)
                 uhi_val = round(peak_temp - annual_mean_temp, 2)
                 grid_stress = round((peak_temp - 18) * hw_days, 1)
@@ -258,8 +234,7 @@ def create_app() -> FastAPI:
                     "source": "cmip6_live" if year <= 2050 else "extrapolated",
                     "heatwave_days": hw_days,
                     "peak_tx5d_c": round(peak_temp, 2),
-                    "avg_excess_temp_c": round(excess_temp, 2),
-                    "attributable_deaths": deaths,
+                    "attributable_deaths": int(daily_baseline_deaths * 0.125 * hw_days * ssp_multiplier),
                     "economic_decay_usd": econ_loss,
                     "wbt_max_c": wbt_max,
                     "uhi_intensity_c": uhi_val,
@@ -270,20 +245,12 @@ def create_app() -> FastAPI:
             return {
                 "threshold_c": round(historical_summer_peak, 2),
                 "cooling_offset_c": round(total_cooling, 2),
-                "iso2": "UN",
                 "gdp_usd": gdp,
                 "population": pop,
                 "projections": projections,
-                "errors": [],
-                "baseline": {
-                    "baseline_mean_c": round(annual_mean_temp, 2),
-                    "baseline_p95_c": round(historical_summer_peak, 2),
-                    "baseline_p99_c": round(historical_summer_peak + 2.5, 2),
-                    "baseline_max_c": round(historical_summer_peak + 4, 2),
-                }
+                "baseline": {"baseline_mean_c": round(annual_mean_temp, 2)}
             }
         except Exception as e:
-            logger.error(f"CLIMATE RISK API CRASH: {str(e)}")
             return {"error": str(e)}
 
     return app
