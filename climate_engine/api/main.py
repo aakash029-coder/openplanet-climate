@@ -92,27 +92,43 @@ def create_app() -> FastAPI:
     # --- NEW: RESEARCH & COMPARE EXPERT AI ENDPOINT ---
     @app.post("/api/research-analysis")
     async def research_analysis(req: ResearchAIRequest):
-        # Groq ko "Scientific Auditor" banayenge
+        import re
+        
+        # Check if it's Compare mode or Single City mode
+        is_compare = " vs " in req.city_name
+        mode_text = "COMPARATIVE SCIENTIFIC AUDIT" if is_compare else "SCIENTIFIC AUDIT"
+        
         prompt = f"""
-        [SYSTEM: SCIENTIFIC AUDIT MODE]
-        Analyze the climate risk for {req.city_name} based on these REAL coordinates/metrics:
-        - Peak Temp: {req.metrics.get('temp')}
-        - Elevation: {req.metrics.get('elevation')}m
+        [SYSTEM: {mode_text} MODE]
+        Write a cohesive, professional 3-sentence executive summary analyzing the climate risk for {req.city_name}.
+        
+        METRICS PROVIDED:
+        - Temperatures: {req.metrics.get('temp')}
+        - Elevations: {req.metrics.get('elevation')}
         - Heatwave Days: {req.metrics.get('heatwave')}
         - Economic Loss: {req.metrics.get('loss')}
-        - Lat/Lng: {req.metrics.get('lat')}, {req.metrics.get('lng')}
         
-        TASK: Explain WHY these numbers exist in a {req.context} context. 
-        1. If elevation is high, explain the Lapse Rate cooling effect.
-        2. If GDP loss is high, explain the Burke Productivity Decay model.
-        3. Explain if the geography (coastal vs inland) affects the thermal inertia.
-        4. Do NOT hallucinate. Use only the provided metrics.
-        5. Keep it professional and technical.
+        STRICT RULES (FAILURE IS NOT AN OPTION):
+        1. Write exactly ONE flowing paragraph. MAXIMUM 3-4 sentences.
+        2. DO NOT use lists (1., 2.), bullet points, or newlines.
+        3. DO NOT say "model is not applicable" or "cannot be evaluated". Act like an expert interpreting the data directly.
+        4. If comparing, clearly state which city has higher economic or thermal exposure based strictly on the numbers.
+        5. Write like a Senior IPCC Climate Scientist. Keep it authoritative and dense.
         """
         
         try:
-            analysis = await generate_strategic_analysis_raw(prompt) 
-            return {"reasoning": analysis}
+            analysis = await generate_strategic_analysis_raw(prompt)
+            
+            # --- BACKEND CLEANING (Extra Safety) ---
+            # 1. Remove all asterisks
+            clean_analysis = analysis.replace("**", "").replace("*", "")
+            # 2. Remove line breaks to force a single paragraph
+            clean_analysis = clean_analysis.replace("\n", " ").strip()
+            # 3. Use Regex to remove robotic numbering like "1. ", "2. ", "3. "
+            clean_analysis = re.sub(r'\b\d+\.\s', '', clean_analysis)
+            
+            return {"reasoning": clean_analysis}
+            
         except Exception as e:
             return {"reasoning": "Scientific reasoning currently unavailable due to thermal processing load."}
 
