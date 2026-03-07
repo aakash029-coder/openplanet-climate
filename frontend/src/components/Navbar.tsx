@@ -1,15 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
-import { useSession, signOut } from 'next-auth/react'
-import { useState } from 'react'
-import { usePathname } from 'next/navigation' // 👈 Active page track karne ke liye
+import Image from 'next/image' 
+import { useSession, signOut, signIn } from 'next-auth/react' 
+import { useState, useEffect } from 'react' 
+import { usePathname } from 'next/navigation' 
 
 export default function Navbar() {
   const { data: session } = useSession()
-  const [open, setOpen] = useState(false)
-  const pathname = usePathname() // 👈 Pathname hook
+  const pathname = usePathname() 
 
   // Helper function for active link highlighting
   const getLinkStyle = (path: string) => {
@@ -19,7 +18,6 @@ export default function Navbar() {
   };
 
   return (
-    // 'fixed' ko 'sticky' kiya taaki gap ka issue na aaye aur layout ke saath manage ho
     <nav className="sticky top-0 left-0 right-0 z-50 flex items-center justify-between px-8 lg:px-16 xl:px-24 h-20 bg-[#020617]/90 backdrop-blur-md border-b border-slate-800/80 shadow-2xl">
       
       {/* Brand Logo */}
@@ -34,7 +32,7 @@ export default function Navbar() {
         </div>
       </Link>
 
-      {/* Center Navigation Links - AB LINKS CONNECTED HAIN ✅ */}
+      {/* Center Navigation Links */}
       <div className="hidden md:flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
         <Link href="/" className={`text-[11px] font-bold uppercase tracking-[0.2em] ${getLinkStyle('/')}`}>Home</Link>
         <Link href="/discover" className={`text-[11px] font-bold uppercase tracking-[0.2em] ${getLinkStyle('/discover')}`}>Discover</Link>
@@ -43,41 +41,35 @@ export default function Navbar() {
 
       {/* Extreme Right Auth Actions */}
       <div className="flex items-center gap-6">
-        {session ? (
-          <div className="relative">
+        {session?.user ? (
+          
+          <div className="flex items-center gap-5">
             <button 
-              onClick={() => setOpen(!open)} 
-              className="flex items-center gap-3 bg-[#0a0f1d] border border-slate-700 hover:border-slate-500 rounded-full py-1.5 px-2 pr-5 transition-colors shadow-sm"
+              onClick={() => signOut({ callbackUrl: '/' })} 
+              className="text-[10px] font-mono text-slate-500 hover:text-red-400 uppercase tracking-widest transition-colors"
             >
-              {session.user?.image ? (
-                <Image src={session.user.image} alt="Profile" width={28} height={28} className="rounded-full border border-slate-600"/>
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-400">
-                  {session.user?.name?.[0] || 'U'}
-                </div>
-              )}
-              <span className="font-mono text-xs text-slate-300 uppercase tracking-widest">
-                {session.user?.name?.split(' ')[0] || 'Operator'}
-              </span>
+              Logout
             </button>
+            
+            <div className="bg-white/5 border border-white/10 px-5 py-2 rounded-lg flex items-center justify-center shadow-inner cursor-default">
+              <span className="text-xs font-mono text-white tracking-[0.2em] uppercase">
+                {session.user.name?.split(' ')[0] || 'USER'}
+              </span>
+            </div>
+          </div>
 
-            {open && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-[#0a0f1d] border border-slate-700 rounded-md shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                <Link href="/dashboard" onClick={() => setOpen(false)} className="block px-5 py-3 text-xs font-mono text-slate-300 hover:bg-slate-800 hover:text-white transition-colors border-b border-slate-800/50">
-                  ACCESS DASHBOARD
-                </Link>
-                <button onClick={() => { setOpen(false); signOut({ callbackUrl:'/' }) }} className="block w-full text-left px-5 py-3 text-xs font-mono text-red-500 hover:bg-slate-800 transition-colors">
-                  TERMINATE SESSION
-                </button>
-              </div>
-            )}
-          </div>
         ) : (
-          <div className="flex items-center">
-            <Link href="/api/auth/signin" className="flex items-center justify-center px-8 py-3 rounded-full font-bold text-[#020617] bg-white hover:bg-slate-200 transition-colors text-[11px] tracking-[0.2em] uppercase shadow-md">
-              Sign In
-            </Link>
+          
+          <div className="flex items-center gap-4">
+            {/* Ab button active hai, user chahe toh sign in kare, warna bina sign in ke website use kare */}
+            <button 
+              onClick={() => signIn('google')} 
+              className="bg-white/5 border border-white/10 px-5 py-2 rounded-lg text-xs font-mono text-white tracking-[0.2em] uppercase hover:bg-white/10 transition-colors shadow-md"
+            >
+              Sign in with Google
+            </button>
           </div>
+
         )}
       </div>
     </nav>

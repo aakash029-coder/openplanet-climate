@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react'; // 👈 signIn yahan add kiya hai
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -8,10 +8,15 @@ export default function HomePage() {
   const { data: session } = useSession();
   const router = useRouter();
 
-  // Internal Logic: Direct entry to dashboard
+  // Internal Logic: Direct entry to dashboard or trigger direct login
   const handleStartSimulation = (e: React.MouseEvent) => {
     e.preventDefault();
-    router.push('/dashboard'); 
+    if (session) {
+      router.push('/dashboard'); 
+    } else {
+      // 👇 Full-screen page ke bajaye seedha Google popup/login trigger karega
+      signIn('google', { callbackUrl: '/dashboard' });
+    }
   };
 
   return (
