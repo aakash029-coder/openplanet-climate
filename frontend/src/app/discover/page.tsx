@@ -221,16 +221,6 @@ export default function DiscoverPage() {
       </main>
 
       {/* 6. STANDARD FOOTER (Unchanged text) */}
-      <footer className="w-full border-t border-white/10 bg-black/80 backdrop-blur-md py-6 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between mt-auto z-40">
-        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-4 md:mb-0">
-          &copy; 2026 OPENPLANET. ALL RIGHTS RESERVED.
-        </p>
-        <div className="flex gap-6">
-          <Link href="#" className="text-[10px] font-mono text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Privacy Policy</Link>
-          <Link href="#" className="text-[10px] font-mono text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Terms of Service</Link>
-          <Link href="#" className="text-[10px] font-mono text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Support</Link>
-        </div>
-      </footer>
 
     </div>
   );

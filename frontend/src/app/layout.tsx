@@ -9,20 +9,20 @@ export const metadata = {
 };
 
 export default function RootLayout({
-  children,
+  children, bg-[url('/cybermap.jpeg')] bg-cover bg-center bg-no-repeat
 }: {
   children: React.ReactNode;
 }) {
   return (
     <html lang="en" className="bg-[#020617] text-white">
-      <body className="font-mono min-h-screen flex flex-col selection:bg-indigo-500/30">
+      <body className="font-mono uppercase tracking-widest min-h-screen flex flex-col selection:bg-indigo-500/30">
         
         {/* ── YAHAN WRAP KIYA HAI TERI FILE KO ── */}
         <Providers>
           
           {/* ── HEADER ── */}
           <header className="sticky top-0 z-50 bg-[#020617]/90 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 py-5 flex justify-between items-center shadow-lg">
-            <Link href="/" className="text-sm md:text-base font-bold uppercase tracking-[0.3em] text-white hover:text-indigo-400 transition-colors">
+            <Link href="/" className="text-sm md:text-base font-bold uppercase tracking-[0.3em] text-white hover:text-white transition-colors uppercase tracking-widest text-[9px]">
               Open<span className="text-indigo-500">Planet</span>
             </Link>
             
@@ -47,9 +47,9 @@ export default function RootLayout({
               </div>
               
               <div className="flex flex-wrap justify-center gap-6 md:gap-10 font-bold">
-                <Link href="/privacy" className="hover:text-indigo-400 transition-colors">Privacy Policy</Link>
-                <Link href="/terms" className="hover:text-indigo-400 transition-colors">Terms of Service</Link>
-                <Link href="/support" className="hover:text-indigo-400 transition-colors ">Support</Link>
+                <Link href="/privacy" className="hover:text-white transition-colors uppercase tracking-widest text-[9px]">Privacy Policy</Link>
+                <Link href="/terms" className="hover:text-white transition-colors uppercase tracking-widest text-[9px]">Terms of Service</Link>
+                <Link href="/support" className="hover:text-white transition-colors uppercase tracking-widest text-[9px] ">Support</Link>
               </div>
 
             </div>
