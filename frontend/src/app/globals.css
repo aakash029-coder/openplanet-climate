@@ -1,16 +1,15 @@
-/* This single line replaces all the old @tailwind directives in v4 */
 @import "tailwindcss";
 
-/* Force the institutional dark theme at the base level */
 html, body {
-  background-color: #020617;
-  color: #f8fafc;
+  /* Premium Deep Slate instead of Pure Black */
+  background-color: #020617; 
+  color: #e2e8f0; 
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Remove default link underlines to fix the "LET'S START" button */
 a {
   text-decoration: none;
 }

@@ -24,30 +24,14 @@ export default function HomePage() {
     setSimCount(count);
   }, []);
 
-  // Internal Logic: Allow 10 free simulations, then force auth
+  // Internal Logic: BYPASS EVERYTHING FOR TESTING
   const handleStartSimulation = (e: React.MouseEvent) => {
     e.preventDefault();
-
-    if (session) {
-      // If already signed in, go straight to the dashboard/app
-      router.push('/dashboard'); 
-      return;
-    }
-
-    if (simCount < 10) {
-      // Add 1 to the count silently and let them proceed as a guest
-      const newCount = simCount + 1;
-      setSimCount(newCount);
-      localStorage.setItem('op_sim_count', newCount.toString());
-      router.push('/dashboard'); // Route them to the engine
-    } else {
-      // 10 times reached: Show the pop-up modal
-      setShowModal(true);
-    }
+    router.push('/dashboard'); // INSTANT ENTRY. NO QUESTIONS ASKED.
   };
 
   return (
-    <div className="flex flex-col items-center w-full min-h-screen">
+    <div className="flex flex-col items-center w-full min-h-screen bg-[url('/map.jpg')] bg-cover bg-center bg-fixed">
       
       {/* AUTH POPUP MODAL */}
       {showModal && (
@@ -94,9 +78,9 @@ export default function HomePage() {
         
         {/* Center: Links */}
         <div className="hidden md:flex gap-12 items-center">
-          <Link href="/discover" className="text-[10px] font-mono tracking-[0.2em] text-slate-400 hover:text-white transition-colors uppercase">Discover</Link>
-          <Link href="/about" className="text-[10px] font-mono tracking-[0.2em] text-slate-400 hover:text-white transition-colors uppercase">About</Link>
-          <Link href="#support" className="text-[10px] font-mono tracking-[0.2em] text-slate-400 hover:text-white transition-colors uppercase">Support</Link>
+          <Link href="/discover" className="text-sm font-sans font-medium text-slate-400 hover:text-white transition-colors">Discover</Link>
+          <Link href="/about" className="text-sm font-sans font-medium text-slate-400 hover:text-white transition-colors">About</Link>
+          <Link href="#support" className="text-sm font-sans font-medium text-slate-400 hover:text-white transition-colors">Support</Link>
         </div>
 
         {/* Right: Profile Dropdown OR Sign In Button */}
@@ -161,13 +145,16 @@ export default function HomePage() {
               )}
             </div>
           ) : (
-            // USER IS NOT SIGNED IN - Show Sign In button
+            // USER IS NOT SIGNED IN - Sign In button is commented out for testing
+            /*
             <button 
               onClick={() => setShowModal(true)}
               className="px-6 py-2 rounded-md border border-white/20 bg-white/5 hover:bg-white hover:text-black transition-all text-[10px] font-mono tracking-widest uppercase text-white"
             >
               Sign In
             </button>
+            */
+            null
           )}
         </div>
       </nav>
@@ -177,10 +164,11 @@ export default function HomePage() {
         
         {/* 2. THE HERO SECTION */}
         <section className="w-full min-h-screen flex flex-col items-center justify-center text-center">
+          {/* THE NEON HEADING */}
           <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tighter mb-8 leading-tight drop-shadow-2xl">
             Project & Mitigate <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-200 to-slate-500">
-              Climate Risks.
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-300 to-slate-500 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+              Climate Risks
             </span>
           </h1>
           
@@ -189,9 +177,10 @@ export default function HomePage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {/* CLEAN WHITE RECTANGULAR BUTTON */}
             <button 
               onClick={handleStartSimulation}
-              className="px-10 py-4 bg-white text-black font-mono text-xs tracking-[0.2em] uppercase hover:bg-slate-200 transition-all border border-transparent hover:border-white shadow-[0_0_30px_rgba(255,255,255,0.15)] rounded-md"
+              className="px-10 py-4 bg-white text-black font-mono text-xs tracking-[0.2em] uppercase transition-all hover:bg-slate-200 rounded-sm flex items-center justify-center"
             >
               Let's Start
             </button>
@@ -234,7 +223,6 @@ export default function HomePage() {
         {/* 4. THE CAPABILITIES GRID */}
         <section id="about" className="w-full flex flex-col items-center">
           <div className="text-center mb-16">
-            <h2 className="text-[10px] font-mono text-blue-400 tracking-[0.3em] uppercase mb-4">Advanced Climate Analytics</h2>
             <h3 className="text-2xl md:text-3xl font-bold text-white tracking-wide">For Informed Decisions</h3>
             <p className="text-slate-400 font-light mt-4 max-w-2xl text-sm">Built on peer-reviewed epidemiology, global satellite data, and institutional-grade spatial computing.</p>
           </div>
@@ -248,9 +236,6 @@ export default function HomePage() {
               "Institutional Grade Precision"
             ].map((title, idx) => (
               <div key={idx} className="bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 p-8 transition-all duration-300 group rounded-xl">
-                <div className="text-blue-400/50 font-mono text-xs mb-6 group-hover:text-blue-400 transition-colors">
-                  [ 0{idx + 1} ]
-                </div>
                 <h4 className="text-base font-bold text-slate-100 tracking-wide">{title}</h4>
               </div>
             ))}
@@ -272,9 +257,6 @@ export default function HomePage() {
             ].map((phase, idx) => (
               <div key={idx} className="bg-black/60 backdrop-blur-xl border border-white/10 p-8 flex flex-col relative overflow-hidden rounded-xl">
                 <div className={`absolute top-0 left-0 w-full h-24 bg-gradient-to-b ${phase.color} opacity-50`}></div>
-                <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mb-6 relative z-10">
-                  <span className="text-white font-mono text-xs">{idx + 1}</span>
-                </div>
                 <h4 className="text-xl font-bold text-white mb-1 relative z-10">{phase.title}</h4>
                 <h5 className="text-sm font-mono text-slate-400 mb-4 uppercase tracking-wider relative z-10">{phase.sub}</h5>
                 <p className="text-sm text-slate-400 font-light relative z-10">{phase.desc}</p>
@@ -285,12 +267,12 @@ export default function HomePage() {
 
         {/* 6. FINAL CALL TO ACTION */}
         <section className="w-full flex flex-col items-center text-center bg-gradient-to-b from-transparent to-blue-900/10 border border-white/10 py-24 backdrop-blur-sm rounded-xl">
-          <h2 className="text-[10px] font-mono text-blue-400 tracking-[0.3em] uppercase mb-4">Join The Mission</h2>
+          <h2 className="text-[10px] font-mono text-white tracking-[0.3em] uppercase mb-4">Join The Mission</h2>
           <h3 className="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">Get Started Today</h3>
           <p className="text-slate-300 font-light mb-10 max-w-xl mx-auto">Analyze, predict, and mitigate climate risks with OpenPlanet.</p>
           <button 
             onClick={handleStartSimulation}
-            className="px-10 py-4 bg-white text-black font-mono tracking-[0.2em] text-xs uppercase hover:bg-slate-200 transition-colors flex items-center gap-2 rounded-md"
+            className="px-8 py-3 bg-white text-black font-sans font-medium text-sm hover:bg-slate-200 transition-colors flex items-center gap-2 rounded-sm shadow-sm border border-transparent"
           >
             Let's Start <span>&rarr;</span>
           </button>
@@ -303,9 +285,9 @@ export default function HomePage() {
           &copy; 2026 OPENPLANET. All Rights Reserved.
         </p>
         <div className="flex gap-6">
-          <Link href="#" className="text-[10px] font-mono text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Privacy Policy</Link>
-          <Link href="#" className="text-[10px] font-mono text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Terms of Service</Link>
-          <Link href="#support" className="text-[10px] font-mono text-slate-500 hover:text-white uppercase tracking-widest transition-colors">Support</Link>
+          <Link href="/privacy" className="text-sm font-sans font-medium text-slate-400 hover:text-white transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="text-sm font-sans font-medium text-slate-400 hover:text-white transition-colors">Terms of Service</Link>
+          <Link href="#support" className="text-sm font-sans font-medium text-slate-400 hover:text-white transition-colors">Support</Link>
         </div>
       </footer>
 
