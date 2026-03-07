@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-// import Link from 'next/link'; // Kept in case you need it later
 import dynamic from "next/dynamic";
 
 import CompareModule from "@/components/CompareModule";
@@ -12,7 +11,6 @@ import MethodologyModule from "@/components/MethodologyModule";
 const MapModule = dynamic(() => import("@/components/MapModule"), { 
   ssr: false,
   loading: () => (
-    // Updated loading background to be transparent so the cyber-map shows through
     <div className="w-full h-[750px] bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center border-b border-white/10">
       <div className="w-10 h-10 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
       <span className="font-mono text-[10px] text-indigo-400 tracking-[0.5em] uppercase animate-pulse">Initializing WebGL Engine...</span>
@@ -23,7 +21,6 @@ const MapModule = dynamic(() => import("@/components/MapModule"), {
 type Tab = 'Dashboard' | 'Compare' | 'Research' | 'Methodology';
 const TABS: Tab[] = ['Dashboard', 'Compare', 'Research', 'Methodology'];
 
-// ⚡️ Routing optimized: Research now flows directly into Methodology
 const NEXT_TAB_MAP: Record<Tab, Tab | null> = {
   Dashboard: 'Compare',
   Compare: 'Research',
@@ -44,17 +41,14 @@ export default function DashboardPage() {
     <main 
       className="text-slate-200 font-sans overflow-x-hidden min-h-screen flex flex-col selection:bg-indigo-500/30 bg-fixed bg-center bg-cover"
       style={{
-        // Maine yahan naam change karke /cybermap.jpeg kar diya hai
         backgroundImage: `linear-gradient(to bottom, rgba(2, 6, 23, 0.85), rgba(5, 8, 20, 0.95)), url('/cybermap.jpeg')`
       }}
     >
       
       {/* ── COMMAND HEADER ── */}
-      {/* Made slightly more transparent (bg-black/80) to let the background bleed through */}
-
       <div className="pt-[72px] flex flex-col w-full flex-grow">
         
-        {/* ── TACTICAL SUB-NAV (LOCKED UNTIL TARGET ACQUIRED) ── */}
+        {/* ── TACTICAL SUB-NAV ── */}
         <nav className="w-full bg-black/60 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 flex flex-col lg:flex-row items-center justify-between sticky top-[72px] z-[450] shadow-xl">
           <div className="flex gap-8 overflow-x-auto w-full lg:w-auto no-scrollbar py-4">
             {TABS.map((tab) => {
@@ -83,7 +77,6 @@ export default function DashboardPage() {
 
         {/* ── THE ENGINE CORE ── */}
         <div className="w-full h-full flex flex-col flex-grow animate-in fade-in duration-700">
-            {/* We pass the lock function to the Map Module */}
             {activeTab === "Dashboard" && (
                 <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
             )}
@@ -94,7 +87,7 @@ export default function DashboardPage() {
                 {activeTab === "Methodology" && <MethodologyModule />}
             </div>
 
-            {/* ── PROGRESSION ROUTER (NEXT PAGE BUTTONS) ── */}
+            {/* ── PROGRESSION ROUTER ── */}
             {targetCity && NEXT_TAB_MAP[activeTab] && (
               <div className="max-w-[1600px] w-full mx-auto px-6 md:px-12 pb-12 mt-auto">
                 <button 
@@ -105,6 +98,16 @@ export default function DashboardPage() {
                 </button>
               </div>
             )}
+        </div>
+      </div>
+
+      {/* ── SYSTEM DISCLAIMER (ABOVE GLOBAL FOOTER) ── */}
+      <div className="w-full border-t border-white/5 bg-[#020617]/80 backdrop-blur-md px-6 py-6 mt-auto">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest leading-relaxed">
+            <span className="text-slate-400 font-bold tracking-[0.2em] mr-2">SYSTEM NOTICE:</span> 
+            OpenPlanet provides climate risk projections generated using the OpenMatrix modeling framework. These projections integrate global climate datasets and demographic models to estimate potential health and economic impacts. All outputs are research-oriented estimates intended for analytical and exploratory purposes.
+          </p>
         </div>
       </div>
 
