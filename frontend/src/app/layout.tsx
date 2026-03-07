@@ -16,7 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-mono min-h-screen flex flex-col text-white selection:bg-indigo-500/30 relative">
         
-        {/* THE 100% BULLETPROOF BACKGROUND LAYER */}
+        {/* THE 100% SOLID BACKGROUND LAYER - CANNOT BE HIDDEN */}
         <div 
           className="fixed inset-0 z-[-10]"
           style={{
@@ -24,19 +24,19 @@ export default function RootLayout({
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
-            backgroundColor: "#020617" // Fallback dark color
+            backgroundColor: "#020617" // Fallback color during load
           }}
         />
 
         <Providers>
           <Navbar />
           
-          {/* Main content area with a slight blur so the map is visible but text is readable */}
+          {/* Main content area with a slight blur so map is visible but text is readable */}
           <main className="flex-1 flex flex-col bg-black/60 backdrop-blur-[2px]">
             {children}
           </main>
 
-          {/* Global Professional Footer */}
+          {/* Global Professional Footer (No duplicated footers) */}
           <footer className="border-t border-white/10 bg-[#050814]/90 backdrop-blur-md py-8 px-6 md:px-12 mt-auto">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
               <div>
