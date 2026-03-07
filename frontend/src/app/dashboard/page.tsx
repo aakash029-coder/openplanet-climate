@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import dynamic from "next/dynamic";
 
 import CompareModule from "@/components/CompareModule";
@@ -11,7 +11,7 @@ import MethodologyModule from "@/components/MethodologyModule";
 const MapModule = dynamic(() => import("@/components/MapModule"), { 
   ssr: false,
   loading: () => (
-    <div className="w-full h-[75vh] min-h-[700px] bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center">
+    <div className="w-full h-[750px] bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center border-b border-white/10">
       <div className="w-10 h-10 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
       <span className="font-mono text-[10px] text-indigo-400 tracking-[0.5em] uppercase animate-pulse">Initializing WebGL Engine...</span>
     </div>
@@ -34,12 +34,13 @@ export default function DashboardPage() {
   const [targetCity, setTargetCity] = useState<string | null>(null);
 
   return (
+    // GAP COMPLETELY DESTROYED: pt-0 mt-0 ensures it sticks right to the top
     <div className="text-slate-200 font-sans overflow-x-hidden flex flex-col w-full flex-grow pt-0 mt-0">
       
       <div className="flex flex-col w-full flex-grow pt-0 mt-0">
         
-        {/* SUB-NAV */}
-        <nav className="w-full bg-black/80 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 flex flex-col lg:flex-row items-center justify-between sticky top-[80px] z-[450] shadow-xl m-0">
+        {/* SUB-NAV FIXED: No emoji, clean text, sticks below header seamlessly */}
+        <nav className="w-full bg-black/60 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 flex flex-col lg:flex-row items-center justify-between sticky top-0 z-[450] shadow-xl m-0">
           <div className="flex gap-8 overflow-x-auto w-full lg:w-auto no-scrollbar py-4">
             {TABS.map((tab) => {
               const isLocked = !targetCity && tab !== 'Dashboard';
@@ -53,6 +54,7 @@ export default function DashboardPage() {
                     ${isLocked ? 'text-slate-500/40 cursor-not-allowed' : 'text-slate-400 hover:text-white'}
                   `}
                 >
+                  {/* SIRF TEXT, KOI EMOJI NAHI */}
                   {tab}
                 </button>
               );
@@ -66,26 +68,18 @@ export default function DashboardPage() {
         </nav>
 
         {/* ── THE ENGINE CORE ── */}
-        <div className="w-full flex flex-col flex-grow relative">
-            
-            {/* MAP MODULE HEIGHT ADJUSTED FOR CLEAN STACKING */}
-            <div className={activeTab === "Dashboard" ? "block w-full h-[75vh] min-h-[750px] relative" : "hidden"}>
+        <div className="w-full h-full flex flex-col flex-grow animate-in fade-in duration-700">
+            {activeTab === "Dashboard" && (
                 <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
-            </div>
+            )}
             
-            <div className={activeTab !== "Dashboard" ? "max-w-[1600px] w-full mx-auto px-6 md:px-12 py-12" : "hidden"}>
-                <div className={activeTab === "Compare" ? "block animate-in fade-in duration-500" : "hidden"}>
-                  {targetCity && <CompareModule baseTarget={targetCity} />}
-                </div>
-                <div className={activeTab === "Research" ? "block animate-in fade-in duration-500" : "hidden"}>
-                  {targetCity && <ResearchModule baseTarget={targetCity} />}
-                </div>
-                <div className={activeTab === "Methodology" ? "block animate-in fade-in duration-500" : "hidden"}>
-                  <MethodologyModule />
-                </div>
+            <div className={activeTab === "Dashboard" ? "" : "max-w-[1600px] w-full mx-auto px-6 md:px-12 py-12"}>
+                {activeTab === "Compare"     && targetCity && <CompareModule baseTarget={targetCity} />}
+                {activeTab === "Research"    && targetCity && <ResearchModule baseTarget={targetCity} />}
+                {activeTab === "Methodology" && <MethodologyModule />}
             </div>
 
-            {targetCity && NEXT_TAB_MAP[activeTab] && activeTab !== "Dashboard" && (
+            {targetCity && NEXT_TAB_MAP[activeTab] && (
               <div className="max-w-[1600px] w-full mx-auto px-6 md:px-12 pb-12 mt-auto">
                 <button 
                   onClick={() => setActiveTab(NEXT_TAB_MAP[activeTab]!)}
@@ -98,9 +92,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── COLLISION FIX: SOLID BACKGROUND & CLEAN PADDING ── */}
-      {/* Changed transparent bg to solid #020617 and removed mt-auto to force it BELOW the map */}
-      <div className="w-full border-y border-white/10 bg-[#020617] px-6 py-8 shrink-0 relative z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+      {/* SYSTEM DISCLAIMER */}
+      <div className="w-full border-t border-white/5 bg-[#020617]/80 backdrop-blur-md px-6 py-6 mt-auto">
         <div className="max-w-7xl mx-auto text-center">
           <p className="text-[9px] text-slate-500 font-mono uppercase tracking-widest leading-relaxed">
             <span className="text-slate-400 font-bold tracking-[0.2em] mr-2">SYSTEM NOTICE:</span> 
