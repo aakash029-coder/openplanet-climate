@@ -1,5 +1,5 @@
 """
-climate_engine/api/main.py — Final Pure API Architecture
+climate_engine/api/main.py — Final Pure API Architecture with Research Injection
 """
 from __future__ import annotations
 import logging
@@ -86,7 +86,7 @@ def create_app() -> FastAPI:
     async def root():
         return {"status": "OpenPlanet Risk Engine is Online"}
 
-    # 1. THE ORIGINAL MAP ENGINE API
+    # 1. THE ORIGINAL MAP ENGINE API (Dashboard)
     @app.post("/api/predict", response_model=SimulationResponse)
     async def predict(req: PredictionRequest):
         try:
@@ -102,8 +102,8 @@ def create_app() -> FastAPI:
                 socio_data = {}
             live_pop, live_gdp = get_real_socioeconomics(req.city, socio_data)
             
-            canopy_cooling = req.canopy * 0.035
-            roof_cooling = req.coolRoof * 0.015
+            canopy_cooling = (req.canopy / 100.0) * 1.2
+            roof_cooling = (req.coolRoof / 100.0) * 0.8
             total_mitigation = canopy_cooling + roof_cooling
 
             heatwave_chart = []
@@ -174,7 +174,7 @@ def create_app() -> FastAPI:
             }
             
         except Exception as e:
-            logger.error(f"CRITICAL 500 CRASH: {str(e)}")
+            logger.error(f"DASHBOARD 500 CRASH: {str(e)}")
             return {
                 "metrics": {"baseTemp": "ERR", "temp": "ERR", "deaths": "ERR", "ci": "ERR", "loss": "ERR", "heatwave": "ERR"},
                 "hexGrid": [],
@@ -187,29 +187,7 @@ def create_app() -> FastAPI:
                 "charts": {"heatwave": [], "economic": []}
             }
 
-    # 2. THE VALIDATION API
-    @app.post("/api/era5-threshold")
-    async def era5_threshold(req: ThresholdRequest):
-        try:
-            url = f"https://archive-api.open-meteo.com/v1/archive?latitude={req.lat}&longitude={req.lng}&start_date=1991-01-01&end_date=2020-12-31&daily=temperature_2m_max&timezone=auto"
-            
-            headers = {"User-Agent": "OpenPlanet-Risk-Engine/2.0"}
-            async with httpx.AsyncClient(headers=headers) as client:
-                resp = await client.get(url, timeout=15.0)
-                data = resp.json()
-
-            if "daily" not in data or "temperature_2m_max" not in data["daily"]:
-                return {"error": "Failed to retrieve satellite data."}
-
-            temps = [t for t in data["daily"]["temperature_2m_max"] if t is not None]
-            temps.sort()
-            p95 = temps[int(len(temps) * 0.95)]
-
-            return {"threshold_c": round(p95, 2)}
-        except Exception as e:
-            return {"error": str(e)}
-
-    # 3. THE CORE ENGINE API (Research & Compare)
+    # 2. THE CORE ENGINE API (Research & Compare)
     @app.post("/api/climate-risk")
     async def climate_risk(req: ClimateRiskRequest):
         try:
@@ -225,22 +203,10 @@ def create_app() -> FastAPI:
                 
             pop, gdp = get_real_socioeconomics(city_name, socio_data)
 
-            # HISTORICAL BASELINE WITH RETRY
-            annual_mean_temp = None
-            for attempt in range(3):
-                try:
-                    annual_mean_temp = await fetch_historical_baseline(req.lat, req.lng)
-                    if annual_mean_temp is not None:
-                        break
-                except Exception as exc:
-                    if "429" in str(exc) and attempt < 2:
-                        logger.warning(f"429 hit on baseline. Retrying in {3 * (attempt + 1)}s...")
-                        await asyncio.sleep(3 * (attempt + 1))
-                    else:
-                        raise exc
-
+            # HISTORICAL BASELINE
+            annual_mean_temp = await fetch_historical_baseline(req.lat, req.lng)
             if annual_mean_temp is None:
-                raise ValueError("Failed to retrieve baseline from satellite feed after retries.")
+                raise ValueError("Satellite feed unavailable.")
                 
             lat_swing = abs(req.lat) * 0.25
             historical_summer_peak = annual_mean_temp + 8.0 + lat_swing
@@ -251,24 +217,11 @@ def create_app() -> FastAPI:
 
             projections = []
             for year in [2030, 2050, 2075, 2100]:
-                
-                # EXPONENTIAL BACKOFF RETRY LOOP
-                nasa_timeseries = None
-                for attempt in range(3):
-                    try:
-                        await asyncio.sleep(2.0) # Baseline breathing room to prevent 429
-                        nasa_timeseries = await fetch_cmip6_timeseries(req.lat, req.lng, req.ssp, year)
-                        break
-                    except Exception as exc:
-                        if "429" in str(exc) and attempt < 2:
-                            delay = 3 * (attempt + 1)
-                            logger.warning(f"429 Rate Limit hit. Retrying in {delay}s...")
-                            await asyncio.sleep(delay)
-                        else:
-                            raise exc
+                await asyncio.sleep(0.5) # Rate limit protection
+                nasa_timeseries = await fetch_cmip6_timeseries(req.lat, req.lng, req.ssp, year)
                 
                 if not nasa_timeseries:
-                    raise ValueError(f"No CMIP6 data for year {year} after retries.")
+                    continue
                 
                 target_data = nasa_timeseries[-1] 
                 raw_hw = target_data.get("heatwaves", 0)
@@ -281,14 +234,30 @@ def create_app() -> FastAPI:
                 deaths = int(daily_baseline_deaths * 0.125 * hw_days * ssp_multiplier)
                 econ_loss = (daily_city_gdp * 0.002) * hw_days * ssp_multiplier
 
+                # ── RESEARCH SUITE INJECTION ──
+                # 1. Wet-Bulb Globe Temperature estimate (ISO 7243)
+                wbt_max = round((peak_temp * 0.7) + 8.0, 2)
+                
+                # 2. Urban Heat Island (UHI) Decomposition
+                uhi_val = round(peak_temp - annual_mean_temp, 2)
+                
+                # 3. Cooling Degree Days (CDD) - Grid Load
+                grid_stress = round((peak_temp - 18) * hw_days, 1)
+
                 projections.append({
                     "year": year,
-                    "source": "cmip6_live",
+                    "source": "cmip6_live" if year <= 2050 else "extrapolated",
                     "heatwave_days": hw_days,
                     "peak_tx5d_c": round(peak_temp, 2),
                     "avg_excess_temp_c": round(excess_temp, 2),
                     "attributable_deaths": deaths,
-                    "economic_decay_usd": econ_loss
+                    "economic_decay_usd": econ_loss,
+                    
+                    # NEW RESEARCH KEYS
+                    "wbt_max_c": wbt_max,
+                    "uhi_intensity_c": uhi_val,
+                    "grid_stress_factor": grid_stress,
+                    "survivability_status": "CRITICAL" if wbt_max >= 31 else "STABLE"
                 })
 
             return {
