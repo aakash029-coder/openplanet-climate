@@ -38,7 +38,7 @@ export default function HomePage() {
               onClick={handleStartSimulation}
               className="px-10 py-4 bg-white text-black font-mono text-xs tracking-[0.2em] uppercase transition-all hover:bg-slate-200 rounded-sm flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)]"
             >
-              Initialize Engine
+              let's start
             </button>
           </div>
         </section>
@@ -127,7 +127,7 @@ export default function HomePage() {
             onClick={handleStartSimulation}
             className="px-12 py-4 bg-white text-black font-mono font-bold text-xs hover:bg-slate-200 transition-all uppercase tracking-[0.3em] rounded-sm"
           >
-            Launch Terminal
+            let's start
           </button>
         </section>
       </main>

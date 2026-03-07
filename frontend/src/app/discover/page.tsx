@@ -42,7 +42,7 @@ export default function DiscoverPage() {
           <p className="text-[9px] font-mono text-slate-500 mt-4 uppercase tracking-[0.2em]">To analyze any global coordinate, initialize terminal from the home page.</p>
         </div>
 
-        {/* 3-COLUMN DASHBOARD LAYOUT */}
+        {/* 2-COLUMN DASHBOARD LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full flex-grow">
           
           {/* 2. REGIONAL RISK PROFILE (Left Sidebar - THE PROBLEM) */}
@@ -90,7 +90,7 @@ export default function DiscoverPage() {
           </div>
 
           {/* 3. MITIGATION MODELER (Center Panel - THE SOLUTION) */}
-          <div className="lg:col-span-6 bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-xl flex flex-col justify-between shadow-2xl">
+          <div className="lg:col-span-9 bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-xl flex flex-col justify-between shadow-2xl">
             <div>
               
               <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded mb-6">
@@ -141,38 +141,6 @@ export default function DiscoverPage() {
                 <span className="block text-[9px] font-mono text-emerald-400 tracking-[0.3em] uppercase mb-4">Mortality Reduction</span>
                 <span className="text-4xl font-light text-white tracking-tighter">{mortalityLower}<span className="text-xl text-slate-500 mr-2">%</span><span className="text-2xl text-slate-600 font-light">-</span> {mortalityUpper}<span className="text-xl text-slate-500 ml-1">%</span></span>
               </div>
-            </div>
-          </div>
-
-          {/* 4. DATA EXTRACTION PANEL (Right Sidebar - THE PROOF) */}
-          <div className="lg:col-span-3 bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-xl flex flex-col shadow-2xl">
-            
-            <div className="bg-white/5 border border-white/10 p-4 rounded mb-6">
-              <span className="text-[10px] font-mono text-slate-300 tracking-[0.2em] uppercase block mb-2 font-bold">Phase 03: Data Audit</span>
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest leading-relaxed">Extract raw diagnostic models and deterministic reports.</p>
-            </div>
-
-            <h2 className="text-xs font-bold text-white mb-2 tracking-[0.2em] uppercase">Export Telemetry</h2>
-            <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-8 leading-relaxed">
-              Export geospatial maps and health estimates for institutional planning.
-            </p>
-            
-            <div className="flex flex-col gap-4 mt-auto">
-              <button className="w-full flex items-center justify-between px-5 py-4 bg-white/[0.02] border border-white/5 rounded group cursor-not-allowed opacity-60">
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-mono text-white tracking-[0.2em] uppercase mb-1">Audit Report (.PDF)</span>
-                  <span className="text-[8px] text-slate-500 font-mono tracking-widest uppercase">Demo Disabled</span>
-                </div>
-                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-              </button>
-
-              <button className="w-full flex items-center justify-between px-5 py-4 bg-white/[0.02] border border-white/5 rounded group cursor-not-allowed opacity-60">
-                <div className="flex flex-col text-left">
-                  <span className="text-[10px] font-mono text-white tracking-[0.2em] uppercase mb-1">Raw Metrics (.CSV)</span>
-                  <span className="text-[8px] text-slate-500 font-mono tracking-widest uppercase">Demo Disabled</span>
-                </div>
-                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-              </button>
             </div>
           </div>
 

@@ -388,15 +388,11 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       {results.some((r) => r.loading) && (
         <div className="grid gap-4 grid-cols-2">
           {results.map((r, i) => (
-            <div key={i} className={`bg-black/40 border ${r.loading ? 'border-indigo-500/50' : 'border-white/5'} rounded-xl p-6 h-32 flex flex-col justify-center items-center gap-3`}>
-               {r.loading ? (
-                 <div className="flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-ping"></div>
-                   <span className="text-[9px] font-mono text-indigo-400 uppercase tracking-widest">Acquiring Sector {i+1} Data...</span>
-                 </div>
-               ) : (
-                 <span className="text-[9px] font-mono text-emerald-500 uppercase tracking-widest">Data Acquired</span>
-               )}
+            <div key={i} className="bg-black/40 border border-indigo-500/50 rounded-xl p-6 h-32 flex flex-col justify-center items-center gap-3">
+               <div className="flex items-center gap-2">
+                 <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-ping"></div>
+                 <span className="text-[9px] font-mono text-indigo-400 uppercase tracking-widest">loading..</span>
+               </div>
             </div>
           ))}
         </div>

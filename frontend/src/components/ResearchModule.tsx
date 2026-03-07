@@ -290,27 +290,6 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             </div>
           </div>
 
-          {/* ── NEW: AI SCIENTIFIC AUDIT BOX ── */}
-          <div className="border border-indigo-500/30 bg-[#050814]/80 p-8 rounded-sm relative overflow-hidden">
-            <div className="absolute -top-12 -left-12 w-32 h-32 bg-indigo-500/10 blur-[50px] pointer-events-none"></div>
-            <h4 className="text-[10px] font-mono text-indigo-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span> 
-              Expert AI Reasoning (Geological & Thermal Context)
-            </h4>
-            
-            {aiLoading ? (
-              <div className="flex flex-col gap-3 py-4">
-                 <div className="h-2 w-full bg-slate-800 rounded animate-pulse"></div>
-                 <div className="h-2 w-3/4 bg-slate-800 rounded animate-pulse"></div>
-                 <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mt-2">Correlating geographical variables...</span>
-              </div>
-            ) : aiAnalysis ? (
-              <p className="text-xs font-mono text-slate-300 leading-loose">
-                {aiAnalysis.replace(/\*/g, '')}
-              </p>
-            ) : null}
-          </div>
-
           {/* ── THE COST OF INACTION (CFO VIEW) ── */}
           <div className="bg-indigo-600/5 border border-indigo-500/20 p-8 rounded-sm">
             <h3 className="text-[10px] font-mono text-indigo-400 uppercase tracking-widest mb-6 font-bold">Economic Value At Risk ({selectedYear || "2050"})</h3>
@@ -341,6 +320,24 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               </div>
             </div>
           </div>
+
+          {/* ── NEW: AI SCIENTIFIC AUDIT BOX ── */}
+          <div className="border border-indigo-500/30 bg-[#050814]/80 p-8 rounded-sm relative overflow-hidden">
+            <div className="absolute -top-12 -left-12 w-32 h-32 bg-indigo-500/10 blur-[50px] pointer-events-none"></div>
+            <h4 className="text-[10px] font-mono text-indigo-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span> 
+              Expert AI Reasoning (Geological & Thermal Context)
+            </h4>
+            
+            {aiLoading ? (
+              <span className="text-xs font-mono text-slate-500">data loading...</span>
+            ) : aiAnalysis ? (
+              <p className="text-xs font-mono text-slate-300 leading-loose">
+                {aiAnalysis.replace(/\*/g, '')}
+              </p>
+            ) : null}
+          </div>
+
         </>
       )}
     </div>
