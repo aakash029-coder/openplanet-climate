@@ -1,15 +1,15 @@
-'use client'; // 👈 Yeh line zaroori hai
+'use client';
 
 export default function BackgroundImage() {
   return (
-    <div className="fixed inset-0 z-[-2] pointer-events-none">
+    <div className="fixed inset-0 z-[-2] pointer-events-none bg-[#020617]">
       <img 
         src="/satellite-map.jpeg" 
         alt="" 
         className="w-full h-full object-cover opacity-60"
-        /* Client component hone ki wajah se ab onError chalega */
+        /* Fallback logic: Agar image load nahi hui toh background black hi rahega */
         onError={(e) => {
-          (e.currentTarget as HTMLImageElement).style.display = 'none';
+          (e.currentTarget as HTMLImageElement).style.opacity = '0';
         }}
       />
     </div>
