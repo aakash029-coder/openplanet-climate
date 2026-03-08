@@ -15,11 +15,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      {/* 👇 Yahan body mein 'satellite-map.jpeg' background set kiya hai */}
-      <body className="font-mono min-h-screen text-white bg-[#020617] relative selection:bg-indigo-500/30 bg-[url('/satellite-map.jpeg')] bg-cover bg-center bg-fixed bg-no-repeat">
+      <body className="font-mono min-h-screen text-white bg-[#020617] relative selection:bg-indigo-500/30">
         
-        {/* 👇 Ye overlay background ko thoda dark aur blur karega taaki text bright dikhe */}
-        <div className="fixed inset-0 bg-[#020617]/80 backdrop-blur-[2px] z-[-1] pointer-events-none"></div>
+        {/* 👇 BULLETPROOF BACKGROUND IMAGE (z-[-2] sabse piche rahega) */}
+        <div 
+          className="fixed inset-0 z-[-2] w-full h-full bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/satellite-map.jpeg')" }}
+        ></div>
+        
+        {/* 👇 DARK OVERLAY (z-[-1] image ke upar, content ke piche). Maine isko /60 kiya hai taaki map dikhe */}
+        <div className="fixed inset-0 bg-[#020617]/60 backdrop-blur-[2px] z-[-1] pointer-events-none"></div>
         
         <Providers>
           <div className="flex flex-col min-h-screen relative z-10">
