@@ -14,9 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    {/* 👇 'dark' class yahan se hata di hai */}
     <html lang="en">
-      {/* 👇 text-white ki jagah text-slate-900 (dark text) aur light selection color use kiya hai */}
       <body className="font-mono min-h-screen text-slate-900 relative selection:bg-indigo-500/30 bg-slate-50">
         
         {/* 1. SATELLITE IMAGE LAYER */}
@@ -37,7 +35,6 @@ export default function RootLayout({
               {children}
             </main>
             
-            {/* 👇 Footer ko professional light look diya hai */}
             <footer className="border-t border-slate-200 bg-white/80 backdrop-blur-md py-8 px-6 md:px-12 mt-auto shadow-sm">
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold">
                 <div>© {new Date().getFullYear()} OpenPlanet Intelligence.</div>
