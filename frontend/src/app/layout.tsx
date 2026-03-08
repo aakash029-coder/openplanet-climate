@@ -1,4 +1,5 @@
-import './globals.css';
+import './globals.css'; // 👈 Dono ek hi folder mein hain, isliye ye sabse best hai
+
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Providers } from '@/components/Providers';
