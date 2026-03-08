@@ -14,20 +14,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      {/* Root cause fix: body ka z-index issue theek karne ke liye hum layers system use kar rahe hain */}
-      <body className="font-mono min-h-screen text-white relative selection:bg-indigo-500/30">
+    {/* 👇 'dark' class yahan se hata di hai */}
+    <html lang="en">
+      {/* 👇 text-white ki jagah text-slate-900 (dark text) aur light selection color use kiya hai */}
+      <body className="font-mono min-h-screen text-slate-900 relative selection:bg-indigo-500/30 bg-slate-50">
         
-        {/* 1. SATELLITE IMAGE LAYER (z-0: Body ke upar, sabse piche) */}
+        {/* 1. SATELLITE IMAGE LAYER */}
         <div 
-          className="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat"
+          className="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40"
           style={{ backgroundImage: "url('/satellite-map.jpeg')" }}
         ></div>
         
-        {/* 2. DARK OVERLAY LAYER (z-10: Image ke theek upar) */}
-        <div className="fixed inset-0 z-10 bg-[#020617]/70 backdrop-blur-[2px] pointer-events-none"></div>
+        {/* 2. LIGHT OVERLAY LAYER (White/Slate blur overlay taaki dark text clear padhne mein aaye) */}
+        <div className="fixed inset-0 z-10 bg-white/85 backdrop-blur-[3px] pointer-events-none"></div>
         
-        {/* 3. MAIN CONTENT LAYER (z-20: Sabse aage) */}
+        {/* 3. MAIN CONTENT LAYER */}
         <Providers>
           <div className="flex flex-col min-h-screen relative z-20">
             <Navbar />
@@ -36,13 +37,14 @@ export default function RootLayout({
               {children}
             </main>
             
-            <footer className="border-t border-white/5 bg-[#050814]/80 backdrop-blur-md py-8 px-6 md:px-12 mt-auto">
+            {/* 👇 Footer ko professional light look diya hai */}
+            <footer className="border-t border-slate-200 bg-white/80 backdrop-blur-md py-8 px-6 md:px-12 mt-auto shadow-sm">
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold">
                 <div>© {new Date().getFullYear()} OpenPlanet Intelligence.</div>
                 <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-                  <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-                  <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-                  <Link href="/support" className="hover:text-white transition-colors">Support</Link>
+                  <Link href="/privacy" className="hover:text-indigo-600 transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="hover:text-indigo-600 transition-colors">Terms of Service</Link>
+                  <Link href="/support" className="hover:text-indigo-600 transition-colors">Support</Link>
                 </div>
               </div>
             </footer>
