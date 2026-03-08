@@ -15,19 +15,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="font-mono min-h-screen text-white bg-[#020617] relative selection:bg-indigo-500/30">
+      {/* Root cause fix: body ka z-index issue theek karne ke liye hum layers system use kar rahe hain */}
+      <body className="font-mono min-h-screen text-white relative selection:bg-indigo-500/30">
         
-        {/* 👇 BULLETPROOF BACKGROUND IMAGE (z-[-2] sabse piche rahega) */}
+        {/* 1. SATELLITE IMAGE LAYER (z-0: Body ke upar, sabse piche) */}
         <div 
-          className="fixed inset-0 z-[-2] w-full h-full bg-cover bg-center bg-no-repeat"
+          className="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/satellite-map.jpeg')" }}
         ></div>
         
-        {/* 👇 DARK OVERLAY (z-[-1] image ke upar, content ke piche). Maine isko /60 kiya hai taaki map dikhe */}
-        <div className="fixed inset-0 bg-[#020617]/60 backdrop-blur-[2px] z-[-1] pointer-events-none"></div>
+        {/* 2. DARK OVERLAY LAYER (z-10: Image ke theek upar) */}
+        <div className="fixed inset-0 z-10 bg-[#020617]/70 backdrop-blur-[2px] pointer-events-none"></div>
         
+        {/* 3. MAIN CONTENT LAYER (z-20: Sabse aage) */}
         <Providers>
-          <div className="flex flex-col min-h-screen relative z-10">
+          <div className="flex flex-col min-h-screen relative z-20">
             <Navbar />
             
             <main className="flex-1 flex flex-col">
