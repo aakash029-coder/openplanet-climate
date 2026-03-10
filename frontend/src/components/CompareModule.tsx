@@ -54,6 +54,31 @@ function fmtUSD(n: number | null | undefined) {
   return `$${n.toLocaleString()}`;
 }
 
+// ── AI TEXT CLEANER (SAFER FRONTEND FIX) ──
+function cleanAiText(text: string | null) {
+  if (!text) return "";
+  
+  let cleaned = text.replace(/\*/g, ''); 
+  
+  // Fix missing spaces (safely ignores numbers/decimals)
+  cleaned = cleaned.replace(/([a-z])([.?!])([A-Z])/g, '$1$2 $3');
+  
+  // Format giant raw numbers EVEN IF AI puts commas (e.g., $209,642,331)
+  cleaned = cleaned.replace(/\$([\d,]+(?:\.\d+)?)/g, (match, numStr) => {
+    // Remove commas before doing math
+    const pureNumStr = numStr.replace(/,/g, '');
+    const num = parseFloat(pureNumStr);
+    
+    if (isNaN(num)) return match;
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    if (num >= 1e3) return `$${Math.round(num).toLocaleString()}`;
+    return `$${num.toFixed(2)}`;
+  });
+
+  return cleaned;
+}
+
 const cartoDarkStyle = {
   version: 8 as const,
   sources: {
@@ -469,7 +494,8 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
               </div>
             ) : aiAnalysis ? (
               <p className="text-xs font-mono text-slate-300 leading-loose tracking-wide">
-                {aiAnalysis.replace(/\*/g, '')}
+                {/* 👇 FRONTEND CLEANER APPLIED HERE */}
+                {cleanAiText(aiAnalysis)}
               </p>
             ) : null}
           </div>
