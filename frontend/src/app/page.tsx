@@ -1,18 +1,21 @@
 'use client';
 
+import { useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // Jab user "Let's Start" par click kare
   const handleStartSimulation = (e: React.MouseEvent) => {
     e.preventDefault();
     if (session) {
       router.push('/dashboard'); 
     } else {
-      signIn('google', { callbackUrl: '/dashboard' });
+      setShowAuthModal(true); // Login nahi hai toh pop-up dikhao
     }
   };
 
@@ -115,6 +118,69 @@ export default function HomePage() {
         </section>
 
       </main>
+
+      {/* ── PREMIUM AUTH POP-UP MODAL ── */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          
+          <div className="relative w-full max-w-md bg-[#050b14]/90 border border-cyan-500/30 rounded-2xl shadow-[0_0_50px_rgba(34,211,238,0.15)] p-8 overflow-hidden animate-in zoom-in-95 duration-300 backdrop-blur-xl">
+            
+            {/* Background Glow inside modal */}
+            <div className="absolute -top-20 -left-20 w-48 h-48 bg-cyan-500/20 blur-[80px] pointer-events-none"></div>
+
+            {/* Top Right 'X' Close Button */}
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-5 right-5 text-slate-500 hover:text-cyan-400 transition-colors z-20"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="w-2 h-2 bg-cyan-400 rounded-sm animate-pulse shadow-[0_0_8px_#22d3ee]"></span>
+                <h2 className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-[0.3em]">
+                  Authentication Recommended
+                </h2>
+              </div>
+              
+              <p className="text-[11px] font-mono text-slate-400 leading-relaxed mb-8">
+                Sign in to save your telemetry reports and access historical risk projections. You can also proceed with limited guest access.
+              </p>
+
+              <div className="space-y-4">
+                {/* Sign In Button */}
+                <button
+                  onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+                  className="w-full relative px-6 py-4 bg-cyan-950/40 border border-cyan-500/50 text-cyan-300 font-mono text-[10px] font-bold uppercase tracking-[0.2em] rounded-lg hover:bg-cyan-900/60 hover:text-white transition-all shadow-[0_0_20px_rgba(34,211,238,0.1)] group overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/20 via-blue-500/20 to-cyan-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <span className="relative z-10">Sign In with Google</span>
+                </button>
+
+                {/* Divider */}
+                <div className="flex items-center gap-4 my-4">
+                  <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
+                  <span className="text-[9px] font-mono text-slate-600 uppercase tracking-widest">OR</span>
+                  <div className="flex-1 h-[1px] bg-cyan-500/10"></div>
+                </div>
+
+                {/* Guest Access Button */}
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="w-full px-6 py-4 bg-transparent border border-white/10 text-slate-400 font-mono text-[10px] font-bold uppercase tracking-[0.2em] rounded-lg hover:border-white/30 hover:text-white transition-all"
+                >
+                  Continue as Guest ➔
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
