@@ -11,8 +11,8 @@ interface Projection {
   heatwave_days: number;
   peak_tx5d_c: number;
   avg_excess_temp_c?: number;
-  wbt_max_c?: number;         // Added for new metrics
-  uhi_intensity_c?: number;   // Added for new metrics
+  wbt_max_c?: number;         
+  uhi_intensity_c?: number;   
   attributable_deaths: number;
   economic_decay_usd: number;
 }
@@ -184,7 +184,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     }
     setGlobalError(null);
     setRunning(true);
-    setAiAnalysis(null); // Reset AI
+    setAiAnalysis(null);
 
     const queries = [baseTarget, city2Geo.display_name];
     const initialResults = queries.map((q) => ({
@@ -230,7 +230,6 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           city_name: `${okRes[0].query} vs ${okRes[1].query}`,
           context: "Compare",
           metrics: {
-            // Yahan dono cities ka data ek sath combine kar diya taaki AI dono ko compare kar sake
             temp: `${okRes[0].query}: ${p1?.peak_tx5d_c}°C | ${okRes[1].query}: ${p2?.peak_tx5d_c}°C`,
             elevation: `${okRes[0].query}: ${okRes[0].elevation}m | ${okRes[1].query}: ${okRes[1].elevation}m`,
             heatwave: `${okRes[0].query}: ${p1?.heatwave_days} days | ${okRes[1].query}: ${p2?.heatwave_days} days`,
@@ -259,10 +258,8 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   const METRICS = [
     { key: "heatwave_days",       label: "Heatwave Days",       unit: "d/yr",  fmt: (v: number) => fmt(v, 0) },
     { key: "peak_tx5d_c",         label: "Peak Tx5d",           unit: "°C",    fmt: (v: number) => fmt(v) + "°C" },
-    // ── NAYE METRICS JO BACKEND BHEJ RAHA HAI ──
     { key: "wbt_max_c",           label: "Max Wet-Bulb",        unit: "°C",    fmt: (v: number) => fmt(v) + "°C" },
     { key: "uhi_intensity_c",     label: "UHI Intensity",       unit: "°C",    fmt: (v: number) => "+" + fmt(v) + "°C" },
-    // ─────────────────────────────────────────────
     { key: "attributable_deaths", label: "Attributable Deaths", unit: "est/yr",fmt: (v: number) => fmt(v, 0) },
     { key: "economic_decay_usd",  label: "Economic Decay",      unit: "USD",   fmt: (v: number) => fmtUSD(v) },
   ];
@@ -270,14 +267,14 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   const okResults = results.filter((r) => !r.loading && !r.error && r.projections?.length > 0);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 relative z-10">
       
       {/* ── TACTICAL INPUT CONSOLE ── */}
-      <div className="bg-black/40 backdrop-blur-xl border border-white/5 p-8 rounded-xl shadow-2xl relative overflow-hidden">
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 blur-[100px] pointer-events-none"></div>
+      <div className="bg-[#050b14]/70 backdrop-blur-xl border border-cyan-500/20 p-8 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.05)] relative overflow-hidden">
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/10 blur-[100px] pointer-events-none"></div>
         
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-xs font-mono font-bold text-white uppercase tracking-[0.4em]">
+          <h2 className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-[0.4em]">
             Dual-Sector Comparative Analysis
           </h2>
         </div>
@@ -286,7 +283,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           
           {/* SECTOR 1 (LOCKED MAP) */}
-          <div className="relative rounded-xl border border-indigo-500/50 overflow-hidden h-[160px] flex flex-col justify-center p-6 bg-[#020617]">
+          <div className="relative rounded-xl border border-cyan-500/50 overflow-hidden h-[160px] flex flex-col justify-center p-6 bg-[#020617] shadow-[0_0_20px_rgba(34,211,238,0.1)]">
             {city1Geo && (
               <div className="absolute inset-0 z-0 opacity-70 pointer-events-none">
                 <Map longitude={city1Geo.lng} latitude={city1Geo.lat} zoom={9} mapStyle={cartoDarkStyle} interactive={false} attributionControl={false} />
@@ -294,14 +291,14 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-[#020617] via-[#020617]/80 to-transparent z-10" />
             <div className="relative z-20 w-full">
-              <span className="text-[10px] font-mono text-indigo-400 uppercase tracking-widest block mb-1 font-bold drop-shadow-md">Sector 1 (Locked)</span>
+              <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block mb-1 font-bold drop-shadow-md">Sector 1 (Locked)</span>
               <h3 className="text-xl sm:text-2xl font-mono text-white tracking-wider uppercase truncate w-full drop-shadow-md" title={baseTarget}>{baseTarget}</h3>
               {city1Geo && <span className="text-[9px] font-mono text-slate-400 tracking-widest block mt-1 drop-shadow-md">{city1Geo.lat.toFixed(4)}N / {city1Geo.lng.toFixed(4)}E</span>}
             </div>
           </div>
 
           {/* SECTOR 2 (SEARCH MAP) */}
-          <div className={`relative rounded-xl border overflow-visible h-[160px] flex flex-col justify-center p-6 bg-[#020617] transition-colors ${city2Geo ? 'border-emerald-500/50' : 'border-white/10'}`}>
+          <div className={`relative rounded-xl border overflow-visible h-[160px] flex flex-col justify-center p-6 bg-[#020617] transition-colors shadow-lg ${city2Geo ? 'border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'border-white/10'}`}>
             {city2Geo && (
               <div className="absolute inset-0 z-0 opacity-70 pointer-events-none overflow-hidden rounded-xl">
                 <Map longitude={city2Geo.lng} latitude={city2Geo.lat} zoom={9} mapStyle={cartoDarkStyle} interactive={false} attributionControl={false} />
@@ -319,10 +316,10 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                     if (city2Geo) setCity2Geo(null);
                   }}
                   placeholder="SEARCH SECONDARY TARGET..."
-                  className="w-full bg-[#0a0f1d]/90 backdrop-blur-md border border-slate-700 p-3 text-xs font-mono text-white placeholder-slate-500 outline-none rounded-sm focus:border-indigo-500 transition-colors uppercase tracking-widest shadow-xl"
+                  className="w-full bg-[#0a0f1d]/90 backdrop-blur-md border border-slate-700 p-3 text-xs font-mono text-white placeholder-slate-500 outline-none rounded-sm focus:border-cyan-500 transition-colors uppercase tracking-widest shadow-xl"
                 />
                 {suggestions2.length > 0 && !city2Geo && (
-                  <div className="absolute top-full left-0 w-full mt-2 bg-[#050814] border border-slate-700 rounded-sm shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-[9999] max-h-48 overflow-y-auto custom-scrollbar">
+                  <div className="absolute top-full left-0 w-full mt-2 bg-[#050814] border border-cyan-500/30 rounded-sm shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-[9999] max-h-48 overflow-y-auto custom-scrollbar">
                     {suggestions2.map((city, idx) => (
                       <div
                         key={`${city.id}-${idx}`}
@@ -332,7 +329,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                           setCity2Geo({ display_name: fullName, lat: city.latitude, lng: city.longitude });
                           setSuggestions2([]);
                         }}
-                        className="px-4 py-3 text-[10px] font-mono text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition-colors border-b border-slate-800 last:border-0 uppercase tracking-widest"
+                        className="px-4 py-3 text-[10px] font-mono text-slate-300 hover:bg-cyan-900 hover:text-white cursor-pointer transition-colors border-b border-slate-800 last:border-0 uppercase tracking-widest"
                       >
                         {city.name}, <span className="opacity-50">{city.country}</span>
                       </div>
@@ -345,34 +342,34 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
         </div>
 
         {/* Configuration HUD */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-white/[0.02] border border-white/5 rounded-lg mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-cyan-950/10 border border-cyan-500/10 rounded-xl mb-8">
           <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-3">Model Scenario</label>
-            <select value={ssp} onChange={(e) => setSsp(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-xs font-mono text-indigo-400 outline-none focus:border-indigo-500">
+            <label className="block text-[10px] font-mono text-cyan-200 uppercase tracking-widest mb-3">Model Scenario</label>
+            <select value={ssp} onChange={(e) => setSsp(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-xs font-mono text-cyan-400 outline-none focus:border-cyan-500">
               <option value="ssp245">SSP2-4.5 (MODERATE)</option>
               <option value="ssp585">SSP5-8.5 (HIGH RISK)</option>
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-3">Temporal Focus</label>
-            <select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-xs font-mono text-white outline-none">
+            <label className="block text-[10px] font-mono text-cyan-200 uppercase tracking-widest mb-3">Temporal Focus</label>
+            <select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-xs font-mono text-white outline-none focus:border-cyan-500">
               {COMPARE_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between"><label className="text-[10px] font-mono text-slate-500 uppercase">Canopy</label><span className="text-[10px] font-mono text-emerald-400">{canopy}%</span></div>
+            <div className="flex justify-between"><label className="text-[10px] font-mono text-cyan-200 uppercase">Canopy</label><span className="text-[10px] font-mono text-emerald-400">{canopy}%</span></div>
             <input type="range" min={0} max={100} value={canopy} onChange={(e) => setCanopy(Number(e.target.value))} className="w-full accent-emerald-500 bg-white/10 h-1 rounded-full appearance-none cursor-pointer" />
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between"><label className="text-[10px] font-mono text-slate-500 uppercase">Albedo</label><span className="text-[10px] font-mono text-sky-400">{albedo}%</span></div>
-            <input type="range" min={0} max={100} value={albedo} onChange={(e) => setAlbedo(Number(e.target.value))} className="w-full accent-sky-500 bg-white/10 h-1 rounded-full appearance-none cursor-pointer" />
+            <div className="flex justify-between"><label className="text-[10px] font-mono text-cyan-200 uppercase">Albedo</label><span className="text-[10px] font-mono text-sky-400">{albedo}%</span></div>
+            <input type="range" min={0} max={100} value={albedo} onChange={(e) => setAlbedo(Number(e.target.value))} className="w-full accent-cyan-500 bg-white/10 h-1 rounded-full appearance-none cursor-pointer" />
           </div>
         </div>
 
         <button
           onClick={handleCompare}
           disabled={running || !city2Geo}
-          className="w-full md:w-auto px-12 py-3 bg-white text-black font-mono text-xs font-bold uppercase tracking-[0.2em] rounded hover:bg-slate-200 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+          className="w-full md:w-auto px-12 py-3 bg-cyan-900 border border-cyan-500/50 text-white font-mono text-xs font-bold uppercase tracking-[0.2em] rounded hover:bg-cyan-800 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(34,211,238,0.2)]"
         >
           {running ? "PROCESSING SIMULATION..." : "RUN COMPARISON"}
         </button>
@@ -388,33 +385,35 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       {results.some((r) => r.loading) && (
         <div className="grid gap-4 grid-cols-2">
           {results.map((r, i) => (
-            <div key={i} className="bg-black/40 border border-indigo-500/50 rounded-xl p-6 h-32 flex flex-col justify-center items-center gap-3">
+            <div key={i} className="bg-[#050b14]/70 border border-cyan-500/20 rounded-xl p-6 h-32 flex flex-col justify-center items-center gap-3 shadow-[0_0_20px_rgba(34,211,238,0.05)]">
                <div className="flex items-center gap-2">
-                 <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-ping"></div>
-                 <span className="text-[9px] font-mono text-indigo-400 uppercase tracking-widest">loading..</span>
+                 <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping"></div>
+                 <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-widest">loading telemetry..</span>
                </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* ── TELEMETRY COMPARISON TABLE ── */}
+      {/* 👇 PREMIUM GLASSMORPHIC TELEMETRY TABLE */}
       {okResults.length === 2 && !running && (
-        <div className="bg-black/40 backdrop-blur-xl border border-white/5 rounded-xl shadow-2xl overflow-hidden">
-          <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-            <h3 className="text-[10px] font-mono text-white uppercase tracking-[0.4em]">
-              Side-by-side Telemetry — {compareYear} · {ssp.toUpperCase()}
+        <div className="w-full bg-[#050b14]/70 backdrop-blur-xl border border-cyan-500/20 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.05)] overflow-hidden mt-8">
+          
+          <div className="bg-cyan-950/40 border-b border-cyan-500/30 px-8 py-6">
+            <h3 className="text-[11px] font-mono text-cyan-300 tracking-[0.4em] uppercase">
+              Side-by-Side Telemetry <span className="text-slate-500 ml-2">| {compareYear} | {ssp.toUpperCase()}</span>
             </h3>
           </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white/[0.03] border-b border-white/5">
-                  <th className="px-8 py-5 text-[10px] font-mono text-slate-500 uppercase tracking-widest">Parameter</th>
+                <tr className="bg-white/[0.01] border-b border-cyan-500/20">
+                  <th className="px-8 py-6 text-[10px] font-mono text-cyan-200 uppercase tracking-widest w-[30%]">Parameter</th>
                   {okResults.map((r) => (
-                    <th key={r.query} className="px-8 py-5 text-center">
+                    <th key={r.query} className="px-8 py-6 text-center w-[35%]">
                       <span className="font-mono text-xs font-bold text-white block uppercase tracking-widest">{r.query}</span>
-                      <span className="text-[9px] font-mono text-slate-600 block mt-1">
+                      <span className="text-[9px] font-mono text-slate-500 block mt-1">
                         {r.lat.toFixed(2)}N / {r.lng.toFixed(2)}E · {r.elevation.toFixed(0)}m
                       </span>
                     </th>
@@ -430,20 +429,20 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                   const maxVal = Math.max(...vals.filter((v): v is number => v !== null));
 
                   return (
-                    <tr key={m.key} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="px-8 py-5">
-                        <div className="text-[11px] font-mono text-slate-400 uppercase tracking-wider">{m.label}</div>
+                    <tr key={m.key} className="hover:bg-cyan-900/20 transition-colors group">
+                      <td className="px-8 py-6">
+                        <div className="text-[11px] font-mono text-slate-300 uppercase tracking-wider group-hover:text-cyan-200 transition-colors">{m.label}</div>
                         <div className="text-[9px] font-mono text-slate-600 mt-1 uppercase">{m.unit}</div>
                       </td>
                       {okResults.map((r, i) => {
                         const val = vals[i];
                         const isMax = val != null && val === maxVal && maxVal > 0;
                         return (
-                          <td key={r.query} className="px-8 py-5 text-center">
-                            <span className={`font-mono text-sm ${isMax ? "text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.5)]" : "text-white"}`}>
+                          <td key={r.query} className="px-8 py-6 text-center">
+                            <span className={`font-mono text-sm ${isMax ? "text-cyan-300 font-bold drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "text-white"}`}>
                               {val != null ? m.fmt(val) : "—"}
                             </span>
-                            {isMax && <span className="ml-2 text-[9px] text-indigo-500/50 uppercase font-mono">Max.Exposure</span>}
+                            {isMax && <span className="block mt-1 text-[8px] text-cyan-500/70 uppercase font-mono tracking-widest">Max.Exposure</span>}
                           </td>
                         );
                       })}
@@ -454,10 +453,10 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
             </table>
           </div>
 
-          {/* ── STRATEGIC COMPARISON AI BOX ── */}
-          <div className="border-t border-white/5 bg-[#050814] p-8">
-            <h4 className="text-[10px] font-mono text-indigo-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span> 
+          {/* ── STRATEGIC COMPARISON AI BOX (PREMIUM) ── */}
+          <div className="bg-[#02050a]/60 border-t border-cyan-500/20 px-8 py-8">
+            <h4 className="flex items-center gap-3 text-[10px] font-mono text-cyan-400 tracking-[0.3em] uppercase mb-4">
+              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-sm animate-pulse shadow-[0_0_8px_#22d3ee]"></span> 
               Scientific Audit & Strategic Comparison
             </h4>
             
@@ -465,10 +464,10 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
               <div className="flex flex-col gap-3 py-4">
                  <div className="h-2 w-full bg-slate-800 rounded animate-pulse"></div>
                  <div className="h-2 w-3/4 bg-slate-800 rounded animate-pulse"></div>
-                 <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mt-2">AI Processing Geological Context...</span>
+                 <span className="text-[9px] font-mono text-cyan-500/50 uppercase tracking-widest mt-2">AI Processing Geological Context...</span>
               </div>
             ) : aiAnalysis ? (
-              <p className="text-xs font-mono text-slate-300 leading-loose">
+              <p className="text-xs font-mono text-slate-300 leading-loose tracking-wide">
                 {aiAnalysis.replace(/\*/g, '')}
               </p>
             ) : null}
@@ -477,7 +476,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
         </div>
       )}
 
-      {/* ── Error Handling HUD ── */}
+      {/* Error Output */}
       {results.filter((r) => r.error).map((r) => (
         <div key={r.query} className="bg-red-500/10 border border-red-500/20 rounded-xl px-6 py-4 mt-6 flex gap-4 items-center">
           <span className="text-red-500 font-mono text-xs">ERR:</span>

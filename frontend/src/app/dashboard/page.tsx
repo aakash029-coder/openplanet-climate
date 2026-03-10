@@ -36,7 +36,6 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('Dashboard');
   const [targetCity, setTargetCity] = useState<string | null>(null);
 
-  // 👇 RESET FUNCTION TO SELECT NEW CITY
   const handleReset = () => {
     setTargetCity(null);
     setActiveTab('Dashboard');
@@ -45,19 +44,19 @@ export default function DashboardPage() {
   return (
     <div className="relative text-slate-200 font-sans overflow-x-hidden flex flex-col w-full min-h-screen">
       
-      {/* 🌌 BRIGHTER CYBERMAP BACKGROUND */}
+      {/* 👇 BACKGROUND VISIBILITY INCREASED: Opacity 40% ki hai aur gradient halka kiya hai */}
       <img 
         src="/cybermap.jpeg" 
         alt="Cyber Map Background" 
-        className="fixed inset-0 w-full h-full object-cover opacity-25 pointer-events-none z-0 mix-blend-screen"
+        className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none z-0 mix-blend-screen"
       />
-      <div className="fixed inset-0 bg-gradient-to-b from-[#060d1a]/40 via-[#060d1a]/80 to-[#060d1a]/40 pointer-events-none z-0"></div>
+      <div className="fixed inset-0 bg-gradient-to-b from-[#060d1a]/30 via-[#060d1a]/60 to-[#060d1a]/30 pointer-events-none z-0"></div>
 
       <div className="flex flex-col w-full flex-grow relative z-10">
         
-        {/* 🛸 SLEEK RIGID SUB-NAVIGATION */}
         <nav className="w-full bg-[#0a1526]/80 backdrop-blur-3xl border-b border-cyan-500/20 pt-20 sticky top-0 z-[40] shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
-          <div className="w-full flex items-center justify-between px-8 lg:px-16 xl:px-24 py-5 text-[10px] font-mono uppercase tracking-[0.2em] relative">
+          {/* 👇 FONT SIZE INCREASED: text-[10px] se text-[11px] kar diya hai */}
+          <div className="w-full flex items-center justify-between px-8 lg:px-16 xl:px-24 py-5 text-[11px] font-mono uppercase tracking-[0.25em] relative">
             
             {TABS.map((tab) => {
               const isLocked = !targetCity && tab !== 'Dashboard';
@@ -71,11 +70,10 @@ export default function DashboardPage() {
                   className={`relative whitespace-nowrap transition-all duration-500 px-4 py-2 group
                     ${isActive ? 'text-cyan-300 font-extrabold tracking-[0.3em] drop-shadow-[0_0_15px_rgba(34,211,238,0.9)] scale-105' : ''}
                     ${isLocked ? 'text-slate-700 cursor-not-allowed' : ''}
-                    ${!isActive && !isLocked ? 'text-slate-400 hover:text-cyan-100 hover:tracking-[0.25em]' : ''}
+                    ${!isActive && !isLocked ? 'text-slate-400 hover:text-cyan-100 hover:tracking-[0.28em]' : ''}
                   `}
                 >
                   {tab}
-                  {/* 👇 GLOWING LINE: Sirf tabhi aayegi jab tab active (kaam kar raha) hoga */}
                   {isActive && (
                     <span className="absolute -bottom-[21px] left-0 w-full h-[2px] bg-cyan-400 shadow-[0_0_20px_#22d3ee] rounded-t-full"></span>
                   )}
@@ -83,7 +81,6 @@ export default function DashboardPage() {
               );
             })}
 
-            {/* 🎯 TARGET BADGE */}
             {targetCity && (
               <div className="absolute -bottom-6 right-8 lg:right-16 xl:right-24 text-[9px] font-mono text-cyan-200 uppercase tracking-widest border border-cyan-400/40 bg-cyan-900/80 px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(34,211,238,0.3)] backdrop-blur-xl flex items-center gap-3">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]"></span>
@@ -94,7 +91,7 @@ export default function DashboardPage() {
           </div>
         </nav>
 
-        {/* ── ⚙️ THE ENGINE CORE ── */}
+        {/* THE ENGINE CORE */}
         <div className="w-full h-full flex flex-col flex-grow animate-in fade-in duration-1000">
             {activeTab === "Dashboard" && (
                 <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
@@ -106,11 +103,9 @@ export default function DashboardPage() {
                 {activeTab === "Methodology" && <MethodologyModule />}
             </div>
 
-            {/* 🚀 BUTTON LOGIC */}
             {targetCity && (
               <div className="max-w-md w-full mx-auto px-6 pb-24 mt-auto">
                 {NEXT_TAB_MAP[activeTab] ? (
-                  // PROCEED BUTTON (Compare & Research pages ke liye)
                   <button 
                     onClick={() => setActiveTab(NEXT_TAB_MAP[activeTab]!)}
                     className="relative w-full py-4 rounded-full text-[10px] font-mono font-bold tracking-[0.3em] text-white uppercase transition-all overflow-hidden group border border-cyan-400/50 bg-cyan-900/60 backdrop-blur-xl shadow-[0_0_30px_rgba(34,211,238,0.3)] hover:shadow-[0_0_50px_rgba(34,211,238,0.6)] hover:border-cyan-300 hover:scale-105 hover:-translate-y-1"
@@ -122,7 +117,6 @@ export default function DashboardPage() {
                     </span>
                   </button>
                 ) : (
-                  // 👇 NEW CITY BUTTON (Sirf Methodology page par dikhega)
                   <button 
                     onClick={handleReset}
                     className="relative w-full py-4 rounded-full text-[10px] font-mono font-bold tracking-[0.3em] text-white uppercase transition-all overflow-hidden group border border-purple-400/50 bg-purple-900/60 backdrop-blur-xl shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:shadow-[0_0_50px_rgba(168,85,247,0.6)] hover:border-purple-300 hover:scale-105 hover:-translate-y-1"
@@ -139,11 +133,11 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 🛡️ BRIGHTER DISCLAIMER */}
+      {/* 👇 DISCLAIMER UPDATED: "SYSTEM NOTICE //" ko "SYSTEM NOTICE :-" kar diya */}
       <div className="w-full border-t border-cyan-500/10 bg-[#060d1a]/80 backdrop-blur-2xl px-6 py-8 mt-auto relative z-20">
         <div className="max-w-5xl mx-auto text-center">
           <p className="text-[9px] text-slate-400 font-mono uppercase tracking-[0.3em] leading-loose">
-            <span className="text-cyan-400 font-bold tracking-[0.4em] mr-3">SYSTEM NOTICE //</span> 
+            <span className="text-cyan-400 font-bold tracking-[0.4em] mr-3">SYSTEM NOTICE :-</span> 
             OpenPlanet provides climate risk projections generated using the OpenMatrix modeling framework. These projections integrate global climate datasets and demographic models to estimate potential health and economic impacts. All outputs are research-oriented estimates intended for analytical and exploratory purposes.
           </p>
         </div>
