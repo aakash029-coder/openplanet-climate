@@ -15,17 +15,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-mono min-h-screen text-slate-200 relative selection:bg-cyan-500/30 selection:text-white bg-[#010314] overflow-x-hidden">
+      <body className="font-mono min-h-screen text-slate-200 relative selection:bg-cyan-500/30 selection:text-white bg-[#050505] overflow-x-hidden">
         
-        {/* 👇 1. BULLETPROOF SATELLITE IMAGE (HTML img tag CSS cache issues se nahi rokta) */}
+        {/* 1. SATELLITE IMAGE LAYER (Blackish theme ke sath) */}
         <img 
           src="/satellite-map.jpeg" 
           alt="Satellite Map" 
-          className="fixed inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0"
+          className="fixed inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0 mix-blend-lighten"
         />
         
-        {/* 2. GLOWING LIGHTS LAYER */}
-        <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-blue-700/20 rounded-full blur-[150px] pointer-events-none z-0"></div>
+        {/* 2. GLOWING LIGHTS LAYER (Subtle Gold & Cyan for that premium look) */}
+        <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-amber-600/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
         <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-700/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
         
         <Providers>
@@ -36,9 +36,9 @@ export default function RootLayout({
               {children}
             </main>
             
-            {/* GLASSMORPHISM FOOTER */}
-            <footer className="border-t border-white/10 bg-[#010314]/60 backdrop-blur-xl py-8 px-6 md:px-12 mt-auto shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-slate-400 font-bold">
+            {/* GLASSMORPHISM FOOTER (Darker) */}
+            <footer className="border-t border-white/5 bg-black/60 backdrop-blur-xl py-8 px-6 md:px-12 mt-auto shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold">
                 <div>© {new Date().getFullYear()} OpenPlanet Intelligence.</div>
                 <div className="flex flex-wrap justify-center gap-6 md:gap-10">
                   <Link href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy Policy</Link>
