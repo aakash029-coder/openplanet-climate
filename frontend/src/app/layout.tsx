@@ -15,34 +15,34 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-mono min-h-screen text-slate-200 relative selection:bg-cyan-500/30 selection:text-white bg-[#050505] overflow-x-hidden">
+      <body className="font-mono min-h-screen text-slate-200 relative selection:bg-cyan-500/30 bg-[#020205] overflow-x-hidden">
         
-        {/* 1. SATELLITE IMAGE LAYER (Blackish theme ke sath) */}
+        {/* 👇 SATELLITE IMAGE - Sharp & Visible */}
         <img 
           src="/satellite-map.jpeg" 
           alt="Satellite Map" 
-          className="fixed inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0 mix-blend-lighten"
+          className="fixed inset-0 w-full h-full object-cover opacity-25 pointer-events-none z-0"
         />
         
-        {/* 2. GLOWING LIGHTS LAYER (Subtle Gold & Cyan for that premium look) */}
-        <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-amber-600/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
-        <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-700/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+        {/* 👇 EXTREMELY LOW GLOW - Just to add depth, not color */}
+        <div className="fixed top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-blue-900/5 rounded-full blur-[180px] pointer-events-none z-0"></div>
         
         <Providers>
           <div className="flex flex-col min-h-screen relative z-20">
+            {/* Header is already sticky/fixed in Navbar */}
             <Navbar />
             
-            <main className="flex-1 flex flex-col">
+            <main className="flex-1 flex flex-col pt-10">
               {children}
             </main>
             
-            {/* GLASSMORPHISM FOOTER (Darker) */}
-            <footer className="border-t border-white/5 bg-black/60 backdrop-blur-xl py-8 px-6 md:px-12 mt-auto shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
-              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold">
+            {/* 👇 RIGID FIXED FOOTER */}
+            <footer className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-black/80 backdrop-blur-2xl py-5 px-6 md:px-12 shadow-[0_-10px_40px_rgba(0,0,0,0.9)]">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] uppercase tracking-[0.4em] text-slate-500 font-bold">
                 <div>© {new Date().getFullYear()} OpenPlanet Intelligence.</div>
-                <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-                  <Link href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy Policy</Link>
-                  <Link href="/terms" className="hover:text-cyan-400 transition-colors">Terms of Service</Link>
+                <div className="flex gap-8">
+                  <Link href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>
+                  <Link href="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>
                   <Link href="/support" className="hover:text-cyan-400 transition-colors">Support</Link>
                 </div>
               </div>
