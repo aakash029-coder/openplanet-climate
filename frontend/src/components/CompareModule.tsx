@@ -308,6 +308,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
             <div className="relative z-20 w-full overflow-visible">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block mb-3 font-bold drop-shadow-md">Sector 2 (Target Acquisition)</span>
               <div className="relative w-full overflow-visible">
+                {/* 👇 UPDATED SEARCH PLACEHOLDER */}
                 <input
                   type="text"
                   value={searchQuery2}
@@ -315,7 +316,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                     setSearchQuery2(e.target.value);
                     if (city2Geo) setCity2Geo(null);
                   }}
-                  placeholder="SEARCH SECONDARY TARGET..."
+                  placeholder="SEARCH ANOTHER YOU WANT TO COMPARE WITH..."
                   className="w-full bg-[#0a0f1d]/90 backdrop-blur-md border border-slate-700 p-3 text-xs font-mono text-white placeholder-slate-500 outline-none rounded-sm focus:border-cyan-500 transition-colors uppercase tracking-widest shadow-xl"
                 />
                 {suggestions2.length > 0 && !city2Geo && (
