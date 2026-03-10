@@ -140,16 +140,12 @@ export default function HomePage() {
             </button>
 
             <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-8">
                 <span className="w-2 h-2 bg-cyan-400 rounded-sm animate-pulse shadow-[0_0_8px_#22d3ee]"></span>
                 <h2 className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-[0.3em]">
-                  Authentication Recommended
+                  Authentication
                 </h2>
               </div>
-              
-              <p className="text-[11px] font-mono text-slate-400 leading-relaxed mb-8">
-                Sign in to save your telemetry reports and access historical risk projections. You can also proceed with limited guest access.
-              </p>
 
               <div className="space-y-4">
                 {/* Sign In Button */}

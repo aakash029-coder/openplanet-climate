@@ -99,6 +99,9 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
+  // Retry Status UI state
+  const [retryStatus, setRetryStatus] = useState<string | null>(null);
+
   useEffect(() => {
     if (baseTarget) handleAnalyse(baseTarget);
   }, [baseTarget, ssp, canopy, albedo]); // Re-run if mitigation changes
@@ -107,85 +110,154 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
     setLoading(true);
     setError(null);
     setAiAnalysis(null);
+    setRetryStatus(null);
 
     try {
-      // 1. GEOCODE THE TARGET
-      const geoResp = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryToRun)}&format=json&limit=1`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const geoDataArr = await geoResp.json();
-      if (!geoDataArr.length) throw new Error("Location not found.");
-      
-      const g = geoDataArr[0];
-      const lat = parseFloat(g.lat);
-      const lng = parseFloat(g.lon);
+      // 1. GEOCODE THE TARGET (with retry)
+      let currentGeo: GeoResult | null = null;
+      let geoRetries = 3;
+      let geoSuccess = false;
+      let lastGeoError: any = null;
 
-      let elevation = 0;
-      try {
-        const elevResp = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
-        const elevData = await elevResp.json();
-        elevation = elevData?.elevation?.[0] ?? 0;
-      } catch {}
+      while (!geoSuccess && geoRetries > 0) {
+        try {
+          if (geoRetries < 3) setRetryStatus(`Locating ${queryToRun}... (${3 - geoRetries}/3)`);
 
-      const currentGeo = { display_name: g.display_name, lat, lng, elevation };
-      setGeo(currentGeo);
+          const geoResp = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(queryToRun)}&format=json&limit=1`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const geoDataArr = await geoResp.json();
+          if (!geoDataArr.length) throw new Error("Location not found.");
+          
+          const g = geoDataArr[0];
+          const lat = parseFloat(g.lat);
+          const lng = parseFloat(g.lon);
 
-      // 2. FETCH RISK METRICS FROM ENGINE
-      const riskResp = await fetch("https://albus2903-openplanet-engine.hf.space/api/climate-risk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat, lng, elevation, ssp, canopy_offset_pct: canopy, albedo_offset_pct: albedo, location_hint: queryToRun }), 
-      });
-      
-      const data = await riskResp.json();
-      if (data.error) throw new Error(data.error);
-      
-      setResult(data);
-      let targetYr = selectedYear;
-      if (!targetYr && data.projections?.length > 0) {
-        targetYr = data.projections[0].year;
-        setSelectedYear(targetYr);
+          let elevation = 0;
+          try {
+            const elevResp = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`);
+            const elevData = await elevResp.json();
+            elevation = elevData?.elevation?.[0] ?? 0;
+          } catch {}
+
+          currentGeo = { display_name: g.display_name, lat, lng, elevation };
+          setGeo(currentGeo);
+          geoSuccess = true;
+          setRetryStatus(null);
+        } catch (err) {
+          lastGeoError = err;
+          geoRetries--;
+          if (geoRetries > 0) await new Promise(resolve => setTimeout(resolve, 2000));
+        }
       }
 
-      // 3. FETCH AI REASONING (SCIENTIFIC AUDIT)
-      if (data.projections?.length > 0) {
-        setAiLoading(true);
-        try {
-          const pData = data.projections.find((p: any) => p.year === (targetYr || 2050)) || data.projections[0];
-          
-          const aiPayload = {
-            city_name: currentGeo.display_name,
-            context: "DeepDive",
-            metrics: {
-              temp: pData.peak_tx5d_c,
-              elevation: currentGeo.elevation,
-              heatwave: pData.heatwave_days,
-              loss: pData.economic_decay_usd,
-              lat: currentGeo.lat,
-              lng: currentGeo.lng
-            }
-          };
+      if (!geoSuccess || !currentGeo) throw new Error(lastGeoError?.message || "Geocoding Failed after 3 retries.");
 
-          const aiResp = await fetch("https://albus2903-openplanet-engine.hf.space/api/research-analysis", {
+
+      // 2. FETCH RISK METRICS FROM ENGINE (with retry)
+      let riskRetries = 3;
+      let riskSuccess = false;
+      let riskData: any = null;
+      let lastRiskError: any = null;
+
+      while (!riskSuccess && riskRetries > 0) {
+        try {
+          if (riskRetries < 3) setRetryStatus(`Fetching risk metrics... (${3 - riskRetries}/3)`);
+
+          const riskResp = await fetch("https://albus2903-openplanet-engine.hf.space/api/climate-risk", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(aiPayload)
+            body: JSON.stringify({ 
+              lat: currentGeo.lat, 
+              lng: currentGeo.lng, 
+              elevation: currentGeo.elevation, 
+              ssp, 
+              canopy_offset_pct: canopy, 
+              albedo_offset_pct: albedo, 
+              location_hint: queryToRun 
+            }), 
           });
           
-          const aiData = await aiResp.json();
-          setAiAnalysis(aiData.reasoning);
+          if (!riskResp.ok) throw new Error(`API ${riskResp.status}`);
+          riskData = await riskResp.json();
+          if (riskData.error) throw new Error(riskData.error);
+          
+          riskSuccess = true;
+          setRetryStatus(null);
         } catch (err) {
-          setAiAnalysis("AI Auditor offline. Refer to raw metrics.");
-        } finally {
-          setAiLoading(false);
+           lastRiskError = err;
+           riskRetries--;
+           if (riskRetries > 0) await new Promise(resolve => setTimeout(resolve, 3000));
         }
+      }
+
+      if (!riskSuccess || !riskData) throw new Error(lastRiskError?.message || "Engine Connection Failed after 3 retries.");
+
+      setResult(riskData);
+      let targetYr = selectedYear;
+      if (!targetYr && riskData.projections?.length > 0) {
+        targetYr = riskData.projections[0].year;
+        setSelectedYear(targetYr);
+      }
+      
+      setLoading(false); // Metrics loaded, stop main spinner
+
+      // 3. FETCH AI REASONING (SCIENTIFIC AUDIT) (with retry & cool-down)
+      if (riskData.projections?.length > 0) {
+        setAiLoading(true);
+        
+        // Wait 3 seconds to avoid Cloudflare bot-protection block
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        let aiRetries = 3;
+        let aiSuccess = false;
+
+        while (!aiSuccess && aiRetries > 0) {
+          try {
+            if (aiRetries < 3) setRetryStatus(`Waking up AI Auditor... (${3 - aiRetries}/3)`);
+
+            const pData = riskData.projections.find((p: any) => p.year === (targetYr || 2050)) || riskData.projections[0];
+            
+            const aiPayload = {
+              city_name: currentGeo.display_name,
+              context: "DeepDive",
+              metrics: {
+                temp: pData.peak_tx5d_c,
+                elevation: currentGeo.elevation,
+                heatwave: pData.heatwave_days,
+                loss: pData.economic_decay_usd,
+                lat: currentGeo.lat,
+                lng: currentGeo.lng
+              }
+            };
+
+            const aiResp = await fetch("https://albus2903-openplanet-engine.hf.space/api/research-analysis", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(aiPayload)
+            });
+            
+            if (!aiResp.ok) throw new Error(`AI API ${aiResp.status}`);
+
+            const aiData = await aiResp.json();
+            setAiAnalysis(aiData.reasoning);
+            aiSuccess = true;
+            setRetryStatus(null);
+          } catch (err) {
+            aiRetries--;
+            if (aiRetries > 0) await new Promise(resolve => setTimeout(resolve, 3000));
+            else setAiAnalysis("AI Auditor offline due to high traffic. Refer to raw metrics.");
+          }
+        }
+        setAiLoading(false);
+        setRetryStatus(null);
       }
 
     } catch (err: any) { 
       setError(err.message || "Analysis Failed"); 
-    } finally { 
-      setLoading(false); 
+      setLoading(false);
+      setRetryStatus(null);
     }
   };
 
@@ -216,6 +288,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
         <div className="w-full h-64 flex flex-col items-center justify-center bg-[#050814] border border-slate-800 rounded-sm">
           <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
           <span className="font-mono text-[10px] text-indigo-400 tracking-[0.3em] uppercase animate-pulse">Running Physics Engine...</span>
+          {retryStatus && <span className="mt-4 font-mono text-[9px] text-slate-500 tracking-widest uppercase">{retryStatus}</span>}
         </div>
       )}
 
@@ -357,7 +430,12 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             </h4>
             
             {aiLoading ? (
-              <span className="text-xs font-mono text-slate-500">data loading...</span>
+              <div className="flex items-center gap-3 py-2">
+                 <div className="w-4 h-4 border-2 border-indigo-500/20 border-t-indigo-400 rounded-full animate-spin"></div>
+                 <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest">
+                   {retryStatus || "Generating Executive Summary..."}
+                 </span>
+              </div>
             ) : aiAnalysis ? (
               <p className="text-xs font-mono text-slate-300 leading-loose">
                 {/* 👇 FRONTEND TEXT CLEANER APPLIED HERE */}

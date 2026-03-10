@@ -164,6 +164,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   // ── AI AUDITOR STATE ──
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  
+  // Retry Status UI state
+  const [retryStatus, setRetryStatus] = useState<string | null>(null);
 
   // Initialize Sector 1 Map on Load
   useEffect(() => {
@@ -210,6 +213,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     setGlobalError(null);
     setRunning(true);
     setAiAnalysis(null);
+    setRetryStatus(null);
 
     const queries = [baseTarget, city2Geo.display_name];
     const initialResults = queries.map((q) => ({
@@ -222,22 +226,45 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     setResults(initialResults);
     const newResults: CityResult[] = [];
     
+    // ── SMART RETRY & THROTTLING LOOP ──
     for (let i = 0; i < queries.length; i++) {
-      try {
-        const data = await geocodeAndFetch(queries[i], ssp, canopy, albedo);
-        newResults.push({ ...(data as Omit<CityResult, "loading" | "error">), loading: false, error: null });
-      } catch (err: any) {
+      let success = false;
+      let retries = 3;
+      let lastError: any = null;
+
+      while (!success && retries > 0) {
+        try {
+          if (retries < 3) setRetryStatus(`Server busy. Retrying ${queries[i]}... (${3 - retries}/3)`);
+          
+          const data = await geocodeAndFetch(queries[i], ssp, canopy, albedo);
+          newResults.push({ ...(data as Omit<CityResult, "loading" | "error">), loading: false, error: null });
+          success = true;
+          setRetryStatus(null); // Clear status on success
+        } catch (err: any) {
+          lastError = err;
+          retries--;
+          if (retries > 0) {
+            // Wait 3 seconds before next retry
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          }
+        }
+      }
+
+      // If all 3 retries failed
+      if (!success) {
         newResults.push({
           query: queries[i], display_name: queries[i], lat: 0, lng: 0, elevation: 0,
           threshold_c: 0, cooling_offset_c: 0, iso2: "", gdp_usd: null, population: null, projections: [], errors: [],
-          loading: false, error: String(err.message || err).replace('Error: ', ''),
+          loading: false, error: String(lastError?.message || lastError).replace('Error: ', ''),
         });
+        setRetryStatus(null);
       }
       
       setResults([...newResults, ...initialResults.slice(i + 1)]);
 
+      // Crucial: Wait 3.5 seconds before fetching the SECOND city to avoid ban
       if (i < queries.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        await new Promise(resolve => setTimeout(resolve, 3500));
       }
     }
 
@@ -247,36 +274,57 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     const okRes = newResults.filter(r => !r.error);
     if (okRes.length === 2) {
       setAiLoading(true);
-      try {
-        const p1 = okRes[0].projections.find(p => p.year === compareYear) || okRes[0].projections[0];
-        const p2 = okRes[1].projections.find(p => p.year === compareYear) || okRes[1].projections[0];
+      
+      // Wait 3 seconds before hitting AI endpoint to prevent rate limit
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
-        const aiPayload = {
-          city_name: `${okRes[0].query} vs ${okRes[1].query}`,
-          context: "Compare",
-          metrics: {
-            temp: `${okRes[0].query}: ${p1?.peak_tx5d_c}°C | ${okRes[1].query}: ${p2?.peak_tx5d_c}°C`,
-            elevation: `${okRes[0].query}: ${okRes[0].elevation}m | ${okRes[1].query}: ${okRes[1].elevation}m`,
-            heatwave: `${okRes[0].query}: ${p1?.heatwave_days} days | ${okRes[1].query}: ${p2?.heatwave_days} days`,
-            loss: `${okRes[0].query}: $${p1?.economic_decay_usd} | ${okRes[1].query}: $${p2?.economic_decay_usd}`,
-            lat: `${okRes[0].query}: ${okRes[0].lat} | ${okRes[1].query}: ${okRes[1].lat}`,
-            lng: `${okRes[0].query}: ${okRes[0].lng} | ${okRes[1].query}: ${okRes[1].lng}`
+      let aiSuccess = false;
+      let aiRetries = 3;
+
+      while (!aiSuccess && aiRetries > 0) {
+        try {
+          if (aiRetries < 3) setRetryStatus(`Waking up AI Auditor... (${3 - aiRetries}/3)`);
+
+          const p1 = okRes[0].projections.find(p => p.year === compareYear) || okRes[0].projections[0];
+          const p2 = okRes[1].projections.find(p => p.year === compareYear) || okRes[1].projections[0];
+
+          const aiPayload = {
+            city_name: `${okRes[0].query} vs ${okRes[1].query}`,
+            context: "Compare",
+            metrics: {
+              temp: `${okRes[0].query}: ${p1?.peak_tx5d_c}°C | ${okRes[1].query}: ${p2?.peak_tx5d_c}°C`,
+              elevation: `${okRes[0].query}: ${okRes[0].elevation}m | ${okRes[1].query}: ${okRes[1].elevation}m`,
+              heatwave: `${okRes[0].query}: ${p1?.heatwave_days} days | ${okRes[1].query}: ${p2?.heatwave_days} days`,
+              loss: `${okRes[0].query}: $${p1?.economic_decay_usd} | ${okRes[1].query}: $${p2?.economic_decay_usd}`,
+              lat: `${okRes[0].query}: ${okRes[0].lat} | ${okRes[1].query}: ${okRes[1].lat}`,
+              lng: `${okRes[0].query}: ${okRes[0].lng} | ${okRes[1].query}: ${okRes[1].lng}`
+            }
+          };
+
+          const aiResp = await fetch("https://albus2903-openplanet-engine.hf.space/api/research-analysis", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(aiPayload)
+          });
+          
+          if (!aiResp.ok) throw new Error(`API ${aiResp.status}`);
+
+          const aiData = await aiResp.json();
+          setAiAnalysis(aiData.reasoning);
+          aiSuccess = true;
+          setRetryStatus(null);
+
+        } catch (err) {
+          aiRetries--;
+          if (aiRetries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          } else {
+            setAiAnalysis("AI Auditor is currently offline due to high traffic. Please interpret the raw telemetry data above.");
           }
-        };
-
-        const aiResp = await fetch("https://albus2903-openplanet-engine.hf.space/api/research-analysis", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(aiPayload)
-        });
-        
-        const aiData = await aiResp.json();
-        setAiAnalysis(aiData.reasoning);
-      } catch (err) {
-        setAiAnalysis("AI Auditor offline. Manual interpretation required.");
-      } finally {
-        setAiLoading(false);
+        }
       }
+      setAiLoading(false);
+      setRetryStatus(null);
     }
   };
 
@@ -333,7 +381,6 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
             <div className="relative z-20 w-full overflow-visible">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block mb-3 font-bold drop-shadow-md">Sector 2 (Target Acquisition)</span>
               <div className="relative w-full overflow-visible">
-                {/* 👇 UPDATED SEARCH PLACEHOLDER */}
                 <input
                   type="text"
                   value={searchQuery2}
@@ -400,6 +447,14 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           {running ? "PROCESSING SIMULATION..." : "RUN COMPARISON"}
         </button>
 
+        {/* Retry Status Display */}
+        {retryStatus && (
+          <p className="mt-4 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-widest animate-pulse">
+            <span className="inline-block w-2 h-2 bg-cyan-400 rounded-full mr-2"></span>
+            {retryStatus}
+          </p>
+        )}
+
         {globalError && (
           <p className="mt-4 text-[10px] font-mono text-red-500 bg-red-950/30 border border-red-900/50 rounded-sm px-4 py-2 uppercase tracking-widest">
             {globalError}
@@ -414,7 +469,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
             <div key={i} className="bg-[#050b14]/70 border border-cyan-500/20 rounded-xl p-6 h-32 flex flex-col justify-center items-center gap-3 shadow-[0_0_20px_rgba(34,211,238,0.05)]">
                <div className="flex items-center gap-2">
                  <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping"></div>
-                 <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-widest">loading telemetry..</span>
+                 <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-widest">
+                    {r.loading ? 'loading telemetry..' : 'processing...'}
+                 </span>
                </div>
             </div>
           ))}
@@ -490,7 +547,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
               <div className="flex flex-col gap-3 py-4">
                  <div className="h-2 w-full bg-slate-800 rounded animate-pulse"></div>
                  <div className="h-2 w-3/4 bg-slate-800 rounded animate-pulse"></div>
-                 <span className="text-[9px] font-mono text-cyan-500/50 uppercase tracking-widest mt-2">AI Processing Geological Context...</span>
+                 <span className="text-[9px] font-mono text-cyan-500/50 uppercase tracking-widest mt-2">
+                    AI Generating Executive Summary...
+                 </span>
               </div>
             ) : aiAnalysis ? (
               <p className="text-xs font-mono text-slate-300 leading-loose tracking-wide">
