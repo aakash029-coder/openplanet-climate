@@ -22,12 +22,8 @@ export default function HomePage() {
         
         {/* 1. THE HERO SECTION */}
         <section className="w-full min-h-[80vh] flex flex-col items-center justify-center text-center relative z-10">
-          <div className="inline-block mb-6 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 backdrop-blur-md">
-            <span className="text-[10px] font-mono text-cyan-300 tracking-[0.3em] uppercase">Intelligence Engine</span>
-          </div>
           <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tighter mb-8 leading-tight drop-shadow-2xl">
             Project & Mitigate <br />
-            {/* CYAN/BLUE GLOSSY TEXT GRADIENT */}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400 drop-shadow-[0_0_30px_rgba(34,211,238,0.4)]">
               Climate Risks
             </span>
@@ -36,18 +32,18 @@ export default function HomePage() {
             High-resolution heat-related mortality, economic impact, and extreme weather projections. Powered by WHO-grade epidemiology and NASA geospatial data pipelines.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {/* DEEP BLUE GLOSSY ACTION BUTTON */}
+            {/* 👈 Text changed to Let's Start */}
             <button 
               onClick={handleStartSimulation}
               className="relative px-12 py-4 rounded-full text-xs font-mono text-white tracking-[0.2em] uppercase transition-all overflow-hidden group border border-white/20 shadow-[0_0_30px_rgba(59,130,246,0.4)] hover:shadow-[0_0_50px_rgba(34,211,238,0.6)] hover:scale-105"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-cyan-600 to-indigo-700 opacity-90 group-hover:opacity-100 transition-opacity"></div>
-              <span className="relative z-10 font-bold">Initialize Engine</span>
+              <span className="relative z-10 font-bold">Let's Start</span>
             </button>
           </div>
         </section>
 
-        {/* 2. THE PROBLEM STATEMENT (DEEP GLASS CARD) */}
+        {/* 2. THE PROBLEM STATEMENT */}
         <section id="discover" className="w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center bg-white/[0.02] backdrop-blur-2xl border border-white/10 p-8 md:p-16 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:border-cyan-500/30 transition-colors">
           <div className="lg:col-span-6 flex flex-col gap-6">
             <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight leading-tight uppercase">
@@ -97,16 +93,17 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 4. FINAL CALL TO ACTION (NEON CYAN GLOW) */}
+        {/* 4. FINAL CALL TO ACTION */}
         <section className="w-full flex flex-col items-center text-center bg-white/[0.02] border border-blue-500/20 py-24 backdrop-blur-2xl rounded-3xl overflow-hidden relative shadow-[0_0_50px_rgba(59,130,246,0.1)]">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 to-transparent pointer-events-none"></div>
-          <h2 className="text-[10px] font-mono text-cyan-400 tracking-[0.5em] uppercase mb-4 drop-shadow-md">Strategic Uplink</h2>
           <h3 className="text-3xl md:text-5xl font-bold text-white mb-10 tracking-widest uppercase">Start Intelligence Audit</h3>
+          
+          {/* 👈 Text changed to Let's Start */}
           <button 
             onClick={handleStartSimulation}
             className="px-12 py-4 bg-white text-black font-mono font-bold text-xs hover:bg-cyan-50 hover:shadow-[0_0_40px_rgba(255,255,255,0.6)] transition-all uppercase tracking-[0.3em] rounded-full"
           >
-            Launch Terminal
+            Let's Start
           </button>
         </section>
 

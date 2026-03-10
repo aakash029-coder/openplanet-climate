@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession, signOut, signIn } from 'next-auth/react' // 👈 signIn wapas import kiya
 import { useState } from 'react'
 import { usePathname } from 'next/navigation' 
 
@@ -11,7 +11,6 @@ export default function Navbar() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname() 
 
-  // Glowing Cyan for active link
   const getLinkStyle = (path: string) => {
     return pathname === path 
       ? "text-cyan-400 font-extrabold drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" 
@@ -60,7 +59,6 @@ export default function Navbar() {
               </span>
             </button>
 
-            {/* Dropdown Menu - Glass style */}
             {open && (
               <div className="absolute right-0 top-full mt-3 w-56 bg-[#020617]/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
                 <Link href="/dashboard" onClick={() => setOpen(false)} className="block px-5 py-4 text-xs font-mono text-slate-300 hover:bg-white/5 hover:text-cyan-400 transition-colors border-b border-white/5">
@@ -74,11 +72,14 @@ export default function Navbar() {
           </div>
         ) : (
           <div className="flex items-center">
-            {/* GLOSSY BLUE BUTTON */}
-            <Link href="/api/auth/signin" className="relative px-8 py-3 rounded-full text-[11px] font-bold tracking-[0.2em] text-white uppercase transition-all overflow-hidden group border border-white/20 shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:shadow-[0_0_30px_rgba(56,189,248,0.5)] hover:scale-105">
+            {/* 👈 BUTTON FIXED: Ab wapas click karne par Google Login popup khulega */}
+            <button 
+              onClick={() => signIn('google')} 
+              className="relative px-8 py-3 rounded-full text-[11px] font-bold tracking-[0.2em] text-white uppercase transition-all overflow-hidden group border border-white/20 shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:shadow-[0_0_30px_rgba(56,189,248,0.5)] hover:scale-105"
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-600 opacity-80 group-hover:opacity-100 transition-opacity"></div>
               <span className="relative z-10">Sign In</span>
-            </Link>
+            </button>
           </div>
         )}
       </div>

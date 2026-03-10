@@ -15,22 +15,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      {/* Deep dark blue base with cyan selection color */}
       <body className="font-mono min-h-screen text-slate-200 relative selection:bg-cyan-500/30 selection:text-white bg-[#010314] overflow-x-hidden">
         
-        {/* 1. SATELLITE IMAGE LAYER */}
+        {/* 1. SATELLITE IMAGE LAYER (Ab ye clearly visible hogi) */}
         <div 
-          className="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-20 mix-blend-overlay"
-          style={{ backgroundImage: "url('/cybermap.jpeg')" }}
+          className="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-30"
+          style={{ backgroundImage: "url('/satellite-map.jpeg')" }}
         ></div>
         
-        {/* 2. GLOWING LIGHTS LAYER (Deep Blue & Cyan) */}
+        {/* 2. GLOWING LIGHTS LAYER */}
         <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-blue-700/20 rounded-full blur-[150px] pointer-events-none z-0"></div>
         <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-700/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
         
         <Providers>
           <div className="flex flex-col min-h-screen relative z-20">
-            {/* Navigaton Bar Component */}
             <Navbar />
             
             <main className="flex-1 flex flex-col">
