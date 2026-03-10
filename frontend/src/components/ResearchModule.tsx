@@ -69,7 +69,7 @@ function cleanResearchText(text: string | null) {
   cleaned = cleaned.replace(/\beuros?\b/gi, 'USD');
   cleaned = cleaned.replace(/€/g, '$');
   
-  // Format giant raw numbers ONLY (SAFE - does not touch words like "million/billion")
+  // As a fallback ONLY (It won't trigger if AI is fed "$221.37M" strings)
   cleaned = cleaned.replace(/(?:USD|\$)\s*([\d,]+(?:\.\d{2,})?)/gi, (match, numStr) => {
     const pureNumStr = numStr.replace(/,/g, '');
     const num = parseFloat(pureNumStr);
@@ -104,7 +104,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
 
   useEffect(() => {
     if (baseTarget) handleAnalyse(baseTarget);
-  }, [baseTarget, ssp, canopy, albedo]); // Re-run if mitigation changes
+  }, [baseTarget, ssp, canopy, albedo]); 
 
   const handleAnalyse = async (queryToRun: string = baseTarget) => {
     setLoading(true);
@@ -219,14 +219,15 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
 
             const pData = riskData.projections.find((p: any) => p.year === (targetYr || 2050)) || riskData.projections[0];
             
+            // 👇 CONTEXT INJECTION (Feeding pre-formatted string to AI)
             const aiPayload = {
               city_name: currentGeo.display_name,
               context: "DeepDive",
               metrics: {
-                temp: pData.peak_tx5d_c,
-                elevation: currentGeo.elevation,
-                heatwave: pData.heatwave_days,
-                loss: pData.economic_decay_usd,
+                temp: `${fmt(pData.peak_tx5d_c)}°C`,
+                elevation: `${fmt(currentGeo.elevation, 0)}m`,
+                heatwave: `${fmt(pData.heatwave_days, 0)} days`,
+                loss: fmtUSD(pData.economic_decay_usd), // <--- Format fix is exactly here! e.g., "$221.37M"
                 lat: currentGeo.lat,
                 lng: currentGeo.lng
               }

@@ -63,9 +63,8 @@ function cleanAiText(text: string | null) {
   // Fix missing spaces (safely ignores numbers/decimals)
   cleaned = cleaned.replace(/([a-z])([.?!])([A-Z])/g, '$1$2 $3');
   
-  // Format giant raw numbers EVEN IF AI puts commas (e.g., $209,642,331)
+  // As a fallback ONLY (It won't trigger if AI is fed "$221.37M" strings)
   cleaned = cleaned.replace(/\$([\d,]+(?:\.\d+)?)/g, (match, numStr) => {
-    // Remove commas before doing math
     const pureNumStr = numStr.replace(/,/g, '');
     const num = parseFloat(pureNumStr);
     
@@ -288,14 +287,16 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           const p1 = okRes[0].projections.find(p => p.year === compareYear) || okRes[0].projections[0];
           const p2 = okRes[1].projections.find(p => p.year === compareYear) || okRes[1].projections[0];
 
+          // 👇 YAHAN BHI FORMATTED DATA BHEJ RAHE HAIN (Context Injection)
           const aiPayload = {
             city_name: `${okRes[0].query} vs ${okRes[1].query}`,
             context: "Compare",
             metrics: {
-              temp: `${okRes[0].query}: ${p1?.peak_tx5d_c}°C | ${okRes[1].query}: ${p2?.peak_tx5d_c}°C`,
-              elevation: `${okRes[0].query}: ${okRes[0].elevation}m | ${okRes[1].query}: ${okRes[1].elevation}m`,
-              heatwave: `${okRes[0].query}: ${p1?.heatwave_days} days | ${okRes[1].query}: ${p2?.heatwave_days} days`,
-              loss: `${okRes[0].query}: $${p1?.economic_decay_usd} | ${okRes[1].query}: $${p2?.economic_decay_usd}`,
+              temp: `${okRes[0].query}: ${fmt(p1?.peak_tx5d_c)}°C | ${okRes[1].query}: ${fmt(p2?.peak_tx5d_c)}°C`,
+              elevation: `${okRes[0].query}: ${fmt(okRes[0].elevation, 0)}m | ${okRes[1].query}: ${fmt(okRes[1].elevation, 0)}m`,
+              heatwave: `${okRes[0].query}: ${fmt(p1?.heatwave_days, 0)} days | ${okRes[1].query}: ${fmt(p2?.heatwave_days, 0)} days`,
+              loss: `${okRes[0].query}: ${fmtUSD(p1?.economic_decay_usd)} | ${okRes[1].query}: ${fmtUSD(p2?.economic_decay_usd)}`, // 👈 Formatting applied!
+              deaths: `${okRes[0].query}: ${fmt(p1?.attributable_deaths, 0)} | ${okRes[1].query}: ${fmt(p2?.attributable_deaths, 0)}`,
               lat: `${okRes[0].query}: ${okRes[0].lat} | ${okRes[1].query}: ${okRes[1].lat}`,
               lng: `${okRes[0].query}: ${okRes[0].lng} | ${okRes[1].query}: ${okRes[1].lng}`
             }
