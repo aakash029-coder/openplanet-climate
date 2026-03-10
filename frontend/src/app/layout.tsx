@@ -36,17 +36,18 @@ export default function RootLayout({
               {children}
             </main>
             
-            {/* 👇 RIGID FIXED FOOTER WITH UPDATED TEXT */}
-            <footer className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-black/60 backdrop-blur-2xl py-5 px-6 md:px-12 shadow-[0_-10px_40px_rgba(0,0,0,0.9)]">
+            {/* 👇 NORMAL FOOTER (Ab yeh sirf scroll karne ke baad aayega) */}
+            <footer className="mt-auto relative z-50 border-t border-white/5 bg-black/80 backdrop-blur-2xl py-8 px-6 md:px-12">
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] uppercase tracking-[0.5em] text-slate-500 font-bold">
                 
-                {/* 👇 Updated Footer Text */}
+                {/* Footer Text */}
                 <div className="flex items-center gap-2">
                   <span className="text-slate-300">© {new Date().getFullYear()} OpenPlanet</span>
                   <span className="text-cyan-900">|</span>
                   <span>Risk Intelligence</span>
                 </div>
                 
+                {/* Footer Links */}
                 <div className="flex gap-8">
                   <Link href="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>
                   <Link href="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>
