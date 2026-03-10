@@ -5,31 +5,31 @@ import React, { useState } from "react";
 const FAQS = [
   {
     q: "What does OpenPlanet actually do?",
-    a: "OpenPlanet is a climate intelligence platform that translates global climate data into localized risk projections. The platform models heat-related mortality, economic productivity loss, and extreme weather exposure at city-scale resolution. Users can simulate mitigation strategies such as urban tree canopy expansion and reflective roofing to evaluate potential risk reduction."
+    a: "OpenPlanet is an exploratory tool that provides high-resolution climate risk projections. It estimates potential heat-related mortality, economic impacts, and heatwave exposure for specific cities to help visualize future climate scenarios."
   },
   {
     q: "Where does OpenPlanet get its climate data?",
-    a: "OpenPlanet integrates global datasets from leading scientific institutions including the Copernicus Climate Data Store (ERA5 reanalysis), NASA Earth observation archives, and CMIP6 climate model projections. These datasets are combined with epidemiological and economic research frameworks to estimate localized climate risk."
+    a: "Our backend engine uses the ERA5 reanalysis dataset via the Open-Meteo API for historical baselines, and CMIP6 climate models for future projections. We then apply established epidemiological and economic formulas to this data."
   },
   {
     q: "Are the projections predictions of the future?",
-    a: "No. OpenPlanet generates probabilistic climate risk projections based on scientific models and historical data. The results represent simulated scenarios and risk estimates rather than guaranteed future outcomes. They are intended for research, planning, and strategic analysis."
+    a: "No. They are simulated scenarios based on statistical models. They are meant for educational and exploratory purposes to understand potential risks, not as definitive future forecasts."
   },
   {
     q: "Who is OpenPlanet designed for?",
-    a: "OpenPlanet is designed for organizations and professionals working with climate risk and infrastructure planning, including: Urban planners and city governments, Climate researchers and universities, Infrastructure and energy analysts, Insurance and financial risk analysts, and Climate technology investors."
+    a: "OpenPlanet is designed for anyone interested in climate data—from students and researchers to urban planners, analysts, and curious individuals who want to understand localized climate impacts."
   },
   {
     q: "How accurate are the climate risk models?",
-    a: "The platform uses peer-reviewed scientific frameworks including epidemiological mortality models, global climate reanalysis datasets, and probabilistic Monte Carlo simulations. While these methods provide high-confidence estimates, all climate modeling contains inherent uncertainty."
+    a: "The models rely on well-known scientific frameworks (like WHO mortality estimates and standard GDP decay models). However, because they are extrapolated simulations, they carry inherent uncertainty and should be used as directional indicators rather than exact predictions."
   },
   {
     q: "Can I export or download the data?",
-    a: "Yes. OpenPlanet allows users to export selected datasets and simulation outputs in formats such as CSV or GeoJSON for research, planning, or integration with external tools. Export capabilities may vary depending on account access level."
+    a: "Not right now, but we are actively working on adding CSV and GeoJSON export features in future updates!"
   },
   {
-    q: "How can I collaborate with the OpenPlanet team?",
-    a: "Researchers, government agencies, and climate organizations interested in collaboration, data partnerships, or pilot projects can contact the OpenPlanet team through the secure uplink form on this page."
+    q: "How can I collaborate or give feedback?",
+    a: "If you have feedback, found a bug, or want to suggest a new feature, we'd love to hear from you! Just drop us a message using the contact form on this page."
   }
 ];
 
@@ -63,17 +63,14 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white p-6 md:p-12 lg:p-16 font-mono selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-[#020617] text-white p-6 md:p-12 lg:p-16 font-mono selection:bg-cyan-500/30">
       <div className="max-w-7xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
         
         {/* ── HEADER ── */}
-        <div className="border-b border-white/10 pb-8">
-          <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-[0.3em] text-white">
-            Support & <span className="text-indigo-400">Intelligence Operations</span>
+        <div className="border-b border-white/10 pb-8 mt-12">
+          <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-[0.2em] text-white">
+            FAQ & <span className="text-cyan-400">Support</span>
           </h1>
-          <p className="text-xs text-slate-500 uppercase tracking-widest mt-3">
-            OpenPlanet Documentation • Partnership Inquiries • Technical Assistance
-          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
@@ -81,32 +78,32 @@ export default function SupportPage() {
           {/* ── LEFT COLUMN: KNOWLEDGE BASE (FAQ) ── */}
           <div className="lg:col-span-7 space-y-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-              <h2 className="text-[10px] text-indigo-400 uppercase tracking-[0.3em] font-bold">Knowledge Base (FAQ)</h2>
+              <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
+              <h2 className="text-[11px] text-cyan-400 uppercase tracking-[0.3em] font-bold">Frequently Asked Questions</h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {FAQS.map((faq, idx) => (
                 <div 
                   key={idx} 
-                  className={`border transition-all duration-300 ${openFaq === idx ? 'border-indigo-500/50 bg-white/[0.02]' : 'border-white/5 bg-black/40 hover:border-white/20'}`}
+                  className={`border rounded-lg transition-all duration-300 overflow-hidden ${openFaq === idx ? 'border-cyan-500/50 bg-cyan-950/10 shadow-[0_0_20px_rgba(34,211,238,0.05)]' : 'border-white/5 bg-black/40 hover:border-white/20'}`}
                 >
                   <button
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                     className="w-full text-left px-6 py-5 flex justify-between items-center focus:outline-none"
                   >
-                    <span className="text-xs font-bold uppercase tracking-widest pr-4 leading-relaxed">
+                    <span className={`text-xs uppercase tracking-widest pr-4 leading-relaxed ${openFaq === idx ? 'text-cyan-300 font-bold' : 'text-slate-200'}`}>
                       {faq.q}
                     </span>
-                    <span className={`text-[10px] text-indigo-400 font-bold transition-transform duration-300 ${openFaq === idx ? 'rotate-180' : ''}`}>
-                      {openFaq === idx ? '[ - ]' : '[ + ]'}
+                    <span className={`text-xl text-cyan-500 font-light transition-transform duration-300 ${openFaq === idx ? 'rotate-45 text-cyan-300' : ''}`}>
+                      +
                     </span>
                   </button>
                   
                   <div 
-                    className={`overflow-hidden transition-all duration-500 ease-in-out ${openFaq === idx ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                    className={`transition-all duration-500 ease-in-out ${openFaq === idx ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
                   >
-                    <p className="px-6 pb-6 text-[11px] text-slate-400 leading-loose tracking-wider border-t border-white/5 pt-4 mt-2">
+                    <p className="px-6 pb-6 text-xs text-slate-400 leading-loose tracking-wide border-t border-white/5 pt-4 mt-1">
                       {faq.a}
                     </p>
                   </div>
@@ -117,82 +114,81 @@ export default function SupportPage() {
 
           {/* ── RIGHT COLUMN: SECURE UPLINK FORM ── */}
           <div className="lg:col-span-5">
-            <div className="sticky top-12">
+            <div className="sticky top-24">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <h2 className="text-[10px] text-emerald-400 uppercase tracking-[0.3em] font-bold">Secure Uplink / Contact</h2>
+                <h2 className="text-[11px] text-emerald-400 uppercase tracking-[0.3em] font-bold">Contact Us</h2>
               </div>
 
-              <div className="bg-black/60 backdrop-blur-xl border border-white/5 p-8 rounded-xl shadow-2xl relative overflow-hidden">
-                <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-500/10 blur-[120px] pointer-events-none"></div>
+              <div className="bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+                {/* Background Glow */}
+                <div className="absolute -top-32 -right-32 w-64 h-64 bg-cyan-500/10 blur-[100px] pointer-events-none"></div>
 
                 {status === "success" ? (
                   <div className="text-center py-16 animate-in zoom-in duration-500">
                     <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 flex items-center justify-center rounded-full mx-auto mb-6 border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                    <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-white mb-3">Transmission Successful</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-white mb-3">Message Sent!</h3>
                     <p className="text-[10px] text-slate-400 uppercase tracking-widest leading-relaxed">
-                      Your query has been logged in our system. <br/> The OpenPlanet team will respond shortly.
+                      Thanks for reaching out. <br/> We'll get back to you as soon as possible.
                     </p>
                     <button 
                       onClick={() => setStatus("idle")}
-                      className="mt-8 px-8 py-3 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors rounded text-[10px] font-bold uppercase tracking-widest"
+                      className="mt-8 px-8 py-3 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors rounded-lg text-[10px] font-bold uppercase tracking-widest"
                     >
-                      Initialize New Session
+                      Send Another Message
                     </button>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+                  <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                     
                     {/* Basic Info */}
                     <div className="space-y-2">
-                      <label className="block text-[9px] text-slate-500 uppercase tracking-widest">Operator Name *</label>
-                      <input type="text" name="name" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 transition-colors uppercase tracking-widest shadow-inner" placeholder="JOHN DOE" />
+                      <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Name *</label>
+                      <input type="text" name="name" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest" placeholder="John Doe" />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-[9px] text-slate-500 uppercase tracking-widest">Return Email *</label>
-                      <input type="email" name="email" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 transition-colors uppercase tracking-widest shadow-inner" placeholder="J.DOE@INSTITUTION.ORG" />
+                      <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Email *</label>
+                      <input type="email" name="email" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest" placeholder="john@example.com" />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-[9px] text-slate-500 uppercase tracking-widest">Organization / Institution</label>
-                      <input type="text" name="organization" className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 transition-colors uppercase tracking-widest shadow-inner" placeholder="OPTIONAL" />
+                      <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Organization (Optional)</label>
+                      <input type="text" name="organization" className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest" placeholder="University or Company" />
                     </div>
 
                     {/* Category Dropdown */}
                     <div className="space-y-2">
-                      <label className="block text-[9px] text-slate-500 uppercase tracking-widest">Request Category *</label>
-                      <select name="category" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3 text-xs text-white outline-none focus:border-indigo-500 transition-colors uppercase tracking-widest shadow-inner appearance-none cursor-pointer">
-                        <option value="" disabled selected>SELECT CLASSIFICATION...</option>
-                        <option value="Technical Issue">Technical Issue</option>
+                      <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Category *</label>
+                      <select name="category" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest appearance-none cursor-pointer">
+                        <option value="" disabled selected>Select an option...</option>
+                        <option value="Feedback / Suggestion">Feedback / Suggestion</option>
+                        <option value="Bug Report">Bug Report</option>
                         <option value="Data Question">Data Question</option>
-                        <option value="Research Collaboration">Research Collaboration</option>
-                        <option value="Feature Request">Feature Request</option>
-                        <option value="Partnership Inquiry">Partnership Inquiry</option>
-                        <option value="Account / Access Support">Account / Access Support</option>
+                        <option value="Partnership / Collaboration">Partnership / Collaboration</option>
                         <option value="Other">Other</option>
                       </select>
                     </div>
 
                     {/* Message Area */}
                     <div className="space-y-2 pt-2">
-                      <label className="block text-[9px] text-slate-500 uppercase tracking-widest">Diagnostic Message *</label>
+                      <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Message *</label>
                       <textarea
                         name="message"
                         required
                         rows={4}
-                        className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 transition-colors uppercase tracking-widest shadow-inner custom-scrollbar resize-none leading-relaxed"
-                        placeholder="Describe your question or issue in detail. Include the city analyzed, scenario parameters, or specific dataset if relevant."
+                        className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest custom-scrollbar resize-none leading-relaxed"
+                        placeholder="How can we help you today?"
                       ></textarea>
                     </div>
 
                     {/* Error State */}
                     {status === "error" && (
-                      <div className="bg-red-500/10 border border-red-500/20 rounded px-4 py-3 flex gap-4 items-center animate-pulse">
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 flex gap-4 items-center">
                         <span className="text-red-500 font-bold text-[10px]">ERR:</span>
-                        <span className="text-red-400 text-[9px] uppercase tracking-widest">Transmission failed. Check network.</span>
+                        <span className="text-red-400 text-[10px] uppercase tracking-widest">Message failed to send. Please try again.</span>
                       </div>
                     )}
 
@@ -200,10 +196,10 @@ export default function SupportPage() {
                     <button
                       type="submit"
                       disabled={status === "submitting"}
-                      className="w-full pt-4"
+                      className="w-full pt-2"
                     >
-                      <div className="w-full px-6 py-4 bg-white text-black text-[10px] font-bold uppercase tracking-[0.3em] rounded hover:bg-slate-200 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] text-center">
-                        {status === "submitting" ? "ENCRYPTING & TRANSMITTING..." : "SUBMIT REPORT"}
+                      <div className="w-full px-6 py-4 bg-cyan-900/80 border border-cyan-500/50 text-cyan-100 text-[10px] font-bold uppercase tracking-[0.3em] rounded-lg hover:bg-cyan-800 hover:text-white disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(34,211,238,0.1)] text-center">
+                        {status === "submitting" ? "SENDING MESSAGE..." : "SEND MESSAGE"}
                       </div>
                     </button>
 
