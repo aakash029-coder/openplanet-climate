@@ -15,16 +15,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-mono min-h-screen text-slate-900 relative selection:bg-indigo-500/30 bg-slate-50">
+      <body className="font-mono min-h-screen text-slate-200 relative selection:bg-fuchsia-500/30 selection:text-white bg-[#030014] overflow-x-hidden">
         
-        {/* 1. SATELLITE IMAGE LAYER */}
+        {/* 1. SATELLITE IMAGE LAYER (Very faint for texture) */}
         <div 
-          className="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-40"
+          className="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-20 mix-blend-overlay"
           style={{ backgroundImage: "url('/satellite-map.jpeg')" }}
         ></div>
         
-        {/* 2. LIGHT OVERLAY LAYER (White/Slate blur overlay taaki dark text clear padhne mein aaye) */}
-        <div className="fixed inset-0 z-10 bg-white/85 backdrop-blur-[3px] pointer-events-none"></div>
+        {/* 2. GLOWING LIGHTS LAYER (Generates stylish background lights) */}
+        <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-purple-700/20 rounded-full blur-[150px] pointer-events-none z-0"></div>
+        <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-indigo-700/20 rounded-full blur-[150px] pointer-events-none z-0"></div>
         
         {/* 3. MAIN CONTENT LAYER */}
         <Providers>
@@ -35,13 +36,14 @@ export default function RootLayout({
               {children}
             </main>
             
-            <footer className="border-t border-slate-200 bg-white/80 backdrop-blur-md py-8 px-6 md:px-12 mt-auto shadow-sm">
-              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold">
+            {/* GLASSMORPHISM FOOTER */}
+            <footer className="border-t border-white/10 bg-black/20 backdrop-blur-xl py-8 px-6 md:px-12 mt-auto shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-slate-400 font-bold">
                 <div>© {new Date().getFullYear()} OpenPlanet Intelligence.</div>
                 <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-                  <Link href="/privacy" className="hover:text-indigo-600 transition-colors">Privacy Policy</Link>
-                  <Link href="/terms" className="hover:text-indigo-600 transition-colors">Terms of Service</Link>
-                  <Link href="/support" className="hover:text-indigo-600 transition-colors">Support</Link>
+                  <Link href="/privacy" className="hover:text-fuchsia-400 transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="hover:text-fuchsia-400 transition-colors">Terms of Service</Link>
+                  <Link href="/support" className="hover:text-fuchsia-400 transition-colors">Support</Link>
                 </div>
               </div>
             </footer>
