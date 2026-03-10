@@ -56,6 +56,33 @@ function getWBTStatus(wbt: number) {
   return { label: "STABLE", color: "text-emerald-500", bg: "bg-emerald-500/10" };
 }
 
+// ── AI TEXT CLEANER (SAFE VERSION) ───────────────────────────────────────────
+function cleanResearchText(text: string | null) {
+  if (!text) return "";
+  
+  let cleaned = text.replace(/\*/g, ''); 
+  
+  // Fix missing spaces after full stops (SAFE)
+  cleaned = cleaned.replace(/([a-z])([.?!])([A-Z])/g, '$1$2 $3');
+  
+  // Fix currency hallucinations (SAFE - because we know OpenMatrix uses USD)
+  cleaned = cleaned.replace(/\beuros?\b/gi, 'USD');
+  cleaned = cleaned.replace(/€/g, '$');
+  
+  // Format giant raw numbers ONLY (SAFE - does not touch words like "million/billion")
+  cleaned = cleaned.replace(/(?:USD|\$)\s*([\d,]+(?:\.\d{2,})?)/gi, (match, numStr) => {
+    const pureNumStr = numStr.replace(/,/g, '');
+    const num = parseFloat(pureNumStr);
+    
+    if (isNaN(num)) return match;
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    return `$${num.toLocaleString()}`;
+  });
+
+  return cleaned;
+}
+
 // ── MAIN COMPONENT ───────────────────────────────────────────────────────────
 export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
   const [ssp, setSsp] = useState("ssp245");
@@ -333,7 +360,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               <span className="text-xs font-mono text-slate-500">data loading...</span>
             ) : aiAnalysis ? (
               <p className="text-xs font-mono text-slate-300 leading-loose">
-                {aiAnalysis.replace(/\*/g, '')}
+                {/* 👇 FRONTEND TEXT CLEANER APPLIED HERE */}
+                {cleanResearchText(aiAnalysis)}
               </p>
             ) : null}
           </div>
