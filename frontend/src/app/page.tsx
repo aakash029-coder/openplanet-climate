@@ -20,7 +20,7 @@ export default function HomePage() {
     <div className="flex flex-col items-center w-full min-h-screen">
       <main className="w-full max-w-7xl px-6 flex flex-col items-center pb-24 gap-32">
         
-        {/* 1. THE HERO SECTION */}
+        {/* HERO SECTION */}
         <section className="w-full min-h-[80vh] flex flex-col items-center justify-center text-center">
           <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 tracking-tighter mb-8 leading-tight drop-shadow-sm">
             Project & Mitigate <br />
@@ -41,7 +41,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 2. THE PROBLEM STATEMENT */}
+        {/* PROBLEM STATEMENT */}
         <section id="discover" className="w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center bg-white/70 backdrop-blur-md border border-slate-200 p-8 md:p-16 rounded-xl shadow-sm">
           <div className="lg:col-span-6 flex flex-col gap-6">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight leading-tight uppercase">
@@ -74,21 +74,14 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 3. THE CAPABILITIES GRID */}
+        {/* CAPABILITIES */}
         <section id="about" className="w-full flex flex-col items-center">
           <div className="text-center mb-16">
             <h3 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-[0.2em] uppercase">Decision Infrastructure</h3>
             <p className="text-slate-500 font-light mt-4 max-w-2xl text-[10px] uppercase tracking-widest">Built on peer-reviewed epidemiology, global satellite data, and institutional-grade spatial computing.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-            {[
-              "High-Resolution Hazard Mapping",
-              "Actionable 'What-If' Scenarios",
-              "Climate & Economic Projections",
-              "WHO-GBD Epidemiology Engine",
-              "Monte Carlo Uncertainty (95% CI)",
-              "Institutional Grade Precision"
-            ].map((title, idx) => (
+            {["High-Resolution Hazard Mapping", "Actionable 'What-If' Scenarios", "Climate & Economic Projections", "WHO-GBD Epidemiology Engine", "Monte Carlo Uncertainty (95% CI)", "Institutional Grade Precision"].map((title, idx) => (
               <div key={idx} className="bg-white/80 backdrop-blur-md border border-slate-200 p-8 transition-all duration-300 group rounded-xl hover:border-indigo-400 hover:shadow-lg shadow-sm">
                 <h4 className="text-[10px] font-bold text-slate-800 tracking-[0.2em] uppercase">{title}</h4>
               </div>
@@ -96,7 +89,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 4. OPERATIONAL WORKFLOW */}
+        {/* WORKFLOW */}
         <section className="w-full flex flex-col items-center">
           <div className="text-center mb-16">
             <h3 className="text-3xl font-bold text-slate-900 tracking-[0.2em] uppercase">Protocol Workflow</h3>
@@ -116,7 +109,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 5. FINAL CALL TO ACTION */}
+        {/* CALL TO ACTION */}
         <section className="w-full flex flex-col items-center text-center bg-indigo-50 border border-indigo-100 py-24 backdrop-blur-sm rounded-xl overflow-hidden relative shadow-sm">
           <div className="absolute inset-0 bg-indigo-500/10 blur-[100px] pointer-events-none"></div>
           <h2 className="text-[10px] font-mono text-indigo-600 tracking-[0.5em] uppercase mb-4">Strategic Uplink</h2>
