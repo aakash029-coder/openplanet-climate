@@ -9,4 +9,3 @@ dist/
 build/
 .DS_Store
 ops_shield.duckdb
-frontend/public/satellite-map.jpeg
