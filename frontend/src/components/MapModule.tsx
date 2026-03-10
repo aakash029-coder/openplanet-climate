@@ -110,7 +110,6 @@ const cartoDarkStyle = {
 };
 
 // --- MAIN MODULE ---
-// CRITICAL FIX: Added onTargetLocked to the props definition
 export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onNavigateToCompare?: () => void, onTargetLocked?: (city: string) => void }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -132,7 +131,6 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [chartData, setChartData] = useState<{heatwave: any[], economic: any[]}>({ heatwave: [], economic: [] });
 
-  // CRITICAL FIX: Replaced Open-Meteo Geocoder with OpenStreetMap to bypass IP Bans
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.length > 2 && !selectedCity) {
@@ -144,11 +142,10 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
           
           const data = await res.json();
           
-          // Map OpenStreetMap data to our exact UI format
           const mappedResults = data.map((city: any) => ({
             id: city.place_id,
             name: city.name || city.display_name.split(',')[0],
-            admin1: '', // Nominatim handles this in display_name
+            admin1: '',
             country: city.display_name.split(',').pop()?.trim() || '',
             latitude: parseFloat(city.lat),
             longitude: parseFloat(city.lon)
@@ -164,7 +161,7 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
         setSuggestions([]);
         setIsSearching(false);
       }
-    }, 600); // Increased debounce to 600ms to be gentle on the new API
+    }, 600);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery, selectedCity]);
@@ -217,7 +214,6 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
 
       const data = await response.json();
 
-      // CRITICAL FIX: Lock the target city in the master page
       if (onTargetLocked) {
         onTargetLocked(selectedCity.name);
       }
@@ -526,16 +522,6 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
                 ) : (
                   <div className="text-slate-600 font-mono text-[10px] uppercase tracking-[0.4em]">AI Analysis data not provided by backend for this query.</div>
                 )}
-
-                {/* Compare Link */}
-                <div className="flex justify-end mt-12">
-                  <button 
-                    onClick={onNavigateToCompare} 
-                    className="flex items-center gap-3 bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-sm font-mono text-[11px] uppercase tracking-[0.2em] transition-all shadow-[0_0_15px_rgba(99,102,241,0.4)] active:scale-95 border border-indigo-400"
-                  >
-                    Compare Projections <span className="text-lg leading-none">→</span>
-                  </button>
-                </div>
               </div>
             </div>
           </>
