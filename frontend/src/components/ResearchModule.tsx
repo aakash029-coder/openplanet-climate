@@ -305,7 +305,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             
             {/* ── COLUMN 1: PHYSIOLOGICAL LIMIT (WET-BULB) ── */}
             <div className="lg:col-span-1 bg-[#050814] border border-slate-800 p-6 rounded-sm relative overflow-hidden flex flex-col">
-              <div className="absolute top-0 right-0 p-2 opacity-20"><span className="text-[40px] font-bold">01</span></div>
+              
               <h3 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-8">Physiological Limit Monitor</h3>
               
               <div className="flex flex-col items-center justify-center py-10 border-y border-slate-800/50 my-6 flex-grow">
