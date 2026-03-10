@@ -1,7 +1,6 @@
 import './globals.css';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
-import { Providers } from '@/components/Providers';
+import { Providers } from '@/components/Providers'; 
 
 export const metadata = {
   title: 'OpenPlanet Climate Engine',
@@ -14,40 +13,49 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="font-mono min-h-screen text-slate-200 relative selection:bg-fuchsia-500/30 selection:text-white bg-[#030014] overflow-x-hidden">
+    <html lang="en" className="bg-[#020617] text-white">
+      {/* 👇 YAHAN MAINE SATELLITE IMAGE PERMANENTLY ADD KAR DI HAI */}
+      <body className="font-mono min-h-screen flex flex-col selection:bg-indigo-500/30 bg-[url('/cybermap.jpeg')] bg-cover bg-center bg-fixed bg-no-repeat">
         
-        {/* 1. SATELLITE IMAGE LAYER (Very faint for texture) */}
-        <div 
-          className="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-20 mix-blend-overlay"
-          style={{ backgroundImage: "url('/satellite-map.jpeg')" }}
-        ></div>
-        
-        {/* 2. GLOWING LIGHTS LAYER (Generates stylish background lights) */}
-        <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-purple-700/20 rounded-full blur-[150px] pointer-events-none z-0"></div>
-        <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-indigo-700/20 rounded-full blur-[150px] pointer-events-none z-0"></div>
-        
-        {/* 3. MAIN CONTENT LAYER */}
         <Providers>
-          <div className="flex flex-col min-h-screen relative z-20">
-            <Navbar />
+          
+          {/* ── HEADER ── */}
+          <header className="sticky top-0 z-50 bg-[#020617]/90 backdrop-blur-xl border-b border-white/10 px-6 md:px-12 py-5 flex justify-between items-center shadow-lg">
+            <Link href="/" className="text-sm md:text-base font-bold uppercase tracking-[0.3em] text-white hover:text-indigo-400 transition-colors">
+              Open<span className="text-indigo-500">Planet</span>
+            </Link>
             
-            <main className="flex-1 flex flex-col">
-              {children}
-            </main>
-            
-            {/* GLASSMORPHISM FOOTER */}
-            <footer className="border-t border-white/10 bg-black/20 backdrop-blur-xl py-8 px-6 md:px-12 mt-auto shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-              <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-slate-400 font-bold">
-                <div>© {new Date().getFullYear()} OpenPlanet Intelligence.</div>
-                <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-                  <Link href="/privacy" className="hover:text-fuchsia-400 transition-colors">Privacy Policy</Link>
-                  <Link href="/terms" className="hover:text-fuchsia-400 transition-colors">Terms of Service</Link>
-                  <Link href="/support" className="hover:text-fuchsia-400 transition-colors">Support</Link>
-                </div>
+            <nav className="flex gap-6 md:gap-10 text-[10px] uppercase tracking-widest font-bold">
+              <Link href="/" className="text-slate-400 hover:text-white transition-colors">Home</Link>
+              <Link href="/discover" className="text-slate-400 hover:text-white transition-colors">Discover</Link>
+              <Link href="/about" className="text-slate-400 hover:text-white transition-colors">About</Link>
+            </nav>
+          </header>
+
+          {/* ── MAIN CONTENT ── */}
+          {/* Halki si black overlay di hai taaki text read karne mein problem na ho, par map piche dikhta rahega */}
+          <main className="flex-1 flex flex-col bg-black/40 backdrop-blur-[2px]">
+            {children}
+          </main>
+
+          {/* ── FOOTER (PROFESSIONAL THEME - NO GREEN) ── */}
+          <footer className="border-t border-white/10 bg-[#050814]/95 backdrop-blur-md py-8 px-6 md:px-12 mt-auto">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-widest text-slate-500 font-bold">
+              
+              <div>
+                © {new Date().getFullYear()} OpenPlanet Intelligence.
               </div>
-            </footer>
-          </div>
+              
+              <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+                <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+                {/* Support se green hata kar professional white/indigo theme par set kar diya */}
+                <Link href="/support" className="hover:text-white transition-colors">Support</Link>
+              </div>
+
+            </div>
+          </footer>
+          
         </Providers>
 
       </body>
