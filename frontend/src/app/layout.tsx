@@ -17,11 +17,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-mono min-h-screen text-slate-200 relative selection:bg-cyan-500/30 selection:text-white bg-[#010314] overflow-x-hidden">
         
-        {/* 1. SATELLITE IMAGE LAYER (Ab ye clearly visible hogi) */}
-        <div 
-          className="fixed inset-0 z-0 w-full h-full bg-cover bg-center bg-no-repeat opacity-30"
-          style={{ backgroundImage: "url('/satellite-map.jpeg')" }}
-        ></div>
+        {/* 👇 1. BULLETPROOF SATELLITE IMAGE (HTML img tag CSS cache issues se nahi rokta) */}
+        <img 
+          src="/satellite-map.jpeg" 
+          alt="Satellite Map" 
+          className="fixed inset-0 w-full h-full object-cover opacity-20 pointer-events-none z-0"
+        />
         
         {/* 2. GLOWING LIGHTS LAYER */}
         <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-blue-700/20 rounded-full blur-[150px] pointer-events-none z-0"></div>

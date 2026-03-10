@@ -1,14 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
-import { useSession, signOut, signIn } from 'next-auth/react' // 👈 signIn wapas import kiya
-import { useState } from 'react'
+import { useSession, signOut, signIn } from 'next-auth/react'
 import { usePathname } from 'next/navigation' 
 
 export default function Navbar() {
   const { data: session } = useSession()
-  const [open, setOpen] = useState(false)
   const pathname = usePathname() 
 
   const getLinkStyle = (path: string) => {
@@ -42,37 +39,23 @@ export default function Navbar() {
       {/* Extreme Right Auth Actions */}
       <div className="flex items-center gap-6">
         {session ? (
-          <div className="relative">
+          
+          /* 👇 FIXED: Sirf Name aur Logout button (No image, no dropdown) */
+          <div className="flex items-center gap-5 bg-white/5 border border-white/10 px-5 py-2 rounded-full shadow-inner">
+            <span className="text-[11px] font-mono text-cyan-400 font-bold tracking-widest uppercase">
+              {session.user?.name?.split(' ')[0] || 'OPERATOR'}
+            </span>
+            <div className="w-[1px] h-3 bg-white/20"></div> {/* Divider */}
             <button 
-              onClick={() => setOpen(!open)} 
-              className="flex items-center gap-3 bg-white/5 border border-white/10 hover:border-cyan-500/50 hover:bg-white/10 rounded-full py-1.5 px-2 pr-5 transition-all shadow-sm"
+              onClick={() => signOut({ callbackUrl: '/' })} 
+              className="text-[10px] font-mono text-slate-400 hover:text-red-400 uppercase tracking-widest transition-colors"
             >
-              {session.user?.image ? (
-                <Image src={session.user.image} alt="Profile" width={28} height={28} className="rounded-full border border-slate-600"/>
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-blue-900/50 border border-blue-500/30 flex items-center justify-center text-[10px] font-bold text-cyan-100">
-                  {session.user?.name?.[0] || 'U'}
-                </div>
-              )}
-              <span className="font-mono text-xs text-slate-300 uppercase tracking-widest">
-                {session.user?.name?.split(' ')[0] || 'Operator'}
-              </span>
+              Logout
             </button>
-
-            {open && (
-              <div className="absolute right-0 top-full mt-3 w-56 bg-[#020617]/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                <Link href="/dashboard" onClick={() => setOpen(false)} className="block px-5 py-4 text-xs font-mono text-slate-300 hover:bg-white/5 hover:text-cyan-400 transition-colors border-b border-white/5">
-                  ACCESS DASHBOARD
-                </Link>
-                <button onClick={() => { setOpen(false); signOut({ callbackUrl:'/' }) }} className="block w-full text-left px-5 py-4 text-xs font-mono text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors">
-                  TERMINATE SESSION
-                </button>
-              </div>
-            )}
           </div>
+
         ) : (
           <div className="flex items-center">
-            {/* 👈 BUTTON FIXED: Ab wapas click karne par Google Login popup khulega */}
             <button 
               onClick={() => signIn('google')} 
               className="relative px-8 py-3 rounded-full text-[11px] font-bold tracking-[0.2em] text-white uppercase transition-all overflow-hidden group border border-white/20 shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:shadow-[0_0_30px_rgba(56,189,248,0.5)] hover:scale-105"
