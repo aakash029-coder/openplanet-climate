@@ -5,15 +5,16 @@ import Navbar from '@/components/Navbar';
 import { Providers } from '@/components/Providers';
 
 export const metadata: Metadata = {
+  // 👇 YAHI THI WO MISSING PIECE JO NEXT.JS KO CHAHIYE THI
+  metadataBase: new URL('https://openplanet-ai.vercel.app'),
+  
   title: 'OpenPlanet | Climate Risk Intelligence',
   description: 'A globally scalable climate intelligence engine translating planetary physics into localized survival.',
   
-  // 👇 GOOGLE VERIFICATION
   verification: {
     google: 'AteFZ_PNhw-ABwNOcaDMqNI6VD4Somp4TQ9xk7Eqmy8', 
   },
 
-  // 👇 OPEN GRAPH FOR LINKEDIN/WHATSAPP (Magic image will handle the picture)
   openGraph: {
     title: 'OpenPlanet | Climate Risk Intelligence',
     description: 'A globally scalable climate intelligence engine translating planetary physics into localized survival.',
@@ -23,7 +24,6 @@ export const metadata: Metadata = {
     type: 'website',
   },
 
-  // 👇 TWITTER CARD
   twitter: {
     card: 'summary_large_image',
     title: 'OpenPlanet | Climate Risk Intelligence',
