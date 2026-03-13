@@ -8,16 +8,17 @@ export const metadata: Metadata = {
   // 👇 YAHI THI WO MISSING PIECE JO NEXT.JS KO CHAHIYE THI
   metadataBase: new URL('https://openplanet-ai.vercel.app'),
   
-  title: 'OpenPlanet | Climate Risk Intelligence',
-  description: 'A globally scalable climate intelligence engine translating planetary physics into localized survival.',
+  // 👇 OPTIMIZED SEO LENGTHS
+  title: 'OpenPlanet | High-Resolution Climate Risk Intelligence',
+  description: 'OpenPlanet is a globally scalable climate intelligence engine. We translate complex planetary physics into highly actionable, localized survival strategies.',
   
   verification: {
     google: 'AteFZ_PNhw-ABwNOcaDMqNI6VD4Somp4TQ9xk7Eqmy8', 
   },
 
   openGraph: {
-    title: 'OpenPlanet | Climate Risk Intelligence',
-    description: 'A globally scalable climate intelligence engine translating planetary physics into localized survival.',
+    title: 'OpenPlanet | High-Resolution Climate Risk Intelligence',
+    description: 'OpenPlanet is a globally scalable climate intelligence engine. We translate complex planetary physics into highly actionable, localized survival strategies.',
     url: 'https://openplanet-ai.vercel.app',
     siteName: 'OpenPlanet',
     locale: 'en_US',
@@ -26,8 +27,8 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: 'OpenPlanet | Climate Risk Intelligence',
-    description: 'A globally scalable climate intelligence engine translating planetary physics into localized survival.',
+    title: 'OpenPlanet | High-Resolution Climate Risk Intelligence',
+    description: 'OpenPlanet is a globally scalable climate intelligence engine. We translate complex planetary physics into highly actionable, localized survival strategies.',
   },
 };
 
