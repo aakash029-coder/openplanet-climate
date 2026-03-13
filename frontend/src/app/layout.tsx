@@ -7,8 +7,27 @@ import { Providers } from '@/components/Providers';
 export const metadata: Metadata = {
   title: 'OpenPlanet | Climate Risk Intelligence',
   description: 'A globally scalable climate intelligence engine translating planetary physics into localized survival.',
+  
+  // 👇 GOOGLE VERIFICATION
   verification: {
-    google: 'AteFZ_PNhw-ABwNOcaDMqNI6VD4Somp4TQ9xk7Eqmy8', // <--- Google Search Console Code
+    google: 'AteFZ_PNhw-ABwNOcaDMqNI6VD4Somp4TQ9xk7Eqmy8', 
+  },
+
+  // 👇 OPEN GRAPH FOR LINKEDIN/WHATSAPP (Magic image will handle the picture)
+  openGraph: {
+    title: 'OpenPlanet | Climate Risk Intelligence',
+    description: 'A globally scalable climate intelligence engine translating planetary physics into localized survival.',
+    url: 'https://openplanet-ai.vercel.app',
+    siteName: 'OpenPlanet',
+    locale: 'en_US',
+    type: 'website',
+  },
+
+  // 👇 TWITTER CARD
+  twitter: {
+    card: 'summary_large_image',
+    title: 'OpenPlanet | Climate Risk Intelligence',
+    description: 'A globally scalable climate intelligence engine translating planetary physics into localized survival.',
   },
 };
 
