@@ -60,8 +60,8 @@ export default function RootLayout({
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                 
                 <div className="flex items-center gap-4 group">
-                  {/* 👇 NAYA RED PLANET LOGO IN FOOTER WITH GLOW */}
-                  <div className="relative flex items-center justify-center w-8 h-8 overflow-hidden rounded-full border border-white/5 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
+                  {/* 👇 BLUE/CYAN PLANET LOGO IN FOOTER WITH GLOW */}
+                  <div className="relative flex items-center justify-center w-8 h-8 overflow-hidden rounded-full border border-white/5 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
                     <img 
                       src="/logo.jpeg" 
                       alt="OpenPlanet Logo" 
