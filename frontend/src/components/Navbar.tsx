@@ -21,8 +21,13 @@ export default function Navbar() {
       
       {/* Brand Logo - Fixed & Rigid */}
       <Link href="/" className="flex items-center gap-4 group">
-        <div className="relative flex items-center justify-center w-9 h-9 bg-black/50 border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)] overflow-hidden group-hover:border-cyan-500/50 transition-all rounded-lg">
-          <span className="relative text-white font-serif font-black text-xs tracking-tighter">OP</span>
+        {/* 👇 NAYA RED PLANET LOGO WITH RED GLOW */}
+        <div className="relative flex items-center justify-center w-10 h-10 overflow-hidden rounded-full border border-white/5 shadow-[0_0_15px_rgba(239,68,68,0.2)] group-hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all duration-300">
+          <img 
+            src="/logo.jpeg" 
+            alt="OpenPlanet Logo" 
+            className="w-full h-full object-cover scale-110" // scale-110 taaki logo edge-to-edge fit baithe
+          />
         </div>
         <div className="flex flex-col">
           <span className="text-sm font-serif font-bold text-slate-200 tracking-[0.2em] leading-none mb-1 uppercase">OpenPlanet</span>
