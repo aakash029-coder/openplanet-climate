@@ -1,11 +1,15 @@
+import type { Metadata } from 'next';
 import './globals.css';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Providers } from '@/components/Providers';
 
-export const metadata = {
-  title: 'OpenPlanet Climate Engine',
-  description: 'High-Resolution Climate Risk Intelligence',
+export const metadata: Metadata = {
+  title: 'OpenPlanet | Climate Risk Intelligence',
+  description: 'A globally scalable climate intelligence engine translating planetary physics into localized survival.',
+  verification: {
+    google: 'AteFZ_PNhw-ABwNOcaDMqNI6VD4Somp4TQ9xk7Eqmy8', // <--- Google Search Console Code
+  },
 };
 
 export default function RootLayout({
