@@ -162,8 +162,8 @@ export default function SupportPage() {
                     {/* Category Dropdown */}
                     <div className="space-y-2">
                       <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Category *</label>
-                      <select name="category" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest appearance-none cursor-pointer">
-                        <option value="" disabled selected>Select an option...</option>
+                      <select name="category" required defaultValue="" className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest appearance-none cursor-pointer">
+                        <option value="" disabled>Select an option...</option>
                         <option value="Feedback / Suggestion">Feedback / Suggestion</option>
                         <option value="Bug Report">Bug Report</option>
                         <option value="Data Question">Data Question</option>

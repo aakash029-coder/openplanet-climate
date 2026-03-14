@@ -40,6 +40,26 @@ export default function DashboardPage() {
   // 👇 MEMORY SYSTEM: Ye track karega ki aap kis-kis tab par ja chuke hain
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(new Set(['Dashboard']));
 
+  // 🔴 NEW: Pop-up control karne ke liye state
+  const [showWarningModal, setShowWarningModal] = useState(false);
+
+  // 🔴 NEW: Page load hote hi screen size check karne ka logic
+  useEffect(() => {
+    const checkScreenSize = () => {
+      // Agar screen 1024px se choti hai (Mobile / Small Tablet), toh pop-up dikhao
+      if (window.innerWidth < 1024) {
+        setShowWarningModal(true);
+      }
+    };
+
+    // Pehli baar check karega
+    checkScreenSize(); 
+
+    // Agar user phone rotate karta hai tab bhi check karega
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
   // Jab bhi active tab badlega, hum use memory mein save kar lenge
   useEffect(() => {
     setVisitedTabs((prev) => {
@@ -59,6 +79,47 @@ export default function DashboardPage() {
   return (
     <div className="relative text-slate-200 font-sans overflow-x-hidden flex flex-col w-full min-h-screen">
       
+      {/* 🛑 THE POP-UP MODAL (Sirf tab dikhega jab screen choti hogi aur state true hogi) */}
+      {showWarningModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="relative w-full max-w-sm bg-[#0a0f1d] border border-cyan-500/30 p-8 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.15)]">
+            
+            {/* ❌ TOP RIGHT CROSS BUTTON (Click karne pe pop-up band aur user dashboard use kar payega) */}
+            <button
+              onClick={() => setShowWarningModal(false)}
+              className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors p-1"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Modal Content */}
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 bg-cyan-900/30 text-cyan-400 rounded-full flex items-center justify-center mx-auto border border-cyan-500/20">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-widest">
+                Desktop Recommended
+              </h3>
+              <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-wider">
+                OpenPlanet's high-resolution maps and data models are complex. For the full experience, please switch to a desktop or large tablet.
+              </p>
+              
+              {/* Continue Button */}
+              <button
+                onClick={() => setShowWarningModal(false)}
+                className="mt-4 w-full py-3 bg-cyan-900/40 border border-cyan-500/30 text-cyan-100 text-[10px] font-bold uppercase tracking-[0.2em] rounded-lg hover:bg-cyan-800 transition-colors"
+              >
+                Continue Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <img 
         src="/cybermap.jpeg" 
         alt="Cyber Map Background" 
