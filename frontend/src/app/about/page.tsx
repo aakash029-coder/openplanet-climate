@@ -42,7 +42,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* CARD 2: Our Hyper-Focus */}
+          {/* CARD 2: Our Philosophy */}
           <div className="lg:col-span-6 bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-2xl shadow-2xl flex flex-col hover:border-red-500/30 transition-colors group">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1.5 h-1.5 bg-red-500 rounded-full group-hover:animate-ping"></div>
@@ -69,7 +69,7 @@ export default function AboutPage() {
               <h3 className="text-[10px] text-emerald-400 tracking-[0.4em] uppercase font-bold">The Architecture</h3>
             </div>
             <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">Edge-Computed & Transparent</h4>
-            <p className="text-xs text-slate-300 font-light leading-loose mb-8 tracking-wide">
+            <p className="text-[11px] text-slate-300 font-light leading-loose mb-8 tracking-wide">
               Planetary climate models are traditionally too heavy and expensive for local planners. We solved this compute bottleneck with a radically transparent engine:
             </p>
             <div className="space-y-8">
@@ -83,7 +83,7 @@ export default function AboutPage() {
               </div>
               <div className="border-l-2 border-slate-700 pl-4">
                 <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Edge-Compute Efficiency</span>
-                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">By running our filtering engines on the edge, we decentralize access to heavy data, allowing global researchers to access intelligence at near-zero server cost.</span>
+                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">By running our filtering engines on the edge, we decentralize access to heavy data, allowing researchers globally to access intelligence at near-zero server cost.</span>
               </div>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function AboutPage() {
               <h3 className="text-[10px] text-purple-400 tracking-[0.4em] uppercase font-bold">The Genesis</h3>
             </div>
             <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">Democratizing Survival Data</h4>
-            <p className="text-xs text-slate-300 font-light leading-loose mb-8 tracking-wide">
+            <p className="text-[11px] text-slate-300 font-light leading-loose mb-8 tracking-wide">
               OpenPlanet was built to answer a singular question: Why is high-resolution climate intelligence still inaccessible to the places that need it most?
             </p>
             <div className="space-y-8">
@@ -104,12 +104,13 @@ export default function AboutPage() {
                 <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">The platform is engineered to ensure that the compute asymmetry between the Global North and South does not dictate who gets to adapt to a warming world.</span>
               </div>
               <div className="border-l-2 border-slate-700 pl-4">
-                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">People Over Property</span>
-                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">We do not stop at the concrete. Our engine shifts the analytical focus entirely toward human survival and labor productivity.</span>
-              </div>
-              <div className="border-l-2 border-slate-700 pl-4">
                 <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Dynamic Simulation</span>
-                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">OpenPlanet operates as an active simulation environment, allowing planners to dynamically test localized interventions (like canopy cover) to calculate risk reduction.</span>
+                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">OpenPlanet operates as an active simulation environment, allowing planners to dynamically test localized interventions (like canopy cover) to calculate immediate risk reduction.</span>
+              </div>
+              {/* 👇 YAHAN NAYA POINT ADD KIYA HAI */}
+              <div className="border-l-2 border-slate-700 pl-4">
+                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Actionable Adaptation</span>
+                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">By transforming abstract climate science into actionable metrics, we empower local governments to secure funding and implement precise, life-saving adaptations.</span>
               </div>
             </div>
           </div>
