@@ -43,11 +43,14 @@ export default function DashboardPage() {
   // 🔴 NEW: Pop-up control karne ke liye state
   const [showWarningModal, setShowWarningModal] = useState(false);
 
-  // 🔴 NEW: Page load hote hi screen size check karne ka logic
+  // 🔴 UPDATED: Screen check with sessionStorage memory
   useEffect(() => {
     const checkScreenSize = () => {
-      // Agar screen 1024px se choti hai (Mobile / Small Tablet), toh pop-up dikhao
-      if (window.innerWidth < 1024) {
+      // Check karo browser ki memory mein ki user ne pehle dismiss kiya hai kya
+      const hasSeenWarning = sessionStorage.getItem('hasSeenDesktopWarning');
+      
+      // Agar screen choti hai AUR usne abhi tak dismiss nahi kiya, tabhi modal dikhao
+      if (window.innerWidth < 1024 && !hasSeenWarning) {
         setShowWarningModal(true);
       }
     };
@@ -59,6 +62,12 @@ export default function DashboardPage() {
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
+
+  // 🔴 NEW: Modal close karne ka function jo browser ko yaad dila dega
+  const handleDismissWarning = () => {
+    sessionStorage.setItem('hasSeenDesktopWarning', 'true'); // Memory mein save kar liya
+    setShowWarningModal(false); // Modal band kar diya
+  };
 
   // Jab bhi active tab badlega, hum use memory mein save kar lenge
   useEffect(() => {
@@ -84,9 +93,9 @@ export default function DashboardPage() {
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="relative w-full max-w-sm bg-[#0a0f1d] border border-cyan-500/30 p-8 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.15)]">
             
-            {/* ❌ TOP RIGHT CROSS BUTTON (Click karne pe pop-up band aur user dashboard use kar payega) */}
+            {/* ❌ TOP RIGHT CROSS BUTTON (Yahan handleDismissWarning lagaya) */}
             <button
-              onClick={() => setShowWarningModal(false)}
+              onClick={handleDismissWarning}
               className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors p-1"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,9 +117,9 @@ export default function DashboardPage() {
                 OpenPlanet's high-resolution maps and data models are complex. For the full experience, please switch to a desktop or large tablet.
               </p>
               
-              {/* Continue Button */}
+              {/* Continue Button (Yahan bhi handleDismissWarning lagaya) */}
               <button
-                onClick={() => setShowWarningModal(false)}
+                onClick={handleDismissWarning}
                 className="mt-4 w-full py-3 bg-cyan-900/40 border border-cyan-500/30 text-cyan-100 text-[10px] font-bold uppercase tracking-[0.2em] rounded-lg hover:bg-cyan-800 transition-colors"
               >
                 Continue Anyway

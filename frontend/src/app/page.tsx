@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -8,52 +8,23 @@ export default function HomePage() {
   const { data: session } = useSession();
   const router = useRouter();
   
-  // States
+  // 🔴 Warning Modal aur Screen Detect yahan se permanently REMOVED
+  // Sirf Auth modal state bachi hai
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showWarningModal, setShowWarningModal] = useState(false);
-  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
-  // 🌍 1. Screen Size Detect Karne Ka Logic
-  useEffect(() => {
-    const checkScreenSize = () => {
-      // 1024px se chota matlab Mobile ya Chota Tablet. 
-      setIsSmallScreen(window.innerWidth < 1024);
-    };
-
-    checkScreenSize(); // Page load hote hi check karega
-    window.addEventListener('resize', checkScreenSize); // Screen resize pe update karega
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
-
-  // 🔐 2. Sign-In Complete Hone Ka Logic 
-  useEffect(() => {
-    // Agar user logged in hai aur choti screen par hai
-    if (session && isSmallScreen) {
-      setShowWarningModal(true);
-    }
-  }, [session, isSmallScreen]);
-
-  // 🚶‍♂️ 3. Guest Button Click Handler
+  // 🚶‍♂️ Guest Button Click Handler
   const handleGuestClick = () => {
-    if (isSmallScreen) {
-      setShowAuthModal(false); // Auth modal band karo
-      setShowWarningModal(true); // Warning modal dikhao
-    } else {
-      router.push('/dashboard');
-    }
+    // Seedha dashboard par bhejo, pop-up ka logic ab dashboard mein hai
+    router.push('/dashboard');
   };
 
-  // 🚀 4. Let's Start Button Handler
+  // 🚀 Let's Start Button Handler
   const handleStartSimulation = (e: React.MouseEvent) => {
     e.preventDefault();
     if (session) {
-      if (isSmallScreen) {
-        setShowWarningModal(true);
-      } else {
-        router.push('/dashboard'); 
-      }
+      router.push('/dashboard'); 
     } else {
-      setShowAuthModal(true); // Login nahi hai toh pop-up dikhao
+      setShowAuthModal(true); 
     }
   };
 
@@ -157,46 +128,6 @@ export default function HomePage() {
         </section>
 
       </main>
-
-      {/* ── 🛑 THE DESKTOP WARNING MODAL ── */}
-      {showWarningModal && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className="relative w-full max-w-sm bg-[#0a0f1d] border border-cyan-500/30 p-8 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.15)]">
-            
-            <button
-              onClick={() => setShowWarningModal(false)}
-              className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors p-1"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            <div className="text-center space-y-4">
-              <div className="w-12 h-12 bg-cyan-900/30 text-cyan-400 rounded-full flex items-center justify-center mx-auto border border-cyan-500/20">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest">
-                Desktop Recommended
-              </h3>
-              <p className="text-[10px] text-slate-400 leading-relaxed uppercase tracking-wider">
-                OpenPlanet's high-resolution maps and data models are complex. For the full experience, please switch to a desktop or large tablet.
-              </p>
-              <button
-                onClick={() => {
-                  setShowWarningModal(false);
-                  router.push('/dashboard');
-                }}
-                className="mt-4 w-full py-3 bg-cyan-900/40 border border-cyan-500/30 text-cyan-100 text-[10px] font-bold uppercase tracking-[0.2em] rounded-lg hover:bg-cyan-800 transition-colors"
-              >
-                Continue Anyway
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── PREMIUM AUTH POP-UP MODAL ── */}
       {showAuthModal && (
