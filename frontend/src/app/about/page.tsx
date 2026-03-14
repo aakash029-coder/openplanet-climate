@@ -15,108 +15,108 @@ export default function AboutPage() {
           <h1 className="text-3xl md:text-5xl font-bold text-white uppercase tracking-[0.2em] mb-6 drop-shadow-lg">About <span className="text-cyan-400">OpenPlanet</span></h1>
           <h2 className="text-sm md:text-lg font-bold text-slate-400 tracking-[0.3em] uppercase mb-8">Translating Planetary Physics into Localized Survival.</h2>
           <p className="text-xs text-slate-300 font-light max-w-3xl mx-auto leading-loose tracking-wide uppercase">
-            OpenPlanet is a globally scalable climate intelligence engine. We bridge the critical gap between macro-level atmospheric science and block-level human vulnerability.
+            OpenPlanet is a high-resolution climate intelligence engine. We bridge the critical gap between macro-level atmospheric science and block-level human vulnerability.
           </p>
         </div>
 
         {/* 2x2 GLASSMORPHIC GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
           
-          {/* CARD 1: The Catalyst */}
+          {/* CARD 1: The Core Problem */}
           <div className="lg:col-span-6 bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-2xl shadow-2xl flex flex-col hover:border-cyan-500/30 transition-colors group">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-1.5 h-1.5 bg-red-500 rounded-full group-hover:animate-ping"></div>
-              <h3 className="text-[10px] text-red-400 tracking-[0.4em] uppercase font-bold">The Catalyst</h3>
+              <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full group-hover:animate-ping"></div>
+              <h3 className="text-[10px] text-cyan-400 tracking-[0.4em] uppercase font-bold">The Core Problem</h3>
             </div>
-            <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">The Cost of the Data Gap</h4>
+            <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">The Spatial Data Gap</h4>
             <div className="text-xs text-slate-300 font-light leading-loose space-y-4 tracking-wide">
               <p>
                 In 2021 and 2022, unprecedented "Heat Domes" across North America and Europe claimed tens of thousands of lives. In these tragedies, a glaring systemic failure was exposed: The disaster was not a failure of weather forecasting; it was a failure of spatial data translation.
               </p>
               <p>
-                National meteorological agencies accurately forecasted the extreme temperatures days in advance. Yet, local governments and emergency responders were caught blind. They knew a region would be hot, but they lacked the localized epidemiological data to pinpoint exactly which specific neighborhoods and concrete-dense urban heat islands would cross lethal physiological thresholds. 
+                National meteorological agencies accurately forecasted extreme temperatures days in advance. Yet, local governments and emergency responders were caught blind. They knew a region would be hot, but they lacked the localized data to pinpoint exactly which specific neighborhoods and concrete-dense urban heat islands would cross lethal physiological thresholds.
               </p>
               <p>
-                Because they couldn't see the micro-level risk, resources could not be deployed where they were needed most. OpenPlanet was engineered to ensure governments and asset managers are never caught blind again.
+                OpenPlanet was engineered to ensure local decision-makers, educators, and planners are never caught blind again.
               </p>
             </div>
           </div>
 
-          {/* CARD 2: The Genesis */}
-          <div className="lg:col-span-6 bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-2xl shadow-2xl flex flex-col hover:border-emerald-500/30 transition-colors group">
+          {/* CARD 2: Our Hyper-Focus */}
+          <div className="lg:col-span-6 bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-2xl shadow-2xl flex flex-col hover:border-red-500/30 transition-colors group">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full group-hover:animate-ping"></div>
-              <h3 className="text-[10px] text-emerald-400 tracking-[0.4em] uppercase font-bold">The Genesis</h3>
+              <div className="w-1.5 h-1.5 bg-red-500 rounded-full group-hover:animate-ping"></div>
+              <h3 className="text-[10px] text-red-400 tracking-[0.4em] uppercase font-bold">Our Philosophy</h3>
             </div>
-            <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">Understanding the Necessary Problem</h4>
+            <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">Thermal Risk & Survival</h4>
             <div className="text-xs text-slate-300 font-light leading-loose space-y-4 tracking-wide">
               <p>
-                The architecture for OpenPlanet was conceptualized during founder Aakash Goswami’s participation in the Harvard Innovation Labs (i-lab) climate venture program. 
+                Honesty in engineering is our core principle. OpenPlanet does not model floods, sea-level rise, or hurricanes. We are hyper-focused on the deadliest, most under-reported climate threat: Extreme Heat and Thermal Vulnerability.
               </p>
               <p>
-                Guided by the "Learn-Do-Discuss" framework championed by leading climate innovators like Rebekah Emanuel, the directive was clear: you must deeply understand the systemic failure before you engineer the platform. The systemic failure was the data gap.
+                While the current climate analytics market focuses heavily on forecasting financial asset damage for insurers and corporations, OpenPlanet operates on a fundamentally different philosophy: People Over Property.
               </p>
               <p>
-                The world is saturated with macro-economic climate policies, but knowing the global average temperature will rise by 1.5°C does not tell a mayor or an investor how to protect their assets and citizens today. OpenPlanet translates abstract planetary science into highly actionable risk intelligence.
+                We actively shift the analytical focus away from structural real-estate damage, and toward human survival, physiological wet-bulb thresholds, and localized infrastructure stress.
               </p>
             </div>
           </div>
 
           {/* CARD 3: The Architecture */}
-          <div className="lg:col-span-6 bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-2xl shadow-2xl flex flex-col hover:border-blue-500/30 transition-colors group">
+          <div className="lg:col-span-6 bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-2xl shadow-2xl flex flex-col hover:border-emerald-500/30 transition-colors group">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:animate-ping"></div>
-              <h3 className="text-[10px] text-blue-400 tracking-[0.4em] uppercase font-bold">The Architecture</h3>
+              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full group-hover:animate-ping"></div>
+              <h3 className="text-[10px] text-emerald-400 tracking-[0.4em] uppercase font-bold">The Architecture</h3>
             </div>
-            <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">Institutional-Grade Telemetry</h4>
+            <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">Edge-Computed & Transparent</h4>
             <p className="text-xs text-slate-300 font-light leading-loose mb-8 tracking-wide">
-              We do not rely on black-box predictions. OpenPlanet is built on an infrastructure of radical transparency, powered by the world's most trusted scientific bodies:
+              Planetary climate models are traditionally too heavy and expensive for local planners. We solved this compute bottleneck with a radically transparent engine:
             </p>
             <div className="space-y-8">
               <div className="border-l-2 border-slate-700 pl-4">
-                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Atmospheric Reanalysis</span>
-                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">Real-time and historical telemetry ingested directly from the Copernicus Climate Data Store (ECMWF) via Open-Meteo infrastructure.</span>
+                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Raw Atmospheric Reanalysis</span>
+                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">We ingest real-time and historical telemetry directly from the Copernicus Climate Data Store (ERA-5) via Open-Meteo infrastructure.</span>
               </div>
               <div className="border-l-2 border-slate-700 pl-4">
-                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Advanced Spatial Data</span>
-                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">High-resolution geocoding, elevation data, and spatial querying executed via OpenStreetMap (Nominatim) and digital elevation models.</span>
+                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Hexagonal Spatial Normalization</span>
+                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">Traditional maps distort data. We use a specialized hexagonal mapping engine to process massive datasets into uniform, equal-area tiles to reveal true micro-level heat islands.</span>
               </div>
               <div className="border-l-2 border-slate-700 pl-4">
-                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Physiological Risk Modeling</span>
-                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">Integrating rigorous epidemiological frameworks to calculate localized health thresholds and labor productivity impacts.</span>
+                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Edge-Compute Efficiency</span>
+                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">By running our filtering engines on the edge, we decentralize access to heavy data, allowing global researchers to access intelligence at near-zero server cost.</span>
               </div>
             </div>
           </div>
 
-          {/* CARD 4: A New Dimension */}
+          {/* CARD 4: The Genesis */}
           <div className="lg:col-span-6 bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 md:p-10 rounded-2xl shadow-2xl flex flex-col hover:border-purple-500/30 transition-colors group">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-1.5 h-1.5 bg-purple-500 rounded-full group-hover:animate-ping"></div>
-              <h3 className="text-[10px] text-purple-400 tracking-[0.4em] uppercase font-bold">The Methodology</h3>
+              <h3 className="text-[10px] text-purple-400 tracking-[0.4em] uppercase font-bold">The Genesis</h3>
             </div>
-            <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">A New Dimension of Climate Intelligence</h4>
+            <h4 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">Democratizing Survival Data</h4>
             <p className="text-xs text-slate-300 font-light leading-loose mb-8 tracking-wide">
-              The current climate analytics market focuses heavily on forecasting financial asset damage or providing static data feeds. OpenPlanet operates on a fundamentally different philosophy:
+              OpenPlanet was built to answer a singular question: Why is high-resolution climate intelligence still inaccessible to the places that need it most?
             </p>
             <div className="space-y-8">
               <div className="border-l-2 border-slate-700 pl-4">
+                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Solving Compute Asymmetry</span>
+                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">The platform is engineered to ensure that the compute asymmetry between the Global North and South does not dictate who gets to adapt to a warming world.</span>
+              </div>
+              <div className="border-l-2 border-slate-700 pl-4">
                 <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">People Over Property</span>
-                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">We do not stop at the concrete. Our engine shifts the focus from structural damage to human survival and labor productivity.</span>
+                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">We do not stop at the concrete. Our engine shifts the analytical focus entirely toward human survival and labor productivity.</span>
               </div>
               <div className="border-l-2 border-slate-700 pl-4">
                 <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Dynamic Simulation</span>
                 <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">OpenPlanet operates as an active simulation environment, allowing planners to dynamically test localized interventions (like canopy cover) to calculate risk reduction.</span>
-              </div>
-              <div className="border-l-2 border-slate-700 pl-4">
-                <span className="text-[11px] font-bold text-white uppercase tracking-widest block mb-2">Probabilistic Reality</span>
-                <span className="text-[10px] text-slate-400 font-light tracking-widest leading-relaxed">We utilize advanced probabilistic modeling to deliver mathematical estimates across standard IPCC emission pathways (CMIP6).</span>
               </div>
             </div>
           </div>
 
         </div>
 
-        {/* FOUNDER SIGN-OFF (Bottom Center) */}
+        {/* FOUNDER SIGN-OFF (Bottom Center) - UNTOUCHED */}
         <div className="mt-8 flex flex-col items-center justify-center text-center">
           <div className="bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-10 rounded-2xl flex flex-col items-center max-w-sm w-full shadow-2xl relative overflow-hidden">
             <div className="absolute -top-16 -left-16 w-32 h-32 bg-cyan-500/10 blur-[50px] pointer-events-none"></div>
