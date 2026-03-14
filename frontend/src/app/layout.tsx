@@ -3,6 +3,8 @@ import './globals.css';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Providers } from '@/components/Providers';
+// 👇 1. Sabse upar ye line daal di hai
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://openplanet-ai.vercel.app'),
@@ -88,6 +90,9 @@ export default function RootLayout({
         </Providers>
 
       </body>
+      
+      {/* 👇 2. </body> close hone ke theek baad ye line daal di hai */}
+      <GoogleAnalytics gaId="G-ZVH6C10YRD" />
     </html>
   );
 }
