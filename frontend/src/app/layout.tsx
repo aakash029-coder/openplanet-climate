@@ -3,7 +3,6 @@ import './globals.css';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Providers } from '@/components/Providers';
-// 👇 1. Sabse upar ye line daal di hai
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 export const metadata: Metadata = {
@@ -41,14 +40,27 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-mono min-h-screen text-slate-200 relative selection:bg-cyan-500/30 bg-[#060d1a] overflow-x-hidden">
         
+        {/* ✅ FIX 1: GPU hardware acceleration — background jitter band */}
         <img 
           src="/satellite-map.jpeg" 
           alt="Satellite Map" 
           className="fixed inset-0 w-full h-full object-cover opacity-35 pointer-events-none z-0 mix-blend-screen"
+          style={{ 
+            transform: 'translate3d(0, 0, 0)',
+            willChange: 'transform',
+            backfaceVisibility: 'hidden',
+          }}
         />
         
-        <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-blue-600/15 rounded-full blur-[150px] pointer-events-none z-0"></div>
-        <div className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-500/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+        {/* ✅ FIX 2: Blur orbs bhi GPU pe — scroll pe stable rahenge */}
+        <div 
+          className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-blue-600/15 rounded-full blur-[150px] pointer-events-none z-0"
+          style={{ transform: 'translate3d(0, 0, 0)' }}
+        />
+        <div 
+          className="fixed bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-cyan-500/10 rounded-full blur-[150px] pointer-events-none z-0"
+          style={{ transform: 'translate3d(0, 0, 0)' }}
+        />
         
         <Providers>
           <div className="flex flex-col min-h-screen relative z-20">
@@ -62,7 +74,6 @@ export default function RootLayout({
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
                 
                 <div className="flex items-center gap-4 group">
-                  {/* 👇 BLUE/CYAN PLANET LOGO IN FOOTER WITH GLOW */}
                   <div className="relative flex items-center justify-center w-8 h-8 overflow-hidden rounded-full border border-white/5 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
                     <img 
                       src="/logo.jpeg" 
@@ -91,7 +102,6 @@ export default function RootLayout({
 
       </body>
       
-      {/* 👇 2. </body> close hone ke theek baad ye line daal di hai */}
       <GoogleAnalytics gaId="G-ZVH6C10YRD" />
     </html>
   );

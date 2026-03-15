@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@config "../../tailwind.config.ts"; /* Ye line Tailwind v4 ko aapki config se connect karegi */
+@config "../../tailwind.config.ts";
 
 :root {
   --foreground-rgb: 255, 255, 255;
@@ -7,15 +7,40 @@
   --background-end-rgb: 5, 8, 20;
 }
 
+/* ── ROOT FIX: iOS Safari + Android rubber band — header/footer kabhi nahi hilega ── */
+html,
+body {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+  /* ✅ iOS Safari ke liye — momentum scroll off, bounce band */
+  -webkit-overflow-scrolling: auto;
+}
+
+/* ── BASE ── */
 body {
   color: rgb(var(--foreground-rgb));
-  background: #020617; /* Dark background default takki white screen na aaye */
+  background: #020617;
   margin: 0;
   padding: 0;
   min-height: 100vh;
+
+  /* ✅ Font size freeze — rotate karne par text size nahi badlega */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+
+  /* ✅ Mobile tap flash band — click par blue/grey highlight nahi */
+  -webkit-tap-highlight-color: transparent;
+
+  /* ✅ Mobile touch — sirf vertical scroll, side bounce nahi */
+  touch-action: pan-y;
 }
 
-/* Scrollbar ko professional banane ke liye */
+/* ✅ Smooth scroll globally — links ke liye */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── SCROLLBAR ── */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -25,4 +50,25 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
   border-radius: 10px;
+}
+
+/* ── CUSTOM SCROLLBAR (dropdown lists ke liye) ── */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #020617;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
+
+/* ✅ animate-spin-reverse — dashboard loading spinner ke liye */
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+.animate-spin-reverse {
+  animation: spin-reverse 1s linear infinite;
 }
