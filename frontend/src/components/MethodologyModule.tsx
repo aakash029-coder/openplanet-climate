@@ -118,9 +118,9 @@ export default function MethodologyModule() {
           </div>
 
           <p>
-            For 2075 and 2100, real CMIP6 data is not available at the free API tier beyond 2050.
-            These years use <span className="text-cyan-300 font-bold">IPCC AR6 WG1 published regional warming deltas</span>{" "}
-            (Chapter 4, Table 4.5 and Chapter 11, Table 11.1) applied to the ERA5-anchored 2050 baseline.
+            For 2075 and 2100, the engine applies{" "}
+            <span className="text-cyan-300 font-bold">IPCC AR6 WG1 published regional warming deltas</span>{" "}
+            (Chapter 4, Table 4.5 and Chapter 11, Table 11.1) to the ERA5-anchored 2050 baseline.
             This is the standard methodology used by institutional climate risk platforms.
           </p>
 
@@ -368,21 +368,18 @@ export default function MethodologyModule() {
 
           <div className="space-y-3 mt-4">
             {[
-              { api: "Open-Meteo ERA5 Archive", url: "archive-api.open-meteo.com", use: "Historical baseline (1991-2020)", cost: "Free" },
-              { api: "Open-Meteo Climate (CMIP6)", url: "climate-api.open-meteo.com", use: "Future projections (2015-2050)", cost: "Free" },
-              { api: "Open-Meteo Forecast", url: "api.open-meteo.com", use: "Real-time humidity for wet-bulb", cost: "Free" },
-              { api: "World Bank API", url: "api.worldbank.org/v2", use: "GDP, death rate, age, healthcare, urban share", cost: "Free" },
-              { api: "GeoNames API", url: "api.geonames.org", use: "City population + country code", cost: "Free" },
+              { api: "Open-Meteo ERA5 Archive",    url: "archive-api.open-meteo.com", use: "Historical baseline (1991-2020)" },
+              { api: "Open-Meteo Climate (CMIP6)", url: "climate-api.open-meteo.com", use: "Future projections (2015-2050)" },
+              { api: "Open-Meteo Forecast",        url: "api.open-meteo.com",         use: "Real-time humidity for wet-bulb" },
+              { api: "World Bank API",             url: "api.worldbank.org/v2",        use: "GDP, death rate, age, healthcare, urban share" },
+              { api: "GeoNames API",               url: "api.geonames.org",            use: "City population + country code" },
             ].map((d) => (
               <div key={d.api} className="bg-[#050b14]/60 border border-cyan-500/10 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                   <p className="text-cyan-300 font-bold text-[10px] tracking-widest">{d.api}</p>
                   <p className="text-slate-500 text-[9px] tracking-widest mt-1">{d.url}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-slate-400 text-[9px] tracking-widest">{d.use}</p>
-                  <span className="text-emerald-400 text-[8px] tracking-widest font-bold">{d.cost}</span>
-                </div>
+                <p className="text-slate-400 text-[9px] tracking-widest text-right">{d.use}</p>
               </div>
             ))}
           </div>
@@ -403,12 +400,12 @@ export default function MethodologyModule() {
             {[
               {
                 label: "Post-2050 Projections",
-                text: "2075 and 2100 values use IPCC AR6 published regional delta rates applied to ERA5 baselines. These are not direct CMIP6 model outputs — CMIP6 data beyond 2050 requires paid API access.",
+                text: "2075 and 2100 values use IPCC AR6 published regional delta rates applied to ERA5 baselines. These are not direct CMIP6 model outputs.",
                 severity: "amber",
               },
               {
                 label: "City GDP Estimates",
-                text: "City-level GDP is estimated from national GDP/capita (World Bank) × metro population (GeoNames) × urban productivity ratio. No free API provides direct city-level GDP for all cities globally.",
+                text: "City-level GDP is estimated from national GDP/capita (World Bank) × metro population (GeoNames) × urban productivity ratio. No API provides direct city-level GDP for all cities globally.",
                 severity: "amber",
               },
               {
