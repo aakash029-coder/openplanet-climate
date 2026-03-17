@@ -1,47 +1,51 @@
 import requests
 import json
+import time
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "https://albus2903-openplanet-engine.hf.space"
 
-def run_diagnostic():
-    print("\n" + "="*50)
-    print("🚀 INITIATING BACKEND DIAGNOSTIC SUITE")
-    print("="*50 + "\n")
+def run_speed_test():
+    print("\n" + "="*60)
+    print("🌍 OPENPLANET BACKEND SPEED & HEALTH TEST")
+    print("="*60)
 
-    # TEST 1: The Validation API
-    print("Testing 1/3: /api/era5-threshold (Validation Module)")
+    print("\n[1] Testing /api/climate-risk (Compare Module)...")
+    risk_payload = {
+        "lat": 22.57,
+        "lng": 88.36,
+        "elevation": 9.0,
+        "ssp": "ssp245",
+        "canopy_offset_pct": 0,
+        "albedo_offset_pct": 0,
+        "location_hint": "Kolkata"
+    }
+    
+    start_time = time.time()
     try:
-        r1 = requests.post(f"{BASE_URL}/api/era5-threshold", json={"lat": 51.51, "lng": -0.13})
-        print(f"Status: {r1.status_code}")
-        print(f"Response: {json.dumps(r1.json(), indent=2)}\n")
+        res = requests.post(f"{BASE_URL}/api/climate-risk", json=risk_payload, timeout=60)
+        end_time = time.time()
+        
+        print(f"HTTP Status: {res.status_code}")
+        print(f"Time Taken: {round(end_time - start_time, 2)} seconds ⚡")
+        
+        if res.status_code == 200:
+            data = res.json()
+            if "error" in data:
+                print(f"❌ Logical Error: {data['error']}")
+            else:
+                print("\n✅ SUCCESS! Data snippet:")
+                print(f"Baseline Temp: {data.get('baseline', {}).get('baseline_mean_c')}°C")
+                print(f"Projections Count: {len(data.get('projections', []))}")
+                print("First Projection Data:")
+                if data.get('projections'):
+                    print(json.dumps(data['projections'][0], indent=2))
+        else:
+            print(f"🔥 RAW ERROR: {res.text}")
+            
     except Exception as e:
-        print(f"❌ FAILED: {e}\n")
-
-    # TEST 2: The Core Engine API
-    print("Testing 2/3: /api/climate-risk (Research & Compare Modules)")
-    try:
-        r2 = requests.post(f"{BASE_URL}/api/climate-risk", json={
-            "lat": 51.51, "lng": -0.13, "elevation": 11.0, 
-            "ssp": "ssp245", "canopy_offset_pct": 5, "albedo_offset_pct": 15, 
-            "location_hint": "London, UK"
-        })
-        print(f"Status: {r2.status_code}")
-        # Only printing the first 300 chars so it doesn't flood your terminal
-        print(f"Response: {json.dumps(r2.json(), indent=2)[:300]} ... [TRUNCATED]\n")
-    except Exception as e:
-        print(f"❌ FAILED: {e}\n")
-
-    # TEST 3: The Map Prediction API
-    print("Testing 3/3: /api/predict (Map Module & AI)")
-    try:
-        r3 = requests.post(f"{BASE_URL}/api/predict", json={
-            "city": "London", "lat": 51.51, "lng": -0.13, 
-            "ssp": "SSP2-4.5", "year": "2050", "canopy": 5, "coolRoof": 15
-        })
-        print(f"Status: {r3.status_code}")
-        print(f"Response: {json.dumps(r3.json(), indent=2)[:300]} ... [TRUNCATED]\n")
-    except Exception as e:
-        print(f"❌ FAILED: {e}\n")
+        print(f"Network Error: {e}")
+        
+    print("\n" + "="*60)
 
 if __name__ == "__main__":
-    run_diagnostic()
+    run_speed_test()
