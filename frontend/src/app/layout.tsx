@@ -8,7 +8,7 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 export const metadata: Metadata = {
   metadataBase: new URL('https://openplanet-ai.vercel.app'),
   
-  title: 'OpenPlanet | High-Resolution Climate Risk Intelligence',
+  title: 'OpenPlanet | Climate Risk Intelligence',
   description: 'OpenPlanet is a globally scalable climate intelligence engine. We translate complex planetary physics into highly actionable, localized survival strategies.',
   
   verification: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: 'OpenPlanet | High-Resolution Climate Risk Intelligence',
+    title: 'OpenPlanet | Climate Risk Intelligence',
     description: 'OpenPlanet is a globally scalable climate intelligence engine. We translate complex planetary physics into highly actionable, localized survival strategies.',
     url: 'https://openplanet-ai.vercel.app',
     siteName: 'OpenPlanet',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: 'OpenPlanet | High-Resolution Climate Risk Intelligence',
+    title: 'OpenPlanet | Climate Risk Intelligence',
     description: 'OpenPlanet is a globally scalable climate intelligence engine. We translate complex planetary physics into highly actionable, localized survival strategies.',
   },
 };
