@@ -92,25 +92,20 @@ export default function RootLayout({
                   </span>
                 </div>
 
-                {/* ── CENTER: CLIMATEBASE CREDIBILITY ── */}
+                {/* ── CENTER: CLIMATEBASE CREDIBILITY (TEXT ONLY) ── */}
                 <div className="flex flex-col items-center">
                   <a 
                     href="https://www.climatebase.org/company/1142537/openplanet-risk-intelligence"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 group/cb p-2 rounded-lg hover:bg-cyan-950/30 transition-all border border-transparent hover:border-cyan-500/20"
+                    className="flex items-center group/cb p-3 rounded-lg hover:bg-cyan-950/30 transition-all border border-transparent hover:border-cyan-500/20 text-center"
                     title="View OpenPlanet on Climatebase"
                   >
-                    <img 
-                      src="/climatebase_logo.jpeg" 
-                      alt="Climatebase Recognized Organization" 
-                      className="h-6 w-6 object-contain opacity-50 grayscale invert group-hover/cb:opacity-100 group-hover/cb:grayscale-0 transition-all duration-500 drop-shadow-[0_0_5px_rgba(255,255,255,0.2)]"
-                    />
-                    <div className="flex flex-col text-left">
+                    <div className="flex flex-col">
                       <span className="text-slate-400 font-mono text-[10px] font-bold tracking-[0.2em] uppercase group-hover/cb:text-cyan-300 transition-colors">
                         Recognized Organization on Climatebase
                       </span>
-                      <span className="text-slate-600 font-mono text-[8px] tracking-[0.2em] uppercase group-hover/cb:text-cyan-500 transition-colors">
+                      <span className="text-slate-600 font-mono text-[8px] tracking-[0.2em] uppercase group-hover/cb:text-cyan-500 transition-colors mt-1">
                         Listed in the Climatebase Directory
                       </span>
                     </div>
