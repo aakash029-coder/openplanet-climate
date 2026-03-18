@@ -77,7 +77,8 @@ async function fetchElevationSafe(lat: number, lng: number): Promise<number> {
   } catch { clearTimeout(timer); return 0; }
 }
 
-async function geocodeAndFetch(query: string, ssp: string, canopy: number, albedo: number): Promise<Omit<CityResult, "loading" | "error"> | null> {
+// 🚀 FIXED: Removed canopy and albedo from API call. Fetching BASE data only.
+async function geocodeAndFetch(query: string, ssp: string): Promise<Omit<CityResult, "loading" | "error"> | null> {
   const geoData = await fetchNominatimSafe(query);
   if (!geoData.length) throw new Error("Location not found.");
   const g = geoData[0];
@@ -88,13 +89,12 @@ async function geocodeAndFetch(query: string, ssp: string, canopy: number, albed
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30000);
   try {
-    // ✅ Via proxy — Cloudflare bypass
     const riskResp = await fetch("/api/engine", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         endpoint: '/api/climate-risk',
-        payload: { lat, lng, elevation, ssp, canopy_offset_pct: canopy, albedo_offset_pct: albedo, location_hint: query }
+        payload: { lat, lng, elevation, ssp, canopy_offset_pct: 0, albedo_offset_pct: 0, location_hint: query }
       }),
       signal: controller.signal,
     });
@@ -163,7 +163,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       while (!success && retries > 0) {
         try {
           if (retries < 3) setRetryStatus(`Retrying ${queries[i]}... (${4 - retries}/3)`);
-          const data = await geocodeAndFetch(queries[i], ssp, canopy, albedo);
+          const data = await geocodeAndFetch(queries[i], ssp); // 🚀 Passed ONLY query and ssp
           newResults.push({ ...(data as Omit<CityResult, "loading" | "error">), loading: false, error: null });
           success = true; setRetryStatus(null);
         } catch (err: any) {
@@ -185,6 +185,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     }
     setRunning(false);
 
+    // AI Analysis Block
     const okRes = newResults.filter(r => !r.error);
     if (okRes.length === 2) {
       setAiLoading(true);
@@ -208,7 +209,6 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           };
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 30000);
-          // ✅ Via proxy
           const aiResp = await fetch("/api/engine", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -228,6 +228,32 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       }
       setAiLoading(false); setRetryStatus(null);
     }
+  };
+
+  // 🚀 THE MAGIC: Real-Time Frontend Mitigation Math for Table
+  const getMitigatedValue = (baseValue: number | null | undefined, metricKey: string, baseHeatwaveDays: number = 0) => {
+    if (baseValue == null) return null;
+    
+    // Calculate total cooling effect from sliders
+    const cooling_C = (canopy / 100) * 1.2 + (albedo / 100) * 0.8;
+
+    if (metricKey === "peak_tx5d_c" || metricKey === "wbt_max_c" || metricKey === "uhi_intensity_c") {
+      return Math.max(0, baseValue - cooling_C);
+    }
+    
+    if (metricKey === "heatwave_days") {
+       return Math.max(0, baseValue - (cooling_C * 3.5));
+    }
+
+    if (metricKey === "attributable_deaths" || metricKey === "economic_decay_usd") {
+        const effectiveHW = Math.max(0, baseHeatwaveDays - (cooling_C * 3.5));
+        const hwRatio = baseHeatwaveDays > 0 ? effectiveHW / baseHeatwaveDays : 1;
+        const severityRatio = Math.max(0, 1 - (cooling_C * 0.08)); 
+        const combinedRatio = hwRatio * severityRatio;
+        return baseValue * combinedRatio;
+    }
+
+    return baseValue;
   };
 
   const METRICS = [
@@ -308,11 +334,11 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
             </select>
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between"><label className="text-[10px] font-mono text-cyan-200 uppercase">Canopy</label><span className="text-[10px] font-mono text-emerald-400">{canopy}%</span></div>
-            <input type="range" min={0} max={100} value={canopy} onChange={(e) => setCanopy(Number(e.target.value))} className="w-full accent-emerald-500 bg-white/10 h-1 rounded-full appearance-none cursor-pointer" style={{ touchAction: 'manipulation' }} />
+            <div className="flex justify-between"><label className="text-[10px] font-mono text-cyan-200 uppercase">Canopy Offset</label><span className="text-[10px] font-mono text-emerald-400">+{canopy}%</span></div>
+            <input type="range" min={0} max={50} value={canopy} onChange={(e) => setCanopy(Number(e.target.value))} className="w-full accent-emerald-500 bg-white/10 h-1 rounded-full appearance-none cursor-pointer" style={{ touchAction: 'manipulation' }} />
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between"><label className="text-[10px] font-mono text-cyan-200 uppercase">Albedo</label><span className="text-[10px] font-mono text-sky-400">{albedo}%</span></div>
+            <div className="flex justify-between"><label className="text-[10px] font-mono text-cyan-200 uppercase">Albedo Roofs</label><span className="text-[10px] font-mono text-sky-400">+{albedo}%</span></div>
             <input type="range" min={0} max={100} value={albedo} onChange={(e) => setAlbedo(Number(e.target.value))} className="w-full accent-cyan-500 bg-white/10 h-1 rounded-full appearance-none cursor-pointer" style={{ touchAction: 'manipulation' }} />
           </div>
         </div>
@@ -361,7 +387,13 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {METRICS.map(m => {
-                  const vals = okResults.map(r => { const p = r.projections?.find(pr => pr.year === compareYear); return p ? (p as any)[m.key] as number : null; });
+                  // 🚀 Apply Real-Time Mitigation to Table Values
+                  const vals = okResults.map(r => { 
+                    const p = r.projections?.find(pr => pr.year === compareYear); 
+                    if (!p) return null;
+                    return getMitigatedValue((p as any)[m.key], m.key, p.heatwave_days);
+                  });
+                  
                   const maxVal = Math.max(...vals.filter((v): v is number => v !== null));
                   return (
                     <tr key={m.key} className="hover:bg-cyan-900/20 transition-colors group">

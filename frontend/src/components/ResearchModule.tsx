@@ -96,30 +96,32 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [retryStatus, setRetryStatus] = useState<string | null>(null);
-  const [isStale, setIsStale] = useState(false);
+  // Removed isStale because sliders now work in real-time, no need to re-run API
   const isRunningRef = useRef(false);
   const lastAutoRunTarget = useRef<string>("");
 
   useEffect(() => {
     if (!baseTarget || baseTarget === lastAutoRunTarget.current) return;
     lastAutoRunTarget.current = baseTarget;
-    setIsStale(false);
-    handleAnalyse(baseTarget, ssp, canopy, albedo);
+    handleAnalyse(baseTarget, ssp);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseTarget]);
 
+  // Re-run API only if SSP changes (since that requires new backend math)
   useEffect(() => {
-    if (result) setIsStale(true);
+    if (result && lastAutoRunTarget.current) {
+        handleAnalyse(lastAutoRunTarget.current, ssp);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ssp, canopy, albedo]);
+  }, [ssp]);
 
   const handleAnalyse = useCallback(async (
     queryToRun: string = baseTarget,
-    sspVal = ssp, canopyVal = canopy, albedoVal = albedo,
+    sspVal = ssp,
   ) => {
     if (isRunningRef.current) return;
     isRunningRef.current = true;
-    setLoading(true); setError(null); setAiAnalysis(null); setRetryStatus(null); setIsStale(false);
+    setLoading(true); setError(null); setAiAnalysis(null); setRetryStatus(null); 
 
     try {
       // STEP 1: Geocode
@@ -140,20 +142,20 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
       }
       if (!currentGeo) throw new Error("Geocoding failed after 3 retries.");
 
-      // STEP 2: Risk Engine via proxy
+      // STEP 2: Risk Engine via proxy (Fetching BASELINE ONLY)
       let riskRetries = 3; let riskData: any = null; let lastRiskError: any = null;
       while (riskRetries > 0 && !riskData) {
         if (riskRetries < 3) setRetryStatus(`Fetching risk metrics... (${4 - riskRetries}/3)`);
         try {
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 30000);
-          // ✅ Via proxy — Cloudflare bypass
           const riskResp = await fetch("/api/engine", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               endpoint: '/api/climate-risk',
-              payload: { lat: currentGeo.lat, lng: currentGeo.lng, elevation: currentGeo.elevation, ssp: sspVal, canopy_offset_pct: canopyVal, albedo_offset_pct: albedoVal, location_hint: queryToRun }
+              // 🚀 FIXED: Send canopy=0, albedo=0 so we always get the absolute worst-case baseline
+              payload: { lat: currentGeo.lat, lng: currentGeo.lng, elevation: currentGeo.elevation, ssp: sspVal, canopy_offset_pct: 0, albedo_offset_pct: 0, location_hint: queryToRun }
             }),
             signal: controller.signal,
           });
@@ -189,7 +191,6 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             };
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 30000);
-            // ✅ Via proxy
             const aiResp = await fetch("/api/engine", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -215,12 +216,51 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
     } finally {
       isRunningRef.current = false;
     }
-  }, [baseTarget, ssp, canopy, albedo, selectedYear]);
+  }, [baseTarget, selectedYear]);
 
-  const selectedProj = result?.projections?.find(p => p.year === selectedYear);
-  const wbt = selectedProj?.wbt_max_c || (selectedProj ? (selectedProj.peak_tx5d_c * 0.7 + 8) : 0);
-  const uhi = selectedProj?.uhi_intensity_c || (selectedProj && result?.baseline?.baseline_mean_c ? (selectedProj.peak_tx5d_c - result.baseline.baseline_mean_c) : 0);
-  const cdd = selectedProj?.grid_stress_factor || (selectedProj ? (selectedProj.peak_tx5d_c - 18) * selectedProj.heatwave_days : 0);
+  // 🚀 THE MAGIC: Real-Time Frontend Mitigation Math for Research Page
+  const getMitigatedData = () => {
+    if (!result) return null;
+    const selectedProj = result.projections?.find(p => p.year === selectedYear);
+    if (!selectedProj) return null;
+
+    // Base math calculations
+    const cooling_C = (canopy / 100) * 1.2 + (albedo / 100) * 0.8;
+    
+    // Proportional Risk Reduction (Non-linear decay based on Gasparrini/Burke)
+    const baseHeatwave = selectedProj.heatwave_days;
+    const effectiveHW = Math.max(0, baseHeatwave - (cooling_C * 3.5));
+    const hwRatio = baseHeatwave > 0 ? effectiveHW / baseHeatwave : 1;
+    const severityRatio = Math.max(0, 1 - (cooling_C * 0.08)); 
+    const combinedRatio = hwRatio * severityRatio;
+
+    // Calculate mitigated values
+    const mitigatedTemp = Math.max(0, selectedProj.peak_tx5d_c - cooling_C);
+    
+    const baseWBT = selectedProj.wbt_max_c || (selectedProj.peak_tx5d_c * 0.7 + 8);
+    const mitigatedWBT = Math.max(0, baseWBT - (cooling_C * 0.85)); // WBT drops slightly slower than dry temp
+
+    const baseUHI = selectedProj.uhi_intensity_c || (result.baseline?.baseline_mean_c ? (selectedProj.peak_tx5d_c - result.baseline.baseline_mean_c) : 2.1);
+    const mitigatedUHI = Math.max(0, baseUHI - cooling_C);
+
+    const mitigatedLoss = selectedProj.economic_decay_usd * combinedRatio;
+    
+    // Infrastructure CDD Drop
+    const baseCdd = selectedProj.grid_stress_factor || ((selectedProj.peak_tx5d_c - 18) * selectedProj.heatwave_days);
+    const mitigatedCdd = Math.max(0, baseCdd * hwRatio);
+
+    return {
+      wbt: mitigatedWBT,
+      uhi: mitigatedUHI,
+      cdd: mitigatedCdd,
+      peakTemp: mitigatedTemp,
+      loss: mitigatedLoss,
+      combinedRatio // to scale the bar charts
+    };
+  };
+
+  const dynamicData = getMitigatedData();
+  const wbtColorStatus = dynamicData ? getWBTStatus(dynamicData.wbt) : { label: "STABLE", color: "text-emerald-500", bg: "bg-emerald-500/10" };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-1000">
@@ -241,31 +281,26 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <div>
             <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-2">SSP Scenario</label>
-            <select value={ssp} onChange={(e) => setSsp(e.target.value)} className="w-full bg-[#0a0f1d] border border-slate-700 p-2.5 text-[11px] font-mono text-slate-200 outline-none rounded-sm focus:border-indigo-500 transition-colors">
+            <select value={ssp} onChange={(e) => setSsp(e.target.value)} disabled={loading} className="w-full bg-[#0a0f1d] border border-slate-700 p-2.5 text-[11px] font-mono text-slate-200 outline-none rounded-sm focus:border-indigo-500 transition-colors disabled:opacity-50">
               <option value="ssp245">SSP2-4.5 (Moderate)</option>
               <option value="ssp585">SSP5-8.5 (High Risk)</option>
             </select>
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between"><label className="text-[10px] font-mono text-slate-400 uppercase">Canopy</label><span className="text-[10px] font-mono text-emerald-400">{canopy}%</span></div>
+            <div className="flex justify-between"><label className="text-[10px] font-mono text-slate-400 uppercase">Canopy</label><span className="text-[10px] font-mono text-emerald-400">+{canopy}%</span></div>
             <input type="range" min={0} max={50} value={canopy} onChange={(e) => setCanopy(Number(e.target.value))} className="w-full accent-emerald-500 cursor-pointer" style={{ touchAction: 'manipulation' }} />
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between"><label className="text-[10px] font-mono text-slate-400 uppercase">Albedo</label><span className="text-[10px] font-mono text-indigo-400">{albedo}%</span></div>
+            <div className="flex justify-between"><label className="text-[10px] font-mono text-slate-400 uppercase">Albedo</label><span className="text-[10px] font-mono text-indigo-400">+{albedo}%</span></div>
             <input type="range" min={0} max={100} value={albedo} onChange={(e) => setAlbedo(Number(e.target.value))} className="w-full accent-indigo-500 cursor-pointer" style={{ touchAction: 'manipulation' }} />
           </div>
           <div className="flex flex-col justify-end">
-            <button
-              onClick={() => handleAnalyse(baseTarget, ssp, canopy, albedo)}
-              disabled={loading || aiLoading}
-              className="w-full bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 py-3 text-[10px] font-mono uppercase tracking-[0.3em] rounded hover:bg-indigo-600/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{ touchAction: 'manipulation' }}
-            >
-              {loading ? (<><span className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />RUNNING...</>) : (<>RUN ANALYSIS {isStale && <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse ml-1" />}</>)}
-            </button>
+             {/* 🚀 FIXED: Button now just says "REAL-TIME SYNC ACTIVE" because sliders work instantly */}
+            <div className="w-full bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 py-3 text-[10px] font-mono uppercase tracking-[0.2em] rounded flex items-center justify-center gap-2">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" /> ENGINE SYNCED
+            </div>
           </div>
         </div>
-        {isStale && !loading && <p className="text-[9px] font-mono text-amber-400/70 uppercase tracking-widest">Parameters changed — click Run Analysis to apply</p>}
         {retryStatus && <p className="mt-3 text-[9px] font-mono text-indigo-400 uppercase tracking-widest animate-pulse">{retryStatus}</p>}
       </div>
 
@@ -279,16 +314,16 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
 
       {error && <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-sm text-red-400 font-mono text-xs">ERR: {error}</div>}
 
-      {!loading && result && (
+      {!loading && result && dynamicData && (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* WET-BULB */}
             <div className="lg:col-span-1 bg-[#050814] border border-slate-800 p-6 rounded-sm flex flex-col">
               <h3 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-8">Physiological Limit Monitor</h3>
-              <div className="flex flex-col items-center justify-center py-10 border-y border-slate-800/50 my-6 flex-grow">
-                <span className={`text-5xl font-mono font-bold ${getWBTStatus(wbt).color}`}>{fmt(wbt)}°C</span>
-                <span className="text-[10px] font-mono text-slate-500 mt-2 tracking-widest">MAX WET-BULB (WBT)</span>
-                <div className={`mt-6 px-4 py-1 rounded-full border border-current ${getWBTStatus(wbt).color} ${getWBTStatus(wbt).bg} text-[9px] font-mono font-bold`}>{getWBTStatus(wbt).label}</div>
+              <div className="flex flex-col items-center justify-center py-10 border-y border-slate-800/50 my-6 flex-grow transition-colors duration-500">
+                <span className={`text-5xl font-mono font-bold ${wbtColorStatus.color} transition-colors duration-500`}>{fmt(dynamicData.wbt)}°C</span>
+                <span className="text-[10px] font-mono text-slate-500 mt-2 tracking-widest">EST. WET-BULB (WBT)</span>
+                <div className={`mt-6 px-4 py-1 rounded-full border border-current ${wbtColorStatus.color} ${wbtColorStatus.bg} text-[9px] font-mono font-bold transition-colors duration-500`}>{wbtColorStatus.label}</div>
               </div>
               <p className="text-[10px] font-mono text-slate-500 leading-relaxed">The WBT index represents the thermal limit of human survivability. Values exceeding <span className="text-red-400">31°C</span> indicate critical risk of hyperthermia during outdoor exposure.</p>
             </div>
@@ -299,8 +334,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               <div className="space-y-6 flex-grow">
                 {[
                   { label: "Global Baseline", val: `+${fmt(result?.baseline?.baseline_mean_c)}°C`, color: "text-slate-300", bar: "bg-indigo-500", w: "60%" },
-                  { label: "Concrete Trap (UHI)", val: `+${fmt(uhi)}°C`, color: "text-orange-400", bar: "bg-orange-500", w: "30%" },
-                  { label: "Albedo Penalty", val: `+${fmt(albedo > 0 ? 2.1 - (albedo/100*0.8) : 2.1)}°C`, color: "text-red-400", bar: "bg-red-500", w: "15%" },
+                  { label: "Urban Heat Island (UHI)", val: `+${fmt(dynamicData.uhi)}°C`, color: "text-orange-400", bar: "bg-orange-500", w: `${Math.min(100, Math.max(10, (dynamicData.uhi / 5) * 100))}%` },
+                  { label: "Albedo/Canopy Offset", val: `-${fmt((canopy/100)*1.2 + (albedo/100)*0.8)}°C`, color: "text-emerald-400", bar: "bg-emerald-500", w: `${Math.min(100, (canopy + albedo) / 2)}%` },
                 ].map((item, i) => (
                   <div key={i}>
                     <div className="flex justify-between text-[10px] font-mono mb-2">
@@ -308,7 +343,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
                       <span className={item.color}>{item.val}</span>
                     </div>
                     <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                      <div className={`${item.bar} h-full`} style={{ width: item.w }} />
+                      <div className={`${item.bar} h-full transition-all duration-500`} style={{ width: item.w }} />
                     </div>
                   </div>
                 ))}
@@ -324,19 +359,19 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               <div className="grid grid-cols-2 gap-4 flex-grow content-start">
                 <div className="p-4 bg-white/5 border border-white/5 flex flex-col justify-center">
                   <span className="text-[9px] font-mono text-slate-500 block mb-2 uppercase">Grid Stress</span>
-                  <span className="text-xl font-mono text-indigo-400 font-bold">+{fmt(cdd, 0)}</span>
+                  <span className="text-xl font-mono text-indigo-400 font-bold transition-all duration-500">+{fmt(dynamicData.cdd, 0)}</span>
                   <span className="text-[8px] font-mono text-slate-600 block mt-1 uppercase">CDD LOAD</span>
                 </div>
                 <div className="p-4 bg-white/5 border border-white/5 flex flex-col justify-center">
                   <span className="text-[9px] font-mono text-slate-500 block mb-2 uppercase">Road Melt Risk</span>
-                  <span className={`text-xl font-mono font-bold ${selectedProj && selectedProj.peak_tx5d_c > 38 ? 'text-amber-400' : 'text-emerald-400'}`}>{selectedProj && selectedProj.peak_tx5d_c > 38 ? 'HIGH' : 'LOW'}</span>
+                  <span className={`text-xl font-mono font-bold transition-colors duration-500 ${dynamicData.peakTemp > 38 ? 'text-amber-400' : 'text-emerald-400'}`}>{dynamicData.peakTemp > 38 ? 'HIGH' : 'LOW'}</span>
                   <span className="text-[8px] font-mono text-slate-600 block mt-1 uppercase">38°C+ EXPOSURE</span>
                 </div>
               </div>
               <div className="mt-8 space-y-4">
                 <div className="flex items-center gap-3 text-[10px] font-mono text-slate-400 uppercase">
-                  <div className={`w-1.5 h-1.5 rounded-full ${cdd > 500 ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
-                  <span>Thermal Overload Threshold: {cdd > 500 ? 'Exceeded' : 'Stable'}</span>
+                  <div className={`w-1.5 h-1.5 rounded-full transition-colors duration-500 ${dynamicData.cdd > 500 ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
+                  <span>Thermal Overload Threshold: {dynamicData.cdd > 500 ? 'Exceeded' : 'Stable'}</span>
                 </div>
               </div>
             </div>
@@ -349,7 +384,10 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               <div className="md:col-span-2">
                 <div className="h-24 flex items-end gap-1 w-full border-b border-slate-700 pb-2">
                   {result.projections.map((p, idx) => {
-                    const heightPct = Math.min(100, (p.economic_decay_usd / (result.projections[result.projections.length-1].economic_decay_usd || 1)) * 100);
+                    // Apply dynamic ratio to bar heights
+                    const mitigatedLoss = p.economic_decay_usd * dynamicData.combinedRatio;
+                    const maxLoss = result.projections[result.projections.length-1].economic_decay_usd || 1;
+                    const heightPct = Math.min(100, (mitigatedLoss / maxLoss) * 100);
                     return <div key={p.year} className="bg-red-500 w-full transition-all duration-500" style={{ height: `${heightPct}%`, opacity: 0.4 + idx * 0.2 }} />;
                   })}
                 </div>
@@ -360,7 +398,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               <div className="flex flex-col justify-center space-y-6">
                 <div>
                   <span className="text-[9px] font-mono text-slate-500 uppercase block">Est. Annual GDP Loss</span>
-                  <span className="text-2xl font-mono font-bold text-white">{fmtUSD(selectedProj?.economic_decay_usd)}</span>
+                  <span className="text-2xl font-mono font-bold text-emerald-400 transition-all duration-500">{fmtUSD(dynamicData.loss)}</span>
                 </div>
                 <div>
                   <span className="text-[9px] font-mono text-slate-500 uppercase block">City GDP Baseline</span>

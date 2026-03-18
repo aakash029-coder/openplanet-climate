@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
@@ -145,7 +145,7 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
     setIsInitialized(false);
     setHexData([]);
     setApiError(null);
-  }, [selectedCity?.name, ssp, year, canopy, coolRoof]);
+  }, [selectedCity?.name, ssp, year]); // Note: Removed canopy/coolRoof so it doesn't reset the map
 
   const handleInitialize = async () => {
     if (!selectedCity) return;
@@ -164,13 +164,12 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
     }));
 
     try {
-      // ✅ Via our proxy — Cloudflare bypass
       const response = await fetch('/api/engine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           endpoint: '/api/predict',
-          payload: { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy, coolRoof },
+          payload: { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy: 0, coolRoof: 0 }, // We fetch base worst-case
         }),
       });
 
@@ -204,6 +203,49 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
       setIsLoading(false);
     }
   };
+
+  // 🚀 THE MAGIC: Real-Time Frontend Mitigation Math
+  let displayData = { ...simData };
+  if (isInitialized && simData.temp !== '--') {
+    // 1. Parse Baseline (Worst Case) Numbers
+    const baseTemp = parseFloat(String(simData.temp));
+    const baseHeatwave = parseFloat(String(simData.heatwave));
+    
+    // Extract raw numbers from strings (e.g. "10,240" -> 10240, "$9.02B" -> 9.02)
+    const baseDeaths = parseFloat(String(simData.deaths).replace(/,/g, '')) || 0;
+    const lossStr = String(simData.loss);
+    const lossMatch = lossStr.match(/([\$€£])?([0-9.]+)([BKM])?/i);
+    let baseLoss = 0, lossPrefix = '$', lossSuffix = 'B';
+    if (lossMatch) {
+      lossPrefix = lossMatch[1] || '';
+      baseLoss = parseFloat(lossMatch[2]) || 0;
+      lossSuffix = lossMatch[3] || '';
+    }
+
+    // 2. Apply Mitigation Offsets (Methodology: Canopy=1.2C, Roofs=0.8C max)
+    const cooling_C = (canopy / 100) * 1.2 + (coolRoof / 100) * 0.8;
+    const effectiveTemp = Math.max(0, baseTemp - cooling_C);
+    
+    // Heatwave days drop by ~3.5 days per degree of cooling
+    const effectiveHW = Math.max(0, baseHeatwave - (cooling_C * 3.5));
+
+    // 3. Proportional Risk Reduction (Non-linear decay)
+    const hwRatio = baseHeatwave > 0 ? effectiveHW / baseHeatwave : 1;
+    const severityRatio = Math.max(0, 1 - (cooling_C * 0.08)); // Approx Gasparrini RR drop
+    const combinedRatio = hwRatio * severityRatio;
+
+    const effectiveDeaths = Math.round(baseDeaths * combinedRatio);
+    const effectiveLoss = (baseLoss * combinedRatio).toFixed(2);
+
+    // 4. Update UI Values instantly
+    displayData = {
+      ...simData,
+      temp: effectiveTemp.toFixed(1),
+      heatwave: Math.round(effectiveHW).toString(),
+      deaths: effectiveDeaths.toLocaleString(),
+      loss: lossMatch ? `${lossPrefix}${effectiveLoss}${lossSuffix}` : simData.loss,
+    };
+  }
 
   const val = (actual: React.ReactNode) =>
     isInitialized && !isLoading && !apiError ? actual : <span className="text-slate-600 font-mono tracking-tighter">--</span>;
@@ -334,7 +376,7 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
             </button>
           </div>
 
-          {/* RIGHT PANEL */}
+          {/* RIGHT PANEL - NOW USING displayData INSTEAD OF simData */}
           <div className="w-[360px] bg-[#050814]/90 backdrop-blur-md border border-slate-800 p-6 rounded-md shadow-2xl flex flex-col gap-4 pointer-events-auto h-auto overflow-visible">
             <div className="flex items-center gap-3 border-b border-slate-800 pb-3 mb-2">
               <h2 className="text-[10px] font-mono tracking-[0.3em] text-slate-300 uppercase">Quantified Risk Metrics</h2>
@@ -348,9 +390,9 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
                     <span className="text-[9px] font-mono text-red-500 uppercase tracking-[0.2em] font-bold flex items-center gap-2"><div className="w-1.5 h-1.5 bg-red-500 rounded-sm" /> Attributable Deaths</span>
                     <InfoTooltip alignLeft publicText="Extra fatalities specifically attributed to extreme heat exposure." techText="WHO-GBD Dose-Response Epidemiology (V8)." />
                   </div>
-                  <div className="text-5xl font-mono text-white tracking-tighter mb-1 mt-3">{val(<span>{simData.deaths}</span>)}</div>
-                  {isInitialized && simData.ci && (
-                    <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mt-1 bg-black/50 inline-block px-2 py-1 rounded-sm border border-slate-800">95% CI: {simData.ci}</div>
+                  <div className="text-5xl font-mono text-white tracking-tighter mb-1 mt-3">{val(<span>{displayData.deaths}</span>)}</div>
+                  {isInitialized && displayData.ci && (
+                    <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mt-1 bg-black/50 inline-block px-2 py-1 rounded-sm border border-slate-800">95% CI: {displayData.ci}</div>
                   )}
                 </div>
                 <div className="bg-[#0a0f1d] border border-slate-800 p-5 rounded-md relative shadow-inner overflow-visible">
@@ -358,7 +400,7 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
                     <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-orange-400 rounded-sm" /> Economic Decay</span>
                     <InfoTooltip alignLeft publicText="Financial capital loss projected from heat-induced productivity drops." techText="GDP Loss Fraction Model." />
                   </div>
-                  <div className="text-3xl font-mono text-slate-200 tracking-tight">{val(simData.loss)}</div>
+                  <div className="text-3xl font-mono text-slate-200 tracking-tight">{val(displayData.loss)}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-[#0a0f1d] border border-slate-800 p-4 rounded-md shadow-inner flex flex-col justify-between overflow-visible">
@@ -366,14 +408,14 @@ export default function MapModule({ onNavigateToCompare, onTargetLocked }: { onN
                       <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest">Heatwave Days</span>
                       <InfoTooltip alignLeft publicText="Count of days exceeding the localized historical extreme temperature threshold." techText="Days > ERA5 Historical p95." />
                     </div>
-                    <div className="text-xl font-mono text-slate-200">{val(simData.heatwave !== '--' ? `${simData.heatwave}d` : '--')}</div>
+                    <div className="text-xl font-mono text-slate-200">{val(displayData.heatwave !== '--' ? `${displayData.heatwave}d` : '--')}</div>
                   </div>
                   <div className="bg-[#0a0f1d] border border-slate-800 p-4 rounded-md shadow-inner flex flex-col justify-between overflow-visible">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest">Peak Tx5d</span>
                       <InfoTooltip alignLeft publicText="The hottest sustained 5-day temperature block expected in the target year." techText="WMO ETCCDI Tx5d Index." />
                     </div>
-                    <div className="text-xl font-mono text-slate-200">{val(simData.temp !== '--' ? `${simData.temp}°C` : '--')}</div>
+                    <div className="text-xl font-mono text-slate-200">{val(displayData.temp !== '--' ? `${displayData.temp}°C` : '--')}</div>
                   </div>
                 </div>
               </>
