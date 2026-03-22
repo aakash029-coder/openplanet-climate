@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from "react";
+import { ExcelExportFullButton, type ExcelExportData } from "@/components/ExcelExport";
+import { useClimateData } from "@/context/ClimateDataContext";
 
 function Code({ children }: { children: string }) {
   return (
@@ -39,8 +41,77 @@ function Ref({ authors, year, journal, title }: { authors: string; year: number;
   );
 }
 
+// ── Demo data for Methodology Excel export ────────────────────────────
+// Uses global average values — user will see real numbers if they run a city
+const DEMO_EXCEL_DATA: ExcelExportData = {
+  city_name:           "Global Average (Demo)",
+  lat:                 20.0,
+  lng:                 78.0,
+  ssp:                 "SSP2-4.5",
+  target_year:         2050,
+  era5_baseline_c:     27.0,
+  era5_p95_c:          36.5,
+  era5_humidity_p95:   70.0,
+  peak_tx5d_c:         44.0,
+  heatwave_days:       45,
+  mean_temp_c:         36.0,
+  population:          5_000_000,
+  gdp_usd:             50_000_000_000,
+  death_rate:          7.7,
+  vulnerability:       1.0,
+  canopy_pct:          10,
+  albedo_pct:          20,
+  attributable_deaths: 2500,
+  economic_decay_usd:  4_000_000_000,
+  wbt_c:               30.5,
+  cmip6_source:        "open_meteo_cmip6_ensemble_3models",
+};
+
 export default function MethodologyModule() {
   const [open, setOpen] = useState<string | null>("threshold");
+  const { primaryData } = useClimateData();
+
+  // 🌟 THE INVESTOR FLEX 🌟
+  // Dynamically map primaryData to ExcelExportData if a city is active
+  let currentExcelData = DEMO_EXCEL_DATA;
+  let isLive = false;
+
+  if (primaryData) {
+    // Attempt to use 2050 projection for the audit, fallback to first available
+    const proj = primaryData.projections.find(p => p.year === 2050) || primaryData.projections[0];
+    
+    if (proj) {
+      // Extract variables from the backend audit trail if available
+      const meanTemp = proj.audit_trail?.economics?.variables?.T_mean as number || (primaryData.baseline.baseline_mean_c + 2.0);
+      const deathRate = proj.audit_trail?.mortality?.variables?.DR as number || 7.7;
+      const vuln = proj.audit_trail?.mortality?.variables?.V as number || 1.0;
+
+      currentExcelData = {
+        city_name:           primaryData.city_name,
+        lat:                 primaryData.lat,
+        lng:                 primaryData.lng,
+        ssp:                 primaryData.ssp,
+        target_year:         proj.year,
+        era5_baseline_c:     primaryData.baseline.baseline_mean_c,
+        era5_p95_c:          primaryData.threshold_c,
+        era5_humidity_p95:   primaryData.era5_humidity_p95,
+        peak_tx5d_c:         proj.peak_tx5d_c,
+        heatwave_days:       proj.heatwave_days,
+        mean_temp_c:         meanTemp,
+        population:          primaryData.population,
+        gdp_usd:             primaryData.gdp_usd,
+        death_rate:          deathRate,
+        vulnerability:       vuln,
+        canopy_pct:          primaryData.canopy_offset_pct,
+        albedo_pct:          primaryData.albedo_offset_pct,
+        attributable_deaths: proj.attributable_deaths,
+        economic_decay_usd:  proj.economic_decay_usd,
+        wbt_c:               proj.wbt_max_c,
+        cmip6_source:        proj.source,
+      };
+      isLive = true;
+    }
+  }
 
   const sections = [
     {
@@ -60,8 +131,6 @@ export default function MethodologyModule() {
           <p>
             The engine computes the <span className="text-cyan-300 font-bold">95th percentile (P95)</span> from
             ~10,950 daily Tmax observations across the WMO standard 1991–2020 climate normal period.
-            This establishes the local physiological adaptation threshold — the temperature above which
-            excess heat mortality risk begins.
           </p>
           <Formula
             label="Heatwave Threshold"
@@ -70,8 +139,7 @@ export default function MethodologyModule() {
           />
           <p>
             Additionally, the engine computes the <span className="text-cyan-300 font-bold">WMO Tx5d index</span> —
-            the mean temperature of the hottest consecutive 5-day block — as the primary extreme heat metric,
-            consistent with WMO ETCCDI standards.
+            the mean temperature of the hottest consecutive 5-day block — consistent with WMO ETCCDI standards.
           </p>
         </div>
       ),
@@ -81,66 +149,25 @@ export default function MethodologyModule() {
       title: "CMIP6 Future Projections",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>
-            Near-term projections (2015–2050) use <span className="text-cyan-300 font-bold">real CMIP6 model output</span>{" "}
-            fetched live from the Open-Meteo Climate API. A 3-model ensemble is used with equal-weight averaging,
-            consistent with IPCC AR6 methodology.
-          </p>
-
+          <p>Near-term projections (2015–2050) use <span className="text-cyan-300 font-bold">real CMIP6 model output</span> fetched live from the Open-Meteo Climate API. A 3-model ensemble is used with equal-weight averaging, consistent with IPCC AR6 methodology.</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
-            {[
-              { model: "MRI-AGCM3-2-S", org: "MRI Japan", res: "20km" },
-              { model: "NICAM16-8S", org: "NICAM Japan", res: "High-res" },
-              { model: "MPI-ESM1-2-XR", org: "MPI Germany", res: "~50km" },
-            ].map((m) => (
+            {[{ model: "MRI-AGCM3-2-S", org: "MRI Japan", res: "20km" }, { model: "NICAM16-8S", org: "NICAM Japan", res: "High-res" }, { model: "MPI-ESM1-2-XR", org: "MPI Germany", res: "~50km" }].map((m) => (
               <div key={m.model} className="bg-[#050b14]/60 border border-cyan-500/10 p-4 rounded-lg">
                 <p className="text-cyan-300 font-bold text-[10px] tracking-widest mb-1">{m.model}</p>
                 <p className="text-slate-500 text-[9px] tracking-widest">{m.org} · {m.res}</p>
               </div>
             ))}
           </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-            {[
-              { year: "2030", method: "CMIP6 Live Ensemble", color: "text-cyan-400", note: "3-model mean" },
-              { year: "2050", method: "CMIP6 Live Ensemble", color: "text-cyan-400", note: "3-model mean" },
-              { year: "2075", method: "IPCC AR6 Delta", color: "text-purple-400", note: "Published rates" },
-              { year: "2100", method: "IPCC AR6 Delta", color: "text-purple-400", note: "Published rates" },
-            ].map((r) => (
+            {[{ year: "2030", method: "CMIP6 Live Ensemble", color: "text-cyan-400", note: "3-model mean" }, { year: "2050", method: "CMIP6 Live Ensemble", color: "text-cyan-400", note: "3-model mean" }, { year: "2075", method: "IPCC AR6 Delta", color: "text-purple-400", note: "Published rates" }, { year: "2100", method: "IPCC AR6 Delta", color: "text-purple-400", note: "Published rates" }].map((r) => (
               <div key={r.year} className="bg-[#050b14]/60 border border-cyan-500/10 p-4 rounded-lg flex items-center justify-between">
                 <span className="text-white font-bold text-lg">{r.year}</span>
-                <div className="text-right">
-                  <span className={`text-[9px] ${r.color} tracking-widest font-bold block`}>{r.method}</span>
-                  <span className="text-[8px] text-slate-600 tracking-widest">{r.note}</span>
-                </div>
+                <div className="text-right"><span className={`text-[9px] ${r.color} tracking-widest font-bold block`}>{r.method}</span><span className="text-[8px] text-slate-600 tracking-widest">{r.note}</span></div>
               </div>
             ))}
           </div>
-
-          <p>
-            For 2075 and 2100, the engine applies{" "}
-            <span className="text-cyan-300 font-bold">IPCC AR6 WG1 published regional warming deltas</span>{" "}
-            (Chapter 4, Table 4.5 and Chapter 11, Table 11.1) to the ERA5-anchored 2050 baseline.
-            This is the standard methodology used by institutional climate risk platforms.
-          </p>
-
-          <Formula
-            label="Post-2050 Projection (IPCC AR6 Delta Method)"
-            formula={"V(t) = V_ERA5_baseline + IPCC_AR6_delta(ssp, t)"}
-            note={
-              <div className="space-y-1">
-                <div><span className="text-cyan-400">V_ERA5_baseline</span> = ERA5 Tx5d / heatwave days (1991-2020 real data)</div>
-                <div><span className="text-cyan-400">IPCC_AR6_delta</span> = published warming rate for SSP scenario and region</div>
-                <div className="text-slate-500 mt-2">Source: IPCC AR6 WG1 Ch.4 Table 4.5, Ch.11 Table 11.1 (South/SE Asia regional)</div>
-              </div>
-            }
-          />
-
-          <p>
-            A <span className="text-cyan-300 font-bold">±4-year rolling window</span> is applied around each
-            target year to reduce inter-annual variability in CMIP6 output, consistent with WMO decadal
-            averaging methodology.
-          </p>
+          <p>For 2075 and 2100, the engine applies <span className="text-cyan-300 font-bold">IPCC AR6 WG1 published regional warming deltas</span> (Chapter 4, Table 4.5 and Chapter 11, Table 11.1) to the ERA5-anchored 2050 baseline.</p>
+          <Formula label="Post-2050 Projection (IPCC AR6 Delta Method)" formula={"V(t) = V_ERA5_baseline + IPCC_AR6_delta(ssp, t)"} note={<div className="space-y-1"><div><span className="text-cyan-400">V_ERA5_baseline</span> = ERA5 Tx5d / heatwave days (1991-2020 real data)</div><div><span className="text-cyan-400">IPCC_AR6_delta</span> = published warming rate for SSP scenario and region</div><div className="text-slate-500 mt-2">Source: IPCC AR6 WG1 Ch.4 Table 4.5, Ch.11 Table 11.1</div></div>} />
         </div>
       ),
     },
@@ -149,24 +176,10 @@ export default function MethodologyModule() {
       title: "Regional Climate Calibration",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>
-            Raw CMIP6 output is calibrated by climate zone to reflect physical reality.
-            Global climate models operate at coarse resolution and require regional downscaling.
-            Our calibration uses <span className="text-cyan-300 font-bold">Koppen-Geiger classification</span> and
-            IPCC AR6 WG1 regional chapter constraints.
-          </p>
-
+          <p>Raw CMIP6 output is calibrated by climate zone using <span className="text-cyan-300 font-bold">Koppen-Geiger classification</span> and IPCC AR6 WG1 regional chapter constraints.</p>
           <div className="overflow-x-auto">
             <table className="w-full text-[9px] font-mono border-collapse mt-4">
-              <thead>
-                <tr className="border-b border-cyan-500/20">
-                  <th className="text-left text-cyan-300 tracking-widest py-3 pr-4">Region</th>
-                  <th className="text-left text-cyan-300 tracking-widest py-3 pr-4">Examples</th>
-                  <th className="text-left text-cyan-300 tracking-widest py-3 pr-4">HW Cap</th>
-                  <th className="text-left text-cyan-300 tracking-widest py-3 pr-4">Temp Cap</th>
-                  <th className="text-left text-cyan-300 tracking-widest py-3">Key Adjustment</th>
-                </tr>
-              </thead>
+              <thead><tr className="border-b border-cyan-500/20">{["Region","Examples","HW Cap","Temp Cap","Key Adjustment"].map(h => <th key={h} className="text-left text-cyan-300 tracking-widest py-3 pr-4">{h}</th>)}</tr></thead>
               <tbody className="divide-y divide-cyan-500/10">
                 {[
                   { r: "Equatorial (<15°)", ex: "Singapore, Jakarta", hw: "45d", t: "40°C", adj: "Wet-bulb risk days + humidity scaling" },
@@ -186,11 +199,7 @@ export default function MethodologyModule() {
               </tbody>
             </table>
           </div>
-
-          <p className="text-[9px] text-slate-500 mt-4">
-            Coastal dampening (−20 to −35%) applied when coordinates are within major ocean-moderated climate zones.
-            UHI intensity capped at 8°C maximum (Oke 1982, Santamouris 2015).
-          </p>
+          <p className="text-[9px] text-slate-500 mt-4">Coastal dampening (−20 to −35%) applied when coordinates are within major ocean-moderated climate zones. UHI intensity capped at 8°C maximum (Oke 1982, Santamouris 2015).</p>
         </div>
       ),
     },
@@ -199,38 +208,10 @@ export default function MethodologyModule() {
       title: "Attributable Deaths (WHO-GBD)",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>
-            Heat mortality is estimated using the{" "}
-            <span className="text-cyan-300 font-bold">Gasparrini et al. (2017) Lancet Planetary Health</span>{" "}
-            dose-response framework — the standard methodology in GBD heat-mortality literature.
-          </p>
-
-          <Formula
-            label="Gasparrini (2017) Attributable Deaths"
-            formula={"Deaths = Pop × (DR/1000) × (HW/365) × AF × V"}
-            note={
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                <div><span className="text-cyan-400">Pop</span> = GeoNames metro population</div>
-                <div><span className="text-cyan-400">DR</span> = World Bank crude death rate per 1000</div>
-                <div><span className="text-cyan-400">HW</span> = calibrated annual heatwave days</div>
-                <div><span className="text-cyan-400">AF</span> = (RR−1)/RR, where RR = exp(0.0801 × ΔT)</div>
-                <div><span className="text-cyan-400">V</span> = vulnerability multiplier (AC + age + healthcare)</div>
-                <div><span className="text-cyan-400">β = 0.0801</span> = GBD meta-analysis global mean</div>
-              </div>
-            }
-          />
-
-          <p>
-            The <span className="text-cyan-300 font-bold">vulnerability multiplier (V)</span> adjusts for
-            population adaptive capacity using three World Bank indicators fetched live:
-          </p>
-
+          <p>Heat mortality uses the <span className="text-cyan-300 font-bold">Gasparrini et al. (2017) Lancet Planetary Health</span> dose-response framework.</p>
+          <Formula label="Gasparrini (2017) Attributable Deaths" formula={"Deaths = Pop × (DR/1000) × (HW/365) × AF × V"} note={<div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2"><div><span className="text-cyan-400">Pop</span> = GeoNames metro population</div><div><span className="text-cyan-400">DR</span> = World Bank crude death rate per 1000</div><div><span className="text-cyan-400">HW</span> = calibrated annual heatwave days</div><div><span className="text-cyan-400">AF</span> = (RR−1)/RR, where RR = exp(0.0801 × ΔT)</div><div><span className="text-cyan-400">V</span> = vulnerability multiplier (AC + age + healthcare)</div><div><span className="text-cyan-400">β = 0.0801</span> = GBD meta-analysis global mean</div></div>} />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            {[
-              { label: "AC Penetration Proxy", source: "World Bank GDP/capita (NY.GDP.PCAP.CD)", note: "IEA (2023) cooling report correlation" },
-              { label: "Age Vulnerability", source: "World Bank age structure (SP.POP.0014 + SP.POP.65UP)", note: "Gasparrini (2017) elderly 3-5x risk" },
-              { label: "Healthcare Access", source: "World Bank physicians/1000 (SH.MED.PHYS.ZS)", note: "WHO Global Health Observatory" },
-            ].map((item) => (
+            {[{ label: "AC Penetration Proxy", source: "World Bank GDP/capita (NY.GDP.PCAP.CD)", note: "IEA (2023) cooling report correlation" }, { label: "Age Vulnerability", source: "World Bank age structure (SP.POP.0014 + SP.POP.65UP)", note: "Gasparrini (2017) elderly 3-5x risk" }, { label: "Healthcare Access", source: "World Bank physicians/1000 (SH.MED.PHYS.ZS)", note: "WHO Global Health Observatory" }].map((item) => (
               <div key={item.label} className="bg-[#050b14]/60 border border-cyan-500/10 p-4 rounded-lg">
                 <p className="text-cyan-300 font-bold text-[10px] tracking-widest mb-2">{item.label}</p>
                 <p className="text-slate-400 text-[9px] tracking-widest mb-1">{item.source}</p>
@@ -238,11 +219,7 @@ export default function MethodologyModule() {
               </div>
             ))}
           </div>
-
-          <p className="text-[9px] text-slate-500">
-            Vulnerability multiplier range: 0.25 (high AC + young + excellent healthcare) to 2.5 (minimal AC + aging + weak healthcare).
-            95% confidence interval: ±15% of point estimate.
-          </p>
+          <p className="text-[9px] text-slate-500">Vulnerability multiplier range: 0.25 to 2.5. 95% confidence interval: ±15% of point estimate.</p>
         </div>
       ),
     },
@@ -251,33 +228,8 @@ export default function MethodologyModule() {
       title: "Economic Decay Model",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>
-            Economic losses combine two published methodologies:
-            <span className="text-cyan-300 font-bold"> Burke et al. (2018) Nature</span> temperature-GDP
-            non-linear relationship and{" "}
-            <span className="text-cyan-300 font-bold">ILO (2019) labor productivity</span> heat stress model.
-          </p>
-
-          <Formula
-            label="Burke (2018) + ILO (2019) Combined Loss"
-            formula={"Loss = GDP × (Burke_penalty + ILO_fraction)"}
-            note={
-              <div className="space-y-1">
-                <div><span className="text-cyan-400">Burke_penalty</span> = 0.0127 × (T_mean − 13°C)² / 100</div>
-                <div><span className="text-cyan-400">ILO_fraction</span> = (HW_days/365) × 0.40 × 0.20</div>
-                <div><span className="text-cyan-400">T_optimal</span> = 13°C (Burke 2018 global regression optimum)</div>
-                <div><span className="text-cyan-400">0.40</span> = fraction of workforce in heat-exposed sectors (ILO)</div>
-                <div><span className="text-cyan-400">0.20</span> = productivity loss per heatwave day (ILO weighted)</div>
-                <div className="text-slate-500 mt-2">City GDP: GeoNames metro population × World Bank GDP/capita × urban productivity ratio</div>
-              </div>
-            }
-          />
-
-          <p>
-            The urban productivity ratio scales national GDP/capita to city-level using
-            <span className="text-cyan-300 font-bold"> World Bank Competitive Cities (2023)</span> agglomeration
-            premiums: 1.8x (high income) to 7.0x (low income primate cities).
-          </p>
+          <p>Economic losses combine <span className="text-cyan-300 font-bold">Burke et al. (2018) Nature</span> and <span className="text-cyan-300 font-bold">ILO (2019) labor productivity</span> heat stress model.</p>
+          <Formula label="Burke (2018) + ILO (2019) Combined Loss" formula={"Loss = GDP × (Burke_penalty + ILO_fraction)"} note={<div className="space-y-1"><div><span className="text-cyan-400">Burke_penalty</span> = 0.0127 × (T_mean − 13°C)² / 100</div><div><span className="text-cyan-400">ILO_fraction</span> = (HW_days/365) × 0.40 × 0.20</div><div><span className="text-cyan-400">T_optimal</span> = 13°C (Burke 2018 global regression optimum)</div><div><span className="text-cyan-400">0.40</span> = fraction of workforce in heat-exposed sectors (ILO)</div><div><span className="text-cyan-400">0.20</span> = productivity loss per heatwave day (ILO weighted)</div></div>} />
         </div>
       ),
     },
@@ -286,25 +238,10 @@ export default function MethodologyModule() {
       title: "Wet-Bulb Temperature & Survivability",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>
-            Wet-bulb temperature (WBT) is computed using the{" "}
-            <span className="text-cyan-300 font-bold">Stull (2011)</span> empirical formula,
-            with real relative humidity fetched from the{" "}
-            <span className="text-cyan-300 font-bold">Open-Meteo Forecast API</span> at query time.
-          </p>
-
-          <Formula
-            label="Stull (2011) Wet-Bulb Formula"
-            formula={"WBT = T·atan(0.151977·√(RH+8.31)) + atan(T+RH) − atan(RH−1.68) + 0.00392·RH^1.5·atan(0.023·RH) − 4.686"}
-            note="Accuracy: ±0.65°C for RH ∈ [5%, 99%], T ∈ [−20°C, 50°C]. Source: Stull (2011), Journal of Applied Meteorology and Climatology."
-          />
-
+          <p>WBT computed using <span className="text-cyan-300 font-bold">Stull (2011)</span> formula with ERA5 P95 humidity (deterministic — not live).</p>
+          <Formula label="Stull (2011) Wet-Bulb Formula" formula={"WBT = T·atan(0.151977·√(RH+8.31)) + atan(T+RH) − atan(RH−1.68) + 0.00392·RH^1.5·atan(0.023·RH) − 4.686"} note="Accuracy: ±0.65°C. Capped at 35°C per Sherwood & Huber (2010) PNAS — theoretical human thermoregulation limit." />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-            {[
-              { range: "WBT < 28°C", label: "Stable", color: "text-emerald-400", desc: "Normal outdoor activity possible" },
-              { range: "28–31°C", label: "Danger", color: "text-orange-400", desc: "Elderly and vulnerable at risk" },
-              { range: "WBT ≥ 31°C", label: "Critical", color: "text-red-400", desc: "Human survivability limit — outdoor labor becomes fatal within hours" },
-            ].map((s) => (
+            {[{ range: "WBT < 28°C", label: "Stable", color: "text-emerald-400", desc: "Normal outdoor activity possible" }, { range: "28–31°C", label: "Danger", color: "text-orange-400", desc: "Elderly and vulnerable at risk" }, { range: "WBT ≥ 31°C", label: "Critical", color: "text-red-400", desc: "Human survivability limit — outdoor labor becomes fatal within hours" }].map((s) => (
               <div key={s.range} className="bg-[#050b14]/60 border border-cyan-500/10 p-4 rounded-lg">
                 <p className={`${s.color} font-bold text-[10px] tracking-widest mb-1`}>{s.label}</p>
                 <p className="text-slate-300 text-[9px] tracking-widest mb-2">{s.range}</p>
@@ -312,11 +249,6 @@ export default function MethodologyModule() {
               </div>
             ))}
           </div>
-
-          <p className="text-[9px] text-slate-500">
-            WBT ≥ 35°C is considered the theoretical absolute limit of human thermoregulation (Sherwood & Huber 2010, PNAS).
-            Values above 31°C are consistent with IPCC AR6 projections for South Asian cities under SSP5-8.5.
-          </p>
         </div>
       ),
     },
@@ -325,37 +257,18 @@ export default function MethodologyModule() {
       title: "Mitigation Offsets",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>
-            Two urban cooling interventions are modelled, with coefficients derived from peer-reviewed urban
-            climate literature:
-          </p>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div className="p-6 bg-[#050b14]/80 border border-emerald-500/30 rounded-xl">
-              <p className="text-emerald-400 font-bold mb-3 tracking-[0.3em] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" /> Canopy Cover
-              </p>
+              <p className="text-emerald-400 font-bold mb-3 tracking-[0.3em] flex items-center gap-2"><span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" /> Canopy Cover</p>
               <p className="text-white font-serif text-lg tracking-wider mb-3">ΔT = (% / 100) × 1.2°C</p>
-              <p className="text-slate-500 text-[9px] tracking-widest">
-                Source: Bowler et al. (2010) — urban greening reduces local Tmax by 0.5–2.0°C per 10% canopy increase.
-              </p>
+              <p className="text-slate-500 text-[9px] tracking-widest">Source: Bowler et al. (2010)</p>
             </div>
             <div className="p-6 bg-[#050b14]/80 border border-sky-500/30 rounded-xl">
-              <p className="text-sky-400 font-bold mb-3 tracking-[0.3em] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-sky-400 rounded-full" /> Cool / Reflective Roofs
-              </p>
+              <p className="text-sky-400 font-bold mb-3 tracking-[0.3em] flex items-center gap-2"><span className="w-1.5 h-1.5 bg-sky-400 rounded-full" /> Cool / Reflective Roofs</p>
               <p className="text-white font-serif text-lg tracking-wider mb-3">ΔT = (% / 100) × 0.8°C</p>
-              <p className="text-slate-500 text-[9px] tracking-widest">
-                Source: Santamouris (2015) — high-albedo surfaces reduce urban Tmax by 0.3–1.0°C per 10% coverage.
-              </p>
+              <p className="text-slate-500 text-[9px] tracking-widest">Source: Santamouris (2015)</p>
             </div>
           </div>
-
-          <p>
-            Mitigation reduces both <span className="text-cyan-300 font-bold">peak Tx5d temperature</span> and
-            <span className="text-cyan-300 font-bold"> annual heatwave days</span> (−3.5 days per 1°C cooling),
-            which propagates through mortality and economic loss calculations.
-          </p>
         </div>
       ),
     },
@@ -365,7 +278,6 @@ export default function MethodologyModule() {
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
           <p>All data is fetched live at query time. No static datasets or cached national averages are used.</p>
-
           <div className="space-y-3 mt-4">
             {[
               { api: "Open-Meteo ERA5 Archive",    url: "archive-api.open-meteo.com", use: "Historical baseline (1991-2020)" },
@@ -375,10 +287,7 @@ export default function MethodologyModule() {
               { api: "GeoNames API",               url: "api.geonames.org",            use: "City population + country code" },
             ].map((d) => (
               <div key={d.api} className="bg-[#050b14]/60 border border-cyan-500/10 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <p className="text-cyan-300 font-bold text-[10px] tracking-widest">{d.api}</p>
-                  <p className="text-slate-500 text-[9px] tracking-widest mt-1">{d.url}</p>
-                </div>
+                <div><p className="text-cyan-300 font-bold text-[10px] tracking-widest">{d.api}</p><p className="text-slate-500 text-[9px] tracking-widest mt-1">{d.url}</p></div>
                 <p className="text-slate-400 text-[9px] tracking-widest text-right">{d.use}</p>
               </div>
             ))}
@@ -391,50 +300,17 @@ export default function MethodologyModule() {
       title: "Limitations & Uncertainty",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>
-            OpenPlanet provides <span className="text-cyan-300 font-bold">research-grade estimates</span> for
-            analytical and exploratory purposes. The following limitations apply:
-          </p>
-
+          <p>OpenPlanet provides <span className="text-cyan-300 font-bold">research-grade estimates</span> for analytical and exploratory purposes.</p>
           <div className="space-y-3 mt-4">
             {[
-              {
-                label: "Post-2050 Projections",
-                text: "2075 and 2100 values use IPCC AR6 published regional delta rates applied to ERA5 baselines. These are not direct CMIP6 model outputs.",
-                severity: "amber",
-              },
-              {
-                label: "City GDP Estimates",
-                text: "City-level GDP is estimated from national GDP/capita (World Bank) × metro population (GeoNames) × urban productivity ratio. No API provides direct city-level GDP for all cities globally.",
-                severity: "amber",
-              },
-              {
-                label: "Mortality Confidence Interval",
-                text: "Death estimates carry ±15% uncertainty from the Gasparrini (2017) beta coefficient. Local age structure and healthcare quality further affect precision.",
-                severity: "amber",
-              },
-              {
-                label: "Spatial Resolution",
-                text: "ERA5 resolution is ~31km, CMIP6 models 20-50km. Sub-city microclimatic variation (street canyons, parks) is not captured.",
-                severity: "info",
-              },
-              {
-                label: "Outputs are Projections, Not Forecasts",
-                text: "All values represent plausible futures under stated SSP scenarios — not deterministic predictions. Actual outcomes depend on future emissions trajectories, adaptation measures, and social factors not modelled here.",
-                severity: "info",
-              },
+              { label: "Post-2050 Projections", text: "2075 and 2100 values use IPCC AR6 published regional delta rates applied to ERA5 baselines. These are not direct CMIP6 model outputs.", severity: "amber" },
+              { label: "City GDP Estimates", text: "City-level GDP is estimated from national GDP/capita (World Bank) × metro population (GeoNames) × urban productivity ratio. No API provides direct city-level GDP for all cities globally.", severity: "amber" },
+              { label: "Mortality Confidence Interval", text: "Death estimates carry ±15% uncertainty from the Gasparrini (2017) beta coefficient.", severity: "amber" },
+              { label: "Spatial Resolution", text: "ERA5 resolution is ~31km, CMIP6 models 20-50km. Sub-city microclimatic variation is not captured.", severity: "info" },
+              { label: "Outputs are Projections, Not Forecasts", text: "All values represent plausible futures under stated SSP scenarios — not deterministic predictions.", severity: "info" },
             ].map((item) => (
-              <div
-                key={item.label}
-                className={`border rounded-lg p-4 ${
-                  item.severity === "amber"
-                    ? "border-amber-500/20 bg-amber-950/10"
-                    : "border-cyan-500/10 bg-[#050b14]/60"
-                }`}
-              >
-                <p className={`font-bold text-[10px] tracking-widest mb-2 ${item.severity === "amber" ? "text-amber-400" : "text-cyan-400"}`}>
-                  {item.label}
-                </p>
+              <div key={item.label} className={`border rounded-lg p-4 ${item.severity === "amber" ? "border-amber-500/20 bg-amber-950/10" : "border-cyan-500/10 bg-[#050b14]/60"}`}>
+                <p className={`font-bold text-[10px] tracking-widest mb-2 ${item.severity === "amber" ? "text-amber-400" : "text-cyan-400"}`}>{item.label}</p>
                 <p className="text-slate-400 text-[10px] tracking-widest leading-relaxed">{item.text}</p>
               </div>
             ))}
@@ -474,37 +350,45 @@ export default function MethodologyModule() {
           Scientific Protocol & Methodology
         </h2>
         <p className="text-xs font-mono text-slate-400 uppercase tracking-[0.2em] leading-loose max-w-3xl">
-          Documentation of data pipelines, calibration methodology, and peer-reviewed empirical constants
-          used by the OpenPlanet climate risk engine.
+          Documentation of data pipelines, calibration methodology, and peer-reviewed empirical constants used by the OpenPlanet climate risk engine.
         </p>
       </div>
 
       {/* Accordion */}
       <div className="space-y-4 flex-grow">
         {sections.map((s) => (
-          <div
-            key={s.id}
-            className="bg-[#02050a]/60 backdrop-blur-xl border border-cyan-500/20 rounded-xl overflow-hidden group shadow-lg transition-all duration-300 hover:border-cyan-500/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)]"
-          >
-            <button
-              onClick={() => setOpen(open === s.id ? null : s.id)}
-              className="w-full flex items-center justify-between px-8 py-6 text-left transition-all hover:bg-cyan-900/10"
-            >
-              <span className={`text-[11px] font-mono font-bold uppercase tracking-[0.3em] transition-colors ${open === s.id ? "text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" : "text-slate-300"}`}>
-                {s.title}
-              </span>
-              <span className={`text-cyan-500 transition-transform duration-500 ${open === s.id ? "rotate-180 text-cyan-300" : ""}`}>
-                ▼
-              </span>
+          <div key={s.id} className="bg-[#02050a]/60 backdrop-blur-xl border border-cyan-500/20 rounded-xl overflow-hidden group shadow-lg transition-all duration-300 hover:border-cyan-500/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.1)]">
+            <button onClick={() => setOpen(open === s.id ? null : s.id)} className="w-full flex items-center justify-between px-8 py-6 text-left transition-all hover:bg-cyan-900/10">
+              <span className={`text-[11px] font-mono font-bold uppercase tracking-[0.3em] transition-colors ${open === s.id ? "text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]" : "text-slate-300"}`}>{s.title}</span>
+              <span className={`text-cyan-500 transition-transform duration-500 ${open === s.id ? "rotate-180 text-cyan-300" : ""}`}>▼</span>
             </button>
-
             <div className={`transition-all duration-500 ease-in-out overflow-hidden ${open === s.id ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"}`}>
-              <div className="px-8 pb-8 pt-2 border-t border-cyan-500/10 bg-[#050b14]/30">
-                {s.content}
-              </div>
+              <div className="px-8 pb-8 pt-2 border-t border-cyan-500/10 bg-[#050b14]/30">{s.content}</div>
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── Excel Export — Large confident button at bottom ── */}
+      <div className="bg-[#050b14]/70 backdrop-blur-xl border border-cyan-500/20 p-8 rounded-2xl">
+        <h3 className="text-[10px] font-mono text-cyan-300 uppercase tracking-[0.4em] mb-2 flex items-center gap-3">
+          <span className="w-2 h-2 bg-emerald-400 rounded-sm shadow-[0_0_8px_#10b981]" />
+          Interactive Audit Model
+        </h3>
+        <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-6 leading-relaxed">
+          Download the complete 3-sheet Excel model. Change any yellow input cell — deaths, GDP loss, and heatwave projections update automatically via real Excel formulas. Used for investor due diligence and academic verification.
+        </p>
+        
+        {/* Pass the dynamic data here */}
+        <ExcelExportFullButton data={currentExcelData} />
+        
+        {/* Dynamic Disclaimer Text */}
+        <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mt-3">
+          {isLive 
+            ? `Model populated with live data for ${primaryData!.city_name} (${primaryData!.ssp}, ${currentExcelData.target_year}).`
+            : `Demo model uses global average values. Run a city analysis in Deep Dive for city-specific data.`
+          }
+        </p>
       </div>
     </div>
   );
