@@ -27,6 +27,7 @@ export interface Projection {
   survivability_status: "STABLE" | "DANGER" | "CRITICAL";
   n_models: number;
   region: string;
+  audit_trail?: any;
 }
 
 export interface ClimateBaseline {
