@@ -28,7 +28,6 @@ export default function DiscoverPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showDesktopWarning, setShowDesktopWarning] = useState(false);
 
   const [canopy, setCanopy] = useState(15);
   const [albedo, setAlbedo] = useState(40);
@@ -56,7 +55,7 @@ export default function DiscoverPage() {
 
   const handleGuestClick = () => {
     setShowAuthModal(false);
-    setShowDesktopWarning(true);
+    router.push('/dashboard');
   };
 
   return (
@@ -369,36 +368,6 @@ export default function DiscoverPage() {
           </div>
         </div>
       )}
-
-      {/* ── DESKTOP WARNING MODAL ── */}
-      {showDesktopWarning && (
-        <div 
-          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300"
-        >
-          <div 
-            className="relative w-full max-w-md bg-[#050b14]/95 border border-cyan-500/30 rounded-2xl shadow-[0_0_60px_rgba(34,211,238,0.15)] p-8 overflow-hidden text-center animate-in zoom-in-95 duration-300 backdrop-blur-xl"
-          >
-            <div className="absolute -top-20 -left-20 w-48 h-48 bg-cyan-500/10 blur-[80px] pointer-events-none" />
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="mb-5 p-3 bg-cyan-950/30 border border-cyan-500/20 rounded-full text-cyan-400">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-              </div>
-              <h2 className="text-lg font-bold text-white mb-3">Desktop Recommended</h2>
-              <p className="text-xs text-slate-400 mb-8 leading-relaxed">
-                OpenPlanet's high-resolution maps and data models are complex. For the full experience, please switch to a desktop or large tablet.
-              </p>
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="w-full px-6 py-3.5 bg-cyan-900 border border-cyan-500/50 text-white font-mono text-[10px] font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-cyan-800 transition-all shadow-[0_0_20px_rgba(34,211,238,0.2)]"
-                style={{ touchAction: 'manipulation' }}
-              >
-                Continue Anyway
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

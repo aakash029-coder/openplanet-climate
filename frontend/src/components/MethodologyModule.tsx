@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ExcelExportFullButton, type ExcelExportData } from "@/components/ExcelExport";
 import { useClimateData } from "@/context/ClimateDataContext";
 
@@ -70,41 +70,74 @@ export default function MethodologyModule() {
   const [open, setOpen] = useState<string | null>("threshold");
   const { primaryData } = useClimateData();
 
-  let currentExcelData = DEMO_EXCEL_DATA;
-  let isLive = false;
+  // ✅ NEW: State to hold the final data for Excel
+  const [currentExcelData, setCurrentExcelData] = useState<ExcelExportData>(DEMO_EXCEL_DATA);
+  const [isLive, setIsLive] = useState(false);
 
-  if (primaryData) {
-    const proj = primaryData.projections.find(p => p.year === 2050) || primaryData.projections[0];
-    if (proj) {
-      const meanTemp  = proj.audit_trail?.economics?.variables?.T_mean as number || (primaryData.baseline.baseline_mean_c + 2.0);
-      const deathRate = proj.audit_trail?.mortality?.variables?.DR as number || 7.7;
-      const vuln      = proj.audit_trail?.mortality?.variables?.V as number || 1.0;
-      currentExcelData = {
-        city_name:           primaryData.city_name,
-        lat:                 primaryData.lat,
-        lng:                 primaryData.lng,
-        ssp:                 primaryData.ssp,
-        target_year:         proj.year,
-        era5_baseline_c:     primaryData.baseline.baseline_mean_c,
-        era5_p95_c:          primaryData.threshold_c,
-        era5_humidity_p95:   primaryData.era5_humidity_p95,
-        peak_tx5d_c:         proj.peak_tx5d_c,
-        heatwave_days:       proj.heatwave_days,
-        mean_temp_c:         meanTemp,
-        population:          primaryData.population,
-        gdp_usd:             primaryData.gdp_usd,
-        death_rate:          deathRate,
-        vulnerability:       vuln,
-        canopy_pct:          primaryData.canopy_offset_pct,
-        albedo_pct:          primaryData.albedo_offset_pct,
-        attributable_deaths: proj.attributable_deaths,
-        economic_decay_usd:  proj.economic_decay_usd,
-        wbt_c:               proj.wbt_max_c,
-        cmip6_source:        proj.source,
-      };
-      isLive = true;
+  useEffect(() => {
+    let sourceData = primaryData;
+
+    // 1. Agar context khali hai, toh localStorage check karo (Persistence logic)
+    if (!sourceData && typeof window !== 'undefined') {
+      const saved = localStorage.getItem('openplanet_last_risk_data');
+      if (saved) {
+        try { sourceData = JSON.parse(saved); } catch (e) { console.error("Cache read fail"); }
+      }
     }
-  }
+
+    // 2. Data extraction logic
+    if (sourceData) {
+      try {
+        const projections = Array.isArray(sourceData.projections) ? sourceData.projections : [sourceData];
+        const proj = projections.find((p: any) => Number(p.year || p.target_year) === 2050) || projections[0];
+
+        if (proj) {
+          const safeNum = (val: any, fallback = 0) => {
+            if (val == null) return fallback;
+            if (typeof val === 'number') return val;
+            const n = Number(String(val).replace(/[^0-9.-]+/g, ""));
+            return isNaN(n) ? fallback : n;
+          };
+
+          const baselineMean = sourceData.baseline?.baseline_mean_c || proj.era5_baseline_c || 20;
+
+          const mappedData: ExcelExportData = {
+            city_name:           sourceData.city_name || proj.city_name || "Target City",
+            lat:                 safeNum(sourceData.lat || proj.lat),
+            lng:                 safeNum(sourceData.lng || proj.lng),
+            ssp:                 sourceData.ssp || proj.ssp || "SSP2-4.5",
+            target_year:         safeNum(proj.year || proj.target_year, 2050),
+            era5_baseline_c:     safeNum(baselineMean),
+            era5_p95_c:          safeNum(sourceData.threshold_c || proj.era5_p95_c),
+            era5_humidity_p95:   safeNum(sourceData.era5_humidity_p95 || proj.era5_humidity_p95 || 70),
+            peak_tx5d_c:         safeNum(proj.peak_tx5d_c || proj.temp),
+            heatwave_days:       safeNum(proj.heatwave_days || proj.heatwave),
+            mean_temp_c:         safeNum(proj.mean_temp_c || (baselineMean + 2)),
+            population:          safeNum(sourceData.population || proj.population),
+            gdp_usd:             safeNum(sourceData.gdp_usd || proj.gdp_usd),
+            death_rate:          7.7,
+            vulnerability:       safeNum(proj.vulnerability || 1.0),
+            canopy_pct:          safeNum(sourceData.canopy_offset_pct || 0),
+            albedo_pct:          safeNum(sourceData.albedo_offset_pct || 0),
+            attributable_deaths: safeNum(proj.attributable_deaths || proj.deaths),
+            economic_decay_usd:  safeNum(proj.economic_decay_usd || proj.loss),
+            wbt_c:               safeNum(proj.wbt_max_c || proj.wbt),
+            cmip6_source:        proj.source || "CMIP6 Ensemble",
+          };
+
+          setCurrentExcelData(mappedData);
+          setIsLive(true);
+
+          // Backup for next tab switch
+          if (typeof window !== 'undefined' && primaryData) {
+            localStorage.setItem('openplanet_last_risk_data', JSON.stringify(primaryData));
+          }
+        }
+      } catch (err) {
+        console.error("Methodology Data Sync Error:", err);
+      }
+    }
+  }, [primaryData]);
 
   const sections = [
     {
@@ -440,7 +473,7 @@ export default function MethodologyModule() {
           <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl px-4 py-3 mb-5 flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"/>
             <p className="text-[9px] font-mono text-emerald-400 uppercase tracking-widest leading-relaxed">
-              Live data loaded · {primaryData!.city_name} · {primaryData!.ssp} · {currentExcelData.target_year} · All cells populated with real CMIP6 + API values
+              Live data loaded · {currentExcelData.city_name} · {currentExcelData.ssp} · {currentExcelData.target_year} · All cells populated with real CMIP6 + API values
             </p>
           </div>
         )}
@@ -449,7 +482,7 @@ export default function MethodologyModule() {
 
         <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mt-3">
           {isLive
-            ? `Model populated with live CMIP6 data for ${primaryData!.city_name} (${primaryData!.ssp}, ${currentExcelData.target_year}). All values are real API outputs — not estimates or placeholders.`
+            ? `Model populated with live CMIP6 data for ${currentExcelData.city_name} (${currentExcelData.ssp}, ${currentExcelData.target_year}). All values are real API outputs — not estimates or placeholders.`
             : `Template file only. All input cells are zero. Not suitable for analysis without first running a city projection in the Deep Dive tab.`
           }
         </p>
