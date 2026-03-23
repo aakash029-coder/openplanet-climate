@@ -651,10 +651,11 @@ export default function MapModule({
                             <YAxis stroke="#334155" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }} />
                             <RechartsTooltip contentStyle={{ background: '#06101f', border: '1px solid #1e293b', borderRadius: '10px', fontSize: '11px', fontFamily: 'monospace' }} formatter={(v: any, name: any) => [`$${Number(v).toFixed(0)}M`, name]} />
                             <Legend wrapperStyle={{ paddingTop: '14px', fontSize: '10px', fontFamily: 'monospace', color: '#94a3b8' }} />
-                            <Bar dataKey="noAction" name="Baseline (No Action)" fill="#ef4444" radius={[3,3,0,0]} opacity={0.85} />
+                            {/* SWAPPED DATAKEYS HERE */}
+                            <Bar dataKey="adapt" name="Baseline (No Action)" fill="#ef4444" radius={[3,3,0,0]} opacity={0.85} />
                             {/* ✅ FIX: Only render if backend sent real adapt data */}
                             {hasRealAdaptData && (
-                              <Bar dataKey="adapt" name="With Mitigation" fill="#10b981" radius={[3,3,0,0]} opacity={0.85} />
+                              <Bar dataKey="noAction" name="With Mitigation" fill="#10b981" radius={[3,3,0,0]} opacity={0.85} />
                             )}
                           </BarChart>
                         </ResponsiveContainer>
