@@ -41,6 +41,7 @@ function Ref({ authors, year, journal, title }: { authors: string; year: number;
   );
 }
 
+// ✅ FIX: All zeros — formula template only. No fabricated numbers.
 const DEMO_EXCEL_DATA: ExcelExportData = {
   city_name:           "FORMULA TEMPLATE — Run a city in Deep Dive for real values",
   lat:                 0,
@@ -69,6 +70,7 @@ export default function MethodologyModule() {
   const [open, setOpen] = useState<string | null>("threshold");
   const { primaryData } = useClimateData();
 
+  // ✅ NEW: State to hold the final data for Excel
   const [currentExcelData, setCurrentExcelData] = useState<ExcelExportData>(DEMO_EXCEL_DATA);
   const [isLive, setIsLive] = useState(false);
 
@@ -76,6 +78,7 @@ export default function MethodologyModule() {
     const syncData = () => {
       let sourceData = primaryData;
 
+      // 1. Hamesha localStorage check karo (yeh sabse fresh data rakhta hai)
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('openplanet_last_risk_data');
         if (saved) {
@@ -85,6 +88,7 @@ export default function MethodologyModule() {
         }
       }
 
+      // 2. Data extraction logic
       if (sourceData) {
         try {
           const _source: any = sourceData;
@@ -101,10 +105,14 @@ export default function MethodologyModule() {
 
             const baselineMean = _source.baseline?.baseline_mean_c || proj.era5_baseline_c || 20;
 
+            // ✅ BULLETPROOF LAT/LNG EXTRACTION (Checking deep nested objects as well)
+            const extractedLat = _source.lat ?? proj.lat ?? _source.location?.lat ?? _source.geo?.lat ?? _source.metadata?.lat;
+            const extractedLng = _source.lng ?? proj.lng ?? _source.location?.lng ?? _source.geo?.lng ?? _source.metadata?.lng;
+
             const mappedData: ExcelExportData = {
               city_name:           _source.city_name || proj.city_name || "Target City",
-              lat:                 safeNum(_source.lat || proj.lat),
-              lng:                 safeNum(_source.lng || proj.lng),
+              lat:                 safeNum(extractedLat),
+              lng:                 safeNum(extractedLng),
               ssp:                 _source.ssp || proj.ssp || "SSP2-4.5",
               target_year:         safeNum(proj.year || proj.target_year, 2050),
               era5_baseline_c:     safeNum(baselineMean),
@@ -138,7 +146,7 @@ export default function MethodologyModule() {
 
     if (typeof window !== 'undefined') {
       window.addEventListener('climate_data_updated', syncData); // Same-tab sync
-      window.addEventListener('storage', syncData); // ✅ CROSS-TAB SYNC (Yeh refresh ki zarurat khatam karega)
+      window.addEventListener('storage', syncData); // CROSS-TAB SYNC
     }
     
     const interval = setInterval(syncData, 1500);
@@ -502,4 +510,4 @@ export default function MethodologyModule() {
       </div>
     </div>
   );
-} 
+}
