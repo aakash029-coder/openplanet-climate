@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Map, { NavigationControl } from 'react-map-gl/maplibre';
+// @ts-ignore
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
 import { HexagonLayer } from '@deck.gl/aggregation-layers';
@@ -16,9 +17,6 @@ import {
   formatDeathsRange,
 } from '@/context/ClimateDataContext';
 
-// ─────────────────────────────────────────────────────────────────
-// TOOLTIP
-// ─────────────────────────────────────────────────────────────────
 const InfoTooltip = ({
   publicText, techText, alignLeft = false,
 }: { publicText: string; techText: string; alignLeft?: boolean }) => (
@@ -31,9 +29,6 @@ const InfoTooltip = ({
   </div>
 );
 
-// ─────────────────────────────────────────────────────────────────
-// VAR TOOLTIPS
-// ─────────────────────────────────────────────────────────────────
 const VAR_TOOLTIPS: Record<string, string> = {
   AF:            "Attributable Fraction — proportion of deaths attributable to heat. AF = (RR−1) / RR",
   RR:            "Relative Risk — how much more likely death is vs baseline. RR = exp(β × ΔT)",
@@ -51,9 +46,6 @@ const VAR_TOOLTIPS: Record<string, string> = {
   GDP:           "City GDP: World Bank GDP/cap × metro population × urban productivity ratio",
 };
 
-// ─────────────────────────────────────────────────────────────────
-// CALCULATION DETAILS MODAL — inside map section
-// ─────────────────────────────────────────────────────────────────
 const AuditModal = ({
   open, onClose, auditTrail, metricKey,
 }: {
@@ -77,10 +69,7 @@ const AuditModal = ({
     <>
       <div className="absolute inset-0 z-[500] bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute inset-0 z-[501] flex items-center justify-center pointer-events-none px-4">
-        <div
-          className="pointer-events-auto w-full max-w-[430px] bg-[#06101f] border border-cyan-500/25 rounded-2xl shadow-[0_0_60px_rgba(34,211,238,0.12),0_24px_48px_rgba(0,0,0,0.8)] overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="pointer-events-auto w-full max-w-[430px] bg-[#06101f] border border-cyan-500/25 rounded-2xl shadow-[0_0_60px_rgba(34,211,238,0.12),0_24px_48px_rgba(0,0,0,0.8)] overflow-hidden" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800/60 bg-gradient-to-r from-cyan-950/30 to-transparent">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
@@ -143,9 +132,6 @@ const AuditModal = ({
   );
 };
 
-// ─────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────
 const LoadingSpinner = () => (
   <div className="flex flex-col items-center justify-center w-full py-24 bg-[#020617]">
     <div className="w-10 h-10 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-6" />
@@ -172,9 +158,6 @@ const cartoDarkStyle = {
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-// ─────────────────────────────────────────────────────────────────
-// AI CARD — Cause / Effect / Solution
-// ─────────────────────────────────────────────────────────────────
 const AiCard = ({ text, title, badge }: { text: string; title: string; badge?: string }) => {
   if (!text) return null;
   const clean = (s: string) => s.replace(/\*\*.*?\*\*:?/g, '').replace(/^:\s*/, '').trim();
@@ -230,9 +213,6 @@ function fmtLoss(n: number): string {
   return `$${n.toLocaleString()}`;
 }
 
-// ─────────────────────────────────────────────────────────────────
-// MAIN
-// ─────────────────────────────────────────────────────────────────
 export default function MapModule({
   onNavigateToCompare,
   onTargetLocked,
@@ -326,7 +306,6 @@ export default function MapModule({
     } finally { setIsLoading(false); }
   };
 
-  // Mitigation math — pure frontend, zero API calls
   const mitigatedData = (() => {
     if (!isInitialized || simData.temp === '--') return null;
     if (canopy === 0 && coolRoof === 0) return null;
@@ -355,6 +334,9 @@ export default function MapModule({
   })();
 
   const baseDeathsNum = isInitialized ? parseFloat(String(simData.deaths).replace(/,/g, '')) || 0 : 0;
+
+  // ✅ Only show mitigation bar if backend actually sent adapt data
+  const hasRealAdaptData = chartData.economic.some(d => d.adapt != null);
 
   const layers = [new HexagonLayer({
     id: 'risk-heatmap', data: hexData,
@@ -399,7 +381,6 @@ export default function MapModule({
           </div>
         )}
 
-        {/* Overlay panels */}
         <div className="absolute inset-x-0 top-0 bottom-0 z-20 flex justify-between items-start p-3 md:p-5 lg:p-8 pointer-events-none gap-2 md:gap-3">
 
           {/* LEFT PANEL */}
@@ -657,17 +638,24 @@ export default function MapModule({
                       <div className="mb-3">
                         <p className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold">Economic Risk Projection</p>
                         <p className="text-[9px] font-mono text-slate-600 italic mt-1"><em>Burke (2018) · ILO (2019) · values in M USD</em></p>
+                        {!hasRealAdaptData && (
+                          <p className="text-[8px] font-mono text-slate-700 italic mt-0.5">Baseline only · no mitigation scenario from API</p>
+                        )}
                       </div>
                       <div className="flex-grow">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={chartData.economic.map(d => ({ ...d, adapt: Math.min(d.adapt ?? 0, d.noAction * 0.80) }))} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
+                          {/* ✅ FIX: d.adapt ?? null — no fabricated 0.80 fallback */}
+                          <BarChart data={chartData.economic.map(d => ({ ...d, adapt: d.adapt ?? null }))} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                             <XAxis dataKey="year" stroke="#334155" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }} />
                             <YAxis stroke="#334155" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }} />
                             <RechartsTooltip contentStyle={{ background: '#06101f', border: '1px solid #1e293b', borderRadius: '10px', fontSize: '11px', fontFamily: 'monospace' }} formatter={(v: any, name: any) => [`$${Number(v).toFixed(0)}M`, name]} />
                             <Legend wrapperStyle={{ paddingTop: '14px', fontSize: '10px', fontFamily: 'monospace', color: '#94a3b8' }} />
                             <Bar dataKey="noAction" name="Baseline (No Action)" fill="#ef4444" radius={[3,3,0,0]} opacity={0.85} />
-                            <Bar dataKey="adapt"    name="With Mitigation"      fill="#10b981" radius={[3,3,0,0]} opacity={0.85} />
+                            {/* ✅ FIX: Only render if backend sent real adapt data */}
+                            {hasRealAdaptData && (
+                              <Bar dataKey="adapt" name="With Mitigation" fill="#10b981" radius={[3,3,0,0]} opacity={0.85} />
+                            )}
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -681,7 +669,6 @@ export default function MapModule({
             {aiAnalysis && (
               <div className="px-4 md:px-8 lg:px-16 py-10 w-full max-w-[1440px] mx-auto">
 
-                {/* Section header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 pb-4 border-b border-slate-800/40">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
@@ -693,7 +680,6 @@ export default function MapModule({
                   <p className="text-[8px] font-mono text-slate-700 italic uppercase tracking-widest">All values sourced from climate engine · Baseline risk</p>
                 </div>
 
-                {/* 4 cards: 3 AI baseline + 1 live mitigation */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
                   <AiCard text={aiAnalysis.mortality}      title="Mortality Risk"        badge="Baseline" />
                   <AiCard text={aiAnalysis.economic}       title="Economic Impact"       badge="Baseline" />
@@ -709,7 +695,6 @@ export default function MapModule({
                       </div>
                     </div>
 
-                    {/* AI science explanation */}
                     {aiAnalysis.mitigation && (() => {
                       const text = aiAnalysis.mitigation;
                       const clean = (s: string) => s.replace(/\*\*.*?\*\*:?/g, '').replace(/^:\s*/, '').trim();
@@ -738,7 +723,6 @@ export default function MapModule({
 
                     <div className="h-px bg-slate-800/60" />
 
-                    {/* Live numbers */}
                     {mitigatedData ? (
                       <div>
                         <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.15em] mb-2">
@@ -767,7 +751,7 @@ export default function MapModule({
                   </div>
                 </div>
 
-                {/* ── Baseline vs Mitigation comparison bar ── */}
+                {/* Baseline vs Mitigation comparison bar */}
                 {mitigatedData && (
                   <div className="bg-[#06101f] border border-slate-800/40 rounded-2xl p-5 md:p-6">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-5">
@@ -783,10 +767,10 @@ export default function MapModule({
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
                       {[
-                        { label: 'Attributable Deaths', baseline: simData.deaths, mitigated: mitigatedData.deaths, saved: `−${mitigatedData.savedDeaths} lives`, baseColor: 'text-red-400' },
-                        { label: 'Economic Loss',        baseline: simData.loss,   mitigated: mitigatedData.loss ?? simData.loss, saved: mitigatedData.savedLoss ? `−${mitigatedData.savedLoss}` : '—', baseColor: 'text-amber-400' },
-                        { label: 'Peak Temperature',     baseline: `${simData.temp}°C`, mitigated: `${mitigatedData.temp}°C`, saved: `−${mitigatedData.tempDelta}°C`, baseColor: 'text-orange-400' },
-                        { label: 'Heatwave Days',        baseline: `${simData.heatwave}d`, mitigated: `${mitigatedData.heatwave}d`, saved: `−${mitigatedData.hwDelta}d`, baseColor: 'text-yellow-400' },
+                        { label: 'Attributable Deaths', baseline: simData.deaths,          mitigated: mitigatedData.deaths,                 saved: `−${mitigatedData.savedDeaths} lives`,                           baseColor: 'text-red-400'    },
+                        { label: 'Economic Loss',        baseline: simData.loss,            mitigated: mitigatedData.loss ?? simData.loss,   saved: mitigatedData.savedLoss ? `−${mitigatedData.savedLoss}` : '—', baseColor: 'text-amber-400'  },
+                        { label: 'Peak Temperature',     baseline: `${simData.temp}°C`,    mitigated: `${mitigatedData.temp}°C`,            saved: `−${mitigatedData.tempDelta}°C`,                                 baseColor: 'text-orange-400' },
+                        { label: 'Heatwave Days',        baseline: `${simData.heatwave}d`, mitigated: `${mitigatedData.heatwave}d`,         saved: `−${mitigatedData.hwDelta}d`,                                    baseColor: 'text-yellow-400' },
                       ].map((item) => (
                         <div key={item.label} className="space-y-2">
                           <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.12em] leading-tight">{item.label}</p>
@@ -807,7 +791,6 @@ export default function MapModule({
                     </div>
                   </div>
                 )}
-
               </div>
             )}
           </>
