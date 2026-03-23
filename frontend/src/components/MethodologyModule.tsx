@@ -96,18 +96,27 @@ export default function MethodologyModule() {
           const proj: any = projections.find((p: any) => Number(p.year || p.target_year) === 2050) || projections[0];
 
           if (proj) {
+            // ✅ IMPROVED PARSER: Handles Trillions, Billions, and Scientific Notation without corruption
             const safeNum = (val: any, fallback = 0) => {
-              if (val == null) return fallback;
+              if (val == null || val === "") return fallback;
               if (typeof val === 'number') return val;
-              const n = Number(String(val).replace(/[^0-9.-]+/g, ""));
-              return isNaN(n) ? fallback : n;
+              
+              const str = String(val).toUpperCase().replace(/,/g, '');
+              let multi = 1;
+              if (str.endsWith('T') || str.includes('TRILLION')) multi = 1e12;
+              else if (str.endsWith('B') || str.includes('BILLION')) multi = 1e9;
+              else if (str.endsWith('M') || str.includes('MILLION')) multi = 1e6;
+              
+              // Keep standard digits, decimals, negatives, AND 'E'/'+' for scientific notation
+              const parsed = Number(str.replace(/[^0-9.\-E+]/g, ""));
+              return isNaN(parsed) ? fallback : parsed * multi;
             };
 
             const baselineMean = _source.baseline?.baseline_mean_c || proj.era5_baseline_c || 20;
 
             // ✅ BULLETPROOF LAT/LNG EXTRACTION (Checking deep nested objects as well)
-            const extractedLat = _source.lat ?? proj.lat ?? _source.location?.lat ?? _source.geo?.lat ?? _source.metadata?.lat;
-            const extractedLng = _source.lng ?? proj.lng ?? _source.location?.lng ?? _source.geo?.lng ?? _source.metadata?.lng;
+            const extractedLat = _source.lat ?? proj.lat ?? _source.location?.lat ?? _source.geo?.lat ?? _source.metadata?.lat ?? 0;
+            const extractedLng = _source.lng ?? proj.lng ?? _source.location?.lng ?? _source.geo?.lng ?? _source.metadata?.lng ?? 0;
 
             const mappedData: ExcelExportData = {
               city_name:           _source.city_name || proj.city_name || "Target City",
@@ -146,7 +155,7 @@ export default function MethodologyModule() {
 
     if (typeof window !== 'undefined') {
       window.addEventListener('climate_data_updated', syncData); // Same-tab sync
-      window.addEventListener('storage', syncData); // CROSS-TAB SYNC
+      window.addEventListener('storage', syncData); // ✅ CROSS-TAB SYNC
     }
     
     const interval = setInterval(syncData, 1500);

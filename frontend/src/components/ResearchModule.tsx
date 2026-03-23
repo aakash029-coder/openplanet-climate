@@ -742,10 +742,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
 
       setResult(riskData);
       
-      // 👇 Here is the added localStorage logic
       if (typeof window !== 'undefined') {
-        localStorage.setItem('openplanet_last_risk_data', JSON.stringify({ ...riskData, city_name: baseTarget }));
-        window.dispatchEvent(new Event('climate_data_updated'));
+        localStorage.setItem('openplanet_last_risk_data', JSON.stringify({ ...riskData, city_name: baseTarget, lat: currentGeo.lat, lng: currentGeo.lng }));
       }
 
       let targetYr=selectedYear;
