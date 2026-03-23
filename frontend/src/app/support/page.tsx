@@ -5,37 +5,37 @@ import React, { useState } from "react";
 const FAQS = [
   {
     q: "What does OpenPlanet actually do?",
-    a: "OpenPlanet is an exploratory tool that provides high-resolution climate risk projections. It estimates potential heat-related mortality, economic impacts, and heatwave exposure for specific cities to help visualize future climate scenarios."
+    a: "OpenPlanet is a climate risk intelligence platform that provides high-resolution heat projections for any city on Earth. It estimates heat-related mortality, economic losses, and heatwave exposure using peer-reviewed epidemiological models, then lets you model the impact of interventions like urban tree cover and cool roofs."
   },
   {
     q: "Where does OpenPlanet get its climate data?",
-    a: "Our backend engine uses the ERA5 reanalysis dataset via the Open-Meteo API for historical baselines, and CMIP6 climate models for future projections. We then apply established epidemiological and economic formulas to this data."
+    a: "The engine uses ERA5 reanalysis data via the Open-Meteo API for historical baselines (1991–2020), and a 3-model CMIP6 ensemble (MRI-AGCM3-2-S, NICAM16-8S, MPI-ESM1-2-XR) for projections up to 2050. For 2075 and 2100, IPCC AR6 WG1 published regional warming deltas are applied. Population data comes from GeoNames, GDP and mortality rates from the World Bank API."
   },
   {
     q: "Are the projections predictions of the future?",
-    a: "No. They are simulated scenarios based on statistical models. They are meant for educational and exploratory purposes to understand potential risks, not as definitive future forecasts."
+    a: "No. They are research-grade estimates based on statistical models under specific emissions scenarios (SSP2-4.5 and SSP5-8.5). Mortality estimates carry a ±15% confidence interval and economic estimates carry ±8%. They are directional indicators for planning and analysis — not deterministic forecasts and not investment advice."
   },
   {
     q: "Who is OpenPlanet designed for?",
-    a: "OpenPlanet is designed for anyone interested in climate data—from students and researchers to urban planners, analysts, and curious individuals who want to understand localized climate impacts."
+    a: "OpenPlanet is built for anyone who makes decisions about places — city planners assessing heatwave risk, climate researchers who need auditable projections, investors and risk teams quantifying GDP-at-risk, and curious individuals who want to understand what climate change means for a specific city."
   },
   {
     q: "How accurate are the climate risk models?",
-    a: "The models rely on well-known scientific frameworks (like WHO mortality estimates and standard GDP decay models). However, because they are extrapolated simulations, they carry inherent uncertainty and should be used as directional indicators rather than exact predictions."
+    a: "The mortality model follows Gasparrini et al. (2017) published in Lancet Planetary Health (β = 0.0801). The economic model follows Burke et al. (2018) in Nature combined with ILO (2019) labor productivity data. Wet-bulb temperature uses the Stull (2011) empirical formula capped at 35°C per Sherwood & Huber (2010). All constants are documented and traceable. Post-2050 projections use IPCC AR6 regional deltas, not direct CMIP6 output — this is disclosed throughout."
   },
   {
     q: "Can I export or download the data?",
-    a: "Not right now, but we are actively working on adding CSV and GeoJSON export features in future updates!"
+    a: "Yes. Every city analysis includes a full Excel export — a 4-sheet audit model with a plain-language README, an editable Control Panel where you can change any input and watch outputs recalculate instantly, a Core Engine sheet with the complete peer-reviewed mathematics, and a Constants & Provenance sheet with full citations. The file is compatible with both Microsoft Excel and Google Sheets."
   },
   {
     q: "How can I collaborate or give feedback?",
-    a: "If you have feedback, found a bug, or want to suggest a new feature, we'd love to hear from you! Just drop us a message using the contact form on this page."
+    a: "If you have feedback, found a bug, or want to suggest a new feature, we'd love to hear from you. Just drop us a message using the contact form on this page."
   }
 ];
 
 export default function SupportPage() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
-  const [openFaq, setOpenFaq] = useState<number | null>(0); // First FAQ open by default
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,7 +44,6 @@ export default function SupportPage() {
     const data = new FormData(form);
 
     try {
-      // ── CONNECTED TO YOUR FORMSPREE ENDPOINT ──
       const response = await fetch("https://formspree.io/f/xreyberd", {
         method: "POST",
         body: data,
@@ -121,7 +120,6 @@ export default function SupportPage() {
               </div>
 
               <div className="bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl relative overflow-hidden">
-                {/* Background Glow */}
                 <div className="absolute -top-32 -right-32 w-64 h-64 bg-cyan-500/10 blur-[100px] pointer-events-none"></div>
 
                 {status === "success" ? (
@@ -143,7 +141,6 @@ export default function SupportPage() {
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                     
-                    {/* Basic Info */}
                     <div className="space-y-2">
                       <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Name *</label>
                       <input type="text" name="name" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest" placeholder="John Doe" />
@@ -159,7 +156,6 @@ export default function SupportPage() {
                       <input type="text" name="organization" className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest" placeholder="University or Company" />
                     </div>
 
-                    {/* Category Dropdown */}
                     <div className="space-y-2">
                       <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Category *</label>
                       <select name="category" required defaultValue="" className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest appearance-none cursor-pointer">
@@ -172,7 +168,6 @@ export default function SupportPage() {
                       </select>
                     </div>
 
-                    {/* Message Area */}
                     <div className="space-y-2 pt-2">
                       <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Message *</label>
                       <textarea
@@ -184,7 +179,6 @@ export default function SupportPage() {
                       ></textarea>
                     </div>
 
-                    {/* Error State */}
                     {status === "error" && (
                       <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 flex gap-4 items-center">
                         <span className="text-red-500 font-bold text-[10px]">ERR:</span>
@@ -192,7 +186,6 @@ export default function SupportPage() {
                       </div>
                     )}
 
-                    {/* Submit Button */}
                     <button
                       type="submit"
                       disabled={status === "submitting"}
