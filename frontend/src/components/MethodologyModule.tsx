@@ -423,16 +423,14 @@ export default function MethodologyModule() {
           Interactive Audit Model
         </h3>
         <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-4 leading-relaxed">
-          Download the complete 3-sheet Excel model. Change any yellow input cell — deaths, GDP loss, and heatwave projections update automatically via real Excel formulas. Used for investor due diligence and academic verification.
+          Download the complete 4-sheet Excel model. Change any input cell marked with <span className="text-amber-400 font-bold">✏️ (Edit)</span> — deaths, GDP loss, and heatwave projections update automatically via real Excel formulas. Used for investor due diligence and academic verification.
         </p>
 
         {/* ✅ FIX: Amber warning — only when no live city data loaded */}
         {!isLive && (
           <div className="bg-amber-950/20 border border-amber-500/20 rounded-xl px-4 py-3 mb-5">
             <p className="text-[9px] font-mono text-amber-400 uppercase tracking-widest leading-relaxed">
-              ⚠ Template mode — all input cells are zero. This file contains only Excel formulas and methodology structure.
-              No climate projections or risk estimates are included. Run a city analysis in the Deep Dive tab first
-              to populate this model with real CMIP6 data for a specific location.
+              ⚠ Template mode — baseline inputs are zeroed out. This file contains the complete mathematical structure and formulas. Run a live city analysis in the Deep Dive tab to download a fully populated model with real CMIP6 data.
             </p>
           </div>
         )}
