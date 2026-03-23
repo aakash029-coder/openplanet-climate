@@ -300,7 +300,7 @@ const ClimateDebtCalculator = ({ projections, canopy, albedo }: {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {[
-            {label:'No Action (NPV)',    val:fmtUSD(baseDebt), sub:`@ ${discountRate}% discount`, color:'text-red-400',    border:'border-red-500/20',    bg:'bg-red-950/20'   },
+            {label:'No Action (NPV)',   val:fmtUSD(baseDebt), sub:`@ ${discountRate}% discount`, color:'text-red-400',    border:'border-red-500/20',    bg:'bg-red-950/20'   },
             {label:'With Mitigation',   val:fmtUSD(mitDebt),  sub:`action in ${actionYear}`,     color:'text-emerald-400',border:'border-emerald-500/20',bg:'bg-emerald-950/20'},
             {label:'Total Savings',     val:fmtUSD(saved),    sub:`${fmt(savingsPct,1)}% · ${livesSaved.toLocaleString()} lives`, color:'text-cyan-300', border:'border-cyan-500/20', bg:'bg-cyan-950/20'},
           ].map(m=>(
@@ -408,7 +408,7 @@ const AdaptationROI = ({ selectedProj, gdp_usd, population, canopy, albedo, setC
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             {label:'Investment (est.)',    val:fmtUSD(totalInvest),                       sub:'30-yr deployment',     color:'text-amber-400',  border:'border-amber-500/20', bg:'bg-amber-950/20'  },
-            {label:'30-Year ROI',          val:totalInvest>0?`${fmt(roi,0)}%`:'—',         sub:'vs baseline losses',   color:roiColor,           border:'border-emerald-500/20',bg:'bg-emerald-950/20'},
+            {label:'30-Year ROI',          val:totalInvest>0?`${fmt(roi,0)}%`:'—',         sub:'vs baseline losses',   color:roiColor,            border:'border-emerald-500/20',bg:'bg-emerald-950/20'},
             {label:'Cost per Life Saved',  val:costPerLife>0?fmtUSD(costPerLife):'—',      sub:'USD estimate',         color:'text-cyan-400',   border:'border-cyan-500/20',  bg:'bg-cyan-950/20'   },
             {label:'Payback Period',       val:isFinite(payback)?`${fmt(payback,1)}y`:'—', sub:'years to break even',  color:'text-indigo-400', border:'border-indigo-500/20',bg:'bg-indigo-950/20' },
           ].map(m=>(
@@ -741,6 +741,13 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
       if (!riskData) throw new Error(lastRiskError?.message||"Engine connection failed.");
 
       setResult(riskData);
+      
+      // 👇 Here is the added localStorage logic
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('openplanet_last_risk_data', JSON.stringify({ ...riskData, city_name: baseTarget }));
+        window.dispatchEvent(new Event('climate_data_updated'));
+      }
+
       let targetYr=selectedYear;
       if (!targetYr&&riskData.projections?.length>0){targetYr=riskData.projections[0].year;setSelectedYear(targetYr);}
       setLoading(false);
@@ -898,8 +905,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                   {label:'Deaths',         baseline:selectedProj.attributable_deaths.toLocaleString(), mitigated:dynamicData.deaths.toLocaleString(),         saved:`−${dynamicData.savedDeaths.toLocaleString()} lives`, baseColor:'text-red-400'   },
-                  {label:'Economic Loss',  baseline:fmtUSD(selectedProj.economic_decay_usd),            mitigated:fmtUSD(dynamicData.loss),                    saved:`−${fmtUSD(dynamicData.savedLoss)}`,                 baseColor:'text-amber-400' },
-                  {label:'Peak Temp',      baseline:`${fmt(selectedProj.peak_tx5d_c)}°C`,               mitigated:`${fmt(dynamicData.peakTemp)}°C`,            saved:`−${fmt(selectedProj.peak_tx5d_c-dynamicData.peakTemp)}°C`, baseColor:'text-orange-400'},
+                  {label:'Economic Loss',  baseline:fmtUSD(selectedProj.economic_decay_usd),             mitigated:fmtUSD(dynamicData.loss),                    saved:`−${fmtUSD(dynamicData.savedLoss)}`,                 baseColor:'text-amber-400' },
+                  {label:'Peak Temp',      baseline:`${fmt(selectedProj.peak_tx5d_c)}°C`,                mitigated:`${fmt(dynamicData.peakTemp)}°C`,            saved:`−${fmt(selectedProj.peak_tx5d_c-dynamicData.peakTemp)}°C`, baseColor:'text-orange-400'},
                   {label:'Heatwave Days',  baseline:`${selectedProj.heatwave_days}d`,                    mitigated:`${dynamicData.hwDays}d`,                    saved:`−${Math.max(0,selectedProj.heatwave_days-dynamicData.hwDays)}d`, baseColor:'text-yellow-400'},
                 ].map(item=>(
                   <div key={item.label} className="space-y-2">
@@ -935,7 +942,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               <h3 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-4">Heat Attribution (UHI)</h3>
               <div className="space-y-5 flex-grow">
                 {[
-                  {label:"ERA5 Historical Mean",  val:`${fmt(result.baseline?.baseline_mean_c)}°C`, color:"text-slate-300", bar:"bg-indigo-500", w:"60%",                                                          source:"ERA5 1991-2020"               },
+                  {label:"ERA5 Historical Mean",  val:`${fmt(result.baseline?.baseline_mean_c)}°C`, color:"text-slate-300", bar:"bg-indigo-500", w:"60%",                                                               source:"ERA5 1991-2020"                },
                   {label:"Urban Heat Island",      val:`+${fmt(dynamicData.uhi)}°C`,                color:"text-orange-400",bar:"bg-orange-500", w:`${Math.min(100,Math.max(10,(dynamicData.uhi/8)*100))}%`,        source:"Oke (1982) cap: 8°C"          },
                   {label:"Albedo/Canopy Offset",   val:`-${fmt((canopy/100)*1.2+(albedo/100)*0.8)}°C`,color:"text-emerald-400",bar:"bg-emerald-500",w:`${Math.min(100,(canopy+albedo)/2)}%`,                        source:"Bowler (2010) · Santamouris (2015)"},
                 ].map((item,i)=>(
@@ -1063,4 +1070,4 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
       )}
     </div>
   );
-}
+} 

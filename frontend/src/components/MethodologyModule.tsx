@@ -41,7 +41,6 @@ function Ref({ authors, year, journal, title }: { authors: string; year: number;
   );
 }
 
-// ✅ FIX: All zeros — formula template only. No fabricated numbers.
 const DEMO_EXCEL_DATA: ExcelExportData = {
   city_name:           "FORMULA TEMPLATE — Run a city in Deep Dive for real values",
   lat:                 0,
@@ -70,75 +69,87 @@ export default function MethodologyModule() {
   const [open, setOpen] = useState<string | null>("threshold");
   const { primaryData } = useClimateData();
 
-  // ✅ NEW: State to hold the final data for Excel
   const [currentExcelData, setCurrentExcelData] = useState<ExcelExportData>(DEMO_EXCEL_DATA);
   const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
-    let sourceData = primaryData;
+    const syncData = () => {
+      let sourceData = primaryData;
 
-    // 1. Agar context khali hai, toh localStorage check karo (Persistence logic)
-    if (!sourceData && typeof window !== 'undefined') {
-      const saved = localStorage.getItem('openplanet_last_risk_data');
-      if (saved) {
-        try { sourceData = JSON.parse(saved); } catch (e) { console.error("Cache read fail"); }
-      }
-    }
-
-    // 2. Data extraction logic
-    if (sourceData) {
-      try {
-        // ✅ FIX: Cast sourceData and proj to 'any' to bypass strict TS checking
-        const _source: any = sourceData;
-        const projections = Array.isArray(_source.projections) ? _source.projections : [_source];
-        const proj: any = projections.find((p: any) => Number(p.year || p.target_year) === 2050) || projections[0];
-
-        if (proj) {
-          const safeNum = (val: any, fallback = 0) => {
-            if (val == null) return fallback;
-            if (typeof val === 'number') return val;
-            const n = Number(String(val).replace(/[^0-9.-]+/g, ""));
-            return isNaN(n) ? fallback : n;
-          };
-
-          const baselineMean = _source.baseline?.baseline_mean_c || proj.era5_baseline_c || 20;
-
-          const mappedData: ExcelExportData = {
-            city_name:           _source.city_name || proj.city_name || "Target City",
-            lat:                 safeNum(_source.lat || proj.lat),
-            lng:                 safeNum(_source.lng || proj.lng),
-            ssp:                 _source.ssp || proj.ssp || "SSP2-4.5",
-            target_year:         safeNum(proj.year || proj.target_year, 2050),
-            era5_baseline_c:     safeNum(baselineMean),
-            era5_p95_c:          safeNum(_source.threshold_c || proj.era5_p95_c),
-            era5_humidity_p95:   safeNum(_source.era5_humidity_p95 || proj.era5_humidity_p95 || 70),
-            peak_tx5d_c:         safeNum(proj.peak_tx5d_c || proj.temp),
-            heatwave_days:       safeNum(proj.heatwave_days || proj.heatwave),
-            mean_temp_c:         safeNum(proj.mean_temp_c || (baselineMean + 2)),
-            population:          safeNum(_source.population || proj.population),
-            gdp_usd:             safeNum(_source.gdp_usd || proj.gdp_usd),
-            death_rate:          7.7,
-            vulnerability:       safeNum(proj.vulnerability || 1.0),
-            canopy_pct:          safeNum(_source.canopy_offset_pct || 0),
-            albedo_pct:          safeNum(_source.albedo_offset_pct || 0),
-            attributable_deaths: safeNum(proj.attributable_deaths || proj.deaths),
-            economic_decay_usd:  safeNum(proj.economic_decay_usd || proj.loss),
-            wbt_c:               safeNum(proj.wbt_max_c || proj.wbt),
-            cmip6_source:        proj.source || "CMIP6 Ensemble",
-          };
-
-          setCurrentExcelData(mappedData);
-          setIsLive(true);
-
-          // Backup for next tab switch
-          if (typeof window !== 'undefined' && primaryData) {
-            localStorage.setItem('openplanet_last_risk_data', JSON.stringify(primaryData));
-          }
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('openplanet_last_risk_data');
+        if (saved) {
+          try { 
+            sourceData = JSON.parse(saved); 
+          } catch (e) { console.error("Cache read fail"); }
         }
-      } catch (err) {
-        console.error("Methodology Data Sync Error:", err);
       }
+
+      if (sourceData) {
+        try {
+          const _source: any = sourceData;
+          const projections = Array.isArray(_source.projections) ? _source.projections : [_source];
+          const proj: any = projections.find((p: any) => Number(p.year || p.target_year) === 2050) || projections[0];
+
+          if (proj) {
+            const safeNum = (val: any, fallback = 0) => {
+              if (val == null) return fallback;
+              if (typeof val === 'number') return val;
+              const n = Number(String(val).replace(/[^0-9.-]+/g, ""));
+              return isNaN(n) ? fallback : n;
+            };
+
+            const baselineMean = _source.baseline?.baseline_mean_c || proj.era5_baseline_c || 20;
+
+            const mappedData: ExcelExportData = {
+              city_name:           _source.city_name || proj.city_name || "Target City",
+              lat:                 safeNum(_source.lat || proj.lat),
+              lng:                 safeNum(_source.lng || proj.lng),
+              ssp:                 _source.ssp || proj.ssp || "SSP2-4.5",
+              target_year:         safeNum(proj.year || proj.target_year, 2050),
+              era5_baseline_c:     safeNum(baselineMean),
+              era5_p95_c:          safeNum(_source.threshold_c || proj.era5_p95_c),
+              era5_humidity_p95:   safeNum(_source.era5_humidity_p95 || proj.era5_humidity_p95 || 70),
+              peak_tx5d_c:         safeNum(proj.peak_tx5d_c || proj.temp),
+              heatwave_days:       safeNum(proj.heatwave_days || proj.heatwave),
+              mean_temp_c:         safeNum(proj.mean_temp_c || (baselineMean + 2)),
+              population:          safeNum(_source.population || proj.population),
+              gdp_usd:             safeNum(_source.gdp_usd || proj.gdp_usd),
+              death_rate:          7.7,
+              vulnerability:       safeNum(proj.vulnerability || 1.0),
+              canopy_pct:          safeNum(_source.canopy_offset_pct || 0),
+              albedo_pct:          safeNum(_source.albedo_offset_pct || 0),
+              attributable_deaths: safeNum(proj.attributable_deaths || proj.deaths),
+              economic_decay_usd:  safeNum(proj.economic_decay_usd || proj.loss),
+              wbt_c:               safeNum(proj.wbt_max_c || proj.wbt),
+              cmip6_source:        proj.source || "CMIP6 Ensemble",
+            };
+
+            setCurrentExcelData(mappedData);
+            setIsLive(true);
+          }
+        } catch (err) {
+          console.error("Methodology Data Sync Error:", err);
+        }
+      }
+    };
+
+    syncData();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('climate_data_updated', syncData); // Same-tab sync
+      window.addEventListener('storage', syncData); // ✅ CROSS-TAB SYNC (Yeh refresh ki zarurat khatam karega)
     }
+    
+    const interval = setInterval(syncData, 1500);
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('climate_data_updated', syncData);
+        window.removeEventListener('storage', syncData);
+      }
+      clearInterval(interval);
+    };
   }, [primaryData]);
 
   const sections = [
@@ -491,4 +502,4 @@ export default function MethodologyModule() {
       </div>
     </div>
   );
-}
+} 
