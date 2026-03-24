@@ -81,7 +81,7 @@ export default function HomePage() {
               {city.name}
             </span>
             <br />
-            <span className="text-white">could lose </span>
+            <span className="text-white">could lose up to </span>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400">
               {city.loss}
             </span>
