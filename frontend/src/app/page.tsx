@@ -74,7 +74,7 @@ export default function HomePage() {
         {/* ── 1. HERO ── */}
         <section className="w-full min-h-[92vh] flex flex-col items-center justify-center text-center relative z-10 pt-24 pb-16 md:pt-32">
           
-          {/* Main headline — human, not technical */}
+          {/* Main headline — Wall Street Hook */}
           <h1 className="text-4xl md:text-[72px] font-extrabold tracking-tighter mb-4 md:mb-6 leading-[0.95] max-w-4xl mx-auto">
             <span className="text-white">By {city.year}, </span>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-400 to-rose-500">
@@ -83,11 +83,11 @@ export default function HomePage() {
             <br />
             <span className="text-white">could lose </span>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400">
-              {city.deaths.toLocaleString()} lives
+              {city.loss}
             </span>
             <br />
             <span className="text-slate-400 font-light text-3xl md:text-5xl">
-              to heat every year.
+              to extreme heat every year.
             </span>
           </h1>
 
@@ -104,7 +104,7 @@ export default function HomePage() {
           <div className="w-full max-w-2xl grid grid-cols-3 gap-3 mb-10 md:mb-14">
             {[
               { label: 'Peak temperature', value: `${city.temp}°C`, color: 'text-orange-400' },
-              { label: 'Annual economic loss', value: city.loss, color: 'text-amber-300' },
+              { label: 'Est. Heat Deaths', value: `~${city.deaths.toLocaleString()}`, color: 'text-rose-400' },
               { label: 'Heatwave days / yr', value: `${city.hw}d`, color: 'text-red-400' },
             ].map(s => (
               <div key={s.label} className="bg-white/[0.03] border border-white/10 rounded-xl p-3 md:p-4 text-center">
@@ -151,8 +151,8 @@ export default function HomePage() {
             <div className="space-y-4 text-sm text-slate-400 font-light leading-relaxed">
               <p>
                 Enter a city — Delhi, Phoenix, Lagos, anywhere — and within seconds you see
-                projected heatwave days, peak temperatures, estimated deaths, and
-                economic losses for 2030 through 2100.
+                projected heatwave days, peak temperatures, economic losses, and estimated
+                mortality for 2030 through 2100.
               </p>
               <p>
                 You can then pull two cities side by side, adjust tree cover or
@@ -287,7 +287,7 @@ export default function HomePage() {
               <span className="text-slate-400 font-light">No black boxes.</span>
             </h2>
             <p className="text-sm text-slate-400 leading-relaxed mb-4">
-              When you see "14,200 deaths", you can click into the calculation
+              When you see a "$31 Billion economic loss" estimate, you can click into the calculation
               and see exactly which formula produced it, which variables were used,
               and which peer-reviewed paper each constant came from.
             </p>
