@@ -96,20 +96,44 @@ export default function MethodologyModule() {
           const proj: any = projections.find((p: any) => Number(p.year || p.target_year) === 2050) || projections[0];
 
           if (proj) {
-            // ✅ IMPROVED PARSER: Handles Trillions, Billions, and Scientific Notation without corruption
-            const safeNum = (val: any, fallback = 0) => {
-              if (val == null || val === "") return fallback;
-              if (typeof val === 'number') return val;
-              
-              const str = String(val).toUpperCase().replace(/,/g, '');
+            const safeNum = (val: any, fallback = 0): number => {
+              if (val == null || val === "" || val === undefined) return fallback;
+
+              // Already a valid number
+              if (typeof val === 'number') {
+                return (isFinite(val) && !isNaN(val)) ? val : fallback;
+              }
+
+              const str = String(val).toUpperCase().trim().replace(/,/g, '').replace(/\s/g, '');
+
+              // Scientific notation (e.g. 1.2E+9)
+              if (/^-?[\d.]+E[+-]?\d+$/i.test(str)) {
+                const parsed = parseFloat(str);
+                return (isFinite(parsed) && !isNaN(parsed)) ? parsed : fallback;
+              }
+
+              // Strip leading $
+              const cleanStr = str.replace(/^\$/, '');
+
+              // Multiplier detection
               let multi = 1;
-              if (str.endsWith('T') || str.includes('TRILLION')) multi = 1e12;
-              else if (str.endsWith('B') || str.includes('BILLION')) multi = 1e9;
-              else if (str.endsWith('M') || str.includes('MILLION')) multi = 1e6;
-              
-              // Keep standard digits, decimals, negatives, AND 'E'/'+' for scientific notation
-              const parsed = Number(str.replace(/[^0-9.\-E+]/g, ""));
-              return isNaN(parsed) ? fallback : parsed * multi;
+              let numStr = cleanStr;
+              if (cleanStr.endsWith('T') || cleanStr.includes('TRILLION')) {
+                multi = 1e12;
+                numStr = cleanStr.replace(/T$|TRILLION/g, '');
+              } else if (cleanStr.endsWith('B') || cleanStr.includes('BILLION')) {
+                multi = 1e9;
+                numStr = cleanStr.replace(/B$|BILLION/g, '');
+              } else if (cleanStr.endsWith('M') || cleanStr.includes('MILLION')) {
+                multi = 1e6;
+                numStr = cleanStr.replace(/M$|MILLION/g, '');
+              } else if (cleanStr.endsWith('K')) {
+                multi = 1e3;
+                numStr = cleanStr.replace(/K$/, '');
+              }
+
+              const parsed = parseFloat(numStr.replace(/[^0-9.\-]/g, ''));
+              return (isNaN(parsed) || !isFinite(parsed)) ? fallback : parsed * multi;
             };
 
             const baselineMean = _source.baseline?.baseline_mean_c || proj.era5_baseline_c || 20;
@@ -155,7 +179,7 @@ export default function MethodologyModule() {
 
     if (typeof window !== 'undefined') {
       window.addEventListener('climate_data_updated', syncData); // Same-tab sync
-      window.addEventListener('storage', syncData); // ✅ CROSS-TAB SYNC
+      window.addEventListener('storage', syncData); // ✅ CROSS-TAB SYNC (Yeh refresh ki zarurat khatam karega)
     }
     
     const interval = setInterval(syncData, 1500);
@@ -519,4 +543,4 @@ export default function MethodologyModule() {
       </div>
     </div>
   );
-}
+} 
