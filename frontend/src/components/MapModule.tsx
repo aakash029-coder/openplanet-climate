@@ -281,7 +281,7 @@ export default function MapModule({
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           endpoint: '/api/predict',
-          payload: { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy: 0, coolRoof: 0 },
+          payload: { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy, coolRoof },
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -351,14 +351,17 @@ export default function MapModule({
       [185, 28,  28],    // crimson  — critical
     ],
     elevationRange: [0, 1200],
-    elevationScale: 8,
+    
+    // 🔥 THE MAGIC FIX: Shrink the bin size, increase height scale to compensate
+    radius: 90,          // CHANGED: Reduced from 280 to 90 for tight coastal hugging
+    elevationScale: 18,  // CHANGED: Increased from 8 so bars still look tall and dramatic
+    coverage: 0.95,      // CHANGED: Makes the smaller hexes look solid together
+    
     extruded: true,
     getPosition: (d: any) => d.position,
     getColorWeight: (d: any) => d.risk_weight ?? 0.5,
     getElevationWeight: (d: any) => d.risk_weight ?? 0.5,
-    radius: 280,
     opacity: 0.88,
-    coverage: 0.80,
     upperPercentile: 98,
     transitions: { elevationScale: 2500 },
   })];
