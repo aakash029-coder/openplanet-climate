@@ -391,10 +391,6 @@ export default function MapModule({
             }}
             controller={{ scrollZoom: false, dragPan: !isMobile, doubleClickZoom: true, dragRotate: !isMobile, touchRotate: false, touchZoom: true }}
             layers={isInitialized ? layers : []}
-            parameters={{
-              depthTest: true,
-              blend: true
-            }}
           >
             <Map mapStyle={cartoDarkStyle} attributionControl={false} reuseMaps>
               <NavigationControl position="bottom-right" showCompass={false} style={{ bottom: '140px', right: '16px', background: 'rgba(6,16,31,0.95)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px' }} />
