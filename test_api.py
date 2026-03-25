@@ -1,51 +1,47 @@
 import requests
 import json
-import time
 
-BASE_URL = "https://albus2903-openplanet-engine.hf.space"
+BASE_URL = "http://localhost:8000"
 
-def run_speed_test():
-    print("\n" + "="*60)
-    print("🌍 OPENPLANET BACKEND SPEED & HEALTH TEST")
-    print("="*60)
+print("🔄 Testing OpenPlanet Backend...\n")
 
-    print("\n[1] Testing /api/climate-risk (Compare Module)...")
-    risk_payload = {
-        "lat": 22.57,
-        "lng": 88.36,
-        "elevation": 9.0,
-        "ssp": "ssp245",
-        "canopy_offset_pct": 0,
-        "albedo_offset_pct": 0,
-        "location_hint": "Kolkata"
-    }
+# 1. Test Root
+try:
+    res = requests.get(f"{BASE_URL}/")
+    print(f"✅ ROOT STATUS: {res.json()['status']}\n")
+except Exception as e:
+    print(f"❌ SERVER IS DOWN: Make sure FastAPI is running. Error: {e}")
+    exit()
+
+# 2. Test Climate Risk Payload
+payload = {
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "elevation": 11.0,
+    "ssp": "ssp245",
+    "canopy_offset_pct": 0,
+    "albedo_offset_pct": 0,
+    "location_hint": "London"
+}
+
+print("🌍 Fetching Climate Risk for London...")
+try:
+    response = requests.post(f"{BASE_URL}/api/climate-risk", json=payload)
+    data = response.json()
     
-    start_time = time.time()
-    try:
-        res = requests.post(f"{BASE_URL}/api/climate-risk", json=risk_payload, timeout=60)
-        end_time = time.time()
+    # Prettify and print specific parts to check if engine logic worked
+    print("\n--- RESULTS ---")
+    print(f"Baseline Mean Temp: {data.get('baseline', {}).get('baseline_mean_c')}°C")
+    print(f"ERA5 P95 Humidity: {data.get('era5_humidity_p95')}%")
+    
+    # Check 2050 projection
+    proj_2050 = next((p for p in data.get('projections', []) if p['year'] == 2050), None)
+    if proj_2050:
+        print(f"2050 Region Detected: {proj_2050.get('region')}")
+        print(f"2050 WBT Max: {proj_2050.get('wbt_max_c')}°C")
+        print(f"2050 Survivability: {proj_2050.get('survivability_status')}")
+    else:
+        print("❌ 2050 Projection missing!")
         
-        print(f"HTTP Status: {res.status_code}")
-        print(f"Time Taken: {round(end_time - start_time, 2)} seconds ⚡")
-        
-        if res.status_code == 200:
-            data = res.json()
-            if "error" in data:
-                print(f"❌ Logical Error: {data['error']}")
-            else:
-                print("\n✅ SUCCESS! Data snippet:")
-                print(f"Baseline Temp: {data.get('baseline', {}).get('baseline_mean_c')}°C")
-                print(f"Projections Count: {len(data.get('projections', []))}")
-                print("First Projection Data:")
-                if data.get('projections'):
-                    print(json.dumps(data['projections'][0], indent=2))
-        else:
-            print(f"🔥 RAW ERROR: {res.text}")
-            
-    except Exception as e:
-        print(f"Network Error: {e}")
-        
-    print("\n" + "="*60)
-
-if __name__ == "__main__":
-    run_speed_test()
+except Exception as e:
+    print(f"❌ API CALL FAILED: {e}")
