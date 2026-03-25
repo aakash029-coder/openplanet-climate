@@ -272,10 +272,10 @@ export default function MapModule({
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null);
     
-    // 🔥 PERFECT CAMERA SETTINGS: Closer zoom, dramatic pitch
+    // 🔥 FIX: Zoomed back out to 10.5 to show the full city beautifully
     setViewState((p: any) => ({
       ...p, longitude: selectedCity.lng, latitude: selectedCity.lat,
-      zoom: 13.5, pitch: 55, bearing: 15,
+      zoom: 10.5, pitch: 55, bearing: 15,
       transitionDuration: 3000, transitionInterpolator: new FlyToInterpolator(),
     }));
 
@@ -353,10 +353,10 @@ export default function MapModule({
     ],
     elevationRange: [0, 1200],
     
-    // 🔥 PERFECT AESTHETIC FIX: Wider radius, towering elevation, tight coverage, ambient lighting
-    radius: 150,         
-    elevationScale: 25,  
-    coverage: 0.98,      
+    // 🔥 FIX: Adjusted radius, scale, and coverage for the "Auckland" look
+    radius: 200,         
+    elevationScale: 40,  
+    coverage: 0.85, // This adds the spacing between the pillars      
     extruded: true,
     material: {
       ambient: 0.65,
