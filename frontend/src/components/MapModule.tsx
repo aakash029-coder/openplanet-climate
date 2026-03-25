@@ -272,7 +272,7 @@ export default function MapModule({
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null);
     
-    // 🔥 THE FIX: Camera swoops in MUCH closer (zoom 13.5) and looks more dramatic (pitch 55)
+    // 🔥 PERFECT CAMERA SETTINGS: Closer zoom, dramatic pitch
     setViewState((p: any) => ({
       ...p, longitude: selectedCity.lng, latitude: selectedCity.lat,
       zoom: 13.5, pitch: 55, bearing: 15,
@@ -337,11 +337,9 @@ export default function MapModule({
   })();
 
   const baseDeathsNum = isInitialized ? parseFloat(String(simData.deaths).replace(/,/g, '')) || 0 : 0;
-
-  // ✅ Only show mitigation bar if backend actually sent adapt data
   const hasRealAdaptData = chartData.economic.some(d => d.adapt != null);
 
-  // ── HexagonLayer: risk_weight drives both color and elevation ──────
+  // ── HexagonLayer: Premium Cinematic Grid Config ──────
   const layers = [new HexagonLayer({
     id: 'risk-heatmap',
     data: hexData,
@@ -355,16 +353,22 @@ export default function MapModule({
     ],
     elevationRange: [0, 1200],
     
-    // 🔥 THE FIX: Perfectly balanced hexes for zoom level 13.5
-    radius: 120,         
-    elevationScale: 15,  
-    coverage: 0.96,      
-    
+    // 🔥 PERFECT AESTHETIC FIX: Wider radius, towering elevation, tight coverage, ambient lighting
+    radius: 150,         
+    elevationScale: 25,  
+    coverage: 0.98,      
     extruded: true,
+    material: {
+      ambient: 0.65,
+      diffuse: 0.5,
+      shininess: 32,
+      specularColor: [60, 64, 70]
+    },
+    
     getPosition: (d: any) => d.position,
     getColorWeight: (d: any) => d.risk_weight ?? 0.5,
     getElevationWeight: (d: any) => d.risk_weight ?? 0.5,
-    opacity: 0.88,
+    opacity: 0.9,
     upperPercentile: 98,
     transitions: { elevationScale: 2500 },
   })];
@@ -387,6 +391,10 @@ export default function MapModule({
             }}
             controller={{ scrollZoom: false, dragPan: !isMobile, doubleClickZoom: true, dragRotate: !isMobile, touchRotate: false, touchZoom: true }}
             layers={isInitialized ? layers : []}
+            parameters={{
+              depthTest: true,
+              blend: true
+            }}
           >
             <Map mapStyle={cartoDarkStyle} attributionControl={false} reuseMaps>
               <NavigationControl position="bottom-right" showCompass={false} style={{ bottom: '140px', right: '16px', background: 'rgba(6,16,31,0.95)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px' }} />
@@ -666,16 +674,13 @@ export default function MapModule({
                       </div>
                       <div className="flex-grow">
                         <ResponsiveContainer width="100%" height="100%">
-                          {/* ✅ FIX: d.adapt ?? null — no fabricated 0.80 fallback */}
                           <BarChart data={chartData.economic.map(d => ({ ...d, adapt: d.adapt ?? null }))} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                             <XAxis dataKey="year" stroke="#334155" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }} />
                             <YAxis stroke="#334155" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }} />
                             <RechartsTooltip contentStyle={{ background: '#06101f', border: '1px solid #1e293b', borderRadius: '10px', fontSize: '11px', fontFamily: 'monospace' }} formatter={(v: any, name: any) => [`$${Number(v).toFixed(0)}M`, name]} />
                             <Legend wrapperStyle={{ paddingTop: '14px', fontSize: '10px', fontFamily: 'monospace', color: '#94a3b8' }} />
-                            {/* SWAPPED DATAKEYS HERE */}
                             <Bar dataKey="adapt" name="Baseline (No Action)" fill="#ef4444" radius={[3,3,0,0]} opacity={0.85} />
-                            {/* ✅ FIX: Only render if backend sent real adapt data */}
                             {hasRealAdaptData && (
                               <Bar dataKey="noAction" name="With Mitigation" fill="#10b981" radius={[3,3,0,0]} opacity={0.85} />
                             )}
