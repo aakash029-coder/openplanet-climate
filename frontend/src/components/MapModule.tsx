@@ -271,11 +271,14 @@ export default function MapModule({
   const handleInitialize = async () => {
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null);
+    
+    // 🔥 THE FIX: Camera swoops in MUCH closer (zoom 13.5) and looks more dramatic (pitch 55)
     setViewState((p: any) => ({
       ...p, longitude: selectedCity.lng, latitude: selectedCity.lat,
-      zoom: 11, pitch: 50, bearing: 10,
+      zoom: 13.5, pitch: 55, bearing: 15,
       transitionDuration: 3000, transitionInterpolator: new FlyToInterpolator(),
     }));
+
     try {
       const res = await fetch('/api/engine', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -351,14 +354,17 @@ export default function MapModule({
       [185, 28,  28],    // crimson  — critical
     ],
     elevationRange: [0, 1200],
-    elevationScale: 8,
+    
+    // 🔥 THE FIX: Perfectly balanced hexes for zoom level 13.5
+    radius: 120,         
+    elevationScale: 15,  
+    coverage: 0.96,      
+    
     extruded: true,
     getPosition: (d: any) => d.position,
     getColorWeight: (d: any) => d.risk_weight ?? 0.5,
     getElevationWeight: (d: any) => d.risk_weight ?? 0.5,
-    radius: 280,
     opacity: 0.88,
-    coverage: 0.80,
     upperPercentile: 98,
     transitions: { elevationScale: 2500 },
   })];
