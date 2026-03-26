@@ -353,10 +353,12 @@ export default function MapModule({
     ],
     elevationRange: [0, 1200],
     
-    // 🔥 FIX: Adjusted radius, scale, and coverage for the "Auckland" look
-    radius: 200,         
-    elevationScale: 40,  
-    coverage: 0.85, // This adds the spacing between the pillars      
+    // 🔥 100% EXACT AUCKLAND FIX:
+    // Massive 1200m radius forces thick, chunky pillars.
+    // 0.8 coverage creates the distinct black gaps between them.
+    radius: 1200,         
+    elevationScale: 60,  
+    coverage: 0.8,      
     extruded: true,
     material: {
       ambient: 0.65,
@@ -368,7 +370,7 @@ export default function MapModule({
     getPosition: (d: any) => d.position,
     getColorWeight: (d: any) => d.risk_weight ?? 0.5,
     getElevationWeight: (d: any) => d.risk_weight ?? 0.5,
-    opacity: 0.9,
+    opacity: 0.95,
     upperPercentile: 98,
     transitions: { elevationScale: 2500 },
   })];
