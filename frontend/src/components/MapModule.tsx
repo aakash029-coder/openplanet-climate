@@ -271,12 +271,16 @@ export default function MapModule({
   const handleInitialize = async () => {
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null);
-    
-    // 🔥 FIX: Zoomed back out to 10.5 and increased pitch to 62 for cinematic view
+
     setViewState((p: any) => ({
-      ...p, longitude: selectedCity.lng, latitude: selectedCity.lat,
-      zoom: 10.5, pitch: 62, bearing: 15,
-      transitionDuration: 3000, transitionInterpolator: new FlyToInterpolator(),
+      ...p,
+      longitude: selectedCity.lng,
+      latitude:  selectedCity.lat,
+      zoom:      11.2,
+      pitch:     55,
+      bearing:   -20,
+      transitionDuration:     3000,
+      transitionInterpolator: new FlyToInterpolator(),
     }));
 
     try {
@@ -339,58 +343,59 @@ export default function MapModule({
   const baseDeathsNum = isInitialized ? parseFloat(String(simData.deaths).replace(/,/g, '')) || 0 : 0;
   const hasRealAdaptData = chartData.economic.some(d => d.adapt != null);
 
-  // ── Cinematic Lighting Injection ──────
-  const ambientLight = new AmbientLight({
-    color: [255, 255, 255],
-    intensity: 0.8
+  // ── CINEMATIC LIGHTING ──────────────────────────────────────────────
+  const ambientLight = new AmbientLight({ color: [255, 255, 255], intensity: 1.0 });
+  const pointLight   = new PointLight({
+    color:    [255, 240, 200],
+    intensity: 3.0,
+    position: [
+      (selectedCity?.lng || 0) + 0.05,
+      (selectedCity?.lat || 0) + 0.05,
+      15000,
+    ],
   });
-
-  const pointLight = new PointLight({
-    color: [255, 255, 255],
-    intensity: 2.5,
-    position: [(selectedCity?.lng || 0) + 0.03, (selectedCity?.lat || 0) - 0.03, 12000] // Cinematic offset side light
-  });
-
   const lightingEffect = new LightingEffect({ ambientLight, pointLight });
 
-  // ── HexagonLayer: Premium Cinematic Grid Config ──────
+  // ── HEXAGON LAYER — MATCHES REFERENCE IMAGE ─────────────────────────
   const layers = [new HexagonLayer({
     id: 'risk-heatmap',
     data: hexData,
-    colorRange: [
-      [16,  185, 129],   // emerald  — safe
-      [52,  211, 153],   // teal     — low
-      [234, 179, 8],     // amber    — moderate
-      [249, 115, 22],    // orange   — elevated
-      [239, 68,  68],    // red      — high
-      [185, 28,  28],    // crimson  — critical
-    ],
-    elevationRange: [0, 1200],
-    
-    // 🔥 Absolute Domain Locking applied:
-    colorDomain: [0, 1.0], 
-    elevationDomain: [0, 1.0],
 
-    // 🔥 THE STRICT AUCKLAND FIX:
-    radius: 250,         
-    elevationScale: 85,  // Taller spikes, more cinematic  
-    coverage: 0.72,      // Cleaner gaps, sharper blocks
-    colorAggregation: 'MAX',     // NEVER blend colors
-    elevationAggregation: 'MAX', // NEVER stack heights
+    colorRange: [
+      [22,  163, 74],    // green-600  — safe (outer edge)
+      [101, 163, 74],    // lime       — low
+      [234, 179, 8],     // amber-500  — moderate
+      [249, 115, 22],    // orange-500 — elevated
+      [239, 68,  68],    // red-500    — high
+      [185, 28,  28],    // red-700    — critical (center)
+    ],
+
+    // ── KEY VISUAL PARAMETERS ──────────────────────────────────────
+    radius:        400,    // chunky hex footprint — matches image
+    elevationScale: 80,    // tall but not extreme
+    coverage:      0.92,   // hexes nearly touching — dense grid
+    // ──────────────────────────────────────────────────────────────
+
+    elevationRange:       [0, 1800],
+    colorDomain:          [0, 1.0],
+    elevationDomain:      [0, 1.0],
+    colorAggregation:     'MAX',
+    elevationAggregation: 'MAX',
     extruded: true,
+
     material: {
-      ambient: 0.65,
-      diffuse: 0.5,
-      shininess: 48, // Glossier finish
-      specularColor: [120, 120, 120] // Premium glass-metal feel
+      ambient:       0.70,
+      diffuse:       0.65,
+      shininess:     80,
+      specularColor: [180, 180, 180],
     },
-    
-    getPosition: (d: any) => d.position,
-    getColorWeight: (d: any) => d.risk_weight ?? 0.5,
+
+    getPosition:        (d: any) => d.position,
+    getColorWeight:     (d: any) => d.risk_weight ?? 0.5,
     getElevationWeight: (d: any) => d.risk_weight ?? 0.5,
-    opacity: 0.95,
-    upperPercentile: 100,
-    transitions: { elevationScale: 2500 },
+    opacity:            0.97,
+    upperPercentile:    100,
+    transitions: { elevationScale: 2800 },
   })];
 
   const panelClass = `bg-[#06101f]/95 backdrop-blur-2xl border border-slate-800/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.03)] pointer-events-auto`;
@@ -416,7 +421,7 @@ export default function MapModule({
             <Map mapStyle={cartoDarkStyle} attributionControl={false} reuseMaps>
               <NavigationControl position="bottom-right" showCompass={false} style={{ bottom: '140px', right: '16px', background: 'rgba(6,16,31,0.95)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px' }} />
             </Map>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#020617_90%)] pointer-events-none z-10" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,#020617_95%)] pointer-events-none z-10" />
           </DeckGL>
         </div>
 
@@ -657,7 +662,6 @@ export default function MapModule({
           </div>
         ) : (
           <>
-            {/* CHARTS */}
             {(chartData.heatwave.length > 0 || chartData.economic.length > 0) && (
               <div className="px-4 md:px-8 lg:px-16 py-10 w-full max-w-[1440px] mx-auto border-b border-slate-800/30">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -710,10 +714,8 @@ export default function MapModule({
               </div>
             )}
 
-            {/* ── AI STRATEGIC ANALYSIS ── */}
             {aiAnalysis && (
               <div className="px-4 md:px-8 lg:px-16 py-10 w-full max-w-[1440px] mx-auto">
-
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 pb-4 border-b border-slate-800/40">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
@@ -730,7 +732,6 @@ export default function MapModule({
                   <AiCard text={aiAnalysis.economic}       title="Economic Impact"       badge="Baseline" />
                   <AiCard text={aiAnalysis.infrastructure} title="Infrastructure Stress" badge="Baseline" />
 
-                  {/* Live mitigation card */}
                   <div className="bg-[#06101f] border border-emerald-900/40 rounded-2xl p-4 md:p-5 h-full flex flex-col gap-3">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
                       <p className="text-[10px] font-mono text-emerald-400 uppercase tracking-[0.2em] font-bold">Mitigation Model</p>
@@ -796,7 +797,6 @@ export default function MapModule({
                   </div>
                 </div>
 
-                {/* Baseline vs Mitigation comparison bar */}
                 {mitigatedData && (
                   <div className="bg-[#06101f] border border-slate-800/40 rounded-2xl p-5 md:p-6">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-5">
@@ -809,13 +809,12 @@ export default function MapModule({
                         <span className="text-[8px] font-mono text-emerald-500 uppercase tracking-widest">Live</span>
                       </div>
                     </div>
-
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
                       {[
-                        { label: 'Attributable Deaths', baseline: simData.deaths,          mitigated: mitigatedData.deaths,                 saved: `−${mitigatedData.savedDeaths} lives`,                           baseColor: 'text-red-400'    },
-                        { label: 'Economic Loss',        baseline: simData.loss,            mitigated: mitigatedData.loss ?? simData.loss,   saved: mitigatedData.savedLoss ? `−${mitigatedData.savedLoss}` : '—', baseColor: 'text-amber-400'  },
-                        { label: 'Peak Temperature',     baseline: `${simData.temp}°C`,    mitigated: `${mitigatedData.temp}°C`,            saved: `−${mitigatedData.tempDelta}°C`,                                 baseColor: 'text-orange-400' },
-                        { label: 'Heatwave Days',        baseline: `${simData.heatwave}d`, mitigated: `${mitigatedData.heatwave}d`,         saved: `−${mitigatedData.hwDelta}d`,                                    baseColor: 'text-yellow-400' },
+                        { label: 'Attributable Deaths', baseline: simData.deaths,          mitigated: mitigatedData.deaths,               saved: `−${mitigatedData.savedDeaths} lives`,                           baseColor: 'text-red-400'    },
+                        { label: 'Economic Loss',        baseline: simData.loss,            mitigated: mitigatedData.loss ?? simData.loss, saved: mitigatedData.savedLoss ? `−${mitigatedData.savedLoss}` : '—', baseColor: 'text-amber-400'  },
+                        { label: 'Peak Temperature',     baseline: `${simData.temp}°C`,    mitigated: `${mitigatedData.temp}°C`,          saved: `−${mitigatedData.tempDelta}°C`,                                 baseColor: 'text-orange-400' },
+                        { label: 'Heatwave Days',        baseline: `${simData.heatwave}d`, mitigated: `${mitigatedData.heatwave}d`,       saved: `−${mitigatedData.hwDelta}d`,                                    baseColor: 'text-yellow-400' },
                       ].map((item) => (
                         <div key={item.label} className="space-y-2">
                           <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.12em] leading-tight">{item.label}</p>
