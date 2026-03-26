@@ -6,7 +6,7 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
 import { HexagonLayer } from '@deck.gl/aggregation-layers';
-import { FlyToInterpolator } from '@deck.gl/core';
+import { FlyToInterpolator, AmbientLight, PointLight, LightingEffect } from '@deck.gl/core';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend,
@@ -272,10 +272,10 @@ export default function MapModule({
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null);
     
-    // 🔥 FIX: Zoomed back out to 10.5 to show the full city beautifully
+    // 🔥 FIX: Zoomed back out to 10.5 and increased pitch to 62 for cinematic view
     setViewState((p: any) => ({
       ...p, longitude: selectedCity.lng, latitude: selectedCity.lat,
-      zoom: 10.5, pitch: 55, bearing: 15,
+      zoom: 10.5, pitch: 62, bearing: 15,
       transitionDuration: 3000, transitionInterpolator: new FlyToInterpolator(),
     }));
 
@@ -339,6 +339,20 @@ export default function MapModule({
   const baseDeathsNum = isInitialized ? parseFloat(String(simData.deaths).replace(/,/g, '')) || 0 : 0;
   const hasRealAdaptData = chartData.economic.some(d => d.adapt != null);
 
+  // ── Cinematic Lighting Injection ──────
+  const ambientLight = new AmbientLight({
+    color: [255, 255, 255],
+    intensity: 0.8
+  });
+
+  const pointLight = new PointLight({
+    color: [255, 255, 255],
+    intensity: 2.5,
+    position: [(selectedCity?.lng || 0) + 0.03, (selectedCity?.lat || 0) - 0.03, 12000] // Cinematic offset side light
+  });
+
+  const lightingEffect = new LightingEffect({ ambientLight, pointLight });
+
   // ── HexagonLayer: Premium Cinematic Grid Config ──────
   const layers = [new HexagonLayer({
     id: 'risk-heatmap',
@@ -353,20 +367,22 @@ export default function MapModule({
     ],
     elevationRange: [0, 1200],
     
+    // 🔥 Absolute Domain Locking applied:
+    colorDomain: [0, 1.0], 
+    elevationDomain: [0, 1.0],
+
     // 🔥 THE STRICT AUCKLAND FIX:
-    // 250m radius = roughly 1-2 city blocks per pillar.
-    // 0.8 coverage = strict, sharp black gaps between them.
     radius: 250,         
-    elevationScale: 70,  
-    coverage: 0.8,      
+    elevationScale: 85,  // Taller spikes, more cinematic  
+    coverage: 0.72,      // Cleaner gaps, sharper blocks
     colorAggregation: 'MAX',     // NEVER blend colors
     elevationAggregation: 'MAX', // NEVER stack heights
     extruded: true,
     material: {
       ambient: 0.65,
       diffuse: 0.5,
-      shininess: 32,
-      specularColor: [60, 64, 70]
+      shininess: 48, // Glossier finish
+      specularColor: [120, 120, 120] // Premium glass-metal feel
     },
     
     getPosition: (d: any) => d.position,
@@ -389,6 +405,7 @@ export default function MapModule({
 
         <div className="absolute inset-0 z-0">
           <DeckGL
+            effects={[lightingEffect]}
             viewState={viewState}
             onViewStateChange={({ viewState: vs, interactionState }: any) => {
               if (interactionState.isDragging || interactionState.isPanning || interactionState.isZooming || interactionState.isRotating) setViewState(vs);
@@ -399,7 +416,7 @@ export default function MapModule({
             <Map mapStyle={cartoDarkStyle} attributionControl={false} reuseMaps>
               <NavigationControl position="bottom-right" showCompass={false} style={{ bottom: '140px', right: '16px', background: 'rgba(6,16,31,0.95)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px' }} />
             </Map>
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_25%,#020617_100%)] z-10" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#020617_90%)] pointer-events-none z-10" />
           </DeckGL>
         </div>
 
@@ -493,7 +510,7 @@ export default function MapModule({
           </div>
 
           {/* RIGHT PANEL */}
-          <div className={`${panelClass} w-[260px] md:w-[280px] lg:w-[300px] p-4 md:p-5 flex flex-col gap-3`}>
+          <div className={`${panelClass} w-[260px] md:w-[280px] lg:w-[300px] p-4 md:p-5 flex flex-col gap-3 relative z-50 overflow-visible`}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-800/50">
               <p className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Risk Metrics</p>
               {isInitialized && (
