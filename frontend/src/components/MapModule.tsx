@@ -353,12 +353,14 @@ export default function MapModule({
     ],
     elevationRange: [0, 1200],
     
-    // 🔥 100% EXACT AUCKLAND FIX:
-    // Massive 1200m radius forces thick, chunky pillars.
-    // 0.8 coverage creates the distinct black gaps between them.
-    radius: 1200,         
-    elevationScale: 60,  
+    // 🔥 THE STRICT AUCKLAND FIX:
+    // 250m radius = roughly 1-2 city blocks per pillar.
+    // 0.8 coverage = strict, sharp black gaps between them.
+    radius: 250,         
+    elevationScale: 70,  
     coverage: 0.8,      
+    colorAggregation: 'MAX',     // NEVER blend colors
+    elevationAggregation: 'MAX', // NEVER stack heights
     extruded: true,
     material: {
       ambient: 0.65,
@@ -371,7 +373,7 @@ export default function MapModule({
     getColorWeight: (d: any) => d.risk_weight ?? 0.5,
     getElevationWeight: (d: any) => d.risk_weight ?? 0.5,
     opacity: 0.95,
-    upperPercentile: 98,
+    upperPercentile: 100,
     transitions: { elevationScale: 2500 },
   })];
 
