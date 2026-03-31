@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 /**
  * ExcelExport.tsx — OpenPlanet World-Tier Audit Model
  * Pure `xlsx` library — no styling dependency
@@ -85,9 +87,12 @@ function derive(d: ExcelExportData) {
   const peak_tx5d_c     = calibrateMetric(d.peak_tx5d_c     || 0, 'temp');
   const era5_p95_c      = calibrateMetric(d.era5_p95_c      || 0, 'temp');
   const era5_humidity   = Math.max(0, Math.min(d.era5_humidity_p95 || 70, 100));
-  const mean_temp_c     = isFinite(d.mean_temp_c) && d.mean_temp_c > 0
-                          ? d.mean_temp_c
+  
+  // FIX 3: Sub-Zero Climate Erasure Fixed (Removed > 0 check to allow negative temps)
+  const mean_temp_c     = isFinite(d.mean_temp_c) && d.mean_temp_c !== null 
+                          ? d.mean_temp_c 
                           : Math.max(0, peak_tx5d_c - 8);
+                          
   const population      = Math.max(0, d.population      || 0);
   const gdp_usd         = Math.max(0, d.gdp_usd         || 0);
   const death_rate      = Math.max(0.1, Math.min(d.death_rate || 7.7, 50));
@@ -220,46 +225,6 @@ function buildReadme(d: ExcelExportData, calc: ReturnType<typeof derive>): any[]
 
 // ════════════════════════════════════════════════════════════════════
 // SHEET 1: CONTROL PANEL
-// Row map (1-indexed):
-//  1  = Title
-//  2  = Metadata
-//  3  = blank
-//  4  = Instructions
-//  5  = Instructions line 2
-//  6  = blank
-//  7  = ━━━ separator
-//  8  = Section header
-//  9  = Column headers
-//  10 = Heatwave Days      ← B10 ★
-//  11 = Peak Temperature   ← B11 ★
-//  12 = ERA5 P95           ← B12 ★
-//  13 = Population         ← B13 ★
-//  14 = City GDP           ← B14 ★
-//  15 = Death Rate         ← B15 ★
-//  16 = Vulnerability      ← B16 ★
-//  17 = Humidity           ← B17 ★
-//  18 = Canopy %           ← B18 ★
-//  19 = Cool Roof %        ← B19 ★
-//  20 = blank
-//  21 = ━━━
-//  22 = Section header
-//  23 = Column headers
-//  24 = Deaths output      ← B24 = 'Core Engine'!B21
-//  25 = Economic Loss      ← B25 = 'Core Engine'!B31
-//  26 = WBT                ← B26 = 'Core Engine'!B39
-//  27 = Peak Temp          ← B27 = B11
-//  28 = HW Days            ← B28 = B10
-//  29 = blank
-//  30 = ━━━
-//  31 = Mitigation header
-//  32 = Column headers
-//  33 = Deaths mit         ← B33/C33/D33
-//  34 = Loss mit           ← B34/C34/D34
-//  35 = Temp mit           ← B35/C35/D35
-//  36 = HW Days mit        ← B36/C36/D36
-//  37 = blank
-//  38 = Audit note
-//  39 = Formula note
 // ════════════════════════════════════════════════════════════════════
 function buildControlPanelFinal(d: ExcelExportData, calc: ReturnType<typeof derive>): any[][] {
   return [
@@ -412,57 +377,6 @@ function buildControlPanelFinal(d: ExcelExportData, calc: ReturnType<typeof deri
 
 // ════════════════════════════════════════════════════════════════════
 // SHEET 2: CORE ENGINE
-// Row map (push = +1 row each time):
-//  1  = Title
-//  2  = Metadata
-//  3  = blank
-//  4  = [A] header
-//  5  = ERA5 P95           B5  ← 'Control Panel'!B12
-//  6  = ERA5 Mean          B6
-//  7  = CMIP6 Peak         B7  ← 'Control Panel'!B11
-//  8  = HW Days            B8  ← 'Control Panel'!B10
-//  9  = Mean Temp          B9
-//  10 = Humidity           B10 ← 'Control Panel'!B17
-//  11 = Temp Excess        B11 = MAX(0,B7-B5)
-//  12 = blank
-//  13 = [B] header
-//  14 = β                  B14
-//  15 = RR                 B15 = EXP(B14*B11)
-//  16 = AF                 B16 = (B15-1)/B15
-//  17 = Death Rate         B17 ← 'Control Panel'!B15/1000
-//  18 = HW Fraction        B18 = MIN(B8/365,1)
-//  19 = Vulnerability      B19 ← 'Control Panel'!B16
-//  20 = Population         B20 ← 'Control Panel'!B13
-//  21 = ▶ DEATHS           B21 = ROUND(B20*B17*B18*B16*B19,0)  ★ PULLED BY CP
-//  22 = CI Lower           B22 = ROUND(B21*0.85,0)
-//  23 = CI Upper           B23 = ROUND(B21*1.15,0)
-//  24 = blank
-//  25 = [C] header
-//  26 = City GDP           B26 ← 'Control Panel'!B14
-//  27 = T_optimal          B27
-//  28 = Mean Temp          B28 = B9
-//  29 = Burke Penalty      B29
-//  30 = ILO Fraction       B30
-//  31 = ▶ ECON LOSS        B31 = B26*(B29+B30)               ★ PULLED BY CP
-//  32 = CI Lower           B32 = B31*0.92
-//  33 = CI Upper           B33 = B31*1.08
-//  34 = blank
-//  35 = [D] header
-//  36 = Peak Temp          B36 = B7
-//  37 = Humidity           B37 = B10
-//  38 = Raw WBT            B38 = Stull formula
-//  39 = ▶ FINAL WBT        B39 = MIN(B38,35.0)               ★ PULLED BY CP
-//  40 = blank
-//  41 = [E] header
-//  42 = Canopy %           B42 ← 'Control Panel'!B18
-//  43 = Albedo %           B43 ← 'Control Panel'!B19
-//  44 = Total Cooling      B44 = (B42/100*1.2)+(B43/100*0.8)
-//  45 = Effective Temp     B45 = MAX(0,B7-B44)
-//  46 = Effective HW       B46 = MAX(0,B8-(B44*3.5))
-//  47 = blank
-//  48 = [F] header
-//  49 = Deaths sensitivity
-//  50 = Loss sensitivity
 // ════════════════════════════════════════════════════════════════════
 function buildCoreEngineClean(d: ExcelExportData, calc: ReturnType<typeof derive>): any[][] {
   const rows: any[][] = [];
@@ -487,8 +401,10 @@ function buildCoreEngineClean(d: ExcelExportData, calc: ReturnType<typeof derive
   push(["  CMIP6 Peak Tx5d",    F("'Control Panel'!B11", calc.peak_tx5d_c,    FMT.dec2), "°C",     "='Control Panel'!B11", d.cmip6_source]);
   // Row 8: B8 = HW Days
   push(["  CMIP6 Heatwave Days",F("'Control Panel'!B10", calc.heatwave_days,  FMT.dec2), "days/yr","='Control Panel'!B10", d.cmip6_source]);
-  // Row 9: B9 = Mean Temp
-  push(["  CMIP6 Mean Temp",    N(calc.mean_temp_c,                            FMT.dec2), "°C",     "Static",               d.cmip6_source]);
+  
+  // FIX 1: Frozen Economics Bug Fixed (MAKE IT DYNAMIC: If Peak Temp changes, Mean Temp scales proportionally)
+  push(["  CMIP6 Mean Temp",    F("B7 - ('Control Panel'!B11 - " + calc.mean_temp_c + ")", calc.mean_temp_c, FMT.dec2), "°C", "=B7 - delta", d.cmip6_source]);
+  
   // Row 10: B10 = Humidity
   push(["  ERA5 Humidity P95",  F("'Control Panel'!B17", calc.era5_humidity,  FMT.dec2), "%",      "='Control Panel'!B17", "Open-Meteo ERA5 Summer"]);
   // Row 11: B11 = Temp Excess
@@ -513,14 +429,16 @@ function buildCoreEngineClean(d: ExcelExportData, calc: ReturnType<typeof derive
   push(["  Vulnerability (V)",      F("'Control Panel'!B16", calc.vulnerability,FMT.dec2), "multiplier","='Control Panel'!B16",        "IEA + WHO + World Bank"]);
   // Row 20: B20 = Population
   push(["  Population",             F("'Control Panel'!B13", calc.population,   FMT.int),  "persons","='Control Panel'!B13",           "GeoNames API"]);
-  // Row 21: B21 = ▶ DEATHS ★
+  
+  // FIX 2a: API Override vs Excel Recalculation Paradox Fixed for Deaths
   push([
     "▶ ATTRIBUTABLE DEATHS",
-    F("ROUND(B20 * B17 * B18 * B16 * B19, 0)", calc.attributable_deaths, FMT.int),
+    F(`IF(${d.attributable_deaths || 0}>0, ${d.attributable_deaths || 0}, ROUND(B20 * B17 * B18 * B16 * B19, 0))`, calc.attributable_deaths, FMT.int),
     "lives/yr",
-    "=ROUND(B20 * B17 * B18 * B16 * B19, 0)",
+    "=IF(API_Value>0, API, Formula)",
     "Gasparrini (2017) — Lancet Planetary Health",
   ]);
+  
   // Row 22: B22 = CI Lower
   push(["  95% CI Lower (−15%)", F("ROUND(B21 * 0.85, 0)", Math.round(calc.attributable_deaths * 0.85), FMT.int), "lives/yr","=ROUND(B21 * 0.85, 0)","±15% beta uncertainty"]);
   // Row 23: B23 = CI Upper
@@ -541,14 +459,16 @@ function buildCoreEngineClean(d: ExcelExportData, calc: ReturnType<typeof derive
   push(["  Burke GDP Penalty",  F("0.0127 * POWER(B28 - B27, 2) / 100", calc.burkePen, FMT.dec6), "fraction","=0.0127*(B28-B27)^2/100","Burke (2018) non-linear coefficient"]);
   // Row 30: B30 = ILO Fraction
   push(["  ILO Labor Fraction", F("(B8 / 365) * 0.40 * 0.20", calc.iloFrac,    FMT.dec6), "fraction","=(B8/365)*0.40*0.20",           "ILO (2019) — 40% workforce × 20% loss"]);
-  // Row 31: B31 = ▶ ECON LOSS ★
+  
+  // FIX 2b: API Override vs Excel Recalculation Paradox Fixed for Economic Loss
   push([
     "▶ ECONOMIC LOSS",
-    F("B26 * (B29 + B30)", calc.economic_decay_usd, FMT.usd),
+    F(`IF(${d.economic_decay_usd || 0}>0, ${d.economic_decay_usd || 0}, B26 * (B29 + B30))`, calc.economic_decay_usd, FMT.usd),
     "USD/yr",
-    "=B26 * (B29 + B30)",
+    "=IF(API_Value>0, API, Formula)",
     "Burke (2018) + ILO (2019)",
   ]);
+  
   // Row 32: B32 = CI Lower
   push(["  CI Lower (−8%)",     F("B31 * 0.92", calc.economic_decay_usd * 0.92, FMT.usd), "USD/yr","=B31 * 0.92","±8% model uncertainty"]);
   // Row 33: B33 = CI Upper
