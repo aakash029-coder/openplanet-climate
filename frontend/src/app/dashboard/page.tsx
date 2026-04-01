@@ -25,18 +25,19 @@ const MapModule = dynamic(() => import("@/components/MapModule"), {
 type Tab = 'Dashboard' | 'Deep Dive' | 'Compare' | 'Methodology';
 const TABS: Tab[] = ['Dashboard', 'Deep Dive', 'Compare', 'Methodology'];
 const NEXT_TAB_MAP: Record<Tab, Tab | null> = {
-  'Dashboard':   'Deep Dive',
-  'Deep Dive':   'Compare',
-  'Compare':     'Methodology',
+  'Dashboard': 'Deep Dive',
+  'Deep Dive': 'Compare',
+  'Compare': 'Methodology',
   'Methodology': null,
 };
 
 function DashboardPageInner() {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab]     = useState<Tab>('Dashboard');
-  const [targetCity, setTargetCity]   = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('Dashboard');
+  const [targetCity, setTargetCity] = useState<string | null>(null);
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(new Set(['Dashboard']));
   const [showWarningModal, setShowWarningModal] = useState(false);
+  const [loadMap, setLoadMap] = useState(false); //add
   const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -56,6 +57,11 @@ function DashboardPageInner() {
       if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current);
     };
   }, []);
+  //added
+  useEffect(() => {
+    const timer = setTimeout(() => setLoadMap(true), 800);
+    return () => clearTimeout(timer);
+  }, []); //added
 
   const handleDismissWarning = () => {
     sessionStorage.setItem('hasSeenDesktopWarning', 'true');
@@ -152,7 +158,10 @@ function DashboardPageInner() {
         <div className="w-full h-full flex flex-col flex-grow">
 
           <div className={activeTab === "Dashboard" ? "block w-full" : "hidden"}>
-            <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
+            {/* <MapModule onTargetLocked={(city: string) => setTargetCity(city)} /> */}
+            {loadMap && (
+              <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
+            )}
           </div>
 
           <div className={activeTab !== "Dashboard" ? "max-w-[1400px] w-full mx-auto px-6 md:px-12 py-16" : "hidden"}>
