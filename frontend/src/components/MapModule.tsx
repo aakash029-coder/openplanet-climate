@@ -369,6 +369,9 @@ export default function MapModule({
       // Updated with environment variable
       data: `https://api.protomaps.com/tiles/v3/{z}/{x}/{y}.mvt?key=${process.env.NEXT_PUBLIC_PROTOMAPS_KEY}`,
       
+      loadOptions: {
+        mvt: { shape: 'geojson' }
+      },
       binary: false, 
 
       getFillColor: (feature: any) => {
@@ -678,7 +681,7 @@ export default function MapModule({
                         <p className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold">Heatwave Escalation Trajectory</p>
                         <p className="text-[9px] font-mono text-slate-600 italic mt-1"><em>Open-Meteo CMIP6 Ensemble (IPCC AR6)</em></p>
                       </div>
-                      <div className="flex-grow">
+                      <div className="flex-grow min-h-[200px] w-full relative">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={chartData.heatwave} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
@@ -700,7 +703,7 @@ export default function MapModule({
                           <p className="text-[8px] font-mono text-slate-700 italic mt-0.5">Baseline only · no mitigation scenario from API</p>
                         )}
                       </div>
-                      <div className="flex-grow">
+                      <div className="flex-grow min-h-[200px] w-full relative">
                         <ResponsiveContainer width="100%" height="100%">
                           {/* ✅ FIX: d.adapt ?? null — no fabricated 0.80 fallback */}
                           <BarChart data={chartData.economic.map(d => ({ ...d, adapt: d.adapt ?? null }))} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
