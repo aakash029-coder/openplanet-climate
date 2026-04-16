@@ -5,7 +5,6 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 // @ts-ignore
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
-// 1. Changed Import: Removed HexagonLayer, Added ScatterplotLayer
 import { ScatterplotLayer } from '@deck.gl/layers';
 import { FlyToInterpolator } from '@deck.gl/core';
 import {
@@ -273,7 +272,6 @@ export default function MapModule({
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null);
     
-    // 2. Map Configuration: Pitch and Bearing set to 0 for flat 2D projection
     setViewState((p: any) => ({
       ...p, longitude: selectedCity.lng, latitude: selectedCity.lat,
       zoom: 12.5, pitch: 0, bearing: 0, 
@@ -285,13 +283,20 @@ export default function MapModule({
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           endpoint: '/api/predict',
-          payload: { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy: 0, coolRoof: 0 },
+          // FIX: Now passing actual slider states instead of hardcoded 0
+          payload: { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy, coolRoof },
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      if (!data.metrics || !data.hexGrid) throw new Error('API missing data.');
+
+      // FIX: Trap the silent backend error from Python and force it to display
+      if (data.metrics?.region === 'ERROR') {
+        throw new Error('Python API Error: Open your Python backend terminal to see why it crashed.');
+      }
+      if (!data.metrics || !data.hexGrid) throw new Error('API returned missing or malformed data.');
+      
       if (onTargetLocked) onTargetLocked(selectedCity.name);
       
       setHexData(data.hexGrid);
@@ -341,27 +346,24 @@ export default function MapModule({
   const baseDeathsNum = isInitialized ? parseFloat(String(simData.deaths).replace(/,/g, '')) || 0 : 0;
   const hasRealAdaptData = chartData.economic.some(d => d.adapt != null);
 
-  // 3. Vector Tile Styling Logic: Mapping Risk Weight (0-1) to colors
   const getRiskColor = (weight: number): [number, number, number, number] => {
-    if (weight >= 0.75) return [239, 68, 68, 230]; // Critical (Red)
-    if (weight >= 0.50) return [249, 115, 22, 230]; // High (Orange)
-    if (weight >= 0.25) return [234, 179, 8, 230];  // Moderate (Yellow)
-    return [34, 197, 94, 230];                      // Safe (Green)
+    if (weight >= 0.75) return [239, 68, 68, 230];
+    if (weight >= 0.50) return [249, 115, 22, 230];
+    if (weight >= 0.25) return [234, 179, 8, 230]; 
+    return [34, 197, 94, 230]; 
   };
 
-  // 4. The Exact "Kepler/Foursquare" Dot Layer
   const layers = [
     new ScatterplotLayer({
       id: 'risk-scatter-dots',
       data: hexData,
       getPosition: (d: any) => d.position,
       getFillColor: (d: any) => getRiskColor(d.risk_weight || 0),
-      // MAGICAL SETTINGS FOR THE EXACT DOT LOOK:
-      radiusUnits: 'pixels', // Force dots to scale by pixels, not real-world meters
-      getRadius: 1.5,        // Set a tiny, crisp 1.5 pixel size
-      opacity: 0.95,         // High opacity for that neon/cyberpunk pop
-      stroked: false,        // Remove borders to prevent blurriness
-      antialiasing: true,    // Keep the edges sharp
+      radiusUnits: 'pixels', 
+      getRadius: 1.5,
+      opacity: 0.95,
+      stroked: false,
+      antialiasing: true,
       transitions: {
         getFillColor: { duration: 1000, easing: (t: number) => t }
       }
