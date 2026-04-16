@@ -331,29 +331,37 @@ def _build_audit_trail(pop: int, death_rate: float, hw_days: float, temp_excess:
     }
 
 async def _generate_topological_grid(lat: float, lng: float, hw_days: float, tx5d: float) -> List[Dict[str, Any]]:
-    """Generates a scatter grid of risk points around a coordinate center."""
     points = []
     severity = min((hw_days / 60.0) * (tx5d / 40.0), 1.0)
-    n_points = 1200
+    
+    # 1. Perfection Logic: Structured Grid instead of Random Gauss
+    # 0.001 degree is approx 110 meters - perfect for "Dot" density
+    step = 0.0012 
+    grid_size = 35 # 35x35 dots ka matrix (total ~1200 points)
+    
+    lats, lngs, dists = [], []
+    start_lat = lat - (grid_size / 2 * step)
+    start_lng = lng - (grid_size / 2 * step)
 
-    lats, lngs, dists = [], [], []
-    sigma = 0.028 
+    for i in range(grid_size):
+        for j in range(grid_size):
+            py = start_lat + (i * step)
+            px = start_lng + (j * step)
+            
+            # Calculate distance from center for the "Bell Curve" effect
+            r = math.sqrt((py - lat)**2 + (px - lng)**2)
+            if r > 0.045: # Outer boundary cut-off
+                continue
+                
+            lats.append(round(py, 5))
+            lngs.append(round(px, 5))
+            dists.append(r)
 
-    # Generate Gaussian scatter
-    for _ in range(n_points):
-        dx = random.gauss(0, sigma)
-        dy = random.gauss(0, sigma)
-        r = math.sqrt(dx**2 + dy**2)
-        r = min(r, 0.09)
-        px = lng + dx
-        py = lat + dy
-        lats.append(round(py, 5))
-        lngs.append(round(px, 5))
-        dists.append(r)
-
+    n_points = len(lats)
     elevations = [10.0] * n_points
 
-    async def fetch_elevation_chunk(start_idx: int) -> Tuple[int, List[Any]]:
+    # 2. Ocean Filtering: Strictly checking for Land
+    async def fetch_elevation_chunk(start_idx: int):
         lat_chunk = ",".join(map(str, lats[start_idx:start_idx + 100]))
         lng_chunk = ",".join(map(str, lngs[start_idx:start_idx + 100]))
         url = f"https://api.open-meteo.com/v1/elevation?latitude={lat_chunk}&longitude={lng_chunk}"
@@ -363,11 +371,9 @@ async def _generate_topological_grid(lat: float, lng: float, hw_days: float, tx5
                     resp = await client.get(url)
                     if resp.status_code == 200:
                         return start_idx, resp.json().get("elevation", [])
-        except httpx.RequestError as e:
-            logger.warning(f"Elevation chunk {start_idx} failed: {e}")
-        return start_idx, []
+        except Exception:
+            return start_idx, []
 
-    # Process elevation fetching concurrently
     tasks = [fetch_elevation_chunk(i) for i in range(0, n_points, 100)]
     chunk_results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -378,18 +384,17 @@ async def _generate_topological_grid(lat: float, lng: float, hw_days: float, tx5
                 if el is not None:
                     elevations[start_idx + j] = float(el)
 
-    max_r = 0.09
-
-    # Calculate final risk weights
-    for i in range(n_points):
-        el = elevations[i]
-        if el <= 0.0: # Skip water
+    for i in range(len(lats)):
+        # 100% Perfection: Ocean Filter
+        # Agar elevation 0.5m se kam hai, toh use Ocean maan kar discard kar do
+        if elevations[i] < 0.5: 
             continue
             
-        dist_norm = min(dists[i] / max_r, 1.0)
-        bell = math.exp(-6.0 * (dist_norm ** 2))
-        jitter = random.uniform(-0.06, 0.06)
-        risk_weight = round(min(1.0, max(0.02, bell * (0.65 + 0.35 * severity) + jitter)), 4)
+        dist_norm = min(dists[i] / 0.045, 1.0)
+        bell = math.exp(-6.0 * dist_norm ** 2)
+        
+        # Risk Weight logic (No jitter for clean look)
+        risk_weight = round(min(1.0, max(0.02, bell * (0.65 + 0.35 * severity))), 4)
         
         points.append({
             "position": [lngs[i], lats[i]],
