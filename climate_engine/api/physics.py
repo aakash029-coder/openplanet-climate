@@ -339,7 +339,8 @@ async def _generate_topological_grid(lat: float, lng: float, hw_days: float, tx5
     step = 0.0012 
     grid_size = 35 # 35x35 dots ka matrix (total ~1200 points)
     
-    lats, lngs, dists = [], []
+    # FIX: Correctly unpacking into 3 lists instead of 2.
+    lats, lngs, dists = [], [], []
     start_lat = lat - (grid_size / 2 * step)
     start_lng = lng - (grid_size / 2 * step)
 
@@ -385,9 +386,8 @@ async def _generate_topological_grid(lat: float, lng: float, hw_days: float, tx5
                     elevations[start_idx + j] = float(el)
 
     for i in range(len(lats)):
-        # 100% Perfection: Ocean Filter
-        # Agar elevation 0.5m se kam hai, toh use Ocean maan kar discard kar do
-        if elevations[i] < 0.5: 
+        # FIX: Relaxed filter from < 0.5 to <= 0.0 to prevent deleting low-lying coastal cities
+        if elevations[i] <= 0.0: 
             continue
             
         dist_norm = min(dists[i] / 0.045, 1.0)
