@@ -1,14 +1,11 @@
 'use client';
 
-// 1. ADDED: useMemo
 import React, { useState, useEffect, useMemo } from 'react';
 import Map, { NavigationControl } from 'react-map-gl/maplibre';
 // @ts-ignore
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
-// 2. CHANGED: ScatterplotLayer to MVTLayer
 import { MVTLayer } from '@deck.gl/geo-layers';
-// 3. ADDED: latLngToCell from h3-js
 import { latLngToCell } from 'h3-js';
 import { FlyToInterpolator } from '@deck.gl/core';
 import {
@@ -355,26 +352,26 @@ export default function MapModule({
     return [34, 197, 94, 230]; 
   };
 
-  // 4. NEW LOGIC: Convert backend hexData into a fast Hash Map
+  // 4. Convert backend hexData into a fast Hash Map
   const riskMap = useMemo(() => {
     const map: Record<string, number> = {};
     hexData.forEach(d => {
-      // Backend se aane wale lat/lng ko H3 index (Level 10) mein lock kar rahe hain
       const h3Index = latLngToCell(d.position[1], d.position[0], 10);
       map[h3Index] = d.risk_weight || 0;
     });
     return map;
   }, [hexData]);
 
-  // 5. NEW LOGIC: The Global MVT Layer
+  // 5. Global Real Assets Layer via MVT
   const layers = [
     new MVTLayer({
       id: 'global-real-assets',
-      data: 'https://api.protomaps.com/tiles/v3/{z}/{x}/{y}.mvt?key=cbba6d601b0f5926',
+      // Updated with environment variable
+      data: `https://api.protomaps.com/tiles/v3/{z}/{x}/{y}.mvt?key=${process.env.NEXT_PUBLIC_PROTOMAPS_KEY}`,
+      
       binary: false, 
 
       getFillColor: (feature: any) => {
-        // Agar feature "places" (POI) ya "buildings" nahi hai, toh chupa do
         if (feature.properties.layer !== 'places' && feature.properties.layer !== 'buildings') {
           return [0, 0, 0, 0]; 
         }
@@ -383,16 +380,14 @@ export default function MapModule({
         if (feature.geometry.type === 'Point') {
           [lng, lat] = feature.geometry.coordinates;
         } else if (feature.geometry.type === 'Polygon') {
-          [lng, lat] = feature.geometry.coordinates[0][0]; // Simple centroid approximation
+          [lng, lat] = feature.geometry.coordinates[0][0];
         } else {
           return [0, 0, 0, 0];
         }
 
-        // Match asset to our H3 risk grid
         const h3Index = latLngToCell(lat, lng, 10);
         const risk = riskMap[h3Index];
 
-        // Apply color if it falls in our calculated risk zone
         if (risk) {
           return getRiskColor(risk);
         }
@@ -707,6 +702,7 @@ export default function MapModule({
                       </div>
                       <div className="flex-grow">
                         <ResponsiveContainer width="100%" height="100%">
+                          {/* ✅ FIX: d.adapt ?? null — no fabricated 0.80 fallback */}
                           <BarChart data={chartData.economic.map(d => ({ ...d, adapt: d.adapt ?? null }))} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                             <XAxis dataKey="year" stroke="#334155" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }} />
@@ -714,6 +710,7 @@ export default function MapModule({
                             <RechartsTooltip contentStyle={{ background: '#06101f', border: '1px solid #1e293b', borderRadius: '10px', fontSize: '11px', fontFamily: 'monospace' }} formatter={(v: any, name: any) => [`$${Number(v).toFixed(0)}M`, name]} />
                             <Legend wrapperStyle={{ paddingTop: '14px', fontSize: '10px', fontFamily: 'monospace', color: '#94a3b8' }} />
                             <Bar dataKey="noAction" name="Baseline (No Action)" fill="#ef4444" radius={[3,3,0,0]} opacity={0.85} />
+                            {/* ✅ FIX: Only render if backend sent real adapt data */}
                             {hasRealAdaptData && (
                               <Bar dataKey="adapt" name="With Mitigation" fill="#10b981" radius={[3,3,0,0]} opacity={0.85} />
                             )}
