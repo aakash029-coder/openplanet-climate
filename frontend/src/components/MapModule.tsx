@@ -349,21 +349,20 @@ export default function MapModule({
     return [34, 197, 94, 230];                      // Safe (Green)
   };
 
-  // 4. The Core Change: ScatterplotLayer replaces HexagonLayer
+  // 4. The Exact "Kepler/Foursquare" Dot Layer
   const layers = [
     new ScatterplotLayer({
       id: 'risk-scatter-dots',
       data: hexData,
       getPosition: (d: any) => d.position,
       getFillColor: (d: any) => getRiskColor(d.risk_weight || 0),
-      getRadius: 65, // Base radius in meters to match city street blocks
-      radiusMinPixels: 2.5, // Keeps points visible when zoomed out globally
-      radiusMaxPixels: 12,  // Prevents dots from covering entire screen when fully zoomed in
-      opacity: 0.9,
-      stroked: false,
-      antialiasing: true,
+      // MAGICAL SETTINGS FOR THE EXACT DOT LOOK:
+      radiusUnits: 'pixels', // Force dots to scale by pixels, not real-world meters
+      getRadius: 1.5,        // Set a tiny, crisp 1.5 pixel size
+      opacity: 0.95,         // High opacity for that neon/cyberpunk pop
+      stroked: false,        // Remove borders to prevent blurriness
+      antialiasing: true,    // Keep the edges sharp
       transitions: {
-        getRadius: { duration: 1000, easing: (t: number) => t },
         getFillColor: { duration: 1000, easing: (t: number) => t }
       }
     })
