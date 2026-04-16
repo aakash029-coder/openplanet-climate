@@ -5,7 +5,8 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 // @ts-ignore
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
-import { HexagonLayer } from '@deck.gl/aggregation-layers';
+// 1. Changed Import: Removed HexagonLayer, Added ScatterplotLayer
+import { ScatterplotLayer } from '@deck.gl/layers';
 import { FlyToInterpolator } from '@deck.gl/core';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -231,7 +232,7 @@ export default function MapModule({
   const [canopy, setCanopy] = useState(5);
   const [coolRoof, setCoolRoof] = useState(15);
   const [viewState, setViewState] = useState<any>({ longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0 });
-  const [hexData, setHexData] = useState<{ position: [number, number] }[]>([]);
+  const [hexData, setHexData] = useState<{ position: [number, number]; risk_weight?: number }[]>([]);
 
   const [simData, setSimData] = useState({
     temp: '--', deaths: '--', ci: null as string | null,
@@ -271,11 +272,14 @@ export default function MapModule({
   const handleInitialize = async () => {
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null);
+    
+    // 2. Map Configuration: Pitch and Bearing set to 0 for flat 2D projection
     setViewState((p: any) => ({
       ...p, longitude: selectedCity.lng, latitude: selectedCity.lat,
-      zoom: 11, pitch: 50, bearing: 10,
+      zoom: 12.5, pitch: 0, bearing: 0, 
       transitionDuration: 3000, transitionInterpolator: new FlyToInterpolator(),
     }));
+
     try {
       const res = await fetch('/api/engine', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -289,6 +293,7 @@ export default function MapModule({
       if (data.error) throw new Error(data.error);
       if (!data.metrics || !data.hexGrid) throw new Error('API missing data.');
       if (onTargetLocked) onTargetLocked(selectedCity.name);
+      
       setHexData(data.hexGrid);
       setSimData({
         temp: data.metrics?.temp ?? '--', deaths: data.metrics?.deaths ?? '--',
@@ -334,18 +339,35 @@ export default function MapModule({
   })();
 
   const baseDeathsNum = isInitialized ? parseFloat(String(simData.deaths).replace(/,/g, '')) || 0 : 0;
-
-  // ✅ Only show mitigation bar if backend actually sent adapt data
   const hasRealAdaptData = chartData.economic.some(d => d.adapt != null);
 
-  const layers = [new HexagonLayer({
-    id: 'risk-heatmap', data: hexData,
-    colorRange: [[34,197,94],[234,179,8],[249,115,22],[239,68,68]],
-    elevationRange: [0, 1000], elevationScale: 5, extruded: true,
-    getPosition: (d: any) => d.position,
-    radius: 350, opacity: 0.85, coverage: 0.85, upperPercentile: 99,
-    transitions: { elevationScale: 2000 },
-  })];
+  // 3. Vector Tile Styling Logic: Mapping Risk Weight (0-1) to colors
+  const getRiskColor = (weight: number): [number, number, number, number] => {
+    if (weight >= 0.75) return [239, 68, 68, 230]; // Critical (Red)
+    if (weight >= 0.50) return [249, 115, 22, 230]; // High (Orange)
+    if (weight >= 0.25) return [234, 179, 8, 230];  // Moderate (Yellow)
+    return [34, 197, 94, 230];                      // Safe (Green)
+  };
+
+  // 4. The Core Change: ScatterplotLayer replaces HexagonLayer
+  const layers = [
+    new ScatterplotLayer({
+      id: 'risk-scatter-dots',
+      data: hexData,
+      getPosition: (d: any) => d.position,
+      getFillColor: (d: any) => getRiskColor(d.risk_weight || 0),
+      getRadius: 65, // Base radius in meters to match city street blocks
+      radiusMinPixels: 2.5, // Keeps points visible when zoomed out globally
+      radiusMaxPixels: 12,  // Prevents dots from covering entire screen when fully zoomed in
+      opacity: 0.9,
+      stroked: false,
+      antialiasing: true,
+      transitions: {
+        getRadius: { duration: 1000, easing: (t: number) => t },
+        getFillColor: { duration: 1000, easing: (t: number) => t }
+      }
+    })
+  ];
 
   const panelClass = `bg-[#06101f]/95 backdrop-blur-2xl border border-slate-800/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.03)] pointer-events-auto`;
 
