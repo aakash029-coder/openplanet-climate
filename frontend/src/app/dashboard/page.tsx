@@ -9,10 +9,12 @@ import ResearchModule from "@/components/ResearchModule";
 import MethodologyModule from "@/components/MethodologyModule";
 import { ClimateDataProvider } from "@/context/ClimateDataContext";
 
+// ── STEP 1: DYNAMIC IMPORT (SSR: FALSE) ──
+// Yehi asli fix hai jo Vercel build ko pass karwayega
 const MapModule = dynamic(() => import("@/components/MapModule"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[750px] bg-[#060d1a]/80 backdrop-blur-md flex flex-col items-center justify-center relative z-10">
+    <div className="w-full h-[820px] bg-[#020617] flex flex-col items-center justify-center relative z-10">
       <div className="relative flex items-center justify-center">
         <div className="w-16 h-16 border-t-2 border-r-2 border-cyan-400/80 rounded-full animate-spin"></div>
         <div className="absolute w-10 h-10 border-b-2 border-l-2 border-blue-400/60 rounded-full animate-spin-reverse"></div>
@@ -150,13 +152,12 @@ function DashboardPageInner() {
 
         {/* ── CONTENT ── */}
         <div className="w-full h-full flex flex-col flex-grow">
-
+          {/* Dashboard Tab uses MapModule with NO SSR */}
           <div className={activeTab === "Dashboard" ? "block w-full" : "hidden"}>
             <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
           </div>
 
           <div className={activeTab !== "Dashboard" ? "max-w-[1400px] w-full mx-auto px-6 md:px-12 py-16" : "hidden"}>
-
             {visitedTabs.has('Deep Dive') && targetCity && (
               <div className={activeTab === "Deep Dive" ? "block animate-in fade-in duration-700" : "hidden"}>
                 <ResearchModule baseTarget={targetCity} />
@@ -219,9 +220,7 @@ function DashboardPageInner() {
   );
 }
 
-// ── ClimateDataProvider wraps the entire dashboard ────────────────────
-// All child components (MapModule, ResearchModule, CompareModule)
-// can now access useClimateData() — single source of truth
+// ── FINAL EXPORT ──
 export default function DashboardPage() {
   return (
     <ClimateDataProvider>
