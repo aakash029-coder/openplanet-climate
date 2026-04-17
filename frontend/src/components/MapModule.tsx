@@ -19,19 +19,19 @@ import {
 } from '@/context/ClimateDataContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FOURSQUARE / KEPLER.GL COLOR PALETTE
-// yellow (hottest) → orange → red → crimson → magenta-purple (edge)
+// FOURSQUARE / INSTITUTIONAL COLOR PALETTE
 // ─────────────────────────────────────────────────────────────────────────────
 function getRiskColor(weight: number): [number, number, number, number] {
-  if (weight >= 0.88) return [255, 235,   0, 255]; // Bright yellow — hottest core
-  if (weight >= 0.72) return [255, 165,  10, 255]; // Amber-orange
-  if (weight >= 0.55) return [240,  80,  15, 255]; // Deep orange-red
-  if (weight >= 0.38) return [200,  30,  60, 255]; // Crimson
-  if (weight >= 0.22) return [155,  15, 105, 255]; // Magenta-purple
-  if (weight >= 0.10) return [100,   8, 120, 255]; // Deep purple
-  return                      [ 55,   4,  75, 255]; // Edge scatter — darkest
+  if (weight >= 0.75) return [239,  68,  68, 255]; // Critical Red
+  if (weight >= 0.50) return [249, 115,  22, 255]; // High Orange
+  if (weight >= 0.35) return [234, 179,   8, 255]; // Warning Yellow
+  if (weight >= 0.20) return [132, 204,  22, 255]; // Mild Lime Green
+  return                     [ 34, 197,  94, 255]; // Safe Green
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CARTO DARK BASE
+// ─────────────────────────────────────────────────────────────────────────────
 const cartoDarkStyle = {
   version: 8 as const,
   sources: {
@@ -45,22 +45,29 @@ const cartoDarkStyle = {
       tileSize: 256,
     },
   },
-  layers: [{
-    id: 'carto-dark-layer', type: 'raster' as const,
-    source: 'carto-dark', paint: { 'raster-opacity': 1 },
-  }],
+  layers: [
+    {
+      id:     'carto-dark-layer',
+      type:   'raster' as const,
+      source: 'carto-dark',
+      paint:  { 'raster-opacity': 1 },
+    },
+  ],
 };
 
 const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHARED COMPONENTS
+// SMALL SHARED COMPONENTS
 // ─────────────────────────────────────────────────────────────────────────────
 const InfoTooltip = ({
   publicText, techText, alignLeft = false,
 }: { publicText: string; techText: string; alignLeft?: boolean }) => (
   <div className="relative flex items-center group shrink-0" onClick={(e) => e.stopPropagation()}>
-    <button type="button" className="w-4 h-4 rounded-full border border-slate-700 text-slate-600 flex items-center justify-center text-[9px] font-bold hover:border-cyan-500/60 hover:text-cyan-400 transition-all select-none focus:outline-none">?</button>
+    <button
+      type="button"
+      className="w-4 h-4 rounded-full border border-slate-700 text-slate-600 flex items-center justify-center text-[9px] font-bold hover:border-cyan-500/60 hover:text-cyan-400 transition-all select-none focus:outline-none"
+    >?</button>
     <div className={`absolute ${alignLeft ? 'right-5' : 'left-5'} top-1/2 -translate-y-1/2 w-56 p-4 rounded-xl bg-[#070e20] border border-slate-700/70 shadow-[0_12px_40px_rgba(0,0,0,0.8)] opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-150 z-[9999] pointer-events-none`}>
       <p className="text-slate-300 text-[11px] leading-relaxed mb-2.5 font-sans">{publicText}</p>
       <p className="text-cyan-400/80 text-[9px] font-mono uppercase tracking-widest border-t border-slate-700/60 pt-2 leading-relaxed">{techText}</p>
@@ -94,25 +101,34 @@ const AuditModal = ({
   if (!open || !auditTrail) return null;
   const data = auditTrail[metricKey === 'economics' ? 'economics' : metricKey];
   if (!data) return null;
+
   const disclaimer = metricKey === 'mortality'
     ? 'Simplified Gasparrini et al. 2017 implementation for research estimation.'
     : metricKey === 'economics'
     ? 'Simplified Burke (2018) + ILO (2019) framework for estimation.'
     : 'Stull (2011) empirical formula. Capped at 35°C per Sherwood & Huber (2010).';
-  const metricLabel = metricKey === 'mortality' ? 'Mortality' : metricKey === 'economics' ? 'Economics' : 'Wet-Bulb';
+
+  const metricLabel = metricKey === 'mortality' ? 'Mortality'
+    : metricKey === 'economics' ? 'Economics' : 'Wet-Bulb';
 
   return (
     <>
       <div className="absolute inset-0 z-[500] bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute inset-0 z-[501] flex items-center justify-center pointer-events-none px-4">
-        <div className="pointer-events-auto w-full max-w-[430px] bg-[#06101f] border border-cyan-500/25 rounded-2xl shadow-[0_0_60px_rgba(34,211,238,0.12),0_24px_48px_rgba(0,0,0,0.8)] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="pointer-events-auto w-full max-w-[430px] bg-[#06101f] border border-cyan-500/25 rounded-2xl shadow-[0_0_60px_rgba(34,211,238,0.12),0_24px_48px_rgba(0,0,0,0.8)] overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800/60 bg-gradient-to-r from-cyan-950/30 to-transparent">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
               <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-[0.3em] font-bold">Calculation Details</span>
               <span className="text-[9px] font-mono text-slate-600 uppercase tracking-widest">· {metricLabel}</span>
             </div>
-            <button onClick={onClose} className="w-6 h-6 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-500 hover:text-white hover:bg-slate-700/60 transition-all flex items-center justify-center text-[14px] leading-none">×</button>
+            <button
+              onClick={onClose}
+              className="w-6 h-6 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-500 hover:text-white hover:bg-slate-700/60 transition-all flex items-center justify-center text-[14px] leading-none"
+            >×</button>
           </div>
           <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
             <div className="bg-[#020912]/80 rounded-xl px-4 py-3 border border-slate-800/60">
@@ -184,20 +200,24 @@ const MapLegend = () => (
       { hex: '#640878', label: 'Low'       },
     ].map((item) => (
       <div key={item.label} className="flex items-center gap-1.5">
-        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.hex, boxShadow: `0 0 6px ${item.hex}88` }} />
+        <div
+          className="w-2.5 h-2.5 rounded-full"
+          style={{ backgroundColor: item.hex, boxShadow: `0 0 6px ${item.hex}88` }}
+        />
         <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest">{item.label}</span>
       </div>
     ))}
   </div>
 );
 
-function parseLoss(s: string) {
-  const m = String(s).match(/([\$€£])?([0-9.]+)([BKM])?/i);
+function parseLoss(lossStr: string): { num: number; prefix: string; suffix: string } | null {
+  const m = String(lossStr).match(/([\$€£])?([0-9.]+)([BKM])?/i);
   if (!m) return null;
-  const mult = m[3]?.toUpperCase() === 'B' ? 1e9 : m[3]?.toUpperCase() === 'M' ? 1e6 : 1;
-  return { num: parseFloat(m[2]) * mult, prefix: m[1] || '$', suffix: m[3] || '' };
+  const multiplier = m[3]?.toUpperCase() === 'B' ? 1e9 : m[3]?.toUpperCase() === 'M' ? 1e6 : 1;
+  return { num: parseFloat(m[2]) * multiplier, prefix: m[1] || '$', suffix: m[3] || '' };
 }
-function fmtLoss(n: number) {
+
+function fmtLoss(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
   if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
   return `$${n.toLocaleString()}`;
@@ -206,6 +226,7 @@ function fmtLoss(n: number) {
 const AiCard = ({ text, title, badge }: { text: string; title: string; badge?: string }) => {
   if (!text) return null;
   const clean = (s: string) => s.replace(/\*\*.*?\*\*:?/g, '').replace(/^:\s*/, '').trim();
+
   if (text.includes('**EFFECT:**') && text.includes('**SOLUTION:**')) {
     const [rawCause, rest]    = text.split('**EFFECT:**');
     const [rawEffect, rawSol] = rest.split('**SOLUTION:**');
@@ -262,26 +283,33 @@ export default function MapModule({
   const [selectedCity, setSelectedCity]   = useState<{ name: string; lat: number; lng: number } | null>(null);
   const [ssp, setSsp]       = useState('SSP2-4.5');
   const [year, setYear]     = useState('2050');
-  const [canopy, setCanopy] = useState(0);
+  const [canopy, setCanopy] = useState(0); // Initialize at 0 for Baseline Reality
   const [coolRoof, setCoolRoof] = useState(0);
-  const [viewState, setViewState] = useState<any>({ longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0 });
+  const [viewState, setViewState] = useState<any>({
+    longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0,
+  });
+
   const [hexData, setHexData] = useState<{ position: [number, number]; risk_weight?: number }[]>([]);
+
   const [simData, setSimData] = useState({
     temp: '--', deaths: '--', ci: null as string | null,
     loss: '--', heatwave: '--', baseTemp: '--',
     wbt: '--', region: '--', rh_p95: null as number | null,
   });
+
   const [auditTrail, setAuditTrail] = useState<any>(null);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [chartData, setChartData]   = useState<{ heatwave: any[]; economic: any[] }>({ heatwave: [], economic: [] });
   const [auditOpen, setAuditOpen]   = useState(false);
   const [auditKey, setAuditKey]     = useState<'mortality' | 'economics' | 'wetbulb'>('mortality');
-  const [systemAlert, setSystemAlert] = useState<{ title: string; message: string; type: 'warning' | 'error' | 'info' } | null>(null);
-
+  
+  // ── NEW UX STATES ──
+  const [systemAlert, setSystemAlert] = useState<{title: string, message: string, type: 'warning' | 'error' | 'info'} | null>(null);
   const isSimulating = canopy > 0 || coolRoof > 0;
+
   const openAudit = (k: 'mortality' | 'economics' | 'wetbulb') => { setAuditKey(k); setAuditOpen(true); };
 
-  // Autocomplete
+  // Nominatim autocomplete
   useEffect(() => {
     const t = setTimeout(async () => {
       if (searchQuery.length > 2 && !selectedCity) {
@@ -306,29 +334,34 @@ export default function MapModule({
   const handleInitialize = async () => {
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null); setSystemAlert(null);
-    setCanopy(0); setCoolRoof(0);
+    setCanopy(0); setCoolRoof(0); // Reset simulation
 
     setViewState((p: any) => ({
       ...p, longitude: selectedCity.lng, latitude: selectedCity.lat,
-      zoom: 14.5, pitch: 30, bearing: 0,
+      zoom: 12.5, pitch: 0, bearing: 0,
       transitionDuration: 3000, transitionInterpolator: new FlyToInterpolator(),
     }));
 
     try {
       const res = await fetch('/api/engine', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           endpoint: '/api/predict',
-          payload:  { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy: 0, coolRoof: 0 },
+          payload:  { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy, coolRoof },
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      if (data.metrics?.region === 'ERROR') throw new Error('Python API Error: Check backend terminal.');
+
+      if (data.metrics?.region === 'ERROR') {
+        throw new Error('Python API Error: Open your Python backend terminal to see why it crashed.');
+      }
       if (!data.metrics || !data.hexGrid) throw new Error('API returned missing or malformed data.');
 
       if (onTargetLocked) onTargetLocked(selectedCity.name);
+
       setHexData(data.hexGrid);
       setSimData({
         temp:     data.metrics?.temp      ?? '--',
@@ -351,85 +384,76 @@ export default function MapModule({
   };
 
   // ── BIOME CONSTRAINT LOGIC ──
-  // FIX: guard against '--' before parseFloat
   const handleMitigationChange = (type: 'canopy' | 'coolRoof', value: number) => {
     if (!selectedCity) return;
     setSystemAlert(null);
+    const city = selectedCity.name.toLowerCase();
+    const temp = parseFloat(String(simData.baseTemp)) || 25;
+    const relHumidity = simData.rh_p95 || 50;
 
-    const baseT = simData.baseTemp !== '--' ? parseFloat(simData.baseTemp) : 20;
-    const rh    = simData.rh_p95 ?? 50;
-
-    // Arid biome: hot + dry → water-scarce, canopy can't grow much
-    if (type === 'canopy' && baseT > 28 && rh < 35 && value > 10) {
-      setSystemAlert({ title: '🏜️ Resource Limit', message: 'Arid Biome: Canopy > 10% restricted — insufficient groundwater for tree establishment.', type: 'warning' });
+    const isArid = temp > 28 && relHumidity < 35;
+    if (type === 'canopy' && isArid && value > 10) {
+      setSystemAlert({ title: "🏜️ Resource Limit", message: "Arid Biome (High Tx, Low RH). Canopy > 10% restricted due to groundwater scarcity.", type: 'warning' });
       setCanopy(10); return;
     }
 
-    // Tropical trap: excessive canopy in humid heat raises transpiration → worse WBT
-    if (type === 'canopy' && baseT > 25 && rh > 75 && value > 25) {
-      setSystemAlert({ title: '🚨 Wet-Bulb Trap', message: 'High ambient humidity. Excess canopy increases transpiration and can worsen lethal Wet-Bulb conditions.', type: 'error' });
+    const isTropical = temp > 25 && relHumidity > 75;
+    if (type === 'canopy' && isTropical && value > 25) {
+      setSystemAlert({ title: "🚨 Wet-Bulb Trap", message: "High ambient humidity. Excessive canopy increases transpiration and lethal Wet-Bulb risk.", type: 'error' });
     }
 
-    // Cold biome: cooling infrastructure has negative ROI
-    if (baseT < 12 && baseT !== 0 && value > 0) {
-      setSystemAlert({ title: '❄️ Biome Mismatch', message: 'Cold-climate zone: Urban cooling yields negative ROI and increases winter heating demand.', type: 'info' });
-      setCanopy(0); setCoolRoof(0); return;
+    const isCold = temp < 12 && temp !== 0; 
+    if (isCold && value > 0) {
+      setSystemAlert({ title: "❄️ Biome Mismatch", message: "Cold-climate zone. Urban cooling yields negative ROI and increases winter heating demands.", type: 'info' });
+      setCoolRoof(0); setCanopy(0); return;
     }
 
-    if (type === 'canopy')   setCanopy(value);
+    if (type === 'canopy') setCanopy(value);
     if (type === 'coolRoof') setCoolRoof(value);
   };
 
-  // ── H3 DATA: convert position points → hex IDs + apply live mitigation ──
-  // FIX: This useMemo previously lived inside the layer useMemo — separated for clarity
+  // ── LIVE MITIGATION ENGINE (React runs this instantly) ──
   const h3Data = useMemo(() => {
     if (!hexData || hexData.length === 0) return [];
-    const cooling  = (canopy / 100) * 1.2 + (coolRoof / 100) * 0.8;
-    const riskMult = Math.max(0.1, 1 - cooling * 0.08);
+    
+    const cooling = (canopy / 100) * 1.2 + (coolRoof / 100) * 0.8;
+    const riskReductionMultiplier = Math.max(0.1, 1 - (cooling * 0.08)); 
+
     return hexData.map(d => ({
-      // position is [lng, lat] — latLngToCell takes (lat, lng, res)
-      hex:  latLngToCell(d.position[1], d.position[0], 9),
-      risk: (d.risk_weight ?? 0) * riskMult,
+      hex: latLngToCell(d.position[1], d.position[0], 10), 
+      risk: (d.risk_weight || 0) * riskReductionMultiplier 
     }));
   }, [hexData, canopy, coolRoof]);
 
-  // ── DUAL H3 LAYERS: glow (additive blend) + core (opaque fill) ──
+  // ── THE GOD-TIER 2-LAYER H3 COMBO ──
   const layers = useMemo(() => {
     if (!isInitialized || h3Data.length === 0) return [];
     return [
-      // Layer 1: soft neon glow (additive blending = colours bleed like kepler.gl)
+      // GLOW LAYER (NEON BLEED)
       new H3HexagonLayer({
-        id:           'h3-glow',
-        data:         h3Data,
-        getHexagon:   (d: any) => d.hex,
-        getFillColor: (d: any) => { const [r, g, b] = getRiskColor(d.risk); return [r, g, b, 80] as [number, number, number, number]; },
-        extruded:     false,
-        coverage:     1.3,
-        stroked:      false,
-        parameters:   { depthTest: false, blend: true, blendFunc: [770, 1] }, // SRC_ALPHA, ONE → additive
+        id: 'h3-glow-layer', data: h3Data, getHexagon: (d: any) => d.hex,
+        getFillColor: (d: any) => { const [r, g, b] = getRiskColor(d.risk); return [r, g, b, 90]; },
+        extruded: false, coverage: 1.25, stroked: false,
+        parameters: { depthTest: false, blend: true, blendFunc: [770, 1] },
         updateTriggers: { getFillColor: h3Data },
       }),
-      // Layer 2: solid core (proper opacity, thin outline keeps hexes readable)
+      // CORE LAYER (CITY VISIBILITY)
       new H3HexagonLayer({
-        id:                 'h3-core',
-        data:               h3Data,
-        pickable:           true,
-        getHexagon:         (d: any) => d.hex,
-        getFillColor:       (d: any) => { const [r, g, b] = getRiskColor(d.risk); return [r, g, b, 145] as [number, number, number, number]; },
-        extruded:           false,
-        coverage:           0.96,
-        stroked:            true,
-        getLineColor:       [8, 12, 22, 70] as [number, number, number, number],
-        lineWidthMinPixels: 0.3,
-        parameters:         { depthTest: false },
-        updateTriggers:     { getFillColor: h3Data },
-      }),
+        id: 'h3-core-layer', data: h3Data, pickable: true, getHexagon: (d: any) => d.hex,
+        getFillColor: (d: any) => { const [r, g, b] = getRiskColor(d.risk); return [r, g, b, 140]; },
+        extruded: false, coverage: 0.98, stroked: true, getLineColor: [10, 15, 25, 80], lineWidthMinPixels: 0.3,
+        parameters: { depthTest: false },
+        updateTriggers: { getFillColor: h3Data },
+      })
     ];
   }, [isInitialized, h3Data]);
 
-  // ── MITIGATION NUMBERS ──
+  // ─────────────────────────────────────────────────────────────────────────
+  // MITIGATION CALCULATION 
+  // ─────────────────────────────────────────────────────────────────────────
   const mitigatedData = (() => {
-    if (!isInitialized || simData.temp === '--' || (canopy === 0 && coolRoof === 0)) return null;
+    if (!isInitialized || simData.temp === '--') return null;
+    if (canopy === 0 && coolRoof === 0) return null;
     const baseTemp       = parseFloat(String(simData.temp));
     const baseHW         = parseFloat(String(simData.heatwave));
     const baseDeaths     = parseFloat(String(simData.deaths).replace(/,/g, '')) || 0;
@@ -439,23 +463,25 @@ export default function MapModule({
     const hwRatio        = baseHW > 0 ? effectHW / baseHW : 1;
     const combined       = hwRatio * Math.max(0, 1 - cooling * 0.08);
     const mitDeaths      = Math.round(baseDeaths * combined);
+    const savedDeaths    = Math.round(baseDeaths - mitDeaths);
     const mitLossNum     = baseLossParsed ? baseLossParsed.num * combined : null;
+    const savedLossNum   = baseLossParsed && mitLossNum !== null ? baseLossParsed.num - mitLossNum : null;
     const mitTemp        = Math.max(0, baseTemp - cooling);
     return {
-      deaths:      mitDeaths.toLocaleString(),
-      savedDeaths: Math.round(baseDeaths - mitDeaths).toLocaleString(),
-      loss:        mitLossNum !== null ? fmtLoss(mitLossNum) : null,
-      savedLoss:   mitLossNum !== null && baseLossParsed ? fmtLoss(baseLossParsed.num - mitLossNum) : null,
-      temp:        mitTemp.toFixed(1),
-      heatwave:    Math.round(effectHW).toString(),
-      tempDelta:   (baseTemp - mitTemp).toFixed(1),
-      hwDelta:     Math.max(0, baseHW - Math.round(effectHW)),
+      deaths:    mitDeaths.toLocaleString(),
+      savedDeaths: savedDeaths.toLocaleString(),
+      loss:      mitLossNum   !== null ? fmtLoss(mitLossNum)   : null,
+      savedLoss: savedLossNum !== null ? fmtLoss(savedLossNum) : null,
+      temp:      mitTemp.toFixed(1),
+      heatwave:  Math.round(effectHW).toString(),
+      tempDelta: (baseTemp - mitTemp).toFixed(1),
+      hwDelta:   Math.max(0, baseHW - Math.round(effectHW)),
     };
   })();
 
   const baseDeathsNum    = isInitialized ? parseFloat(String(simData.deaths).replace(/,/g, '')) || 0 : 0;
   const hasRealAdaptData = chartData.economic.some(d => d.adapt != null);
-  const panelCls         = `bg-[#06101f]/95 backdrop-blur-2xl border border-slate-800/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.03)]`;
+  const panelClass       = `bg-[#06101f]/95 backdrop-blur-2xl border border-slate-800/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.03)] pointer-events-auto`;
 
   return (
     <div className="w-full flex flex-col relative z-0">
@@ -465,50 +491,72 @@ export default function MapModule({
 
         <AuditModal open={auditOpen} onClose={() => setAuditOpen(false)} auditTrail={auditTrail} metricKey={auditKey} />
 
-        {/* TOAST ALERT */}
+        {/* TOAST ALERTS OVERLAY */}
         {systemAlert && (
-          <div className={`absolute top-24 left-1/2 -translate-x-1/2 z-[200] w-[340px] p-4 rounded-xl border backdrop-blur-2xl shadow-2xl ${
-            systemAlert.type === 'error'   ? 'bg-red-950/80 border-red-500/50'   :
-            systemAlert.type === 'warning' ? 'bg-amber-950/80 border-amber-500/50' :
-                                             'bg-cyan-950/80 border-cyan-500/50'
+          <div className={`absolute top-24 left-1/2 -translate-x-1/2 z-[200] w-[340px] p-4 rounded-xl border backdrop-blur-2xl shadow-2xl transition-all animate-fade-in-down ${
+            systemAlert.type === 'error' ? 'bg-red-950/80 border-red-500/50' : 
+            systemAlert.type === 'warning' ? 'bg-amber-950/80 border-amber-500/50' : 
+            'bg-cyan-950/80 border-cyan-500/50'
           }`}>
             <div className="flex justify-between items-start mb-1">
-              <p className={`text-[10px] font-mono font-bold uppercase tracking-[0.2em] ${systemAlert.type === 'error' ? 'text-red-400' : systemAlert.type === 'warning' ? 'text-amber-400' : 'text-cyan-400'}`}>{systemAlert.title}</p>
-              <button onClick={() => setSystemAlert(null)} className="text-slate-400 hover:text-white text-[12px] leading-none ml-2">✕</button>
+              <p className={`text-[10px] font-mono font-bold uppercase tracking-[0.2em] ${
+                systemAlert.type === 'error' ? 'text-red-400' : 'text-amber-400'
+              }`}>{systemAlert.title}</p>
+              <button onClick={() => setSystemAlert(null)} className="text-slate-400 hover:text-white text-[12px]">✕</button>
             </div>
             <p className="text-[11px] font-sans text-slate-300 leading-relaxed">{systemAlert.message}</p>
           </div>
         )}
 
-        {/* BASELINE / SIM MODE BADGE */}
+        {/* STATE SWITCH BADGE */}
         {isInitialized && !isLoading && !apiError && (
-          <div className={`absolute top-5 left-1/2 -translate-x-1/2 z-[100] px-5 py-2 rounded-full border backdrop-blur-xl flex items-center gap-3 transition-all duration-700 pointer-events-none ${
-            isSimulating
-              ? 'bg-emerald-950/40 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
-              : 'bg-red-950/40 border-red-500/40'
+          <div className={`absolute top-6 left-1/2 -translate-x-1/2 z-[100] px-5 py-2 rounded-full border backdrop-blur-xl transition-all duration-700 flex items-center gap-3 ${
+            isSimulating 
+              ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]' 
+              : 'bg-red-950/40 border-red-500/50 text-red-400'
           }`}>
             <div className={`w-2 h-2 rounded-full animate-pulse ${isSimulating ? 'bg-emerald-500' : 'bg-red-500'}`} />
-            <span className={`text-[10px] font-mono font-bold uppercase tracking-[0.3em] ${isSimulating ? 'text-emerald-400' : 'text-red-400'}`}>
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.3em]">
               {isSimulating ? 'Simulation Mode: Sandbox Active' : 'Baseline Reality: Do-Nothing Scenario'}
             </span>
           </div>
         )}
 
-        {/* DECK + MAP */}
         <div className="absolute inset-0 z-0">
           <DeckGL
             viewState={viewState}
             onViewStateChange={({ viewState: vs, interactionState }: any) => {
-              if (interactionState.isDragging || interactionState.isPanning || interactionState.isZooming || interactionState.isRotating)
-                setViewState(vs);
+              if (
+                interactionState.isDragging  ||
+                interactionState.isPanning   ||
+                interactionState.isZooming   ||
+                interactionState.isRotating
+              ) setViewState(vs);
             }}
-            controller={{ scrollZoom: false, dragPan: !isMobile, doubleClickZoom: true, dragRotate: !isMobile, touchRotate: false, touchZoom: true }}
+            controller={{
+              scrollZoom:      false,
+              dragPan:         !isMobile,
+              doubleClickZoom: true,
+              dragRotate:      !isMobile,
+              touchRotate:     false,
+              touchZoom:       true,
+            }}
             layers={layers}
           >
             <Map mapStyle={cartoDarkStyle} attributionControl={false} reuseMaps>
-              <NavigationControl position="bottom-right" showCompass={false} style={{ bottom: '140px', right: '16px', background: 'rgba(6,16,31,0.95)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px' }} />
+              <NavigationControl
+                position="bottom-right"
+                showCompass={false}
+                style={{
+                  bottom:       '140px',
+                  right:        '16px',
+                  background:   'rgba(6,16,31,0.95)',
+                  border:       '1px solid rgba(99,102,241,0.2)',
+                  borderRadius: '10px',
+                }}
+              />
             </Map>
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_30%,#020617_100%)] z-10" />
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_25%,#020617_100%)] z-10" />
           </DeckGL>
         </div>
 
@@ -520,39 +568,45 @@ export default function MapModule({
           </div>
         )}
 
-        {/* ── PANELS OVERLAY ──
-            IMPORTANT: parent is pointer-events-none so deck.gl captures map pan/zoom.
-            Every interactive element inside must have pointer-events-auto explicitly. */}
+        {/* PANELS */}
         <div className="absolute inset-x-0 top-0 bottom-0 z-20 flex justify-between items-start p-3 md:p-5 lg:p-8 pointer-events-none gap-2 md:gap-3">
 
-          {/* ─── LEFT PANEL ─── */}
-          <div className={`${panelCls} w-[240px] md:w-[260px] lg:w-[280px] p-4 md:p-5 flex flex-col gap-3 md:gap-4 pointer-events-auto transition-colors duration-700 ${isSimulating ? 'border-emerald-500/30' : ''}`}>
-
-            {/* City search */}
+          {/* ── LEFT PANEL ── */}
+          <div className={`${panelClass} w-[240px] md:w-[260px] lg:w-[280px] p-4 md:p-5 flex flex-col gap-3 md:gap-4 transition-colors duration-700 ${isSimulating ? 'border-emerald-500/30' : ''}`}>
             <div className="space-y-1.5">
               <label className="block text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Location</label>
               <div className="relative">
                 <input
-                  type="text" placeholder="Search city…" value={searchQuery}
+                  type="text"
+                  placeholder="Search city…"
+                  value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); if (selectedCity) setSelectedCity(null); }}
-                  className="w-full bg-[#0a1830] border border-slate-700/60 rounded-xl px-3 py-2.5 text-[12px] font-sans text-slate-200 placeholder:text-slate-600 outline-none focus:border-indigo-500/50 transition-colors"
+                  className="w-full bg-[#0a1830] border border-slate-700/60 rounded-xl px-3 py-2.5 text-[12px] font-sans text-slate-200 placeholder:text-slate-600 outline-none focus:border-indigo-500/50 transition-colors pointer-events-auto"
                 />
                 {suggestions.length > 0 && !selectedCity && (
-                  <div className="absolute top-full left-0 w-full mt-1.5 bg-[#06101f] border border-slate-700/50 rounded-xl shadow-[0_16px_48px_rgba(0,0,0,0.9)] z-[9999] overflow-hidden">
+                  <div className="absolute top-full left-0 w-full mt-1.5 bg-[#06101f] border border-slate-700/50 rounded-xl shadow-[0_16px_48px_rgba(0,0,0,0.9)] z-[9999] overflow-hidden pointer-events-auto">
                     {suggestions.map((city, idx) => (
-                      <div key={`${city.id}-${idx}`}
-                        onClick={() => { setSelectedCity({ name: city.name, lat: city.latitude, lng: city.longitude }); setSearchQuery(`${city.name}${city.country ? ', ' + city.country : ''}`); setSuggestions([]); }}
+                      <div
+                        key={`${city.id}-${idx}`}
+                        onClick={() => {
+                          setSelectedCity({ name: city.name, lat: city.latitude, lng: city.longitude });
+                          setSearchQuery(`${city.name}${city.country ? ', ' + city.country : ''}`);
+                          setSuggestions([]);
+                        }}
                         className="px-3 py-2.5 text-[11px] font-sans text-slate-300 hover:bg-indigo-700/30 cursor-pointer transition-colors border-b border-slate-800/40 last:border-0"
-                      >{city.name}{city.country && <span className="text-slate-600 ml-1.5">{city.country}</span>}</div>
+                      >
+                        {city.name}{city.country && <span className="text-slate-600 ml-1.5">{city.country}</span>}
+                      </div>
                     ))}
                   </div>
                 )}
               </div>
-              {selectedCity && <p className="text-[9px] font-mono text-slate-600 italic pl-0.5">{formatCoordinates(selectedCity.lat, selectedCity.lng)}</p>}
+              {selectedCity && (
+                <p className="text-[9px] font-mono text-slate-600 italic pl-0.5">{formatCoordinates(selectedCity.lat, selectedCity.lng)}</p>
+              )}
             </div>
 
-            {/* Year */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 pointer-events-auto">
               <label className="block text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Target Year</label>
               <select value={year} onChange={(e) => setYear(e.target.value)} className="w-full bg-[#0a1830] border border-slate-700/60 rounded-xl px-3 py-2.5 text-[12px] font-sans text-slate-200 outline-none appearance-none cursor-pointer focus:border-indigo-500/50 transition-colors">
                 <option value="2030">2030 — Near-term</option>
@@ -562,8 +616,7 @@ export default function MapModule({
               </select>
             </div>
 
-            {/* SSP */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 pointer-events-auto">
               <div className="flex items-center gap-2">
                 <label className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Emission Scenario</label>
                 <InfoTooltip publicText="Global emissions pathway. Higher SSP = more warming." techText="IPCC AR6 SSP scenarios" />
@@ -574,63 +627,67 @@ export default function MapModule({
               </select>
             </div>
 
-            {/* Generate button */}
-            <button onClick={handleInitialize} disabled={!selectedCity || isLoading}
-              className="w-full py-3 rounded-xl bg-indigo-600/15 border border-indigo-500/35 text-[10px] font-mono text-indigo-300 uppercase tracking-[0.3em] hover:bg-indigo-600/28 hover:border-indigo-400/55 disabled:opacity-35 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-              style={{ touchAction: 'manipulation' }}>
-              {isLoading ? (<><span className="w-3 h-3 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />Generating…</>) : 'Generate Projection'}
+            <button
+              onClick={handleInitialize}
+              disabled={!selectedCity || isLoading}
+              className="w-full mt-1 py-3 rounded-xl bg-indigo-600/15 border border-indigo-500/35 text-[10px] font-mono text-indigo-300 uppercase tracking-[0.3em] hover:bg-indigo-600/28 hover:border-indigo-400/55 disabled:opacity-35 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 pointer-events-auto"
+            >
+              {isLoading
+                ? (<><span className="w-3 h-3 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />Generating…</>)
+                : 'Generate Projection'
+              }
             </button>
 
-            {/* SIMULATOR — only shows after first projection */}
+            {/* UX HACK: SLIDERS ONLY SHOW UP ONCE INITIALIZED */}
             {isInitialized && (
-              <div className="mt-1 pt-4 border-t border-slate-800/60">
+              <div className="mt-2 pt-4 border-t border-slate-800/60 pointer-events-auto">
                 <div className="flex items-center gap-1.5 mb-4">
                   <div className={`w-1.5 h-1.5 rounded-full ${isSimulating ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`} />
                   <p className={`text-[9px] font-mono uppercase tracking-widest ${isSimulating ? 'text-emerald-400' : 'text-slate-500'}`}>Theoretical Simulator</p>
                 </div>
 
-                {/* Canopy slider */}
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <label className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Canopy</label>
-                      <InfoTooltip publicText="Urban tree coverage cools surface temperature." techText="Bowler 2010: ~0.12°C cooling per 1% canopy" />
+                <div className="space-y-4">
+                  {/* CANOPY WITH FEASIBILITY GRADIENT */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-1.5">
+                        <label className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Canopy</label>
+                        <InfoTooltip publicText="Urban tree coverage cools surface temperature." techText="Meta-analysis baseline (Bowler et al. 2010): ~0.12°C cooling per 1% canopy fraction." />
+                      </div>
+                      <span className={`text-[11px] font-mono font-bold ${canopy > 25 ? 'text-red-500' : 'text-emerald-400'}`}>
+                        +{canopy}% {canopy > 25 && '⚠️'}
+                      </span>
                     </div>
-                    <span className={`text-[11px] font-mono font-bold ${canopy > 25 ? 'text-red-500' : 'text-emerald-400'}`}>
-                      +{canopy}%{canopy > 25 ? ' ⚠️' : ''}
-                    </span>
+                    <input 
+                      type="range" min="0" max="50" value={canopy} 
+                      onChange={(e) => handleMitigationChange('canopy', Number(e.target.value))} 
+                      className={`w-full h-1.5 appearance-none rounded-full cursor-pointer transition-colors ${canopy > 25 ? 'accent-red-500' : 'accent-emerald-500'}`} 
+                      style={{ touchAction: 'manipulation' }} 
+                    />
+                    <div className="relative h-1 w-full rounded-full overflow-hidden bg-slate-800">
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-600 opacity-60" />
+                    </div>
+                    {canopy > 25 && <p className="text-[8px] font-mono text-red-500 animate-pulse uppercase tracking-tighter leading-tight">Critical: Target density requires heavy urban demolition.</p>}
                   </div>
-                  <input type="range" min="0" max="50" value={canopy}
-                    onChange={(e) => handleMitigationChange('canopy', Number(e.target.value))}
-                    className={`w-full h-1.5 appearance-none rounded-full cursor-pointer ${canopy > 25 ? 'accent-red-500' : 'accent-emerald-500'}`}
-                    style={{ touchAction: 'manipulation' }} />
-                  {/* Feasibility gradient bar */}
-                  <div className="relative h-1 w-full rounded-full overflow-hidden bg-slate-800">
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-600 opacity-50" />
-                  </div>
-                  {canopy > 25 && <p className="text-[8px] font-mono text-red-500/80 uppercase tracking-tighter leading-tight">Critical: density requires significant urban demolition</p>}
-                </div>
 
-                {/* Cool roof slider */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <label className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Albedo Roofs</label>
-                      <InfoTooltip publicText="Reflective rooftops reduce solar heat absorption." techText="Santamouris 2014: ~0.08°C per 1% albedo" />
+                  {/* ALBEDO ROOFS */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-1.5">
+                        <label className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Albedo Roofs</label>
+                        <InfoTooltip publicText="Reflective rooftops reduce solar heat absorption." techText="Empirical baseline (Santamouris 2014): ~0.08°C cooling per 1% albedo increase." />
+                      </div>
+                      <span className="text-[11px] font-mono text-cyan-400 font-bold">+{coolRoof}%</span>
                     </div>
-                    <span className="text-[11px] font-mono text-cyan-400 font-bold">+{coolRoof}%</span>
+                    <input type="range" min="0" max="100" value={coolRoof} onChange={(e) => handleMitigationChange('coolRoof', Number(e.target.value))} className="w-full h-1.5 accent-cyan-500 cursor-pointer" style={{ touchAction: 'manipulation' }} />
                   </div>
-                  <input type="range" min="0" max="100" value={coolRoof}
-                    onChange={(e) => handleMitigationChange('coolRoof', Number(e.target.value))}
-                    className="w-full h-1.5 accent-cyan-500 cursor-pointer"
-                    style={{ touchAction: 'manipulation' }} />
                 </div>
               </div>
             )}
           </div>
 
-          {/* ─── RIGHT PANEL ─── */}
-          <div className={`${panelCls} w-[260px] md:w-[280px] lg:w-[300px] p-4 md:p-5 flex flex-col gap-3 pointer-events-auto transition-colors duration-700 ${isSimulating ? 'border-emerald-500/30' : ''}`}>
+          {/* ── RIGHT PANEL ── */}
+          <div className={`${panelClass} w-[260px] md:w-[280px] lg:w-[300px] p-4 md:p-5 flex flex-col gap-3 transition-colors duration-700 ${isSimulating ? 'border-emerald-500/30' : ''}`}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-800/50">
               <p className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Risk Metrics</p>
               {isInitialized && (
@@ -642,11 +699,11 @@ export default function MapModule({
             </div>
 
             {apiError ? (
-              <div className="bg-red-950/20 border border-red-900/30 rounded-xl p-3 text-red-400 text-[11px] font-mono leading-relaxed">{apiError}</div>
+              <div className="bg-red-950/20 border border-red-900/30 rounded-xl p-3 text-red-400 text-[11px] font-mono leading-relaxed pointer-events-auto">{apiError}</div>
             ) : (
               <>
                 {/* DEATHS */}
-                <div className="bg-[#0a1830] border border-slate-800/50 rounded-xl p-3.5 space-y-2">
+                <div className="bg-[#0a1830] border border-slate-800/50 rounded-xl p-3.5 space-y-2 pointer-events-auto">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
@@ -656,19 +713,18 @@ export default function MapModule({
                   </div>
                   <div>
                     <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-0.5">Baseline</p>
-                    {isInitialized && simData.deaths !== '--'
-                      ? <p className="text-[30px] md:text-[34px] font-mono tracking-tighter leading-none tabular-nums select-none">
-                          {isSimulating
-                            ? <span className="text-red-500/50 line-through">{simData.deaths}</span>
-                            : <span className="text-white">{simData.deaths}</span>}
+                    {isInitialized && !isLoading && !apiError && simData.deaths !== '--'
+                      ? <p className="text-[30px] md:text-[34px] font-mono text-white tracking-tighter leading-none tabular-nums select-none">
+                          {isSimulating ? <span className="text-red-500/60 line-through mr-2">{simData.deaths}</span> : simData.deaths}
                         </p>
-                      : <p className="text-[30px] font-mono text-slate-700 tracking-tighter leading-none">—</p>}
+                      : <p className="text-[30px] font-mono text-slate-700 tracking-tighter leading-none">—</p>
+                    }
                   </div>
                   {isInitialized && baseDeathsNum > 0 && !isSimulating && (
                     <p className="text-[9px] font-mono text-slate-500">95% CI · {formatDeathsRange(baseDeathsNum)}</p>
                   )}
-                  {mitigatedData && (
-                    <div className="pt-2 border-t border-slate-700/50">
+                  {mitigatedData && isSimulating && (
+                    <div className="pt-2 border-t border-slate-700/50 animate-fade-in">
                       <div className="flex items-end justify-between">
                         <div>
                           <p className="text-[8px] font-mono text-emerald-500/70 uppercase tracking-widest mb-0.5">With Mitigation</p>
@@ -676,21 +732,23 @@ export default function MapModule({
                         </div>
                         <div className="text-right">
                           <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-0.5">Saved</p>
-                          <p className="text-[13px] font-mono text-emerald-300 font-bold">−{mitigatedData.savedDeaths}</p>
+                          <p className="text-[13px] font-mono text-emerald-300 font-bold">📉 −{mitigatedData.savedDeaths}</p>
                         </div>
                       </div>
                     </div>
                   )}
-                  <p className="text-[8px] font-mono text-slate-600 italic pt-0.5"><em>Gasparrini et al. (2017), Lancet Planetary Health</em></p>
+                  <p className="text-[8px] font-mono text-slate-600 italic leading-relaxed pt-0.5">
+                    <em>Gasparrini et al. (2017), Lancet Planetary Health</em>
+                  </p>
                   {isInitialized && auditTrail && (
-                    <button onClick={() => openAudit('mortality')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[9px] font-mono text-cyan-400 hover:bg-cyan-900/40 hover:border-cyan-400/40 transition-all duration-150">
-                      <span>⊕</span>Calculation Details
+                    <button onClick={() => openAudit('mortality')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[9px] font-mono text-cyan-400 hover:bg-cyan-900/40 hover:border-cyan-400/40 hover:text-cyan-300 transition-all duration-150">
+                      <span className="leading-none">⊕</span>Calculation Details
                     </button>
                   )}
                 </div>
 
                 {/* ECONOMIC DECAY */}
-                <div className="bg-[#0a1830] border border-slate-800/50 rounded-xl p-3.5 space-y-2">
+                <div className="bg-[#0a1830] border border-slate-800/50 rounded-xl p-3.5 space-y-2 pointer-events-auto">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
@@ -700,17 +758,20 @@ export default function MapModule({
                   </div>
                   <div>
                     <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-0.5">Baseline</p>
-                    {isInitialized && simData.loss !== '--'
-                      ? <p className="text-[22px] md:text-[26px] font-mono tracking-tighter leading-none select-none">
-                          {isSimulating
-                            ? <span className="text-red-500/50 line-through">{simData.loss}</span>
-                            : <span className="text-white">{simData.loss}</span>}
+                    {isInitialized && !isLoading && !apiError && simData.loss !== '--'                      
+                      ? <p className="text-[22px] md:text-[26px] font-mono text-white tracking-tighter leading-none select-none">
+                          {isSimulating ? <span className="text-red-500/60 line-through mr-2">{simData.loss}</span> : simData.loss}
                         </p>
-                      : <p className="text-[22px] font-mono text-slate-700 tracking-tighter leading-none">—</p>}
+                      : <p className="text-[22px] font-mono text-slate-700 tracking-tighter leading-none">—</p>
+                    }
                   </div>
-                  {isInitialized && simData.loss !== '--' && !isSimulating && (() => { const p = parseLoss(simData.loss); return p ? <p className="text-[9px] font-mono text-slate-500">Range · {formatEconomicRange(p.num)}</p> : null; })()}
-                  {mitigatedData && mitigatedData.loss && (
-                    <div className="pt-2 border-t border-slate-700/50">
+                  {isInitialized && simData.loss !== '--' && !isSimulating && (() => {
+                    const p = parseLoss(simData.loss);
+                    if (!p) return null;
+                    return <p className="text-[9px] font-mono text-slate-500">Range · {formatEconomicRange(p.num)}</p>;
+                  })()}
+                  {mitigatedData && mitigatedData.loss && isSimulating && (
+                    <div className="pt-2 border-t border-slate-700/50 animate-fade-in">
                       <div className="flex items-end justify-between">
                         <div>
                           <p className="text-[8px] font-mono text-emerald-500/70 uppercase tracking-widest mb-0.5">With Mitigation</p>
@@ -719,50 +780,59 @@ export default function MapModule({
                         {mitigatedData.savedLoss && (
                           <div className="text-right">
                             <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-0.5">Saved</p>
-                            <p className="text-[12px] font-mono text-emerald-300 font-bold">−{mitigatedData.savedLoss}</p>
+                            <p className="text-[12px] font-mono text-emerald-300 font-bold">📉 −{mitigatedData.savedLoss}</p>
                           </div>
                         )}
                       </div>
                     </div>
                   )}
-                  <p className="text-[8px] font-mono text-slate-600 italic pt-0.5"><em>Burke et al. (2018), Nature · ILO (2019)</em></p>
+                  <p className="text-[8px] font-mono text-slate-600 italic leading-relaxed pt-0.5">
+                    <em>Burke et al. (2018), Nature · ILO (2019)</em>
+                  </p>
                   {isInitialized && auditTrail && (
-                    <button onClick={() => openAudit('economics')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[9px] font-mono text-cyan-400 hover:bg-cyan-900/40 hover:border-cyan-400/40 transition-all duration-150">
-                      <span>⊕</span>Calculation Details
+                    <button onClick={() => openAudit('economics')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[9px] font-mono text-cyan-400 hover:bg-cyan-900/40 hover:border-cyan-400/40 hover:text-cyan-300 transition-all duration-150">
+                      <span className="leading-none">⊕</span>Calculation Details
                     </button>
                   )}
                 </div>
 
                 {/* HW DAYS + PEAK Tx5d */}
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { key: 'heatwave', label: 'HW Days',   unit: 'd', pub: 'Annual days exceeding ERA5 P95 threshold.', tech: 'ERA5 P95 · 1991-2020',      src: 'CMIP6 Ensemble',    mit: mitigatedData?.heatwave },
-                    { key: 'temp',     label: 'Peak Tx5d', unit: '°C', pub: 'Hottest sustained 5-day temperature block.', tech: 'WMO ETCCDI Tx5d',       src: 'Open-Meteo CMIP6',  mit: mitigatedData?.temp     },
-                  ].map((m) => {
-                    const val = simData[m.key as 'heatwave' | 'temp'];
-                    return (
-                      <div key={m.key} className="bg-[#0a1830] border border-slate-800/50 rounded-xl p-3 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.12em]">{m.label}</span>
-                          <InfoTooltip alignLeft publicText={m.pub} techText={m.tech} />
-                        </div>
-                        {isInitialized && val !== '--'
-                          ? <p className="text-[20px] font-mono leading-none tabular-nums select-none">
-                              {isSimulating
-                                ? <span className="text-red-500/50 line-through text-[14px]">{val}{m.unit}</span>
-                                : <span className="text-white">{val}{m.unit}</span>}
-                            </p>
-                          : <p className="text-[20px] font-mono text-slate-700 leading-none">—</p>}
-                        {m.mit && isSimulating && m.mit !== val && (
-                          <p className="text-[11px] font-mono text-emerald-400 leading-none">↓ {m.mit}{m.unit}</p>
-                        )}
-                        {m.key === 'temp' && isInitialized && simData.baseTemp !== '--' && (
-                          <p className="text-[8px] font-mono text-slate-600">hist. {simData.baseTemp}°C</p>
-                        )}
-                        <p className="text-[8px] font-mono text-slate-600 italic"><em>{m.src}</em></p>
-                      </div>
-                    );
-                  })}
+                <div className="grid grid-cols-2 gap-2 pointer-events-auto">
+                  <div className="bg-[#0a1830] border border-slate-800/50 rounded-xl p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.12em]">HW Days</span>
+                      <InfoTooltip alignLeft publicText="Annual days exceeding ERA5 P95 threshold." techText="ERA5 P95 · 1991-2020" />
+                    </div>
+                    {isInitialized && !isLoading && simData.heatwave !== '--'
+                      ? <p className="text-[20px] font-mono text-white leading-none tabular-nums select-none">
+                          {isSimulating ? <span className="text-red-500/60 line-through mr-2">{simData.heatwave}d</span> : `${simData.heatwave}d`}
+                        </p>
+                      : <p className="text-[20px] font-mono text-slate-700 leading-none">—</p>
+                    }
+                    {mitigatedData && mitigatedData.heatwave !== simData.heatwave && isSimulating && (
+                      <p className="text-[11px] font-mono text-emerald-400 leading-none">↓ {mitigatedData.heatwave}d</p>
+                    )}
+                    <p className="text-[8px] font-mono text-slate-600 italic"><em>CMIP6 Ensemble</em></p>
+                  </div>
+                  <div className="bg-[#0a1830] border border-slate-800/50 rounded-xl p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.12em]">Peak Tx5d</span>
+                      <InfoTooltip alignLeft publicText="Hottest sustained 5-day temperature block." techText="WMO ETCCDI Tx5d" />
+                    </div>
+                    {isInitialized && !isLoading && simData.temp !== '--'
+                      ? <p className="text-[20px] font-mono text-white leading-none select-none">
+                          {isSimulating ? <span className="text-red-500/60 line-through mr-2">{simData.temp}°C</span> : `${simData.temp}°C`}
+                        </p>
+                      : <p className="text-[20px] font-mono text-slate-700 leading-none">—</p>
+                    }
+                    {mitigatedData && mitigatedData.temp !== simData.temp && isSimulating && (
+                      <p className="text-[11px] font-mono text-emerald-400 leading-none">↓ {mitigatedData.temp}°C</p>
+                    )}
+                    {isInitialized && simData.baseTemp !== '--' && (
+                      <p className="text-[8px] font-mono text-slate-600">hist. {simData.baseTemp}°C</p>
+                    )}
+                    <p className="text-[8px] font-mono text-slate-600 italic"><em>Open-Meteo CMIP6</em></p>
+                  </div>
                 </div>
               </>
             )}
@@ -782,10 +852,12 @@ export default function MapModule({
               <div className="px-4 md:px-8 lg:px-16 py-10 w-full max-w-[1440px] mx-auto border-b border-slate-800/30">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   {chartData.heatwave.length > 0 && (
-                    <div className="bg-[#06101f] border border-slate-800/60 rounded-2xl p-5">
-                      <p className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold mb-1">Heatwave Escalation Trajectory</p>
-                      <p className="text-[9px] font-mono text-slate-600 italic mb-4"><em>Open-Meteo CMIP6 Ensemble (IPCC AR6)</em></p>
-                      <div className="h-[250px]">
+                    <div className="bg-[#06101f] border border-slate-800/60 rounded-2xl p-5 flex flex-col">
+                      <div className="mb-3">
+                        <p className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold">Heatwave Escalation Trajectory</p>
+                        <p className="text-[9px] font-mono text-slate-600 italic mt-1"><em>Open-Meteo CMIP6 Ensemble (IPCC AR6)</em></p>
+                      </div>
+                      <div className="h-[250px] w-full relative mt-2">
                         <ResponsiveContainer width="100%" height={250}>
                           <LineChart data={chartData.heatwave} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
@@ -799,11 +871,15 @@ export default function MapModule({
                     </div>
                   )}
                   {chartData.economic.length > 0 && (
-                    <div className="bg-[#06101f] border border-slate-800/60 rounded-2xl p-5">
-                      <p className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold mb-1">Economic Risk Projection</p>
-                      <p className="text-[9px] font-mono text-slate-600 italic mb-1"><em>Burke (2018) · ILO (2019) · values in M USD</em></p>
-                      {!hasRealAdaptData && <p className="text-[8px] font-mono text-slate-700 italic mb-3">Baseline only · no mitigation scenario from API</p>}
-                      <div className="h-[250px]">
+                    <div className="bg-[#06101f] border border-slate-800/60 rounded-2xl p-5 flex flex-col">
+                      <div className="mb-3">
+                        <p className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold">Economic Risk Projection</p>
+                        <p className="text-[9px] font-mono text-slate-600 italic mt-1"><em>Burke (2018) · ILO (2019) · values in M USD</em></p>
+                        {!hasRealAdaptData && (
+                          <p className="text-[8px] font-mono text-slate-700 italic mt-0.5">Baseline only · no mitigation scenario from API</p>
+                        )}
+                      </div>
+                      <div className="h-[250px] w-full relative mt-2">
                         <ResponsiveContainer width="100%" height={250}>
                           <BarChart data={chartData.economic.map(d => ({ ...d, adapt: d.adapt ?? null }))} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
@@ -828,7 +904,8 @@ export default function MapModule({
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
                     <p className="text-[10px] font-mono text-slate-400 uppercase tracking-[0.3em]">
-                      Strategic Analysis{selectedCity && <span className="text-slate-200 ml-2 font-bold">· {selectedCity.name}</span>}
+                      Strategic Analysis
+                      {selectedCity && <span className="text-slate-200 ml-2 font-bold">· {selectedCity.name}</span>}
                     </p>
                   </div>
                   <p className="text-[8px] font-mono text-slate-700 italic uppercase tracking-widest">All values sourced from climate engine · Baseline risk</p>
@@ -839,7 +916,6 @@ export default function MapModule({
                   <AiCard text={aiAnalysis.economic}       title="Economic Impact"       badge="Baseline" />
                   <AiCard text={aiAnalysis.infrastructure} title="Infrastructure Stress" badge="Baseline" />
 
-                  {/* Live mitigation card */}
                   <div className="bg-[#06101f] border border-emerald-900/40 rounded-2xl p-4 md:p-5 h-full flex flex-col gap-3">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
                       <p className="text-[10px] font-mono text-emerald-400 uppercase tracking-[0.2em] font-bold">Mitigation Model</p>
@@ -848,6 +924,7 @@ export default function MapModule({
                         <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest">Live</span>
                       </div>
                     </div>
+
                     {aiAnalysis.mitigation && (() => {
                       const text  = aiAnalysis.mitigation;
                       const clean = (s: string) => s.replace(/\*\*.*?\*\*:?/g, '').replace(/^:\s*/, '').trim();
@@ -857,9 +934,8 @@ export default function MapModule({
                         return (
                           <div className="space-y-2 flex-grow text-[11px]">
                             {[
-                              { label: 'Why it works', text: clean(rawCause),  cls: 'text-slate-600' },
-                              { label: 'Mechanism',    text: clean(rawEffect), cls: 'text-slate-600' },
-                              { label: 'Scaling rule', text: clean(rawSol),    cls: 'text-cyan-700'  },
+                              { label: 'Why it works', text: clean(rawCause),   cls: 'text-slate-600' },                              { label: 'Mechanism',    text: clean(rawEffect),  cls: 'text-slate-600' },
+                              { label: 'Scaling rule', text: clean(rawSol),     cls: 'text-cyan-700'  },
                             ].map((row) => (
                               <div key={row.label}>
                                 <p className={`text-[8px] font-mono ${row.cls} uppercase tracking-[0.15em] mb-1`}>{row.label}</p>
@@ -871,15 +947,19 @@ export default function MapModule({
                       }
                       return <p className="text-slate-400 text-[11px] leading-relaxed font-sans flex-grow">{clean(text)}</p>;
                     })()}
+
                     <div className="h-px bg-slate-800/60" />
+
                     {mitigatedData ? (
                       <div>
-                        <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.15em] mb-2">+{canopy}% canopy · +{coolRoof}% cool roofs</p>
+                        <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.15em] mb-2">
+                          +{canopy}% canopy · +{coolRoof}% cool roofs
+                        </p>
                         {[
                           { label: 'Lives Saved',    value: `−${mitigatedData.savedDeaths}`, color: 'text-emerald-300' },
                           { label: 'GDP Saved',      value: mitigatedData.savedLoss ? `−${mitigatedData.savedLoss}` : '—', color: 'text-emerald-300' },
-                          { label: 'Temp Reduction', value: `−${mitigatedData.tempDelta}°C`, color: 'text-cyan-300'    },
-                          { label: 'HW Days Cut',    value: `−${mitigatedData.hwDelta}d`,    color: 'text-cyan-300'    },
+                          { label: 'Temp Reduction', value: `−${mitigatedData.tempDelta}°C`, color: 'text-cyan-300' },
+                          { label: 'HW Days Cut',    value: `−${mitigatedData.hwDelta}d`, color: 'text-cyan-300' },
                         ].map((row) => (
                           <div key={row.label} className="flex items-center justify-between py-1.5 border-b border-slate-800/30 last:border-0">
                             <span className="text-[10px] font-mono text-slate-500">{row.label}</span>
@@ -890,7 +970,8 @@ export default function MapModule({
                     ) : (
                       <div className="bg-slate-900/30 rounded-xl px-3 py-3 border border-slate-800/40">
                         <p className="text-[10px] font-mono text-slate-600 leading-relaxed">
-                          Adjust <span className="text-emerald-400">Canopy</span> and <span className="text-cyan-400">Albedo Roofs</span> sliders to see live impact.
+                          Adjust <span className="text-emerald-400">Canopy</span> and{' '}
+                          <span className="text-indigo-400">Albedo Roofs</span> sliders to see live impact.
                         </p>
                       </div>
                     )}
@@ -911,10 +992,10 @@ export default function MapModule({
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
                       {[
-                        { label: 'Attributable Deaths', baseline: simData.deaths,         mitigated: mitigatedData.deaths,              saved: `−${mitigatedData.savedDeaths} lives`,                          baseColor: 'text-red-400'    },
-                        { label: 'Economic Loss',        baseline: simData.loss,           mitigated: mitigatedData.loss ?? simData.loss, saved: mitigatedData.savedLoss ? `−${mitigatedData.savedLoss}` : '—', baseColor: 'text-amber-400'  },
-                        { label: 'Peak Temperature',     baseline: `${simData.temp}°C`,    mitigated: `${mitigatedData.temp}°C`,          saved: `−${mitigatedData.tempDelta}°C`,                                baseColor: 'text-orange-400' },
-                        { label: 'Heatwave Days',        baseline: `${simData.heatwave}d`, mitigated: `${mitigatedData.heatwave}d`,       saved: `−${mitigatedData.hwDelta}d`,                                   baseColor: 'text-yellow-400' },
+                        { label: 'Attributable Deaths', baseline: simData.deaths,          mitigated: mitigatedData.deaths,              saved: `📉 −${mitigatedData.savedDeaths} lives`,                           baseColor: 'text-red-400'    },
+                        { label: 'Economic Loss',        baseline: simData.loss,            mitigated: mitigatedData.loss ?? simData.loss, saved: mitigatedData.savedLoss ? `📉 −${mitigatedData.savedLoss}` : '—', baseColor: 'text-amber-400'  },
+                        { label: 'Peak Temperature',     baseline: `${simData.temp}°C`,     mitigated: `${mitigatedData.temp}°C`,          saved: `📉 −${mitigatedData.tempDelta}°C`,                                 baseColor: 'text-orange-400' },
+                        { label: 'Heatwave Days',        baseline: `${simData.heatwave}d`,  mitigated: `${mitigatedData.heatwave}d`,       saved: `📉 −${mitigatedData.hwDelta}d`,                                    baseColor: 'text-yellow-400' },
                       ].map((item) => (
                         <div key={item.label} className="space-y-2">
                           <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.12em] leading-tight">{item.label}</p>
