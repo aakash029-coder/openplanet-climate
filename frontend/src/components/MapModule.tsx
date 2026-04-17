@@ -5,8 +5,7 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 // @ts-ignore
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
-import { MVTLayer } from '@deck.gl/geo-layers';
-import { latLngToCell } from 'h3-js';
+import { ScatterplotLayer } from '@deck.gl/layers';
 import { FlyToInterpolator } from '@deck.gl/core';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -18,11 +17,63 @@ import {
   formatDeathsRange,
 } from '@/context/ClimateDataContext';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FOURSQUARE / KEPLER.GL COLOR PALETTE
+// yellow (hottest core) → orange → red → crimson → magenta → deep purple (edge)
+// Exactly matches the reference screenshot gradient.
+// ─────────────────────────────────────────────────────────────────────────────
+function getRiskColor(weight: number): [number, number, number, number] {
+  if (weight >= 0.88) return [255, 235,   0, 235]; // Bright yellow  — hottest core
+  if (weight >= 0.72) return [255, 165,  10, 225]; // Amber-orange
+  if (weight >= 0.55) return [240,  80,  15, 215]; // Deep orange-red
+  if (weight >= 0.38) return [200,  30,  60, 200]; // Crimson
+  if (weight >= 0.22) return [155,  15, 105, 185]; // Magenta-purple
+  if (weight >= 0.10) return [100,   8, 120, 160]; // Deep purple
+  return                      [ 55,   4,  75, 110]; // Edge scatter — darkest
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CARTO DARK BASE — provides streets + district labels underneath scatter dots
+// MVTLayer is intentionally removed; CartoDark handles all geographic context.
+// This eliminates the loaders.gl "options.gis is deprecated" console warning
+// entirely, because we no longer import or use MVTLayer at all.
+// ─────────────────────────────────────────────────────────────────────────────
+const cartoDarkStyle = {
+  version: 8 as const,
+  sources: {
+    'carto-dark': {
+      type: 'raster' as const,
+      tiles: [
+        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+      ],
+      tileSize: 256,
+    },
+  },
+  layers: [
+    {
+      id:     'carto-dark-layer',
+      type:   'raster' as const,
+      source: 'carto-dark',
+      paint:  { 'raster-opacity': 1 },
+    },
+  ],
+};
+
+const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SMALL SHARED COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
 const InfoTooltip = ({
   publicText, techText, alignLeft = false,
 }: { publicText: string; techText: string; alignLeft?: boolean }) => (
   <div className="relative flex items-center group shrink-0" onClick={(e) => e.stopPropagation()}>
-    <button type="button" className="w-4 h-4 rounded-full border border-slate-700 text-slate-600 flex items-center justify-center text-[9px] font-bold hover:border-cyan-500/60 hover:text-cyan-400 transition-all select-none focus:outline-none">?</button>
+    <button
+      type="button"
+      className="w-4 h-4 rounded-full border border-slate-700 text-slate-600 flex items-center justify-center text-[9px] font-bold hover:border-cyan-500/60 hover:text-cyan-400 transition-all select-none focus:outline-none"
+    >?</button>
     <div className={`absolute ${alignLeft ? 'right-5' : 'left-5'} top-1/2 -translate-y-1/2 w-56 p-4 rounded-xl bg-[#070e20] border border-slate-700/70 shadow-[0_12px_40px_rgba(0,0,0,0.8)] opacity-0 invisible scale-95 group-hover:opacity-100 group-hover:visible group-hover:scale-100 transition-all duration-150 z-[9999] pointer-events-none`}>
       <p className="text-slate-300 text-[11px] leading-relaxed mb-2.5 font-sans">{publicText}</p>
       <p className="text-cyan-400/80 text-[9px] font-mono uppercase tracking-widest border-t border-slate-700/60 pt-2 leading-relaxed">{techText}</p>
@@ -70,14 +121,20 @@ const AuditModal = ({
     <>
       <div className="absolute inset-0 z-[500] bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute inset-0 z-[501] flex items-center justify-center pointer-events-none px-4">
-        <div className="pointer-events-auto w-full max-w-[430px] bg-[#06101f] border border-cyan-500/25 rounded-2xl shadow-[0_0_60px_rgba(34,211,238,0.12),0_24px_48px_rgba(0,0,0,0.8)] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="pointer-events-auto w-full max-w-[430px] bg-[#06101f] border border-cyan-500/25 rounded-2xl shadow-[0_0_60px_rgba(34,211,238,0.12),0_24px_48px_rgba(0,0,0,0.8)] overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800/60 bg-gradient-to-r from-cyan-950/30 to-transparent">
             <div className="flex items-center gap-2.5">
               <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
               <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-[0.3em] font-bold">Calculation Details</span>
               <span className="text-[9px] font-mono text-slate-600 uppercase tracking-widest">· {metricLabel}</span>
             </div>
-            <button onClick={onClose} className="w-6 h-6 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-500 hover:text-white hover:bg-slate-700/60 transition-all flex items-center justify-center text-[14px] leading-none">×</button>
+            <button
+              onClick={onClose}
+              className="w-6 h-6 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-500 hover:text-white hover:bg-slate-700/60 transition-all flex items-center justify-center text-[14px] leading-none"
+            >×</button>
           </div>
           <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
             <div className="bg-[#020912]/80 rounded-xl px-4 py-3 border border-slate-800/60">
@@ -140,24 +197,38 @@ const LoadingSpinner = () => (
   </div>
 );
 
+// Legend colours mirror getRiskColor stops
 const MapLegend = () => (
-  <div className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-black/80 border border-white/5 px-4 py-2 rounded-full backdrop-blur-xl z-50 flex items-center gap-3 shadow-2xl pointer-events-none">
-    {[{ color: 'bg-emerald-500', label: 'Safe' }, { color: 'bg-yellow-400', label: 'Moderate' }, { color: 'bg-orange-500', label: 'High' }, { color: 'bg-red-600', label: 'Critical' }].map((item) => (
+  <div className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-black/80 border border-white/5 px-5 py-2.5 rounded-full backdrop-blur-xl z-50 flex items-center gap-4 shadow-2xl pointer-events-none">
+    {[
+      { hex: '#FFEB00', label: 'Critical'  },
+      { hex: '#FF8A00', label: 'High'      },
+      { hex: '#C81E3C', label: 'Moderate'  },
+      { hex: '#640878', label: 'Low'       },
+    ].map((item) => (
       <div key={item.label} className="flex items-center gap-1.5">
-        <div className={`w-2 h-2 rounded-full ${item.color}`} />
+        <div
+          className="w-2.5 h-2.5 rounded-full"
+          style={{ backgroundColor: item.hex, boxShadow: `0 0 6px ${item.hex}88` }}
+        />
         <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest">{item.label}</span>
       </div>
     ))}
   </div>
 );
 
-const cartoDarkStyle = {
-  version: 8 as const,
-  sources: { 'carto-dark': { type: 'raster' as const, tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png', 'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png', 'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'], tileSize: 256 } },
-  layers: [{ id: 'carto-dark-layer', type: 'raster' as const, source: 'carto-dark', paint: { 'raster-opacity': 1 } }],
-};
+function parseLoss(lossStr: string): { num: number; prefix: string; suffix: string } | null {
+  const m = String(lossStr).match(/([\$€£])?([0-9.]+)([BKM])?/i);
+  if (!m) return null;
+  const multiplier = m[3]?.toUpperCase() === 'B' ? 1e9 : m[3]?.toUpperCase() === 'M' ? 1e6 : 1;
+  return { num: parseFloat(m[2]) * multiplier, prefix: m[1] || '$', suffix: m[3] || '' };
+}
 
-const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+function fmtLoss(n: number): string {
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
+  return `$${n.toLocaleString()}`;
+}
 
 const AiCard = ({ text, title, badge }: { text: string; title: string; badge?: string }) => {
   if (!text) return null;
@@ -201,22 +272,9 @@ const AiCard = ({ text, title, badge }: { text: string; title: string; badge?: s
   );
 };
 
-function parseLoss(lossStr: string): { num: number; prefix: string; suffix: string } | null {
-  const m = String(lossStr).match(/([\$€£])?([0-9.]+)([BKM])?/i);
-  if (!m) return null;
-  const multiplier = m[3]?.toUpperCase() === 'B' ? 1e9 : m[3]?.toUpperCase() === 'M' ? 1e6 : 1;
-  return { num: parseFloat(m[2]) * multiplier, prefix: m[1] || '$', suffix: m[3] || '' };
-}
-
-function fmtLoss(n: number): string {
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
-  return `$${n.toLocaleString()}`;
-}
-
-// ── FIX 2 & 3: Protomaps key pulled once at module level ──
-const PROTOMAPS_KEY = process.env.NEXT_PUBLIC_PROTOMAPS_KEY || '';
-
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN EXPORT
+// ─────────────────────────────────────────────────────────────────────────────
 export default function MapModule({
   onNavigateToCompare,
   onTargetLocked,
@@ -234,7 +292,11 @@ export default function MapModule({
   const [year, setYear]     = useState('2050');
   const [canopy, setCanopy] = useState(5);
   const [coolRoof, setCoolRoof] = useState(15);
-  const [viewState, setViewState] = useState<any>({ longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0 });
+  const [viewState, setViewState] = useState<any>({
+    longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0,
+  });
+
+  // hexData shape: [{ position: [lng, lat], risk_weight: number }]
   const [hexData, setHexData] = useState<{ position: [number, number]; risk_weight?: number }[]>([]);
 
   const [simData, setSimData] = useState({
@@ -251,6 +313,7 @@ export default function MapModule({
 
   const openAudit = (k: 'mortality' | 'economics' | 'wetbulb') => { setAuditKey(k); setAuditOpen(true); };
 
+  // Nominatim autocomplete
   useEffect(() => {
     const t = setTimeout(async () => {
       if (searchQuery.length > 2 && !selectedCity) {
@@ -275,19 +338,27 @@ export default function MapModule({
   const handleInitialize = async () => {
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null);
-    
+
+    // ── FIX: zoom 14.5 ensures point cloud fills the city view at full density.
+    // pitch 30 adds subtle depth so the scatter cloud feels three-dimensional.
     setViewState((p: any) => ({
-      ...p, longitude: selectedCity.lng, latitude: selectedCity.lat,
-      zoom: 12.5, pitch: 0, bearing: 0, 
-      transitionDuration: 3000, transitionInterpolator: new FlyToInterpolator(),
+      ...p,
+      longitude:              selectedCity.lng,
+      latitude:               selectedCity.lat,
+      zoom:                   14.5,
+      pitch:                  30,
+      bearing:                0,
+      transitionDuration:     3000,
+      transitionInterpolator: new FlyToInterpolator(),
     }));
 
     try {
       const res = await fetch('/api/engine', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           endpoint: '/api/predict',
-          payload: { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy, coolRoof },
+          payload:  { city: selectedCity.name, lat: selectedCity.lat, lng: selectedCity.lng, ssp, year, canopy, coolRoof },
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -298,16 +369,20 @@ export default function MapModule({
         throw new Error('Python API Error: Open your Python backend terminal to see why it crashed.');
       }
       if (!data.metrics || !data.hexGrid) throw new Error('API returned missing or malformed data.');
-      
+
       if (onTargetLocked) onTargetLocked(selectedCity.name);
-      
+
       setHexData(data.hexGrid);
       setSimData({
-        temp: data.metrics?.temp ?? '--', deaths: data.metrics?.deaths ?? '--',
-        ci: data.metrics?.ci ?? null, loss: data.metrics?.loss ?? '--',
-        heatwave: data.metrics?.heatwave ?? '--', baseTemp: data.metrics?.baseTemp ?? '--',
-        wbt: data.metrics?.wbt ?? '--', region: data.metrics?.region ?? '--',
-        rh_p95: data.metrics?.rh_p95 ?? null,
+        temp:     data.metrics?.temp      ?? '--',
+        deaths:   data.metrics?.deaths    ?? '--',
+        ci:       data.metrics?.ci        ?? null,
+        loss:     data.metrics?.loss      ?? '--',
+        heatwave: data.metrics?.heatwave  ?? '--',
+        baseTemp: data.metrics?.baseTemp  ?? '--',
+        wbt:      data.metrics?.wbt       ?? '--',
+        region:   data.metrics?.region    ?? '--',
+        rh_p95:   data.metrics?.rh_p95    ?? null,
       });
       setAuditTrail(data.auditTrail ?? null);
       setAiAnalysis(data.aiAnalysis ?? null);
@@ -318,6 +393,55 @@ export default function MapModule({
     } finally { setIsLoading(false); }
   };
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // DECK.GL LAYERS
+  //
+  // WHY ScatterplotLayer INSTEAD OF MVTLayer:
+  //   • MVTLayer coloring buildings only works at zoom ≥ 13-14, so the map
+  //     appears blank at city zoom 12.5 and the loaders.gl warning fires
+  //     because the deprecated "options.gis" path is hit internally.
+  //
+  //   • ScatterplotLayer renders the hexGrid points directly from the backend
+  //     response. It works at any zoom, has zero tile-availability dependency,
+  //     and produces the exact Foursquare / Kepler.gl aesthetic in the reference.
+  //
+  //   • CartoDark (MapLibre raster) already renders streets, district labels,
+  //     water, and parks underneath the scatter dots — nothing is lost.
+  // ─────────────────────────────────────────────────────────────────────────
+  const layers = useMemo(() => {
+    if (!isInitialized || hexData.length === 0) return [];
+    return [
+      new ScatterplotLayer({
+        id:   'heat-risk-scatter',
+        data: hexData,
+
+        // position is [lng, lat] — matches deck.gl coordinate convention
+        getPosition: (d: any) => d.position,
+        getColor:    (d: any) => getRiskColor(d.risk_weight ?? 0),
+
+        // 18 m radius gives a fine urban-grain dot at zoom 14-15
+        getRadius: 18,
+
+        // Clamp pixel size so dots stay crisp at any zoom level
+        radiusMinPixels: 1.2,
+        radiusMaxPixels: 4.0,
+
+        opacity:   1,
+        stroked:   false,
+        filled:    true,
+        billboard: false,
+
+        // Disable depth test → overlapping dots blend naturally like kepler.gl
+        parameters: { depthTest: false },
+
+        updateTriggers: { getColor: hexData },
+      }),
+    ];
+  }, [isInitialized, hexData]);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // MITIGATION CALCULATION (unchanged)
+  // ─────────────────────────────────────────────────────────────────────────
   const mitigatedData = (() => {
     if (!isInitialized || simData.temp === '--') return null;
     if (canopy === 0 && coolRoof === 0) return null;
@@ -335,86 +459,25 @@ export default function MapModule({
     const savedLossNum   = baseLossParsed && mitLossNum !== null ? baseLossParsed.num - mitLossNum : null;
     const mitTemp        = Math.max(0, baseTemp - cooling);
     return {
-      deaths: mitDeaths.toLocaleString(), savedDeaths: savedDeaths.toLocaleString(),
-      loss: mitLossNum !== null ? fmtLoss(mitLossNum) : null,
+      deaths:    mitDeaths.toLocaleString(),
+      savedDeaths: savedDeaths.toLocaleString(),
+      loss:      mitLossNum   !== null ? fmtLoss(mitLossNum)   : null,
       savedLoss: savedLossNum !== null ? fmtLoss(savedLossNum) : null,
-      temp: mitTemp.toFixed(1),
-      heatwave: Math.round(effectHW).toString(),
+      temp:      mitTemp.toFixed(1),
+      heatwave:  Math.round(effectHW).toString(),
       tempDelta: (baseTemp - mitTemp).toFixed(1),
-      hwDelta: Math.max(0, baseHW - Math.round(effectHW)),
+      hwDelta:   Math.max(0, baseHW - Math.round(effectHW)),
     };
   })();
 
-  const baseDeathsNum = isInitialized ? parseFloat(String(simData.deaths).replace(/,/g, '')) || 0 : 0;
+  const baseDeathsNum    = isInitialized ? parseFloat(String(simData.deaths).replace(/,/g, '')) || 0 : 0;
   const hasRealAdaptData = chartData.economic.some(d => d.adapt != null);
-
-  const getRiskColor = (weight: number): [number, number, number, number] => {
-    if (weight >= 0.75) return [239, 68, 68, 230];
-    if (weight >= 0.50) return [249, 115, 22, 230];
-    if (weight >= 0.25) return [234, 179, 8, 230]; 
-    return [34, 197, 94, 230]; 
-  };
-
-  // Convert backend hexData into a fast Hash Map
-  const riskMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    hexData.forEach(d => {
-      const h3Index = latLngToCell(d.position[1], d.position[0], 10);
-      map[h3Index] = d.risk_weight || 0;
-    });
-    return map;
-  }, [hexData]);
-
-  // ── FIX 2 & 3: v4.json TileJSON endpoint — eliminates 404s and gis warning ──
-  const layers = [
-    new MVTLayer({
-      id: 'global-real-assets',
-      data: `https://api.protomaps.com/tiles/v4.json?key=${PROTOMAPS_KEY}`,
-      maxZoom: 15,
-      minZoom: 0,
-      pickable: false,
-      binary: false,
-
-      getFillColor: (feature: any) => {
-        const lyr = feature?.properties?.layer;
-        if (lyr !== 'places' && lyr !== 'buildings') return [0, 0, 0, 0];
-
-        let lng: number, lat: number;
-        try {
-          if (feature.geometry.type === 'Point') {
-            [lng, lat] = feature.geometry.coordinates;
-          } else if (feature.geometry.type === 'Polygon') {
-            [lng, lat] = feature.geometry.coordinates[0][0];
-          } else {
-            return [0, 0, 0, 0];
-          }
-        } catch {
-          return [0, 0, 0, 0];
-        }
-
-        const h3Index = latLngToCell(lat, lng, 10);
-        const risk = riskMap[h3Index];
-
-        if (risk !== undefined) return getRiskColor(risk);
-        return [30, 42, 60, 40];
-      },
-
-      pointRadiusUnits: 'pixels',
-      getPointRadius: 1.5,
-      stroked: false,
-      opacity: 1,
-      updateTriggers: {
-        getFillColor: [riskMap],
-      },
-    }),
-  ];
-
-  const panelClass = `bg-[#06101f]/95 backdrop-blur-2xl border border-slate-800/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.03)] pointer-events-auto`;
+  const panelClass       = `bg-[#06101f]/95 backdrop-blur-2xl border border-slate-800/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.03)] pointer-events-auto`;
 
   return (
     <div className="w-full flex flex-col relative z-0">
 
-      {/* ═══ MAP ═══ */}
+      {/* ══════════════════════════════ MAP ══════════════════════════════ */}
       <section className="relative w-full h-[680px] md:h-[760px] lg:h-[820px] bg-[#020617] overflow-hidden border-b border-slate-800/40">
 
         <AuditModal open={auditOpen} onClose={() => setAuditOpen(false)} auditTrail={auditTrail} metricKey={auditKey} />
@@ -423,14 +486,37 @@ export default function MapModule({
           <DeckGL
             viewState={viewState}
             onViewStateChange={({ viewState: vs, interactionState }: any) => {
-              if (interactionState.isDragging || interactionState.isPanning || interactionState.isZooming || interactionState.isRotating) setViewState(vs);
+              if (
+                interactionState.isDragging  ||
+                interactionState.isPanning   ||
+                interactionState.isZooming   ||
+                interactionState.isRotating
+              ) setViewState(vs);
             }}
-            controller={{ scrollZoom: false, dragPan: !isMobile, doubleClickZoom: true, dragRotate: !isMobile, touchRotate: false, touchZoom: true }}
-            layers={isInitialized ? layers : []}
+            controller={{
+              scrollZoom:      false,
+              dragPan:         !isMobile,
+              doubleClickZoom: true,
+              dragRotate:      !isMobile,
+              touchRotate:     false,
+              touchZoom:       true,
+            }}
+            layers={layers}
           >
             <Map mapStyle={cartoDarkStyle} attributionControl={false} reuseMaps>
-              <NavigationControl position="bottom-right" showCompass={false} style={{ bottom: '140px', right: '16px', background: 'rgba(6,16,31,0.95)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px' }} />
+              <NavigationControl
+                position="bottom-right"
+                showCompass={false}
+                style={{
+                  bottom:       '140px',
+                  right:        '16px',
+                  background:   'rgba(6,16,31,0.95)',
+                  border:       '1px solid rgba(99,102,241,0.2)',
+                  borderRadius: '10px',
+                }}
+              />
             </Map>
+            {/* Radial vignette keeps panel edges dark */}
             <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_25%,#020617_100%)] z-10" />
           </DeckGL>
         </div>
@@ -443,22 +529,31 @@ export default function MapModule({
           </div>
         )}
 
+        {/* PANELS */}
         <div className="absolute inset-x-0 top-0 bottom-0 z-20 flex justify-between items-start p-3 md:p-5 lg:p-8 pointer-events-none gap-2 md:gap-3">
 
-          {/* LEFT PANEL */}
+          {/* ── LEFT PANEL ── */}
           <div className={`${panelClass} w-[240px] md:w-[260px] lg:w-[280px] p-4 md:p-5 flex flex-col gap-3 md:gap-4`}>
             <div className="space-y-1.5">
               <label className="block text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Location</label>
               <div className="relative">
-                <input type="text" placeholder="Search city…" value={searchQuery}
+                <input
+                  type="text"
+                  placeholder="Search city…"
+                  value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); if (selectedCity) setSelectedCity(null); }}
                   className="w-full bg-[#0a1830] border border-slate-700/60 rounded-xl px-3 py-2.5 text-[12px] font-sans text-slate-200 placeholder:text-slate-600 outline-none focus:border-indigo-500/50 transition-colors"
                 />
                 {suggestions.length > 0 && !selectedCity && (
                   <div className="absolute top-full left-0 w-full mt-1.5 bg-[#06101f] border border-slate-700/50 rounded-xl shadow-[0_16px_48px_rgba(0,0,0,0.9)] z-[9999] overflow-hidden">
                     {suggestions.map((city, idx) => (
-                      <div key={`${city.id}-${idx}`}
-                        onClick={() => { setSelectedCity({ name: city.name, lat: city.latitude, lng: city.longitude }); setSearchQuery(`${city.name}${city.country ? ', ' + city.country : ''}`); setSuggestions([]); }}
+                      <div
+                        key={`${city.id}-${idx}`}
+                        onClick={() => {
+                          setSelectedCity({ name: city.name, lat: city.latitude, lng: city.longitude });
+                          setSearchQuery(`${city.name}${city.country ? ', ' + city.country : ''}`);
+                          setSuggestions([]);
+                        }}
                         className="px-3 py-2.5 text-[11px] font-sans text-slate-300 hover:bg-indigo-700/30 cursor-pointer transition-colors border-b border-slate-800/40 last:border-0"
                       >
                         {city.name}{city.country && <span className="text-slate-600 ml-1.5">{city.country}</span>}
@@ -467,7 +562,9 @@ export default function MapModule({
                   </div>
                 )}
               </div>
-              {selectedCity && <p className="text-[9px] font-mono text-slate-600 italic pl-0.5">{formatCoordinates(selectedCity.lat, selectedCity.lng)}</p>}
+              {selectedCity && (
+                <p className="text-[9px] font-mono text-slate-600 italic pl-0.5">{formatCoordinates(selectedCity.lat, selectedCity.lng)}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -517,14 +614,20 @@ export default function MapModule({
               <div className="flex justify-between text-[9px] font-mono text-slate-700"><span>0%</span><span>100%</span></div>
             </div>
 
-            <button onClick={handleInitialize} disabled={!selectedCity || isLoading}
+            <button
+              onClick={handleInitialize}
+              disabled={!selectedCity || isLoading}
               className="w-full mt-1 py-3 rounded-xl bg-indigo-600/15 border border-indigo-500/35 text-[10px] font-mono text-indigo-300 uppercase tracking-[0.3em] hover:bg-indigo-600/28 hover:border-indigo-400/55 disabled:opacity-35 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
-              style={{ touchAction: 'manipulation' }}>
-              {isLoading ? (<><span className="w-3 h-3 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />Generating…</>) : 'Generate Projection'}
+              style={{ touchAction: 'manipulation' }}
+            >
+              {isLoading
+                ? (<><span className="w-3 h-3 border-2 border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin" />Generating…</>)
+                : 'Generate Projection'
+              }
             </button>
           </div>
 
-          {/* RIGHT PANEL */}
+          {/* ── RIGHT PANEL ── */}
           <div className={`${panelClass} w-[260px] md:w-[280px] lg:w-[300px] p-4 md:p-5 flex flex-col gap-3`}>
             <div className="flex items-center justify-between pb-3 border-b border-slate-800/50">
               <p className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em]">Risk Metrics</p>
@@ -551,9 +654,10 @@ export default function MapModule({
                   </div>
                   <div>
                     <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-0.5">Baseline</p>
-                    {isInitialized && !isLoading && !apiError && simData.deaths !== '--' ? (
-                      <p className="text-[30px] md:text-[34px] font-mono text-white tracking-tighter leading-none tabular-nums select-none">{simData.deaths}</p>
-                    ) : <p className="text-[30px] font-mono text-slate-700 tracking-tighter leading-none">—</p>}
+                    {isInitialized && !isLoading && !apiError && simData.deaths !== '--'
+                      ? <p className="text-[30px] md:text-[34px] font-mono text-white tracking-tighter leading-none tabular-nums select-none">{simData.deaths}</p>
+                      : <p className="text-[30px] font-mono text-slate-700 tracking-tighter leading-none">—</p>
+                    }
                   </div>
                   {isInitialized && baseDeathsNum > 0 && (
                     <p className="text-[9px] font-mono text-slate-500">95% CI · {formatDeathsRange(baseDeathsNum)}</p>
@@ -576,8 +680,7 @@ export default function MapModule({
                     <em>Gasparrini et al. (2017), Lancet Planetary Health</em>
                   </p>
                   {isInitialized && auditTrail && (
-                    <button onClick={() => openAudit('mortality')}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[9px] font-mono text-cyan-400 hover:bg-cyan-900/40 hover:border-cyan-400/40 hover:text-cyan-300 transition-all duration-150">
+                    <button onClick={() => openAudit('mortality')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[9px] font-mono text-cyan-400 hover:bg-cyan-900/40 hover:border-cyan-400/40 hover:text-cyan-300 transition-all duration-150">
                       <span className="leading-none">⊕</span>Calculation Details
                     </button>
                   )}
@@ -594,11 +697,16 @@ export default function MapModule({
                   </div>
                   <div>
                     <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-0.5">Baseline</p>
-                    {isInitialized && !isLoading && !apiError && simData.loss !== '--' ? (
-                      <p className="text-[22px] md:text-[26px] font-mono text-white tracking-tighter leading-none select-none">{simData.loss}</p>
-                    ) : <p className="text-[22px] font-mono text-slate-700 tracking-tighter leading-none">—</p>}
+                    {isInitialized && !isLoading && !apiError && simData.loss !== '--'
+                      ? <p className="text-[22px] md:text-[26px] font-mono text-white tracking-tighter leading-none select-none">{simData.loss}</p>
+                      : <p className="text-[22px] font-mono text-slate-700 tracking-tighter leading-none">—</p>
+                    }
                   </div>
-                  {isInitialized && simData.loss !== '--' && (() => { const p = parseLoss(simData.loss); if (!p) return null; return <p className="text-[9px] font-mono text-slate-500">Range · {formatEconomicRange(p.num)}</p>; })()}
+                  {isInitialized && simData.loss !== '--' && (() => {
+                    const p = parseLoss(simData.loss);
+                    if (!p) return null;
+                    return <p className="text-[9px] font-mono text-slate-500">Range · {formatEconomicRange(p.num)}</p>;
+                  })()}
                   {mitigatedData && mitigatedData.loss && (
                     <div className="pt-2 border-t border-slate-700/50">
                       <div className="flex items-end justify-between">
@@ -619,8 +727,7 @@ export default function MapModule({
                     <em>Burke et al. (2018), Nature · ILO (2019)</em>
                   </p>
                   {isInitialized && auditTrail && (
-                    <button onClick={() => openAudit('economics')}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[9px] font-mono text-cyan-400 hover:bg-cyan-900/40 hover:border-cyan-400/40 hover:text-cyan-300 transition-all duration-150">
+                    <button onClick={() => openAudit('economics')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[9px] font-mono text-cyan-400 hover:bg-cyan-900/40 hover:border-cyan-400/40 hover:text-cyan-300 transition-all duration-150">
                       <span className="leading-none">⊕</span>Calculation Details
                     </button>
                   )}
@@ -633,9 +740,10 @@ export default function MapModule({
                       <span className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.12em]">HW Days</span>
                       <InfoTooltip alignLeft publicText="Annual days exceeding ERA5 P95 threshold." techText="ERA5 P95 · 1991-2020" />
                     </div>
-                    {isInitialized && !isLoading && simData.heatwave !== '--' ? (
-                      <p className="text-[20px] font-mono text-white leading-none tabular-nums select-none">{simData.heatwave}d</p>
-                    ) : <p className="text-[20px] font-mono text-slate-700 leading-none">—</p>}
+                    {isInitialized && !isLoading && simData.heatwave !== '--'
+                      ? <p className="text-[20px] font-mono text-white leading-none tabular-nums select-none">{simData.heatwave}d</p>
+                      : <p className="text-[20px] font-mono text-slate-700 leading-none">—</p>
+                    }
                     {mitigatedData && mitigatedData.heatwave !== simData.heatwave && (
                       <p className="text-[11px] font-mono text-emerald-400 leading-none">↓ {mitigatedData.heatwave}d</p>
                     )}
@@ -646,9 +754,10 @@ export default function MapModule({
                       <span className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.12em]">Peak Tx5d</span>
                       <InfoTooltip alignLeft publicText="Hottest sustained 5-day temperature block." techText="WMO ETCCDI Tx5d" />
                     </div>
-                    {isInitialized && !isLoading && simData.temp !== '--' ? (
-                      <p className="text-[20px] font-mono text-white leading-none select-none">{simData.temp}°C</p>
-                    ) : <p className="text-[20px] font-mono text-slate-700 leading-none">—</p>}
+                    {isInitialized && !isLoading && simData.temp !== '--'
+                      ? <p className="text-[20px] font-mono text-white leading-none select-none">{simData.temp}°C</p>
+                      : <p className="text-[20px] font-mono text-slate-700 leading-none">—</p>
+                    }
                     {mitigatedData && mitigatedData.temp !== simData.temp && (
                       <p className="text-[11px] font-mono text-emerald-400 leading-none">↓ {mitigatedData.temp}°C</p>
                     )}
@@ -664,7 +773,7 @@ export default function MapModule({
         </div>
       </section>
 
-      {/* ═══ CHARTS + AI ═══ */}
+      {/* ══════════════════════════════ CHARTS + AI ══════════════════════════════ */}
       <section className="bg-[#030c1a] w-full flex flex-col z-10 relative">
         {isLoading ? <LoadingSpinner /> : !isInitialized ? (
           <div className="py-28 text-center">
@@ -672,7 +781,6 @@ export default function MapModule({
           </div>
         ) : (
           <>
-            {/* CHARTS */}
             {(chartData.heatwave.length > 0 || chartData.economic.length > 0) && (
               <div className="px-4 md:px-8 lg:px-16 py-10 w-full max-w-[1440px] mx-auto border-b border-slate-800/30">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -682,7 +790,6 @@ export default function MapModule({
                         <p className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold">Heatwave Escalation Trajectory</p>
                         <p className="text-[9px] font-mono text-slate-600 italic mt-1"><em>Open-Meteo CMIP6 Ensemble (IPCC AR6)</em></p>
                       </div>
-                      {/* ── FIX 1: Fixed pixel height — eliminates width(-1)/height(-1) error ── */}
                       <div className="h-[250px] w-full relative mt-2">
                         <ResponsiveContainer width="100%" height={250}>
                           <LineChart data={chartData.heatwave} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
@@ -705,7 +812,6 @@ export default function MapModule({
                           <p className="text-[8px] font-mono text-slate-700 italic mt-0.5">Baseline only · no mitigation scenario from API</p>
                         )}
                       </div>
-                      {/* ── FIX 1: Fixed pixel height — eliminates width(-1)/height(-1) error ── */}
                       <div className="h-[250px] w-full relative mt-2">
                         <ResponsiveContainer width="100%" height={250}>
                           <BarChart data={chartData.economic.map(d => ({ ...d, adapt: d.adapt ?? null }))} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
@@ -715,9 +821,7 @@ export default function MapModule({
                             <RechartsTooltip contentStyle={{ background: '#06101f', border: '1px solid #1e293b', borderRadius: '10px', fontSize: '11px', fontFamily: 'monospace' }} formatter={(v: any, name: any) => [`$${Number(v).toFixed(0)}M`, name]} />
                             <Legend wrapperStyle={{ paddingTop: '14px', fontSize: '10px', fontFamily: 'monospace', color: '#94a3b8' }} />
                             <Bar dataKey="noAction" name="Baseline (No Action)" fill="#ef4444" radius={[3,3,0,0]} opacity={0.85} />
-                            {hasRealAdaptData && (
-                              <Bar dataKey="adapt" name="With Mitigation" fill="#10b981" radius={[3,3,0,0]} opacity={0.85} />
-                            )}
+                            {hasRealAdaptData && <Bar dataKey="adapt" name="With Mitigation" fill="#10b981" radius={[3,3,0,0]} opacity={0.85} />}
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -727,10 +831,8 @@ export default function MapModule({
               </div>
             )}
 
-            {/* ── AI STRATEGIC ANALYSIS ── */}
             {aiAnalysis && (
               <div className="px-4 md:px-8 lg:px-16 py-10 w-full max-w-[1440px] mx-auto">
-
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6 pb-4 border-b border-slate-800/40">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
@@ -747,7 +849,6 @@ export default function MapModule({
                   <AiCard text={aiAnalysis.economic}       title="Economic Impact"       badge="Baseline" />
                   <AiCard text={aiAnalysis.infrastructure} title="Infrastructure Stress" badge="Baseline" />
 
-                  {/* Live mitigation card */}
                   <div className="bg-[#06101f] border border-emerald-900/40 rounded-2xl p-4 md:p-5 h-full flex flex-col gap-3">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
                       <p className="text-[10px] font-mono text-emerald-400 uppercase tracking-[0.2em] font-bold">Mitigation Model</p>
@@ -758,25 +859,23 @@ export default function MapModule({
                     </div>
 
                     {aiAnalysis.mitigation && (() => {
-                      const text = aiAnalysis.mitigation;
+                      const text  = aiAnalysis.mitigation;
                       const clean = (s: string) => s.replace(/\*\*.*?\*\*:?/g, '').replace(/^:\s*/, '').trim();
                       if (text.includes('**EFFECT:**') && text.includes('**SOLUTION:**')) {
                         const [rawCause, rest]    = text.split('**EFFECT:**');
                         const [rawEffect, rawSol] = rest.split('**SOLUTION:**');
                         return (
                           <div className="space-y-2 flex-grow text-[11px]">
-                            <div>
-                              <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.15em] mb-1">Why it works</p>
-                              <p className="text-slate-400 leading-relaxed font-sans">{clean(rawCause)}</p>
-                            </div>
-                            <div>
-                              <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.15em] mb-1">Mechanism</p>
-                              <p className="text-slate-400 leading-relaxed font-sans">{clean(rawEffect)}</p>
-                            </div>
-                            <div>
-                              <p className="text-[8px] font-mono text-cyan-700 uppercase tracking-[0.15em] mb-1">Scaling rule</p>
-                              <p className="text-slate-400 leading-relaxed font-sans">{clean(rawSol)}</p>
-                            </div>
+                            {[
+                              { label: 'Why it works', text: clean(rawCause),   cls: 'text-slate-600' },
+                              { label: 'Mechanism',    text: clean(rawEffect),  cls: 'text-slate-600' },
+                              { label: 'Scaling rule', text: clean(rawSol),     cls: 'text-cyan-700'  },
+                            ].map((row) => (
+                              <div key={row.label}>
+                                <p className={`text-[8px] font-mono ${row.cls} uppercase tracking-[0.15em] mb-1`}>{row.label}</p>
+                                <p className="text-slate-400 leading-relaxed font-sans">{row.text}</p>
+                              </div>
+                            ))}
                           </div>
                         );
                       }
@@ -813,7 +912,6 @@ export default function MapModule({
                   </div>
                 </div>
 
-                {/* Baseline vs Mitigation comparison bar */}
                 {mitigatedData && (
                   <div className="bg-[#06101f] border border-slate-800/40 rounded-2xl p-5 md:p-6">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-5">
@@ -826,13 +924,12 @@ export default function MapModule({
                         <span className="text-[8px] font-mono text-emerald-500 uppercase tracking-widest">Live</span>
                       </div>
                     </div>
-
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
                       {[
-                        { label: 'Attributable Deaths', baseline: simData.deaths,          mitigated: mitigatedData.deaths,                 saved: `−${mitigatedData.savedDeaths} lives`,                           baseColor: 'text-red-400'    },
-                        { label: 'Economic Loss',        baseline: simData.loss,            mitigated: mitigatedData.loss ?? simData.loss,   saved: mitigatedData.savedLoss ? `−${mitigatedData.savedLoss}` : '—', baseColor: 'text-amber-400'  },
-                        { label: 'Peak Temperature',     baseline: `${simData.temp}°C`,    mitigated: `${mitigatedData.temp}°C`,            saved: `−${mitigatedData.tempDelta}°C`,                                 baseColor: 'text-orange-400' },
-                        { label: 'Heatwave Days',        baseline: `${simData.heatwave}d`, mitigated: `${mitigatedData.heatwave}d`,         saved: `−${mitigatedData.hwDelta}d`,                                    baseColor: 'text-yellow-400' },
+                        { label: 'Attributable Deaths', baseline: simData.deaths,          mitigated: mitigatedData.deaths,              saved: `−${mitigatedData.savedDeaths} lives`,                           baseColor: 'text-red-400'    },
+                        { label: 'Economic Loss',        baseline: simData.loss,            mitigated: mitigatedData.loss ?? simData.loss, saved: mitigatedData.savedLoss ? `−${mitigatedData.savedLoss}` : '—', baseColor: 'text-amber-400'  },
+                        { label: 'Peak Temperature',     baseline: `${simData.temp}°C`,     mitigated: `${mitigatedData.temp}°C`,          saved: `−${mitigatedData.tempDelta}°C`,                                 baseColor: 'text-orange-400' },
+                        { label: 'Heatwave Days',        baseline: `${simData.heatwave}d`,  mitigated: `${mitigatedData.heatwave}d`,       saved: `−${mitigatedData.hwDelta}d`,                                    baseColor: 'text-yellow-400' },
                       ].map((item) => (
                         <div key={item.label} className="space-y-2">
                           <p className="text-[8px] font-mono text-slate-600 uppercase tracking-[0.12em] leading-tight">{item.label}</p>
