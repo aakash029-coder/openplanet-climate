@@ -214,6 +214,9 @@ function fmtLoss(n: number): string {
   return `$${n.toLocaleString()}`;
 }
 
+// ── FIX 2 & 3: Protomaps key pulled once at module level ──
+const PROTOMAPS_KEY = process.env.NEXT_PUBLIC_PROTOMAPS_KEY || '';
+
 export default function MapModule({
   onNavigateToCompare,
   onTargetLocked,
@@ -352,7 +355,7 @@ export default function MapModule({
     return [34, 197, 94, 230]; 
   };
 
-  // 4. Convert backend hexData into a fast Hash Map
+  // Convert backend hexData into a fast Hash Map
   const riskMap = useMemo(() => {
     const map: Record<string, number> = {};
     hexData.forEach(d => {
@@ -362,50 +365,48 @@ export default function MapModule({
     return map;
   }, [hexData]);
 
-  // 5. Global Real Assets Layer via MVT
+  // ── FIX 2 & 3: v4.json TileJSON endpoint — eliminates 404s and gis warning ──
   const layers = [
     new MVTLayer({
       id: 'global-real-assets',
-      // Updated with environment variable
-      data: `https://api.protomaps.com/tiles/v3/{z}/{x}/{y}.mvt?key=${process.env.NEXT_PUBLIC_PROTOMAPS_KEY}`,
-      
-      loadOptions: {
-        mvt: { shape: 'geojson' }
-      },
-      binary: false, 
+      data: `https://api.protomaps.com/tiles/v4.json?key=${PROTOMAPS_KEY}`,
+      maxZoom: 15,
+      minZoom: 0,
+      pickable: false,
+      binary: false,
 
       getFillColor: (feature: any) => {
-        if (feature.properties.layer !== 'places' && feature.properties.layer !== 'buildings') {
-          return [0, 0, 0, 0]; 
-        }
+        const lyr = feature?.properties?.layer;
+        if (lyr !== 'places' && lyr !== 'buildings') return [0, 0, 0, 0];
 
-        let lng, lat;
-        if (feature.geometry.type === 'Point') {
-          [lng, lat] = feature.geometry.coordinates;
-        } else if (feature.geometry.type === 'Polygon') {
-          [lng, lat] = feature.geometry.coordinates[0][0];
-        } else {
+        let lng: number, lat: number;
+        try {
+          if (feature.geometry.type === 'Point') {
+            [lng, lat] = feature.geometry.coordinates;
+          } else if (feature.geometry.type === 'Polygon') {
+            [lng, lat] = feature.geometry.coordinates[0][0];
+          } else {
+            return [0, 0, 0, 0];
+          }
+        } catch {
           return [0, 0, 0, 0];
         }
 
         const h3Index = latLngToCell(lat, lng, 10);
         const risk = riskMap[h3Index];
 
-        if (risk) {
-          return getRiskColor(risk);
-        }
-        return [0, 0, 0, 0]; 
+        if (risk !== undefined) return getRiskColor(risk);
+        return [30, 42, 60, 40];
       },
 
       pointRadiusUnits: 'pixels',
       getPointRadius: 1.5,
       stroked: false,
-      opacity: 0.95,
-      
-      transitions: {
-        getFillColor: 500
-      }
-    })
+      opacity: 1,
+      updateTriggers: {
+        getFillColor: [riskMap],
+      },
+    }),
   ];
 
   const panelClass = `bg-[#06101f]/95 backdrop-blur-2xl border border-slate-800/70 rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.03)] pointer-events-auto`;
@@ -676,13 +677,14 @@ export default function MapModule({
               <div className="px-4 md:px-8 lg:px-16 py-10 w-full max-w-[1440px] mx-auto border-b border-slate-800/30">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   {chartData.heatwave.length > 0 && (
-                    <div className="bg-[#06101f] border border-slate-800/60 rounded-2xl p-5 flex flex-col h-[320px] md:h-[360px]">
+                    <div className="bg-[#06101f] border border-slate-800/60 rounded-2xl p-5 flex flex-col">
                       <div className="mb-3">
                         <p className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold">Heatwave Escalation Trajectory</p>
                         <p className="text-[9px] font-mono text-slate-600 italic mt-1"><em>Open-Meteo CMIP6 Ensemble (IPCC AR6)</em></p>
                       </div>
-                      <div className="flex-grow min-h-[200px] w-full relative">
-                        <ResponsiveContainer width="100%" height="100%">
+                      {/* ── FIX 1: Fixed pixel height — eliminates width(-1)/height(-1) error ── */}
+                      <div className="h-[250px] w-full relative mt-2">
+                        <ResponsiveContainer width="100%" height={250}>
                           <LineChart data={chartData.heatwave} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                             <XAxis dataKey="year" stroke="#334155" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }} />
@@ -695,7 +697,7 @@ export default function MapModule({
                     </div>
                   )}
                   {chartData.economic.length > 0 && (
-                    <div className="bg-[#06101f] border border-slate-800/60 rounded-2xl p-5 flex flex-col h-[320px] md:h-[360px]">
+                    <div className="bg-[#06101f] border border-slate-800/60 rounded-2xl p-5 flex flex-col">
                       <div className="mb-3">
                         <p className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold">Economic Risk Projection</p>
                         <p className="text-[9px] font-mono text-slate-600 italic mt-1"><em>Burke (2018) · ILO (2019) · values in M USD</em></p>
@@ -703,9 +705,9 @@ export default function MapModule({
                           <p className="text-[8px] font-mono text-slate-700 italic mt-0.5">Baseline only · no mitigation scenario from API</p>
                         )}
                       </div>
-                      <div className="flex-grow min-h-[200px] w-full relative">
-                        <ResponsiveContainer width="100%" height="100%">
-                          {/* ✅ FIX: d.adapt ?? null — no fabricated 0.80 fallback */}
+                      {/* ── FIX 1: Fixed pixel height — eliminates width(-1)/height(-1) error ── */}
+                      <div className="h-[250px] w-full relative mt-2">
+                        <ResponsiveContainer width="100%" height={250}>
                           <BarChart data={chartData.economic.map(d => ({ ...d, adapt: d.adapt ?? null }))} margin={{ top: 5, right: 16, bottom: 5, left: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                             <XAxis dataKey="year" stroke="#334155" tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }} />
@@ -713,7 +715,6 @@ export default function MapModule({
                             <RechartsTooltip contentStyle={{ background: '#06101f', border: '1px solid #1e293b', borderRadius: '10px', fontSize: '11px', fontFamily: 'monospace' }} formatter={(v: any, name: any) => [`$${Number(v).toFixed(0)}M`, name]} />
                             <Legend wrapperStyle={{ paddingTop: '14px', fontSize: '10px', fontFamily: 'monospace', color: '#94a3b8' }} />
                             <Bar dataKey="noAction" name="Baseline (No Action)" fill="#ef4444" radius={[3,3,0,0]} opacity={0.85} />
-                            {/* ✅ FIX: Only render if backend sent real adapt data */}
                             {hasRealAdaptData && (
                               <Bar dataKey="adapt" name="With Mitigation" fill="#10b981" radius={[3,3,0,0]} opacity={0.85} />
                             )}
