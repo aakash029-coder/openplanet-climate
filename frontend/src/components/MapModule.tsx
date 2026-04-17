@@ -5,7 +5,8 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 // @ts-ignore
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
-import { ScatterplotLayer } from '@deck.gl/layers';
+import { H3HexagonLayer } from '@deck.gl/geo-layers';
+import { latLngToCell } from 'h3-js';
 import { FlyToInterpolator } from '@deck.gl/core';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -20,23 +21,19 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // FOURSQUARE / KEPLER.GL COLOR PALETTE
 // yellow (hottest core) → orange → red → crimson → magenta → deep purple (edge)
-// Exactly matches the reference screenshot gradient.
 // ─────────────────────────────────────────────────────────────────────────────
 function getRiskColor(weight: number): [number, number, number, number] {
-  if (weight >= 0.88) return [255, 235,   0, 235]; // Bright yellow  — hottest core
-  if (weight >= 0.72) return [255, 165,  10, 225]; // Amber-orange
-  if (weight >= 0.55) return [240,  80,  15, 215]; // Deep orange-red
-  if (weight >= 0.38) return [200,  30,  60, 200]; // Crimson
-  if (weight >= 0.22) return [155,  15, 105, 185]; // Magenta-purple
-  if (weight >= 0.10) return [100,   8, 120, 160]; // Deep purple
-  return                      [ 55,   4,  75, 110]; // Edge scatter — darkest
+  if (weight >= 0.88) return [255, 235,   0, 235]; 
+  if (weight >= 0.72) return [255, 165,  10, 225]; 
+  if (weight >= 0.55) return [240,  80,  15, 215]; 
+  if (weight >= 0.38) return [200,  30,  60, 200]; 
+  if (weight >= 0.22) return [155,  15, 105, 185]; 
+  if (weight >= 0.10) return [100,   8, 120, 160]; 
+  return                      [ 55,   4,  75, 110]; 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CARTO DARK BASE — provides streets + district labels underneath scatter dots
-// MVTLayer is intentionally removed; CartoDark handles all geographic context.
-// This eliminates the loaders.gl "options.gis is deprecated" console warning
-// entirely, because we no longer import or use MVTLayer at all.
+// CARTO DARK BASE — provides streets + district labels underneath
 // ─────────────────────────────────────────────────────────────────────────────
 const cartoDarkStyle = {
   version: 8 as const,
@@ -197,7 +194,6 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Legend colours mirror getRiskColor stops
 const MapLegend = () => (
   <div className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-black/80 border border-white/5 px-5 py-2.5 rounded-full backdrop-blur-xl z-50 flex items-center gap-4 shadow-2xl pointer-events-none">
     {[
@@ -296,7 +292,6 @@ export default function MapModule({
     longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0,
   });
 
-  // hexData shape: [{ position: [lng, lat], risk_weight: number }]
   const [hexData, setHexData] = useState<{ position: [number, number]; risk_weight?: number }[]>([]);
 
   const [simData, setSimData] = useState({
@@ -339,14 +334,13 @@ export default function MapModule({
     if (!selectedCity) return;
     setIsLoading(true); setApiError(null);
 
-    // ── FIX: zoom 14.5 ensures point cloud fills the city view at full density.
-    // pitch 30 adds subtle depth so the scatter cloud feels three-dimensional.
+    // Zoom adjusted for Top-Down Hex Grid View
     setViewState((p: any) => ({
       ...p,
       longitude:              selectedCity.lng,
       latitude:               selectedCity.lat,
-      zoom:                   14.5,
-      pitch:                  30,
+      zoom:                   12.5,
+      pitch:                  0,
       bearing:                0,
       transitionDuration:     3000,
       transitionInterpolator: new FlyToInterpolator(),
@@ -394,53 +388,58 @@ export default function MapModule({
   };
 
   // ─────────────────────────────────────────────────────────────────────────
-  // DECK.GL LAYERS
-  //
-  // WHY ScatterplotLayer INSTEAD OF MVTLayer:
-  //   • MVTLayer coloring buildings only works at zoom ≥ 13-14, so the map
-  //     appears blank at city zoom 12.5 and the loaders.gl warning fires
-  //     because the deprecated "options.gis" path is hit internally.
-  //
-  //   • ScatterplotLayer renders the hexGrid points directly from the backend
-  //     response. It works at any zoom, has zero tile-availability dependency,
-  //     and produces the exact Foursquare / Kepler.gl aesthetic in the reference.
-  //
-  //   • CartoDark (MapLibre raster) already renders streets, district labels,
-  //     water, and parks underneath the scatter dots — nothing is lost.
+  // H3 DATA TRANSFORM & DECK.GL LAYERS
   // ─────────────────────────────────────────────────────────────────────────
+  const h3Data = useMemo(() => {
+    if (!hexData || hexData.length === 0) return [];
+    return hexData.map(d => ({
+      hex: latLngToCell(d.position[1], d.position[0], 10), 
+      risk: d.risk_weight || 0
+    }));
+  }, [hexData]);
+
   const layers = useMemo(() => {
-    if (!isInitialized || hexData.length === 0) return [];
+    if (!isInitialized || h3Data.length === 0) return [];
     return [
-      new ScatterplotLayer({
-        id:   'heat-risk-scatter',
-        data: hexData,
-
-        // position is [lng, lat] — matches deck.gl coordinate convention
-        getPosition: (d: any) => d.position,
-        getColor:    (d: any) => getRiskColor(d.risk_weight ?? 0),
-
-        // 18 m radius gives a fine urban-grain dot at zoom 14-15
-        getRadius: 18,
-
-        // Clamp pixel size so dots stay crisp at any zoom level
-        radiusMinPixels: 1.2,
-        radiusMaxPixels: 4.0,
-
-        opacity:   1,
-        stroked:   false,
-        filled:    true,
-        billboard: false,
-
-        // Disable depth test → overlapping dots blend naturally like kepler.gl
+      // GLOW LAYER
+      new H3HexagonLayer({
+        id: 'h3-glow-layer',
+        data: h3Data,
+        getHexagon: (d: any) => d.hex,
+        getFillColor: (d: any) => {
+          const [r, g, b] = getRiskColor(d.risk);
+          return [r, g, b, 70]; // Blended edges
+        },
+        extruded: false,
+        coverage: 1.15,
+        stroked: false,
         parameters: { depthTest: false },
-
-        updateTriggers: { getColor: hexData },
+        updateTriggers: { getFillColor: h3Data },
       }),
+
+      // CORE LAYER
+      new H3HexagonLayer({
+        id: 'h3-core-layer',
+        data: h3Data,
+        pickable: true,
+        getHexagon: (d: any) => d.hex,
+        getFillColor: (d: any) => {
+          const [r, g, b] = getRiskColor(d.risk);
+          return [r, g, b, 170]; // ~65% opacity
+        },
+        extruded: false,
+        coverage: 0.95,
+        stroked: true,
+        getLineColor: [10, 15, 25, 200],
+        lineWidthMinPixels: 1,
+        parameters: { depthTest: false },
+        updateTriggers: { getFillColor: h3Data },
+      })
     ];
-  }, [isInitialized, hexData]);
+  }, [isInitialized, h3Data]);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // MITIGATION CALCULATION (unchanged)
+  // MITIGATION CALCULATION 
   // ─────────────────────────────────────────────────────────────────────────
   const mitigatedData = (() => {
     if (!isInitialized || simData.temp === '--') return null;
@@ -516,7 +515,6 @@ export default function MapModule({
                 }}
               />
             </Map>
-            {/* Radial vignette keeps panel edges dark */}
             <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_25%,#020617_100%)] z-10" />
           </DeckGL>
         </div>
@@ -697,8 +695,7 @@ export default function MapModule({
                   </div>
                   <div>
                     <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-0.5">Baseline</p>
-                    {isInitialized && !isLoading && !apiError && simData.loss !== '--'
-                      ? <p className="text-[22px] md:text-[26px] font-mono text-white tracking-tighter leading-none select-none">{simData.loss}</p>
+                    {isInitialized && !isLoading && !apiError && simData.loss !== '--'                      ? <p className="text-[22px] md:text-[26px] font-mono text-white tracking-tighter leading-none select-none">{simData.loss}</p>
                       : <p className="text-[22px] font-mono text-slate-700 tracking-tighter leading-none">—</p>
                     }
                   </div>
@@ -867,8 +864,7 @@ export default function MapModule({
                         return (
                           <div className="space-y-2 flex-grow text-[11px]">
                             {[
-                              { label: 'Why it works', text: clean(rawCause),   cls: 'text-slate-600' },
-                              { label: 'Mechanism',    text: clean(rawEffect),  cls: 'text-slate-600' },
+                              { label: 'Why it works', text: clean(rawCause),   cls: 'text-slate-600' },                              { label: 'Mechanism',    text: clean(rawEffect),  cls: 'text-slate-600' },
                               { label: 'Scaling rule', text: clean(rawSol),     cls: 'text-cyan-700'  },
                             ].map((row) => (
                               <div key={row.label}>
