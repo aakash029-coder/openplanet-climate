@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@deck.gl/geo-layers": "^9.3.0",
+    "h3-js": "^4.4.0",
     "recharts": "^3.7.0"
   }
 }

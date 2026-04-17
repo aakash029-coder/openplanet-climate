@@ -13,15 +13,12 @@ pydantic>=2.0.0
 pydantic-settings>=2.0.0
 
 # ── Science layer ─────────────────────────────────────────────────────────────
-# Kept: engine_bridge.py, epidemiology.py, and lapse_layer.py use pandas + numpy.
-# Kept: H3 spatial indexing used in ingestion and H3Cell registry.
+# CRITICAL: h3 ko v4 se pehle pin karna zaroori hai warna geo_to_h3 fail ho jayega
 pandas>=2.0.0
 numpy>=1.24.0
-h3>=3.7.0
+h3<4.0.0 
 h3pandas>=0.2.0
-
-# ── Removed ───────────────────────────────────────────────────────────────────
-# duckdb — replaced by Postgres + PostGIS. No remaining references in codebase.
+geopy>=2.4.0 
 
 # ── LLM Integration ───────────────────────────────────────────────────────────
 groq>=0.4.0

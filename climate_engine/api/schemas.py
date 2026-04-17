@@ -10,7 +10,7 @@ Rules:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Dict, Any, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -29,7 +29,48 @@ def _validate_year_range(start: int, end: int) -> None:
 
 
 # ---------------------------------------------------------------------------
-# ProjectionRequest
+# OpenPlanet Simulation Schemas (Frontend API)
+# ---------------------------------------------------------------------------
+
+class PredictionRequest(BaseModel):
+    city: str
+    lat: float
+    lng: float
+    ssp: str
+    year: str
+    canopy: int
+    coolRoof: int
+
+class ClimateRiskRequest(BaseModel):
+    lat: float
+    lng: float
+    elevation: float = 0.0
+    ssp: str
+    canopy_offset_pct: int
+    albedo_offset_pct: int
+    location_hint: str = ""
+
+class ResearchAIRequest(BaseModel):
+    city_name: str
+    metrics: Dict[str, Any]
+    context: str
+
+class CompareAnalysisRequest(BaseModel):
+    city_a: str
+    city_b: str
+    data_a: Dict[str, Any]
+    data_b: Dict[str, Any]
+
+class SimulationResponse(BaseModel):
+    metrics:    Dict[str, Any]
+    hexGrid:    List[Dict[str, Any]]
+    aiAnalysis: Optional[Dict[str, str]]
+    auditTrail: Optional[Dict[str, Any]]
+    charts:     Dict[str, List[Dict[str, Any]]]
+
+
+# ---------------------------------------------------------------------------
+# Projection & Baseline Engine Schemas
 # ---------------------------------------------------------------------------
 
 class ProjectionRequest(BaseModel):
@@ -53,10 +94,6 @@ class ProjectionRequest(BaseModel):
     model_config = {"use_enum_values": False}
 
 
-# ---------------------------------------------------------------------------
-# BaselineRequest
-# ---------------------------------------------------------------------------
-
 class BaselineRequest(BaseModel):
     baseline_start_year: int           = Field(..., ge=1900, le=2024)
     baseline_end_year:   int           = Field(..., ge=1901, le=2025)
@@ -71,10 +108,6 @@ class BaselineRequest(BaseModel):
         _validate_year_range(self.baseline_start_year, self.baseline_end_year)
         return self
 
-
-# ---------------------------------------------------------------------------
-# ProjectionResponse
-# ---------------------------------------------------------------------------
 
 class ProjectionResponse(BaseModel):
     run_id:               int
@@ -99,7 +132,7 @@ class ProjectionResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Utility schemas
+# Utility Schemas
 # ---------------------------------------------------------------------------
 
 class ErrorResponse(BaseModel):
