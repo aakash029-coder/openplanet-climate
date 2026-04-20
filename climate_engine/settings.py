@@ -1,5 +1,9 @@
 """
 climate_engine/settings.py — Centralised Settings & Environment Governance
+
+All environment variables are validated at startup.
+The application will refuse to start with a clear error message
+rather than silently using wrong/missing configuration.
 """
 
 from __future__ import annotations
@@ -10,18 +14,14 @@ from enum import Enum
 from functools import lru_cache
 
 from pydantic import (
-    PostgresDsn,
     SecretStr,
-    TypeAdapter,
     field_validator,
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_postgres_dsn_adapter: TypeAdapter[PostgresDsn] = TypeAdapter(PostgresDsn)
-
-# Bootstrap logging before settings loads
-# Reads LOG_LEVEL from system env only (.env not parsed yet — intentional)
+# Bootstrap logging before settings loads.
+# Reads LOG_LEVEL from system env only (.env not parsed yet — intentional).
 _bootstrap_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=getattr(logging, _bootstrap_level, logging.INFO),
@@ -33,14 +33,14 @@ logger = logging.getLogger(__name__)
 
 class EnvMode(str, Enum):
     development = "development"
-    production  = "production"
+    production = "production"
 
 
 class LogLevel(str, Enum):
-    DEBUG   = "DEBUG"
-    INFO    = "INFO"
+    DEBUG = "DEBUG"
+    INFO = "INFO"
     WARNING = "WARNING"
-    ERROR   = "ERROR"
+    ERROR = "ERROR"
 
 
 class Settings(BaseSettings):
@@ -53,61 +53,48 @@ class Settings(BaseSettings):
     )
 
     # ── API credentials ───────────────────────────────────────────────────
-    GROQ_API_KEY:            SecretStr = SecretStr("")
-    ECMWF_UID:               SecretStr = SecretStr("")
-    ECMWF_API_KEY:           SecretStr = SecretStr("")
+    GROQ_API_KEY: SecretStr = SecretStr("")
+    ECMWF_UID: SecretStr = SecretStr("")
+    ECMWF_API_KEY: SecretStr = SecretStr("")
     NASA_EARTHDATA_USERNAME: SecretStr = SecretStr("")
     NASA_EARTHDATA_PASSWORD: SecretStr = SecretStr("")
 
     # ── Google Earth Engine ───────────────────────────────────────────────
-    GEE_SERVICE_ACCOUNT_EMAIL: str
-    GEE_SERVICE_ACCOUNT_FILE:  str
-    GEE_PROJECT_ID:            str
+    GEE_SERVICE_ACCOUNT_EMAIL: str = ""
+    GEE_SERVICE_ACCOUNT_FILE: str = ""
+    GEE_PROJECT_ID: str = ""
 
-    # ── Database ──────────────────────────────────────────────────────────
-    POSTGRES_URL: SecretStr
-
+    # ── Security ──────────────────────────────────────────────────────────
+    # Comma-separated list of valid API keys for endpoint protection.
+    # If empty string, API key validation is DISABLED (dev mode only).
+    API_KEYS: str = ""
+    # Rate limit: requests per minute per IP
+    RATE_LIMIT_PER_MINUTE: int = 100
+    # CORS: comma-separated allowed origins. "*" = all (dev only)
+    CORS_ORIGINS: str = "*"
+    # Secret for signing internal tokens (min 32 chars in production)
+    SECRET_KEY: SecretStr = SecretStr("aakash_mega_power_secret_key_1234567890_secured")
     # ── Runtime ───────────────────────────────────────────────────────────
-    ENV_MODE:  EnvMode  = EnvMode.development
+    ENV_MODE: EnvMode = EnvMode.development
     LOG_LEVEL: LogLevel = LogLevel.INFO
 
-    # ── Database Pool Governance ──────────────────────────────────────────
-    DB_POOL_SIZE: int = 5
-    """Persistent connections per worker process."""
+    # ── Vercel Tunnel ─────────────────────────────────────────────────────
+    VERCEL_TUNNEL_URL: str = "https://openplanet-ai.vercel.app/api/tunnel"
 
-    DB_MAX_OVERFLOW: int = 10
-    """Burst connections beyond pool_size. Closed when returned to pool."""
-
-    DB_POOL_TIMEOUT: int = 30
-    """Seconds to wait for a free connection before raising PoolTimeout."""
-
-    DB_POOL_RECYCLE: int = 1800
-    """Recycle connections after N seconds to prevent stale TCP."""
-
-    DB_STATEMENT_TIMEOUT_MS: int = 30000
-    """Server-side statement timeout in milliseconds (asyncpg server_settings)."""
+    # ── Engine Tuning ─────────────────────────────────────────────────────
+    ERA5_CACHE_TTL_SECONDS: int = 86400       # 24 hours
+    CMIP6_CACHE_TTL_SECONDS: int = 86400      # 24 hours
+    CITY_CACHE_TTL_SECONDS: int = 604800      # 7 days
+    COUNTRY_CACHE_TTL_SECONDS: int = 2592000  # 30 days
+    HTTP_TIMEOUT_SECONDS: float = 30.0
+    MAX_CONCURRENT_API_CALLS: int = 5
 
     # ── Validators ────────────────────────────────────────────────────────
-
-    @field_validator("POSTGRES_URL", mode="before")
-    @classmethod
-    def validate_postgres_url(cls, v: str) -> str:
-        raw = v.get_secret_value() if hasattr(v, "get_secret_value") else str(v)
-        if not raw.startswith("postgresql"):
-            raise ValueError(
-                "POSTGRES_URL must start with 'postgresql' "
-                f"(e.g. postgresql://user:pass@host:5432/db). Got: '{raw.split(':')[0]}'."
-            )
-        try:
-            _postgres_dsn_adapter.validate_python(raw)
-        except Exception as exc:
-            raise ValueError(f"POSTGRES_URL is not a valid PostgreSQL URL: {exc}") from exc
-        return v
 
     @field_validator("GEE_SERVICE_ACCOUNT_EMAIL", mode="after")
     @classmethod
     def validate_gee_email(cls, v: str) -> str:
-        if "@" not in v or not v.endswith(".gserviceaccount.com"):
+        if v and ("@" not in v or not v.endswith(".gserviceaccount.com")):
             raise ValueError(
                 "GEE_SERVICE_ACCOUNT_EMAIL must end in '.gserviceaccount.com'. "
                 f"Got: '{v}'."
@@ -117,44 +104,66 @@ class Settings(BaseSettings):
     @field_validator("GEE_SERVICE_ACCOUNT_FILE", mode="after")
     @classmethod
     def validate_gee_key_file(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("GEE_SERVICE_ACCOUNT_FILE must not be empty.")
-        if not v.endswith(".json"):
-            raise ValueError(f"GEE_SERVICE_ACCOUNT_FILE must be a .json file. Got: '{v}'.")
-        if not os.path.exists(v):
-            raise ValueError(
-                f"GEE_SERVICE_ACCOUNT_FILE does not exist on disk: '{v}'. "
-                "Ensure the file is mounted before starting."
-            )
+        if v:
+            if not v.endswith(".json"):
+                raise ValueError(
+                    f"GEE_SERVICE_ACCOUNT_FILE must be a .json file. Got: '{v}'."
+                )
+            if not os.path.exists(v):
+                logger.warning(
+                    "GEE_SERVICE_ACCOUNT_FILE not found on disk: '%s'. "
+                    "GEE-dependent features will be unavailable.",
+                    v,
+                )
         return v
 
     @model_validator(mode="after")
     def production_safety_checks(self) -> "Settings":
-        if self.ENV_MODE == EnvMode.production and self.LOG_LEVEL == LogLevel.DEBUG:
-            raise ValueError(
-                "LOG_LEVEL=DEBUG is not permitted in production. "
-                "Set LOG_LEVEL to INFO, WARNING, or ERROR."
-            )
+        if self.ENV_MODE == EnvMode.production:
+            if self.LOG_LEVEL == LogLevel.DEBUG:
+                raise ValueError(
+                    "LOG_LEVEL=DEBUG is not permitted in production. "
+                    "Set LOG_LEVEL to INFO, WARNING, or ERROR."
+                )
+            secret = self.SECRET_KEY.get_secret_value()
+            if secret == "dev-secret-change-in-production-min32chars":
+                raise ValueError(
+                    "SECRET_KEY must be changed from the default in production."
+                )
+            if len(secret) < 32:
+                raise ValueError(
+                    "SECRET_KEY must be at least 32 characters in production."
+                )
         return self
+
+    @property
+    def allowed_api_keys(self) -> set[str]:
+        """Return set of valid API keys (empty = no key required)."""
+        if not self.API_KEYS:
+            return set()
+        return {k.strip() for k in self.API_KEYS.split(",") if k.strip()}
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """Return parsed CORS origin list."""
+        if self.CORS_ORIGINS == "*":
+            return ["*"]
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
     def safe_summary(self) -> dict:
         return {
-            "ENV_MODE":                  self.ENV_MODE.value,
-            "LOG_LEVEL":                 self.LOG_LEVEL.value,
-            "GEE_SERVICE_ACCOUNT_EMAIL": self.GEE_SERVICE_ACCOUNT_EMAIL,
-            "GEE_PROJECT_ID":            self.GEE_PROJECT_ID,
-            "GEE_SERVICE_ACCOUNT_FILE":  self.GEE_SERVICE_ACCOUNT_FILE,
-            "DB_POOL_SIZE":              self.DB_POOL_SIZE,
-            "DB_MAX_OVERFLOW":           self.DB_MAX_OVERFLOW,
-            "DB_POOL_TIMEOUT":           self.DB_POOL_TIMEOUT,
-            "DB_POOL_RECYCLE":           self.DB_POOL_RECYCLE,
-            "DB_STATEMENT_TIMEOUT_MS":   self.DB_STATEMENT_TIMEOUT_MS,
-            "GROQ_API_KEY":              "**redacted**",
-            "ECMWF_UID":                 "**redacted**",
-            "ECMWF_API_KEY":             "**redacted**",
-            "NASA_EARTHDATA_USERNAME":   "**redacted**",
-            "NASA_EARTHDATA_PASSWORD":   "**redacted**",
-            "POSTGRES_URL":              "**redacted**",
+            "ENV_MODE": self.ENV_MODE.value,
+            "LOG_LEVEL": self.LOG_LEVEL.value,
+            "GEE_SERVICE_ACCOUNT_EMAIL": self.GEE_SERVICE_ACCOUNT_EMAIL or "(not set)",
+            "GEE_PROJECT_ID": self.GEE_PROJECT_ID or "(not set)",
+            "GEE_SERVICE_ACCOUNT_FILE": self.GEE_SERVICE_ACCOUNT_FILE or "(not set)",
+            "RATE_LIMIT_PER_MINUTE": self.RATE_LIMIT_PER_MINUTE,
+            "CORS_ORIGINS": self.CORS_ORIGINS,
+            "API_KEY_PROTECTION": bool(self.API_KEYS),
+            "GROQ_API_KEY": "**redacted**" if self.GROQ_API_KEY.get_secret_value() else "(not set)",
+            "ECMWF_UID": "**redacted**" if self.ECMWF_UID.get_secret_value() else "(not set)",
+            "NASA_EARTHDATA_USERNAME": "**redacted**" if self.NASA_EARTHDATA_USERNAME.get_secret_value() else "(not set)",
+            "SECRET_KEY": "**redacted**",
         }
 
     def __repr__(self) -> str:

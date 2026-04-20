@@ -1,26 +1,23 @@
 """
-climate_engine/services — Orchestration layer.
-
-Files
-─────
-    scenario_runner.py  — ScenarioRun lifecycle, streaming, batching
-    engine_bridge.py    — science ↔ service boundary (pure transformation)
-
-Architectural rule
-──────────────────
-    API layer   → calls scenario_runner only
-    Services    → call engine_bridge only
-    Engine      → pure science, no DB, no HTTP
+climate_engine/services — Stateless Service Layer
 """
 
-from climate_engine.services.scenario_runner import (
-    RunAggregates,
-    RunParameters,
-    execute_scenario_run,
+from __future__ import annotations
+
+from climate_engine.services.cmip6_service import (
+    fetch_historical_baseline_full,
+    fetch_cmip6_projection,
+)
+from climate_engine.services.socioeconomic_service import fetch_live_socioeconomics
+from climate_engine.services.llm_service import (
+    generate_strategic_analysis,
+    generate_compare_analysis,
 )
 
 __all__ = [
-    "execute_scenario_run",
-    "RunParameters",
-    "RunAggregates",
+    "fetch_historical_baseline_full",
+    "fetch_cmip6_projection",
+    "fetch_live_socioeconomics",
+    "generate_strategic_analysis",
+    "generate_compare_analysis",
 ]

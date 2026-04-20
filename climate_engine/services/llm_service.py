@@ -1,17 +1,50 @@
-import os
-import logging
+"""
+climate_engine/services/llm_service.py — LLM Analysis Service
+
+Uses Groq API (llama-3.1-8b-instant) for:
+1. Per-city strategic analysis cards (generate_strategic_analysis)
+2. Single-city research narrative (generate_strategic_analysis_raw)
+3. Two-city comparison narrative (generate_compare_analysis)
+
+ZERO-HALLUCINATION PROTOCOL:
+  - Model is instructed to act as a deterministic engine, not a generative AI.
+  - All output must be derived exclusively from the exact input values provided.
+  - If a value is not in the input, the model must write "data not specified".
+  - No geography, demographics, or infrastructure may be assumed or inferred.
+"""
+
+from __future__ import annotations
+
 import json
+import logging
+import os
+from typing import Any
+
 from groq import AsyncGroq
 
 logger = logging.getLogger(__name__)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Client factory
+# ─────────────────────────────────────────────────────────────────────────────
+
 def _get_groq_client() -> AsyncGroq:
-    api_key = os.environ.get("GROQ_API_KEY")
+    api_key = os.environ.get("GROQ_API_KEY", "")
+    if not api_key:
+        try:
+            from climate_engine.settings import settings
+            api_key = settings.GROQ_API_KEY.get_secret_value()
+        except Exception:
+            pass
     if not api_key:
         raise ValueError("GROQ_API_KEY missing from environment variables.")
     return AsyncGroq(api_key=api_key)
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Shared utilities
+# ─────────────────────────────────────────────────────────────────────────────
 
 def _fmt_loss(usd: float) -> str:
     if usd >= 1_000_000_000:
@@ -19,24 +52,57 @@ def _fmt_loss(usd: float) -> str:
     return f"${usd / 1_000_000:.1f}M"
 
 
-def _fmt_loss_range(usd: float) -> str:
-    low  = usd * 0.92
-    high = usd * 1.08
-    return f"{_fmt_loss(low)} – {_fmt_loss(high)}"
-
-
-def _fmt_deaths_range(deaths: int) -> str:
-    return f"{int(deaths * 0.85):,} – {int(deaths * 1.15):,}"
-
-
 def _fallback_error(cause: str, effect: str) -> dict:
+    """
+    Hard fallback returned when the LLM call fails entirely.
+    Uses the same 4-key structure as a successful response so the
+    frontend never has to handle a shape mismatch.
+    """
     return {
-        "mortality":      f"**CAUSE:** {cause} **EFFECT:** {effect} **SOLUTION:** Check logs.",
-        "economic":       "**CAUSE:** N/A **EFFECT:** N/A **SOLUTION:** N/A",
-        "infrastructure": "**CAUSE:** N/A **EFFECT:** N/A **SOLUTION:** N/A",
-        "mitigation":     "**CAUSE:** N/A **EFFECT:** N/A **SOLUTION:** N/A",
+        "mortality": (
+            f"CAUSE: {cause} "
+            f"EFFECT: {effect} "
+            "SOLUTION: Check server logs and verify GROQ_API_KEY is set."
+        ),
+        "economic": "CAUSE: data not specified EFFECT: data not specified SOLUTION: data not specified",
+        "infrastructure": "CAUSE: data not specified EFFECT: data not specified SOLUTION: data not specified",
+        "mitigation": "CAUSE: data not specified EFFECT: data not specified SOLUTION: data not specified",
     }
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Zero-hallucination system prompt (shared base)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_DETERMINISTIC_SYSTEM_CORE = """You are a deterministic climate risk analysis engine. \
+You are NOT allowed to generate, assume, infer, or imagine any information beyond \
+the exact input provided.
+
+STRICT NON-NEGOTIABLE RULES:
+1. USE ONLY the exact numerical values provided in the input. No rounding, no reformatting.
+2. DO NOT:
+   - add any new numbers not present in the input
+   - estimate, approximate, or interpolate any value
+   - mention any studies, research papers, or external sources
+   - assume geography, elevation, coastal status, or urban design unless explicitly provided
+   - assume infrastructure, economy, or demographics unless explicitly provided
+   - use any country name — refer ONLY to the city name given
+3. If any detail is not explicitly provided in the input, write exactly: "data not specified"
+4. DO NOT exaggerate, use dramatic language, or use storytelling.
+5. DO NOT contradict the provided data.
+6. POINT ESTIMATES ONLY. Never write ranges (e.g. "3,000 – 4,000"). Use the exact figure given.
+7. OUTPUT must be strict JSON only. No text, explanation, or markdown outside the JSON object.
+
+TONE:
+- Factual, minimal, and causal.
+- Focus only on physics and direct impact relationships.
+- No narrative. No adjectives beyond what the data requires."""
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. Strategic analysis (4-card JSON) — FULLY DETERMINISTIC (NO AI WRITING)
+# ─────────────────────────────────────────────────────────────────────────────
 
 async def generate_strategic_analysis(
     city: str,
@@ -50,109 +116,56 @@ async def generate_strategic_analysis(
     calc_loss_usd: float,
 ) -> dict:
     """
-    Baseline-only AI analysis — 1 Groq call on Generate button.
-    Mitigation numbers come from frontend math, not AI.
-    This prevents hallucination and eliminates slider-triggered API calls.
+    Fully deterministic 4-card climate risk brief.
+    NO LLM generation for core cards — eliminates all hallucination risk.
     """
-    try:
-        client = _get_groq_client()
-    except ValueError as e:
-        logger.error(str(e))
-        return _fallback_error("API Key Missing", "Check Hugging Face Secrets.")
 
     loss_str = _fmt_loss(calc_loss_usd)
 
-    system_prompt = """You are the OpenPlanet Expert Climate Risk AI writing for institutional investors and policymakers.
-
-ABSOLUTE RULES:
-1. ZERO HALLUCINATION: Use ONLY the exact numbers from the user message. Never invent figures.
-2. POINT ESTIMATES ONLY: Use exact numbers given. Never write ranges like "3,424 – 4,634".
-3. CITY-SPECIFIC: Every sentence must reference this specific city's geography, climate, economy.
-   Wrong: "Heat causes deaths in urban areas."
-   Right: "Los Angeles's basin geography traps hot air, extending heatwave duration beyond regional averages."
-4. BASELINE ONLY for mortality/economic/infrastructure cards: Explain WHY baseline risk exists.
-   Do NOT mention sliders, canopy%, or coolRoof% in these 3 cards.
-5. MITIGATION card: Explain the SCIENCE of how canopy + cool roofs work in general.
-   Do NOT state specific slider percentages or claim specific savings — those are shown separately.
-   The mitigation card explains WHY these interventions work, not HOW MUCH was applied.
-6. OUTPUT: Strict JSON, 4 keys, no text outside JSON."""
-
-    user_prompt = f"""Write a baseline climate risk brief for {city} under {ssp} scenario for {year}.
-
-EXACT ENGINE NUMBERS — use verbatim, no modification:
-- City: {city}
-- Scenario: {ssp} | Year: {year}
-- Peak Tx5d Temperature: {calc_temp}°C
-- Annual Heatwave Days: {calc_heatwaves} days
-- Attributable Deaths (baseline, no mitigation): {calc_deaths:,}
-- Economic Loss (baseline, no mitigation): {loss_str}
-
-CARD INSTRUCTIONS:
-
-mortality card — explain WHY {city} specifically has high heat mortality:
-  CAUSE: {city}'s specific geography/density/UHI that amplifies heat exposure
-  EFFECT: {calc_deaths:,} baseline deaths projected at {calc_temp}°C peak over {calc_heatwaves} heatwave days
-  SOLUTION: 1 specific intervention appropriate for {city}'s urban form
-
-economic card — explain the labor/productivity mechanism for {city}:
-  CAUSE: Which sectors in {city} are most exposed at {calc_temp}°C (construction, logistics, agriculture, tourism)
-  EFFECT: {loss_str} baseline economic loss from {calc_heatwaves} days of heat stress
-  SOLUTION: 1 specific policy for {city}'s dominant economic sectors
-
-infrastructure card — explain {city}'s most vulnerable infrastructure:
-  CAUSE: Which infrastructure in {city} is most stressed at {calc_temp}°C for {calc_heatwaves} days
-  EFFECT: Specific failure mode (grid blackouts, road buckling, transit shutdown)
-  SOLUTION: Engineering fix specific to that infrastructure type
-
-mitigation card — explain the SCIENCE of urban cooling interventions (city-agnostic mechanism):
-  CAUSE: Urban heat island physics — impervious surfaces, lack of vegetation, albedo effects
-  EFFECT: How canopy cover reduces temperature via evapotranspiration and shading; how cool roofs reduce solar absorption
-  SOLUTION: Scaling principle — every 10% canopy increase ≈ 1.2°C cooling; every 10% cool roof coverage ≈ 0.8°C cooling — these reductions compound across mortality and economic metrics
-
-REQUIRED JSON:
-{{
-  "mortality": "**CAUSE:** [city-specific geography + {calc_heatwaves} heatwave days mechanism]. **EFFECT:** {calc_deaths:,} baseline deaths at {calc_temp}°C — without any intervention. **SOLUTION:** [specific action for {city}].",
-  "economic": "**CAUSE:** [specific labor sectors in {city} exposed at {calc_temp}°C]. **EFFECT:** {loss_str} baseline economic loss across {calc_heatwaves} heat-stress days. **SOLUTION:** [specific policy for {city}].",
-  "infrastructure": "**CAUSE:** [specific infrastructure vulnerability in {city} at {calc_temp}°C]. **EFFECT:** [specific failure mode]. **SOLUTION:** [engineering fix].",
-  "mitigation": "**CAUSE:** [UHI physics — impervious surfaces, albedo, lack of vegetation]. **EFFECT:** Canopy cover triggers evapotranspiration cooling while cool roofs reflect solar radiation — both directly reduce peak temperatures, shortening heatwave duration and cutting heat-attributable deaths and economic losses proportionally. **SOLUTION:** Every 10% canopy increase delivers ~1.2°C peak cooling; every 10% cool roof deployment delivers ~0.8°C — use the sliders above to model the compounding impact on this city's baseline numbers."
-}}"""
-
     try:
-        completion = await client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user",   "content": user_prompt},
-            ],
-            temperature=0.05,
-            max_tokens=700,
-            response_format={"type": "json_object"},
-        )
+        return {
+            "mortality": (
+                f"CAUSE: Elevated temperature ({calc_temp}°C) and {calc_heatwaves} heatwave days increase thermal stress. "
+                f"EFFECT: {calc_deaths:,} attributable deaths. "
+                f"SOLUTION: Heat mitigation and exposure reduction."
+            ),
 
-        raw = completion.choices[0].message.content.strip()
-        if raw.startswith("```json"): raw = raw[7:-3].strip()
-        elif raw.startswith("```"):   raw = raw[3:-3].strip()
+            "economic": (
+                f"CAUSE: Temperature of {calc_temp}°C reduces labor productivity during {calc_heatwaves} heatwave days. "
+                f"EFFECT: {loss_str} economic loss. "
+                f"SOLUTION: Heat-resilient work systems and scheduling adjustments."
+            ),
 
-        parsed = json.loads(raw)
+            "infrastructure": (
+                f"CAUSE: Sustained temperature of {calc_temp}°C increases thermal load on urban systems. "
+                f"EFFECT: elevated stress on cooling and energy infrastructure. "
+                f"SOLUTION: load management and passive cooling infrastructure."
+            ),
 
-        required = {"mortality", "economic", "infrastructure", "mitigation"}
-        if not required.issubset(parsed.keys()):
-            logger.warning(f"AI missing keys: {required - parsed.keys()}")
-            return _fallback_error("Incomplete Response", "Missing keys.")
+            "mitigation": (
+                "CAUSE: Urban heat accumulation. "
+                "EFFECT: increased surface temperature above ambient. "
+                "SOLUTION: Vegetation cover triggers evapotranspiration cooling; "
+                "reflective roofing reduces absorbed solar radiation. "
+                "Every 10% canopy increase delivers approximately 1.2°C peak cooling; "
+                "every 10% cool roof deployment delivers approximately 0.8°C."
+            ),
+        }
 
-        return parsed
-
-    except json.JSONDecodeError as e:
-        logger.error(f"AI JSON parse failed: {e}")
-        return _fallback_error("JSON Parse Error", str(e))
     except Exception as e:
-        logger.error(f"AI analysis failed: {e}")
-        return _fallback_error("AI Generation Failed", str(e))
+        logger.error("[llm_service] deterministic generation failed: %s", e)
+        return _fallback_error("Deterministic Generation Failed", str(e))
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. Research narrative (single paragraph, plain text)
+# ─────────────────────────────────────────────────────────────────────────────
 
 async def generate_strategic_analysis_raw(prompt: str) -> str:
     """
-    Deep Dive single-city research — one authoritative paragraph.
+    Single-city research narrative — one tight paragraph.
+
+    The caller is responsible for injecting all metric values into `prompt`.
+    The model must use only those values and must not infer anything beyond them.
     """
     try:
         client = _get_groq_client()
@@ -161,13 +174,14 @@ async def generate_strategic_analysis_raw(prompt: str) -> str:
         return "Scientific reasoning unavailable — API key missing."
 
     system_msg = (
-        "You are a Senior Climate Risk Scientist writing for an IPCC-level report. "
-        "RULES: "
-        "1. Write exactly ONE paragraph (3-4 sentences). No lists, no bullets, no newlines. "
-        "2. No markdown. "
-        "3. Use ONLY the exact numbers provided. Never substitute with ranges or approximations. "
-        "4. Explain causal mechanisms — WHY this city, WHY this geography. "
-        "5. Weave thermal physiology, UHI dynamics, and economic productivity into one narrative."
+        _DETERMINISTIC_SYSTEM_CORE
+        + "\n\nFOR THIS CALL SPECIFICALLY:\n"
+        "- Output exactly ONE paragraph (3–4 sentences). No lists, no bullets, no newlines.\n"
+        "- No markdown of any kind.\n"
+        "- Connect temperature, heatwave days, mortality, and economic loss causally "
+        "using only the values given.\n"
+        "- If a metric is absent from the input, write 'data not specified' in its place.\n"
+        "- Do not introduce any external context, city descriptions, or assumed geography."
     )
 
     try:
@@ -175,17 +189,20 @@ async def generate_strategic_analysis_raw(prompt: str) -> str:
             model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": system_msg},
-                {"role": "user",   "content": prompt},
+                {"role": "user", "content": prompt},
             ],
-            temperature=0.1,
+            temperature=0.0,
             max_tokens=220,
         )
         return response.choices[0].message.content.strip()
-
     except Exception as e:
-        logger.error(f"Groq raw analysis failed: {e}")
+        logger.error("[llm_service] generate_strategic_analysis_raw failed: %s", e)
         return "Scientific reasoning temporarily unavailable."
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. Two-city comparison (single paragraph, plain text)
+# ─────────────────────────────────────────────────────────────────────────────
 
 async def generate_compare_analysis(
     city_a: str,
@@ -194,8 +211,11 @@ async def generate_compare_analysis(
     data_b: dict,
 ) -> str:
     """
-    Single Groq call with BOTH cities — no contradiction possible.
-    Uses point estimates only — matches metrics panel exactly.
+    Side-by-side comparison of two cities.
+
+    Model must use only the metrics provided for each city and must
+    state which city has higher risk using the exact provided numbers.
+    It must not infer any reason from geography or demographics.
     """
     try:
         client = _get_groq_client()
@@ -203,52 +223,50 @@ async def generate_compare_analysis(
         logger.error(str(e))
         return "Comparison unavailable — API key missing."
 
-    def _fmt(d: dict) -> str:
-        loss   = d.get("economic_decay_usd", 0)
+    def _fmt_city_block(name: str, d: dict) -> str:
+        loss = d.get("economic_decay_usd", 0)
         deaths = d.get("attributable_deaths", 0)
         return (
-            f"Peak Tx5d: {d.get('peak_tx5d_c', 'N/A')}°C | "
-            f"Heatwave Days: {d.get('heatwave_days', 'N/A')} | "
-            f"Deaths: {deaths:,} | "
-            f"Economic Loss: {_fmt_loss(loss)} | "
-            f"WBT: {d.get('wbt_max_c', 'N/A')}°C | "
-            f"Region: {d.get('region', 'N/A')}"
+            f"City: {name}\n"
+            f"  Peak Tx5d Temperature: {d.get('peak_tx5d_c', 'data not specified')}°C\n"
+            f"  Annual Heatwave Days: {d.get('heatwave_days', 'data not specified')}\n"
+            f"  Attributable Deaths: {deaths:,}\n"
+            f"  Economic Loss: {_fmt_loss(loss)}\n"
+            f"  Max Wet-Bulb Temperature: {d.get('wbt_max_c', 'data not specified')}°C"
         )
 
     system_msg = (
-        "You are a Senior Climate Risk Scientist comparing two cities for institutional investors. "
-        "RULES: "
-        "1. Write ONE paragraph (3-4 sentences). No lists, no bullets, no newlines. "
-        "2. Use ONLY the exact numbers provided — zero hallucination. "
-        "3. NEVER substitute point estimates with ranges. Use the exact figures given. "
-        "4. State CLEARLY which city faces higher risk and WHY (geography + numbers). "
-        "5. Quantify the difference using exact numbers."
+        _DETERMINISTIC_SYSTEM_CORE
+        + "\n\nFOR THIS CALL SPECIFICALLY:\n"
+        "- Output exactly ONE paragraph (3–4 sentences). No lists, no bullets, no newlines.\n"
+        "- No markdown of any kind.\n"
+        "- State clearly which city has higher absolute climate risk.\n"
+        "- Quantify the difference using the exact numbers provided (e.g. delta in deaths, "
+        "delta in temperature, delta in economic loss).\n"
+        "- Do NOT infer any geographic, demographic, or economic reason not present in the data.\n"
+        "- If a metric is absent from a city's data block, write 'data not specified'."
     )
 
-    user_msg = f"""Compare climate heat risk for these two cities.
-Use the exact numbers below — no substitution with ranges or approximations.
-
-{city_a}:
-{_fmt(data_a)}
-
-{city_b}:
-{_fmt(data_b)}
-
-State which city faces higher absolute climate risk, explain geographic/thermal reasons,
-and quantify the difference using the exact numbers above."""
+    user_msg = (
+        "Compare the climate heat risk for these two cities using ONLY the data below.\n\n"
+        f"{_fmt_city_block(city_a, data_a)}\n\n"
+        f"{_fmt_city_block(city_b, data_b)}\n\n"
+        "State which city has higher absolute risk, quantify the difference using the exact "
+        "numbers above, and explain the causal relationship between temperature, heatwave days, "
+        "deaths, and economic loss — using only the values provided."
+    )
 
     try:
         response = await client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": system_msg},
-                {"role": "user",   "content": user_msg},
+                {"role": "user", "content": user_msg},
             ],
-            temperature=0.05,
-            max_tokens=250,
+            temperature=0.0,
+            max_tokens=260,
         )
         return response.choices[0].message.content.strip()
-
     except Exception as e:
-        logger.error(f"Compare analysis failed: {e}")
+        logger.error("[llm_service] generate_compare_analysis failed: %s", e)
         return "Comparative analysis temporarily unavailable."

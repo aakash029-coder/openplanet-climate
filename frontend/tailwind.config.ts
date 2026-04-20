@@ -2,12 +2,12 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
-    // Agar files 'src' folder ke andar hain
+    // Aapka project 'src' folder use kar raha hai (frontend/src/...)
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     
-    // Agar files direct root folder mein hain (Yahan changes kiye hain 👇)
+    // Fallback agar koi file direct bahar ho
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -31,4 +31,5 @@ const config: Config = {
   },
   plugins: [],
 };
+
 export default config;
