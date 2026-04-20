@@ -79,7 +79,7 @@ function DashboardPageInner() {
   };
 
   return (
-    <div className="relative text-slate-200 font-sans overflow-x-hidden flex flex-col w-full min-h-screen">
+    <div className="relative text-slate-200 font-sans overflow-x-hidden flex flex-col w-full min-h-screen bg-[#020617]">
 
       {/* ── MODAL ── */}
       {showWarningModal && (
@@ -115,36 +115,37 @@ function DashboardPageInner() {
         className="fixed inset-0 w-full h-full object-cover opacity-40 pointer-events-none z-0 mix-blend-screen"
         style={{ transform: 'translate3d(0, 0, 0)', willChange: 'transform', backfaceVisibility: 'hidden' }}
       />
-      <div className="fixed inset-0 bg-gradient-to-b from-[#060d1a]/30 via-[#060d1a]/60 to-[#060d1a]/30 pointer-events-none z-0" />
+      <div className="fixed inset-0 bg-gradient-to-b from-[#020617]/40 via-[#020617]/80 to-[#020617]/40 pointer-events-none z-0" />
 
       <div className="flex flex-col w-full flex-grow relative z-10">
 
         {/* ── TAB NAV ── */}
-        <nav className="w-full bg-[#0a1526]/80 backdrop-blur-3xl border-b border-cyan-500/20 pt-20 sticky top-0 z-[40] shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
-          <div className="w-full flex items-center justify-between px-8 lg:px-16 xl:px-24 py-5 text-[11px] font-mono uppercase tracking-[0.25em] relative">
-            {TABS.map((tab) => {
-              const isLocked = !targetCity && tab !== 'Dashboard';
-              const isActive = activeTab === tab;
-              return (
-                <button
-                  key={tab}
-                  disabled={isLocked}
-                  onClick={() => setActiveTab(tab)}
-                  className={`relative whitespace-nowrap transition-all duration-500 px-4 py-2 group
-                    ${isActive ? 'text-cyan-300 font-extrabold tracking-[0.3em] drop-shadow-[0_0_15px_rgba(34,211,238,0.9)] scale-105' : ''}
-                    ${isLocked ? 'text-slate-700 cursor-not-allowed' : ''}
-                    ${!isActive && !isLocked ? 'text-slate-400 hover:text-cyan-100 hover:tracking-[0.28em]' : ''}
-                  `}
-                >
-                  {tab}
-                  {isActive && <span className="absolute -bottom-[21px] left-0 w-full h-[2px] bg-cyan-400 shadow-[0_0_20px_#22d3ee] rounded-t-full" />}
-                </button>
-              );
-            })}
+        <nav className="w-full bg-[#06101f]/90 backdrop-blur-3xl border-b border-slate-800/60 pt-20 sticky top-0 z-[40] shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+          <div className="w-full flex items-center justify-between px-8 lg:px-16 xl:px-24 py-4 text-[11px] font-mono uppercase tracking-[0.25em] relative">
+            <div className="flex items-center gap-2">
+              {TABS.map((tab) => {
+                const isLocked = !targetCity && tab !== 'Dashboard';
+                const isActive = activeTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    disabled={isLocked}
+                    onClick={() => setActiveTab(tab)}
+                    className={`relative whitespace-nowrap transition-all duration-300 px-4 py-2 group rounded-md
+                      ${isActive ? 'text-white font-bold bg-slate-800/50 border border-slate-700/50' : 'border border-transparent'}
+                      ${isLocked ? 'text-slate-600 cursor-not-allowed' : ''}
+                      ${!isActive && !isLocked ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30' : ''}
+                    `}
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
             {targetCity && (
-              <div className="absolute -bottom-6 right-8 lg:right-16 xl:right-24 text-[9px] font-mono text-cyan-200 uppercase tracking-widest border border-cyan-400/40 bg-cyan-900/80 px-4 py-1.5 rounded-full shadow-[0_0_20px_rgba(34,211,238,0.3)] backdrop-blur-xl flex items-center gap-3">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#22d3ee]" />
-                Target Locked: <span className="text-white font-bold">{targetCity}</span>
+              <div className="absolute right-8 lg:right-16 xl:right-24 text-[9px] font-mono text-emerald-400 uppercase tracking-widest border border-emerald-900/50 bg-emerald-950/30 px-3 py-1.5 rounded flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                LOCKED: <span className="font-bold text-white">{targetCity}</span>
               </div>
             )}
           </div>
@@ -152,7 +153,6 @@ function DashboardPageInner() {
 
         {/* ── CONTENT ── */}
         <div className="w-full h-full flex flex-col flex-grow">
-          {/* Dashboard Tab uses MapModule with NO SSR */}
           <div className={activeTab === "Dashboard" ? "block w-full" : "hidden"}>
             <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
           </div>
@@ -182,24 +182,16 @@ function DashboardPageInner() {
               {NEXT_TAB_MAP[activeTab] ? (
                 <button
                   onClick={() => setActiveTab(NEXT_TAB_MAP[activeTab]!)}
-                  className="relative w-full py-4 rounded-full text-[10px] font-mono font-bold tracking-[0.3em] text-white uppercase transition-all overflow-hidden group border border-cyan-400/50 bg-cyan-900/60 backdrop-blur-xl shadow-[0_0_30px_rgba(34,211,238,0.3)] hover:shadow-[0_0_50px_rgba(34,211,238,0.6)] hover:border-cyan-300 hover:scale-105 hover:-translate-y-1"
+                  className="w-full py-4 rounded-lg text-[10px] font-mono font-bold tracking-[0.2em] text-slate-300 uppercase transition-all border border-slate-700 bg-slate-800/40 backdrop-blur-xl hover:bg-slate-700 hover:text-white hover:border-slate-500 flex items-center justify-center gap-3"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/40 via-blue-500/50 to-cyan-600/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <span className="relative z-10 flex items-center justify-center gap-3">
-                    Initialize {NEXT_TAB_MAP[activeTab]} Protocol
-                    <span className="text-cyan-300 group-hover:text-white group-hover:translate-x-2 transition-transform duration-300">➔</span>
-                  </span>
+                  INITIALIZE {NEXT_TAB_MAP[activeTab]} PROTOCOL →
                 </button>
               ) : (
                 <button
                   onClick={handleReset}
-                  className="relative w-full py-4 rounded-full text-[10px] font-mono font-bold tracking-[0.3em] text-white uppercase transition-all overflow-hidden group border border-cyan-400/50 bg-cyan-900/60 backdrop-blur-xl shadow-[0_0_30px_rgba(34,211,238,0.3)] hover:shadow-[0_0_50px_rgba(34,211,238,0.6)] hover:border-cyan-300 hover:scale-105 hover:-translate-y-1"
+                  className="w-full py-4 rounded-lg text-[10px] font-mono font-bold tracking-[0.2em] text-slate-300 uppercase transition-all border border-slate-700 bg-slate-800/40 backdrop-blur-xl hover:bg-slate-700 hover:text-white hover:border-slate-500 flex items-center justify-center gap-3"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/40 via-blue-500/50 to-cyan-600/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <span className="relative z-10 flex items-center justify-center gap-3">
-                    <span className="text-cyan-300 group-hover:text-white group-hover:-translate-x-2 transition-transform duration-300">↺</span>
-                    Analyze New City
-                  </span>
+                  ↺ ANALYZE NEW LOCATION
                 </button>
               )}
             </div>
@@ -207,15 +199,17 @@ function DashboardPageInner() {
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
-      <div className="w-full border-t border-cyan-500/10 bg-[#060d1a]/80 backdrop-blur-2xl px-6 py-8 mt-auto relative z-20">
-        <div className="max-w-5xl mx-auto text-center">
-          <p className="text-[9px] text-slate-400 font-mono uppercase tracking-[0.3em] leading-loose">
-            <span className="text-cyan-400 font-bold tracking-[0.4em] mr-3">SYSTEM NOTICE :-</span>
-            OpenPlanet provides climate risk projections generated using the OpenMatrix modeling framework. These projections integrate global climate datasets and demographic models to estimate potential health and economic impacts. All outputs are research-oriented estimates intended for analytical and exploratory purposes.
-          </p>
+      {/* ── PROFESSIONAL DISCLAIMER FOOTER (CENTERED STACKED) ── */}
+      <div className="flex flex-col items-center justify-center text-center gap-3 mt-16 pt-8 pb-12 border-t border-white/10 opacity-50 relative z-20">
+        <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400">
+          <div className="w-2 h-2 bg-slate-500"></div> DISCLAIMER
         </div>
+        
+        <p className="text-xs text-slate-500 leading-relaxed max-w-4xl px-6">
+          OpenPlanet is a computational estimation engine based on global meta-analyses (Gasparrini 2017, Burke 2018). It is designed for directional risk visualization and strategic planning, not localized actuarial or medical forecasting. All outputs are model-driven estimates and do not constitute professional operational advice.
+        </p>
       </div>
+
     </div>
   );
 }

@@ -41,7 +41,6 @@ function Ref({ authors, year, journal, title }: { authors: string; year: number;
   );
 }
 
-// ✅ FIX: All zeros — formula template only. No fabricated numbers.
 const DEMO_EXCEL_DATA: ExcelExportData = {
   city_name:           "FORMULA TEMPLATE — Run a city in Deep Dive for real values",
   lat:                 0,
@@ -70,7 +69,6 @@ export default function MethodologyModule() {
   const [open, setOpen] = useState<string | null>("threshold");
   const { primaryData } = useClimateData();
 
-  // ✅ NEW: State to hold the final data for Excel
   const [currentExcelData, setCurrentExcelData] = useState<ExcelExportData>(DEMO_EXCEL_DATA);
   const [isLive, setIsLive] = useState(false);
 
@@ -78,7 +76,6 @@ export default function MethodologyModule() {
     const syncData = () => {
       let sourceData = primaryData;
 
-      // 1. Hamesha localStorage check karo (yeh sabse fresh data rakhta hai)
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('openplanet_last_risk_data');
         if (saved) {
@@ -88,7 +85,6 @@ export default function MethodologyModule() {
         }
       }
 
-      // 2. Data extraction logic
       if (sourceData) {
         try {
           const _source: any = sourceData;
@@ -98,24 +94,15 @@ export default function MethodologyModule() {
           if (proj) {
             const safeNum = (val: any, fallback = 0): number => {
               if (val == null || val === "" || val === undefined) return fallback;
-
-              // Already a valid number
               if (typeof val === 'number') {
                 return (isFinite(val) && !isNaN(val)) ? val : fallback;
               }
-
               const str = String(val).toUpperCase().trim().replace(/,/g, '').replace(/\s/g, '');
-
-              // Scientific notation (e.g. 1.2E+9)
               if (/^-?[\d.]+E[+-]?\d+$/i.test(str)) {
                 const parsed = parseFloat(str);
                 return (isFinite(parsed) && !isNaN(parsed)) ? parsed : fallback;
               }
-
-              // Strip leading $
               const cleanStr = str.replace(/^\$/, '');
-
-              // Multiplier detection
               let multi = 1;
               let numStr = cleanStr;
               if (cleanStr.endsWith('T') || cleanStr.includes('TRILLION')) {
@@ -131,14 +118,11 @@ export default function MethodologyModule() {
                 multi = 1e3;
                 numStr = cleanStr.replace(/K$/, '');
               }
-
               const parsed = parseFloat(numStr.replace(/[^0-9.\-]/g, ''));
               return (isNaN(parsed) || !isFinite(parsed)) ? fallback : parsed * multi;
             };
 
             const baselineMean = _source.baseline?.baseline_mean_c || proj.era5_baseline_c || 20;
-
-            // ✅ BULLETPROOF LAT/LNG EXTRACTION (Checking deep nested objects as well)
             const extractedLat = _source.lat ?? proj.lat ?? _source.location?.lat ?? _source.geo?.lat ?? _source.metadata?.lat ?? 0;
             const extractedLng = _source.lng ?? proj.lng ?? _source.location?.lng ?? _source.geo?.lng ?? _source.metadata?.lng ?? 0;
 
@@ -178,8 +162,8 @@ export default function MethodologyModule() {
     syncData();
 
     if (typeof window !== 'undefined') {
-      window.addEventListener('climate_data_updated', syncData); // Same-tab sync
-      window.addEventListener('storage', syncData); // ✅ CROSS-TAB SYNC (Yeh refresh ki zarurat khatam karega)
+      window.addEventListener('climate_data_updated', syncData);
+      window.addEventListener('storage', syncData);
     }
     
     const interval = setInterval(syncData, 1500);
@@ -231,8 +215,8 @@ export default function MethodologyModule() {
             {[
               { year: "2030", method: "CMIP6 Live Ensemble", color: "text-cyan-400",   note: "3-model mean" },
               { year: "2050", method: "CMIP6 Live Ensemble", color: "text-cyan-400",   note: "3-model mean" },
-              { year: "2075", method: "IPCC AR6 Delta",      color: "text-purple-400", note: "Published rates" },
-              { year: "2100", method: "IPCC AR6 Delta",      color: "text-purple-400", note: "Published rates" },
+              { year: "2075", method: "IPCC AR6 Delta",      color: "text-purple-400", note: "Extrapolated rates" },
+              { year: "2100", method: "IPCC AR6 Delta",      color: "text-purple-400", note: "Extrapolated rates" },
             ].map((r) => (
               <div key={r.year} className="bg-[#050b14]/60 border border-cyan-500/10 p-4 rounded-lg flex items-center justify-between">
                 <span className="text-white font-bold text-lg">{r.year}</span>
@@ -240,11 +224,11 @@ export default function MethodologyModule() {
               </div>
             ))}
           </div>
-          <p>For 2075 and 2100, the engine applies <span className="text-cyan-300 font-bold">IPCC AR6 WG1 published regional warming deltas</span> (Chapter 4, Table 4.5 and Chapter 11, Table 11.1) to the ERA5-anchored 2050 baseline.</p>
+          <p>For 2075 and 2100, the engine <span className="text-cyan-300 font-bold">DOES NOT fetch raw CMIP6 data</span> due to API latency constraints. Instead, it applies a mathematical extrapolation based on IPCC AR6 WG1 published regional warming rates to the 2050 baseline.</p>
           <Formula
-            label="Post-2050 Projection (IPCC AR6 Delta Method)"
+            label="Post-2050 Projection (IPCC AR6 Extrapolation)"
             formula={"V(t) = V_ERA5_baseline + IPCC_AR6_delta(ssp, t)"}
-            note={<div className="space-y-1"><div><span className="text-cyan-400">V_ERA5_baseline</span> = ERA5 Tx5d / heatwave days (1991-2020 real data)</div><div><span className="text-cyan-400">IPCC_AR6_delta</span> = published warming rate for SSP scenario and region</div><div className="text-slate-500 mt-2">Source: IPCC AR6 WG1 Ch.4 Table 4.5, Ch.11 Table 11.1</div></div>}
+            note={<div className="space-y-1"><div><span className="text-cyan-400">V_ERA5_baseline</span> = ERA5 Tx5d / heatwave days (1991-2020 data)</div><div><span className="text-cyan-400">IPCC_AR6_delta</span> = published warming rate mathematical proxy</div><div className="text-slate-500 mt-2">Source: IPCC AR6 WG1 Ch.4 Table 4.5, Ch.11 Table 11.1</div></div>}
           />
         </div>
       ),
@@ -254,7 +238,7 @@ export default function MethodologyModule() {
       title: "Regional Climate Calibration",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>Raw CMIP6 output is calibrated by climate zone using <span className="text-cyan-300 font-bold">Koppen-Geiger classification</span> and IPCC AR6 WG1 regional chapter constraints.</p>
+          <p>Raw CMIP6 output is adjusted using <span className="text-cyan-300 font-bold">heuristic climate zone caps</span> (Koppen-Geiger) to prevent unbounded mathematical runaway in extreme scenarios.</p>
           <div className="overflow-x-auto">
             <table className="w-full text-[9px] font-mono border-collapse mt-4">
               <thead>
@@ -283,7 +267,7 @@ export default function MethodologyModule() {
               </tbody>
             </table>
           </div>
-          <p className="text-[9px] text-slate-500 mt-4">Coastal dampening (−20 to −35%) applied when coordinates are within major ocean-moderated climate zones. UHI intensity capped at 8°C maximum (Oke 1982, Santamouris 2015).</p>
+          <p className="text-[9px] text-slate-500 mt-4">Coastal dampening (−20 to −35%) and UHI caps (8°C) are broad heuristic adjustments. They are NOT localized microclimate simulations.</p>
         </div>
       ),
     },
@@ -301,8 +285,8 @@ export default function MethodologyModule() {
               <div><span className="text-cyan-400">DR</span> = World Bank crude death rate per 1000</div>
               <div><span className="text-cyan-400">HW</span> = calibrated annual heatwave days</div>
               <div><span className="text-cyan-400">AF</span> = (RR−1)/RR, where RR = exp(0.0801 × ΔT)</div>
-              <div><span className="text-cyan-400">V</span> = vulnerability multiplier (AC + age + healthcare)</div>
-              <div><span className="text-cyan-400">β = 0.0801</span> = GBD meta-analysis global mean</div>
+              <div><span className="text-cyan-400">V</span> = vulnerability multiplier proxy</div>
+              <div><span className="text-cyan-400">β = 0.0801</span> = GBD global mean constant</div>
             </div>}
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
@@ -318,7 +302,7 @@ export default function MethodologyModule() {
               </div>
             ))}
           </div>
-          <p className="text-[9px] text-slate-500">Vulnerability multiplier range: 0.25 to 2.5. 95% confidence interval: ±15% of point estimate.</p>
+          <p className="text-[9px] text-slate-500">Vulnerability multiplier range: 0.25 to 2.5. WARNING: This is a synthetic heuristic derived from national-level proxies, not a ground-truthed local health metric. A global constant (β=0.0801) is used as local calibration data is restricted.</p>
         </div>
       ),
     },
@@ -341,7 +325,7 @@ export default function MethodologyModule() {
           />
           <div className="bg-amber-950/20 border border-amber-500/20 rounded-xl px-4 py-3">
             <p className="text-[9px] font-mono text-amber-400 uppercase tracking-widest leading-relaxed">
-              ⚠ City GDP is estimated from national World Bank GDP/capita × metro population (GeoNames) × urban productivity ratio. No API provides direct city-level GDP for all cities globally. This is disclosed in the Limitations section.
+              ⚠ City GDP is synthetically estimated (National GDP/capita × Metro Pop × Urban Multiplier). No free API provides true city-level GDP globally. This is a directional proxy, not actuarial financial data.
             </p>
           </div>
         </div>
@@ -393,7 +377,7 @@ export default function MethodologyModule() {
           </div>
           <div className="bg-slate-900/40 border border-slate-800/60 rounded-xl px-4 py-3 mt-2">
             <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest leading-relaxed">
-              Mitigation math is computed entirely on the frontend — zero additional API calls when sliders change. Cooling offsets reduce peak temperature, heatwave days, deaths, and economic loss using the scaling rules above. These are linear approximations from published literature, not city-specific climate model runs.
+              Mitigation math is computed entirely on the frontend using highly simplified, uncalibrated linear heuristics. They do not account for local urban canyon effects, wind patterns, or existing baseline albedo. These are broad approximations, not city-specific model runs.
             </p>
           </div>
         </div>
@@ -427,11 +411,11 @@ export default function MethodologyModule() {
       title: "Limitations & Uncertainty",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>OpenPlanet provides <span className="text-cyan-300 font-bold">research-grade estimates</span> for analytical and exploratory purposes.</p>
+          <p>OpenPlanet is an <span className="text-cyan-300 font-bold">early-stage directional estimation engine</span>. It relies on global meta-analyses and heuristic proxies where hyper-local data is unavailable. It is NOT localized actuarial or medical forecasting.</p>
           <div className="space-y-3 mt-4">
             {[
-              { label:"Post-2050 Projections",        text:"2075 and 2100 values use IPCC AR6 published regional delta rates applied to ERA5 baselines. These are not direct CMIP6 model outputs.", severity:"amber" },
-              { label:"City GDP Estimates",            text:"City-level GDP is estimated from national GDP/capita (World Bank) × metro population (GeoNames) × urban productivity ratio. No API provides direct city-level GDP for all cities globally.", severity:"amber" },
+              { label:"Post-2050 Projections",        text:"2075 and 2100 values use IPCC AR6 published regional delta rates applied to ERA5 baselines. These are mathematical extrapolations, not direct CMIP6 model outputs.", severity:"amber" },
+              { label:"City GDP Estimates",            text:"City-level GDP is synthetically estimated from national GDP/capita (World Bank) × metro population (GeoNames) × urban productivity ratio. No API provides direct city-level GDP for all cities globally.", severity:"amber" },
               { label:"Mortality Confidence Interval", text:"Death estimates carry ±15% uncertainty from the Gasparrini (2017) beta coefficient.", severity:"amber" },
               { label:"Age Decomposition",             text:"Per-cohort death distributions (elderly/working/children) use GBD 2019 vulnerability multipliers and UN WUP 2022 population shares — not city-specific demographic data. These are research estimates normalized to the real API total.", severity:"amber" },
               { label:"Adaptation ROI Costs",          text:"Investment cost estimates for canopy and albedo programs are order-of-magnitude figures from C40 Cities (2021) and Levinson LBNL (2018). Actual costs vary significantly by city context. Not suitable for financial planning.", severity:"amber" },
@@ -513,7 +497,6 @@ export default function MethodologyModule() {
           Download the complete 4-sheet Excel model. Change any input cell marked with <span className="text-amber-400 font-bold">✏️ (Edit)</span> — deaths, GDP loss, and heatwave projections update automatically via real Excel formulas. Used for investor due diligence and academic verification.
         </p>
 
-        {/* ✅ FIX: Amber warning — only when no live city data loaded */}
         {!isLive && (
           <div className="bg-amber-950/20 border border-amber-500/20 rounded-xl px-4 py-3 mb-5">
             <p className="text-[9px] font-mono text-amber-400 uppercase tracking-widest leading-relaxed">
@@ -522,12 +505,11 @@ export default function MethodologyModule() {
           </div>
         )}
 
-        {/* ✅ FIX: Green badge — when real city data is loaded */}
         {isLive && (
           <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl px-4 py-3 mb-5 flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"/>
             <p className="text-[9px] font-mono text-emerald-400 uppercase tracking-widest leading-relaxed">
-              Live data loaded · {currentExcelData.city_name} · {currentExcelData.ssp} · {currentExcelData.target_year} · All cells populated with real CMIP6 + API values
+              Live data loaded · {currentExcelData.city_name} · {currentExcelData.ssp} · {currentExcelData.target_year} · Cells populated with CMIP6 + API proxies
             </p>
           </div>
         )}
@@ -536,11 +518,11 @@ export default function MethodologyModule() {
 
         <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mt-3">
           {isLive
-            ? `Model populated with live CMIP6 data for ${currentExcelData.city_name} (${currentExcelData.ssp}, ${currentExcelData.target_year}). All values are real API outputs — not estimates or placeholders.`
+            ? `Model populated with live CMIP6/ERA5 data and heuristic extrapolations for ${currentExcelData.city_name} (${currentExcelData.ssp}, ${currentExcelData.target_year}). Values are directional estimates based on our mathematical proxies.`
             : `Template file only. All input cells are zero. Not suitable for analysis without first running a city projection in the Deep Dive tab.`
           }
         </p>
       </div>
     </div>
   );
-} 
+}

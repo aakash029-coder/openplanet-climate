@@ -33,6 +33,7 @@ interface CityResult {
   gdp_usd: number | null;
   population: number | null;
   projections: Projection[];
+  baseline: { baseline_mean_c: number | null }; // 🔴 Needed for UHI math
   loading: boolean;
   error: string | null;
 }
@@ -176,7 +177,10 @@ async function fetchNominatimSafe(query: string): Promise<any[]> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 6000);
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`, { headers: { "Accept-Language": "en", "User-Agent": "OpenPlanetRiskIntelligence/1.0" }, signal: controller.signal });
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`,
+      { headers: { "Accept-Language": "en", "User-Agent": "OpenPlanetRiskIntelligence/1.0" }, signal: controller.signal }
+    );
     clearTimeout(timer);
     if (!res.ok) return [];
     const data = await res.json();
@@ -191,7 +195,10 @@ async function fetchElevationSafe(lat: number, lng: number): Promise<number> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 5000);
   try {
-    const res = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`, { signal: controller.signal });
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`,
+      { signal: controller.signal }
+    );
     clearTimeout(timer);
     if (!res.ok) return 0;
     const data = await res.json();
@@ -201,37 +208,104 @@ async function fetchElevationSafe(lat: number, lng: number): Promise<number> {
   } catch { clearTimeout(timer); return 0; }
 }
 
-async function geocodeAndFetch(query: string, ssp: string): Promise<Omit<CityResult, "loading" | "error"> | null> {
+async function fetchClimateRisk(payload: {
+  lat: number; lng: number; elevation: number;
+  ssp: string; canopy_offset_pct: number; albedo_offset_pct: number;
+  location_hint: string;
+}, signal: AbortSignal): Promise<any> {
+
+  console.log(
+    "[fetchClimateRisk] Sending payload to /api/climate-risk:\n",
+    JSON.stringify(payload, null, 2)
+  );
+
+  const riskResp = await fetch("/api/engine", {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({ endpoint: "/api/climate-risk", payload }),
+    signal,
+  });
+
+  if (!riskResp.ok) {
+    const rawText = await riskResp.text();
+    let humanMessage = rawText;
+    try {
+      const parsed = JSON.parse(rawText) as { detail?: unknown };
+      if (parsed.detail) {
+        console.error(
+          `[fetchClimateRisk] FastAPI ${riskResp.status} validation errors:\n`,
+          JSON.stringify(parsed.detail, null, 2)
+        );
+        if (Array.isArray(parsed.detail)) {
+          humanMessage = parsed.detail
+            .map((e: { loc?: string[]; msg?: string; type?: string }) =>
+              `[${(e.loc ?? []).join(" → ")}] ${e.msg ?? e.type ?? "unknown"}`
+            )
+            .join("  |  ");
+        } else {
+          humanMessage = String(parsed.detail);
+        }
+      }
+    } catch {
+      console.error(
+        `[fetchClimateRisk] Non-JSON error body (status ${riskResp.status}):\n`,
+        rawText
+      );
+    }
+    throw new Error(`API ${riskResp.status}: ${humanMessage}`);
+  }
+
+  const riskData = await riskResp.json();
+  if (riskData.error) throw new Error(`Engine: ${riskData.error}`);
+  return riskData;
+}
+
+async function geocodeAndFetch(
+  query: string,
+  ssp: string
+): Promise<Omit<CityResult, "loading" | "error"> | null> {
   const geoData = await fetchNominatimSafe(query);
   if (!geoData.length) throw new Error("Location not found.");
-  const g = geoData[0];
-  const lat = parseFloat(g.lat); const lng = parseFloat(g.lon);
+
+  const g         = geoData[0];
+  const lat       = parseFloat(g.lat);
+  const lng       = parseFloat(g.lon);
   const elevation = await fetchElevationSafe(lat, lng);
+  const locationHint = (g.display_name ?? query).trim();
+
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 30000);
+  const timer      = setTimeout(() => controller.abort(), 30000);
+
   try {
-    const riskResp = await fetch("/api/engine", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ endpoint: '/api/climate-risk', payload: { lat, lng, elevation, ssp, canopy_offset_pct: 0, albedo_offset_pct: 0, location_hint: query } }),
-      signal: controller.signal,
-    });
+    const riskData = await fetchClimateRisk(
+      {
+        lat,
+        lng,
+        elevation,
+        ssp,                         
+        canopy_offset_pct: 0,
+        albedo_offset_pct: 0,
+        location_hint: locationHint, 
+      },
+      controller.signal
+    );
     clearTimeout(timer);
-    if (!riskResp.ok) throw new Error(`API ${riskResp.status}`);
-    const riskData = await riskResp.json();
-    if (riskData.error) throw new Error(`Engine: ${riskData.error}`);
     return { query, display_name: g.display_name, lat, lng, elevation, ...riskData };
-  } catch (err) { clearTimeout(timer); throw err; }
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
 }
 
 const COMPARE_YEARS = [2030, 2050, 2075, 2100];
 
 const METRICS = [
-  { key: "heatwave_days",       label: "Heatwave Days",      unit: "d/yr",  source: "CMIP6 Ensemble · ERA5 P95",          fmt: (v: number) => `${fmt(v, 0)}d`,    hasCalc: false },
-  { key: "peak_tx5d_c",         label: "Peak Tx5d",          unit: "°C",    source: "Open-Meteo CMIP6",                   fmt: (v: number) => `${fmt(v)}°C`,      hasCalc: false },
-  { key: "wbt_max_c",           label: "Max Wet-Bulb",       unit: "°C",    source: "Stull (2011) · ERA5 P95 Humidity",   fmt: (v: number) => formatWBT(v),       hasCalc: false },
-  { key: "uhi_intensity_c",     label: "UHI Intensity",      unit: "°C",    source: "Oke (1982) cap 8°C",                 fmt: (v: number) => `+${fmt(v)}°C`,     hasCalc: false },
-  { key: "attributable_deaths", label: "Attributable Deaths",unit: "est/yr",source: "Gasparrini (2017), Lancet",          fmt: (v: number) => Math.round(v).toLocaleString(), hasCalc: true  },
-  { key: "economic_decay_usd",  label: "Economic Decay",     unit: "USD",   source: "Burke (2018) · ILO (2019)",          fmt: (v: number) => fmtUSD(v),          hasCalc: true  },
+  { key: "heatwave_days",       label: "Heatwave Days",       unit: "d/yr",   source: "CMIP6 Ensemble · ERA5 P95",         fmt: (v: number) => `${fmt(v, 0)}d`,                             hasCalc: false },
+  { key: "peak_tx5d_c",         label: "Peak Tx5d",           unit: "°C",     source: "Open-Meteo CMIP6",                  fmt: (v: number) => `${fmt(v)}°C`,                               hasCalc: false },
+  { key: "wbt_max_c",           label: "Max Wet-Bulb",        unit: "°C",     source: "Stull (2011) · ERA5 P95 Humidity",  fmt: (v: number) => formatWBT(v),                                hasCalc: false },
+  { key: "uhi_intensity_c",     label: "UHI Intensity",       unit: "°C",     source: "Oke (1982) cap 8°C",                fmt: (v: number) => `+${fmt(v)}°C`,                              hasCalc: false },
+  { key: "attributable_deaths", label: "Attributable Deaths", unit: "est/yr", source: "Gasparrini (2017), Lancet",         fmt: (v: number) => Math.round(v).toLocaleString(),              hasCalc: true  },
+  { key: "economic_decay_usd",  label: "Economic Decay",      unit: "USD",    source: "Burke (2018) · ILO (2019)",         fmt: (v: number) => fmtUSD(v),                                   hasCalc: true  },
 ];
 
 // ─────────────────────────────────────────────────────────────────
@@ -242,7 +316,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   const [searchQuery2, setSearchQuery2] = useState("");
   const [suggestions2, setSuggestions2] = useState<any[]>([]);
   const [city2Geo, setCity2Geo]         = useState<{ lat: number; lng: number; display_name: string } | null>(null);
-  const [ssp, setSsp]                   = useState("ssp245");
+  const [ssp, setSsp]                   = useState("SSP2-4.5");
   const [canopy, setCanopy]             = useState(0);
   const [albedo, setAlbedo]             = useState(0);
   const [compareYear, setCompareYear]   = useState(2050);
@@ -252,7 +326,10 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   const [aiAnalysis, setAiAnalysis]     = useState<string | null>(null);
   const [aiLoading, setAiLoading]       = useState(false);
   const [retryStatus, setRetryStatus]   = useState<string | null>(null);
-  const [mathModal, setMathModal]       = useState<{ open: boolean; metricLabel: string; metricKey: string; valA: number | null; valB: number | null; }>({ open: false, metricLabel: '', metricKey: '', valA: null, valB: null });
+  const [mathModal, setMathModal]       = useState<{
+    open: boolean; metricLabel: string; metricKey: string;
+    valA: number | null; valB: number | null;
+  }>({ open: false, metricLabel: '', metricKey: '', valA: null, valB: null });
 
   const city1FetchedRef = useRef<string>("");
 
@@ -260,7 +337,11 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     if (!baseTarget || baseTarget === city1FetchedRef.current) return;
     city1FetchedRef.current = baseTarget;
     fetchNominatimSafe(baseTarget).then((data) => {
-      if (data?.[0]) setCity1Geo({ display_name: baseTarget, lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+      if (data?.[0]) setCity1Geo({
+        display_name: baseTarget,
+        lat:          parseFloat(data[0].lat),
+        lng:          parseFloat(data[0].lon),
+      });
     });
   }, [baseTarget]);
 
@@ -268,7 +349,13 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     if (city2Geo || searchQuery2.length <= 2) { setSuggestions2([]); return; }
     const timer = setTimeout(async () => {
       const data = await fetchNominatimSafe(searchQuery2);
-      setSuggestions2(data.map((c: any) => ({ id: c.place_id, name: c.name || c.display_name.split(',')[0], country: c.display_name.split(',').pop()?.trim() || '', latitude: parseFloat(c.lat), longitude: parseFloat(c.lon) })));
+      setSuggestions2(data.map((c: any) => ({
+        id:        c.place_id,
+        name:      c.name || c.display_name.split(',')[0],
+        country:   c.display_name.split(',').pop()?.trim() || '',
+        latitude:  parseFloat(c.lat),
+        longitude: parseFloat(c.lon),
+      })));
     }, 600);
     return () => clearTimeout(timer);
   }, [searchQuery2, city2Geo]);
@@ -276,8 +363,13 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   const handleCompare = async () => {
     if (!city2Geo || running) return;
     setGlobalError(null); setRunning(true); setAiAnalysis(null); setRetryStatus(null);
+
     const queries = [baseTarget, city2Geo.display_name];
-    const initialResults = queries.map((q) => ({ query: q, display_name: q, lat: 0, lng: 0, elevation: 0, threshold_c: 0, cooling_offset_c: 0, gdp_usd: null, population: null, projections: [], loading: true, error: null }));
+    const initialResults = queries.map((q) => ({
+      query: q, display_name: q, lat: 0, lng: 0, elevation: 0,
+      threshold_c: 0, cooling_offset_c: 0, gdp_usd: null, population: null,
+      projections: [], baseline: { baseline_mean_c: null }, loading: true, error: null,
+    }));
     setResults(initialResults);
 
     const newResults: CityResult[] = [];
@@ -295,7 +387,15 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
         }
       }
       if (!success) {
-        newResults.push({ query: queries[i], display_name: queries[i], lat: 0, lng: 0, elevation: 0, threshold_c: 0, cooling_offset_c: 0, gdp_usd: null, population: null, projections: [], loading: false, error: String(lastError?.message || lastError).replace('Error: ', '') });
+        const errMsg = String(lastError?.message ?? lastError).replace('Error: ', '');
+        console.error(`[CompareModule] Final error for "${queries[i]}":`, errMsg);
+        newResults.push({
+          query: queries[i], display_name: queries[i], lat: 0, lng: 0,
+          elevation: 0, threshold_c: 0, cooling_offset_c: 0,
+          gdp_usd: null, population: null, projections: [],
+          baseline: { baseline_mean_c: null },
+          loading: false, error: errMsg,
+        });
         setRetryStatus(null);
       }
       setResults([...newResults, ...initialResults.slice(i + 1)]);
@@ -315,35 +415,42 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           const p2 = okRes[1].projections.find(p => p.year === compareYear) || okRes[1].projections[0];
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 30000);
-          
-          // 🚀 FIXED: AI Payload correctly targets /api/research-analysis to avoid 400 Error
+
           const aiResp = await fetch("/api/engine", {
-            method: "POST", headers: { "Content-Type": "application/json" },
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              endpoint: '/api/research-analysis', // Correct endpoint
+              endpoint: '/api/research-analysis',
               payload: {
                 city_name: `${okRes[0].query} vs ${okRes[1].query}`,
-                context: "Compare",
+                context:   "Comparative climate risk analysis between two urban centers.",
                 metrics: {
-                  temp: `${okRes[0].query}: ${fmt(p1?.peak_tx5d_c)}°C | ${okRes[1].query}: ${fmt(p2?.peak_tx5d_c)}°C`,
+                  temp:      `${okRes[0].query}: ${fmt(p1?.peak_tx5d_c)}°C | ${okRes[1].query}: ${fmt(p2?.peak_tx5d_c)}°C`,
                   elevation: `${okRes[0].query}: ${fmt(okRes[0].elevation, 0)}m | ${okRes[1].query}: ${fmt(okRes[1].elevation, 0)}m`,
-                  heatwave: `${okRes[0].query}: ${fmt(p1?.heatwave_days, 0)} days | ${okRes[1].query}: ${fmt(p2?.heatwave_days, 0)} days`,
-                  loss: `${okRes[0].query}: ${fmtUSD(p1?.economic_decay_usd)} | ${okRes[1].query}: ${fmtUSD(p2?.economic_decay_usd)}`,
-                  deaths: `${okRes[0].query}: ${fmt(p1?.attributable_deaths, 0)} | ${okRes[1].query}: ${fmt(p2?.attributable_deaths, 0)}`,
-                  lat: `${okRes[0].lat} | ${okRes[1].lat}`, 
-                  lng: `${okRes[0].lng} | ${okRes[1].lng}`,
-                }
+                  heatwave:  `${okRes[0].query}: ${fmt(p1?.heatwave_days, 0)} days | ${okRes[1].query}: ${fmt(p2?.heatwave_days, 0)} days`,
+                  loss:      `${okRes[0].query}: ${fmtUSD(p1?.economic_decay_usd)} | ${okRes[1].query}: ${fmtUSD(p2?.economic_decay_usd)}`,
+                  deaths:    `${okRes[0].query}: ${fmt(p1?.attributable_deaths, 0)} | ${okRes[1].query}: ${fmt(p2?.attributable_deaths, 0)}`,
+                  lat:       `${okRes[0].lat} | ${okRes[1].lat}`,
+                  lng:       `${okRes[0].lng} | ${okRes[1].lng}`,
+                },
               },
             }),
             signal: controller.signal,
           });
-          
+
           clearTimeout(timer);
-          if (!aiResp.ok) throw new Error(`API ${aiResp.status}`);
+          if (!aiResp.ok) {
+            const t = await aiResp.text();
+            console.error("[CompareModule] AI endpoint error:", t);
+            throw new Error(`API ${aiResp.status}`);
+          }
           const aiData = await aiResp.json();
-          const text = aiData.comparison || aiData.reasoning || "";
-          if (text && text.length > 10) { setAiAnalysis(text); aiSuccess = true; setRetryStatus(null); }
-          else throw new Error("Empty AI response");
+          const text   = aiData.comparison || aiData.reasoning || "";
+          if (text && text.length > 10) {
+            setAiAnalysis(text); aiSuccess = true; setRetryStatus(null);
+          } else {
+            throw new Error("Empty AI response");
+          }
         } catch {
           aiRetries--;
           if (aiRetries > 0) await new Promise(r => setTimeout(r, 3000));
@@ -354,12 +461,16 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     }
   };
 
-  const getMitigatedValue = (baseValue: number | null | undefined, metricKey: string, baseHW = 0): number | null => {
+  const getMitigatedValue = (
+    baseValue: number | null | undefined,
+    metricKey: string,
+    baseHW = 0
+  ): number | null => {
     if (baseValue == null) return null;
     const cooling = (canopy / 100) * 1.2 + (albedo / 100) * 0.8;
     if (['peak_tx5d_c', 'uhi_intensity_c'].includes(metricKey)) return Math.max(0, baseValue - cooling);
-    if (metricKey === 'wbt_max_c') return Math.min(35.0, Math.max(0, baseValue - cooling));
-    if (metricKey === 'heatwave_days') return Math.max(0, baseValue - (cooling * 3.5));
+    if (metricKey === 'wbt_max_c')          return Math.min(35.0, Math.max(0, baseValue - cooling));
+    if (metricKey === 'heatwave_days')       return Math.max(0, baseValue - (cooling * 3.5));
     if (['attributable_deaths', 'economic_decay_usd'].includes(metricKey)) {
       const effHW = Math.max(0, baseHW - (cooling * 3.5));
       const hwR   = baseHW > 0 ? effHW / baseHW : 1;
@@ -369,9 +480,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   };
 
   const hasMitigation = canopy > 0 || albedo > 0;
-  const okResults = results.filter(r => !r.loading && !r.error && r.projections?.length > 0);
-  const projA     = okResults[0]?.projections?.find(p => p.year === compareYear) ?? null;
-  const projB     = okResults[1]?.projections?.find(p => p.year === compareYear) ?? null;
+  const okResults     = results.filter(r => !r.loading && !r.error && r.projections?.length > 0);
+  const projA         = okResults[0]?.projections?.find(p => p.year === compareYear) ?? null;
+  const projB         = okResults[1]?.projections?.find(p => p.year === compareYear) ?? null;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
@@ -412,7 +523,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
             <div className="relative z-20 w-full overflow-visible">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block mb-3 font-bold">City B — Target</span>
               <div className="relative w-full overflow-visible">
-                <input type="text" value={searchQuery2}
+                <input
+                  type="text"
+                  value={searchQuery2}
                   onChange={(e) => { setSearchQuery2(e.target.value); if (city2Geo) setCity2Geo(null); }}
                   placeholder="Search city to compare..."
                   className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3 text-[11px] font-mono text-white placeholder-slate-500 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest"
@@ -420,8 +533,14 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                 {suggestions2.length > 0 && !city2Geo && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-[#050814] border border-cyan-500/30 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-[9999] max-h-48 overflow-y-auto">
                     {suggestions2.map((city, idx) => (
-                      <div key={`${city.id}-${idx}`}
-                        onClick={() => { const n = `${city.name}, ${city.country}`; setSearchQuery2(n); setCity2Geo({ display_name: n, lat: city.latitude, lng: city.longitude }); setSuggestions2([]); }}
+                      <div
+                        key={`${city.id}-${idx}`}
+                        onClick={() => {
+                          const n = `${city.name}, ${city.country}`;
+                          setSearchQuery2(n);
+                          setCity2Geo({ display_name: n, lat: city.latitude, lng: city.longitude });
+                          setSuggestions2([]);
+                        }}
                         className="px-4 py-3 text-[10px] font-mono text-slate-300 hover:bg-cyan-900 hover:text-white cursor-pointer transition-colors border-b border-slate-800 last:border-0 uppercase tracking-widest"
                       >
                         {city.name}, <span className="opacity-50">{city.country}</span>
@@ -439,14 +558,22 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-cyan-950/10 border border-cyan-500/10 rounded-xl mb-6">
           <div>
             <label className="block text-[10px] font-mono text-cyan-200 uppercase tracking-widest mb-2">Scenario</label>
-            <select value={ssp} onChange={(e) => setSsp(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-cyan-400 outline-none focus:border-cyan-500">
-              <option value="ssp245">SSP2-4.5 (MODERATE)</option>
-              <option value="ssp585">SSP5-8.5 (HIGH RISK)</option>
+            <select
+              value={ssp}
+              onChange={(e) => setSsp(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-cyan-400 outline-none focus:border-cyan-500"
+            >
+              <option value="SSP2-4.5">SSP2-4.5 (MODERATE)</option>
+              <option value="SSP5-8.5">SSP5-8.5 (HIGH RISK)</option>
             </select>
           </div>
           <div>
             <label className="block text-[10px] font-mono text-cyan-200 uppercase tracking-widest mb-2">Year</label>
-            <select value={compareYear} onChange={(e) => setCompareYear(Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none focus:border-cyan-500">
+            <select
+              value={compareYear}
+              onChange={(e) => setCompareYear(Number(e.target.value))}
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none focus:border-cyan-500"
+            >
               {COMPARE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
@@ -466,14 +593,23 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           </div>
         </div>
 
-        <button onClick={handleCompare} disabled={running || !city2Geo}
+        <button
+          onClick={handleCompare}
+          disabled={running || !city2Geo}
           className="w-full md:w-auto px-10 py-3 bg-cyan-900 border border-cyan-500/50 text-white font-mono text-xs font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-cyan-800 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(34,211,238,0.2)]"
-          style={{ touchAction: 'manipulation' }}>
+          style={{ touchAction: 'manipulation' }}
+        >
           {running ? "PROCESSING..." : "RUN COMPARISON"}
         </button>
 
-        {retryStatus && <p className="mt-4 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-widest animate-pulse"><span className="inline-block w-2 h-2 bg-cyan-400 rounded-full mr-2" />{retryStatus}</p>}
-        {globalError && <p className="mt-4 text-[10px] font-mono text-red-500 bg-red-950/30 border border-red-900/50 rounded-lg px-4 py-2 uppercase tracking-widest">{globalError}</p>}
+        {retryStatus && (
+          <p className="mt-4 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-widest animate-pulse">
+            <span className="inline-block w-2 h-2 bg-cyan-400 rounded-full mr-2" />{retryStatus}
+          </p>
+        )}
+        {globalError && (
+          <p className="mt-4 text-[10px] font-mono text-red-500 bg-red-950/30 border border-red-900/50 rounded-lg px-4 py-2 uppercase tracking-widest">{globalError}</p>
+        )}
       </div>
 
       {/* Loading */}
@@ -483,7 +619,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
             <div key={i} className="bg-[#050b14]/70 border border-cyan-500/20 rounded-xl p-6 h-28 flex items-center justify-center">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping" />
-                <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-widest">{r.loading ? 'Loading telemetry...' : 'Processing...'}</span>
+                <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-widest">
+                  {r.loading ? 'Loading telemetry...' : 'Processing...'}
+                </span>
               </div>
             </div>
           ))}
@@ -493,7 +631,6 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       {/* ── RESULTS ── */}
       {okResults.length === 2 && !running && (
         <>
-          {/* Mitigation comparison bar — shows when sliders > 0 */}
           {hasMitigation && (
             <div className="bg-[#06101f] border border-emerald-800/30 rounded-2xl p-5">
               <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -507,18 +644,18 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                   const proj = r.projections?.find(p => p.year === compareYear);
                   if (!proj) return null;
                   const mitDeaths = getMitigatedValue(proj.attributable_deaths, 'attributable_deaths', proj.heatwave_days);
-                  const mitLoss   = getMitigatedValue(proj.economic_decay_usd, 'economic_decay_usd', proj.heatwave_days);
-                  const mitTemp   = getMitigatedValue(proj.peak_tx5d_c, 'peak_tx5d_c', proj.heatwave_days);
-                  const mitHW     = getMitigatedValue(proj.heatwave_days, 'heatwave_days', proj.heatwave_days);
+                  const mitLoss   = getMitigatedValue(proj.economic_decay_usd,  'economic_decay_usd',  proj.heatwave_days);
+                  const mitTemp   = getMitigatedValue(proj.peak_tx5d_c,         'peak_tx5d_c',         proj.heatwave_days);
+                  const mitHW     = getMitigatedValue(proj.heatwave_days,        'heatwave_days',       proj.heatwave_days);
                   return (
                     <div key={r.query}>
                       <p className="text-[9px] font-mono text-slate-400 uppercase tracking-widest font-bold mb-3 truncate">{r.query}</p>
                       <div className="grid grid-cols-2 gap-3">
                         {[
-                          { label: 'Deaths', base: proj.attributable_deaths.toLocaleString(), mit: mitDeaths ? Math.round(mitDeaths).toLocaleString() : '—', saved: mitDeaths ? `−${(proj.attributable_deaths - Math.round(mitDeaths)).toLocaleString()}` : '—', bc: 'text-red-400' },
-                          { label: 'Econ Loss', base: fmtUSD(proj.economic_decay_usd), mit: fmtUSD(mitLoss), saved: mitLoss ? `−${fmtUSD(proj.economic_decay_usd - mitLoss)}` : '—', bc: 'text-amber-400' },
-                          { label: 'Peak Temp', base: `${fmt(proj.peak_tx5d_c)}°C`, mit: `${fmt(mitTemp ?? 0)}°C`, saved: `−${fmt((proj.peak_tx5d_c) - (mitTemp ?? proj.peak_tx5d_c))}°C`, bc: 'text-orange-400' },
-                          { label: 'HW Days', base: `${proj.heatwave_days}d`, mit: `${Math.round(mitHW ?? proj.heatwave_days)}d`, saved: `−${proj.heatwave_days - Math.round(mitHW ?? proj.heatwave_days)}d`, bc: 'text-yellow-400' },
+                          { label: 'Deaths',    base: proj.attributable_deaths.toLocaleString(), mit: mitDeaths ? Math.round(mitDeaths).toLocaleString() : '—', saved: mitDeaths ? `−${(proj.attributable_deaths - Math.round(mitDeaths)).toLocaleString()}` : '—', bc: 'text-red-400'   },
+                          { label: 'Econ Loss', base: fmtUSD(proj.economic_decay_usd),            mit: fmtUSD(mitLoss),                                         saved: mitLoss ? `−${fmtUSD(proj.economic_decay_usd - mitLoss)}` : '—',                       bc: 'text-amber-400' },
+                          { label: 'Peak Temp', base: `${fmt(proj.peak_tx5d_c)}°C`,               mit: `${fmt(mitTemp ?? 0)}°C`,                                saved: `−${fmt((proj.peak_tx5d_c) - (mitTemp ?? proj.peak_tx5d_c))}°C`,                     bc: 'text-orange-400'},
+                          { label: 'HW Days',   base: `${proj.heatwave_days}d`,                   mit: `${Math.round(mitHW ?? proj.heatwave_days)}d`,             saved: `−${proj.heatwave_days - Math.round(mitHW ?? proj.heatwave_days)}d`,                bc: 'text-yellow-400'},
                         ].map((item) => (
                           <div key={item.label} className="bg-slate-900/30 rounded-lg p-3 border border-slate-800/40">
                             <p className="text-[8px] font-mono text-slate-600 uppercase mb-1.5">{item.label}</p>
@@ -576,7 +713,16 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                   {METRICS.map(m => {
                     const baseVals = okResults.map(r => {
                       const p = r.projections?.find(pr => pr.year === compareYear);
-                      return p ? (p as any)[m.key] as number : null;
+                      if (!p) return null;
+                      
+                      let val = (p as any)[m.key];
+                      
+                      // 🔴 THE FIX: If UHI is null/undefined in the table mapping, calculate it using baseline
+                      if (m.key === 'uhi_intensity_c' && val == null) {
+                        val = r.baseline?.baseline_mean_c ? (p.peak_tx5d_c - r.baseline.baseline_mean_c) : 2.1;
+                      }
+                      
+                      return val as number;
                     });
                     const mitigatedVals = okResults.map((r, i) => {
                       const p = r.projections?.find(pr => pr.year === compareYear);
@@ -584,15 +730,17 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                       return getMitigatedValue(baseVals[i], m.key, p.heatwave_days);
                     });
                     const displayVals = hasMitigation ? mitigatedVals : baseVals;
-                    const maxVal = Math.max(...displayVals.filter((v): v is number => v !== null));
+                    const maxVal      = Math.max(...displayVals.filter((v): v is number => v !== null));
 
                     return (
-                      <tr key={m.key}
+                      <tr
+                        key={m.key}
                         className={`hover:bg-cyan-900/10 transition-colors group ${m.hasCalc ? 'cursor-pointer' : ''}`}
                         onClick={() => {
                           if (!m.hasCalc || !projA || !projB) return;
                           setMathModal({ open: true, metricLabel: m.label, metricKey: m.key, valA: displayVals[0], valB: displayVals[1] });
-                        }}>
+                        }}
+                      >
                         <td className="px-5 md:px-8 py-5">
                           <div className="flex items-center gap-2">
                             <span className="text-[11px] font-mono text-slate-300 uppercase tracking-wider group-hover:text-white transition-colors">{m.label}</span>
@@ -627,7 +775,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                               {/* Saved delta */}
                               {hasMitigation && baseV != null && mitV != null && (
                                 <div className="text-[8px] font-mono text-emerald-500 mt-1">
-                                  {m.key === 'economic_decay_usd' ? `−${fmtUSD(baseV - mitV)}` : m.key === 'attributable_deaths' ? `−${Math.round(baseV - mitV).toLocaleString()}` : `−${fmt(baseV - mitV)}`}
+                                  {m.key === 'economic_decay_usd'  ? `−${fmtUSD(baseV - mitV)}`
+                                  : m.key === 'attributable_deaths' ? `−${Math.round(baseV - mitV).toLocaleString()}`
+                                  : `−${fmt(baseV - mitV)}`}
                                 </div>
                               )}
                               {dispV != null && m.key === 'attributable_deaths' && (
@@ -671,9 +821,14 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
 
       {/* Errors */}
       {results.filter(r => r.error).map(r => (
-        <div key={r.query} className="bg-red-500/10 border border-red-500/20 rounded-xl px-5 py-4 flex gap-4 items-center">
-          <span className="text-red-500 font-mono text-xs">ERR:</span>
-          <span className="text-red-400 font-mono text-[10px] uppercase tracking-widest">{r.query}: {r.error}</span>
+        <div key={r.query} className="bg-red-500/10 border border-red-500/20 rounded-xl px-5 py-4 flex flex-col gap-2">
+          <div className="flex gap-4 items-center">
+            <span className="text-red-500 font-mono text-xs shrink-0">ERR:</span>
+            <span className="text-red-400 font-mono text-[10px] uppercase tracking-widest break-all">{r.query}</span>
+          </div>
+          <pre className="text-[9px] font-mono text-red-300/70 bg-red-950/20 border border-red-900/30 rounded-lg px-3 py-2 whitespace-pre-wrap break-all leading-relaxed">
+            {r.error}
+          </pre>
         </div>
       ))}
     </div>

@@ -1,0 +1,157 @@
+
+/Users/aakash/openplanet-climate
+├── Dockerfile
+├── LICENSE
+├── PRIVACY.md
+├── README.md
+├── backend
+├── backend_architecture.png
+├── climate_engine
+|  ├── __init__.py
+|  ├── api
+|  |  ├── __init__.py
+|  |  ├── main.py
+|  |  ├── physics.py
+|  |  ├── routes_baseline.py
+|  |  ├── routes_projection.py
+|  |  └── schemas.py
+|  ├── audit
+|  |  ├── __init__.py
+|  |  └── input_hashing.py
+|  ├── config.py
+|  ├── data
+|  |  └── countries_loader.py
+|  ├── db
+|  |  ├── base.py
+|  |  ├── models.py
+|  |  └── session.py
+|  ├── epidemiology.py
+|  ├── lapse_layer.py
+|  ├── services
+|  |  ├── __init__.py
+|  |  ├── cmip6_service.py
+|  |  ├── engine_bridge.py
+|  |  ├── llm_service.py
+|  |  ├── scenario_runner.py
+|  |  └── socioeconomic_service.py
+|  ├── settings.py
+|  └── version.py
+├── docs
+|  └── methodology.md
+├── frontend
+|  ├── README.md
+|  ├── eslint.config.mjs
+|  ├── frontend_architecture.png
+|  ├── next-auth.d.ts
+|  ├── next-env.d.ts
+|  ├── next.config.ts
+|  ├── package-lock.json
+|  ├── package.json
+|  ├── postcss.config.mjs
+|  ├── public
+|  |  ├── cybermap.jpeg
+|  |  ├── file.svg
+|  |  ├── globe.svg
+|  |  ├── logo.jpeg
+|  |  ├── next.svg
+|  |  ├── satellite-map.jpeg
+|  |  ├── vercel.svg
+|  |  └── window.svg
+|  ├── src
+|  |  ├── app
+|  |  |  ├── about
+|  |  |  ├── api
+|  |  |  ├── dashboard
+|  |  |  ├── discover
+|  |  |  ├── globals.css
+|  |  |  ├── icon.jpeg
+|  |  |  ├── layout.tsx
+|  |  |  ├── opengraph-image.jpeg
+|  |  |  ├── page.tsx
+|  |  |  ├── privacy
+|  |  |  ├── robots.ts
+|  |  |  ├── sitemap.ts
+|  |  |  ├── support
+|  |  |  └── terms
+|  |  ├── components
+|  |  |  ├── CompareModule.tsx
+|  |  |  ├── ExcelExport.tsx
+|  |  |  ├── MapModule.tsx
+|  |  |  ├── MethodologyModule.tsx
+|  |  |  ├── Navbar.tsx
+|  |  |  ├── Providers.tsx
+|  |  |  └── ResearchModule.tsx
+|  |  ├── context
+|  |  |  └── ClimateDataContext.tsx
+|  |  └── lib
+|  |     └── data
+|  ├── tailwind.config.ts
+|  └── tsconfig.json
+├── hf_space
+|  ├── Dockerfile
+|  ├── README.md
+|  ├── climate_engine
+|  |  ├── __init__.py
+|  |  ├── api
+|  |  |  ├── __init__.py
+|  |  |  ├── main.py
+|  |  |  ├── routes_baseline.py
+|  |  |  ├── routes_projection.py
+|  |  |  └── schemas.py
+|  |  ├── audit
+|  |  |  ├── __init__.py
+|  |  |  └── input_hashing.py
+|  |  ├── config.py
+|  |  ├── constants.py
+|  |  ├── data
+|  |  |  └── countries_loader.py
+|  |  ├── db
+|  |  |  ├── base.py
+|  |  |  ├── models.py
+|  |  |  └── session.py
+|  |  ├── epidemiology.py
+|  |  ├── lapse_layer.py
+|  |  ├── services
+|  |  |  ├── __init__.py
+|  |  |  ├── engine_bridge.py
+|  |  |  └── scenario_runner.py
+|  |  ├── settings.py
+|  |  ├── utils
+|  |  |  ├── geo_utils.py
+|  |  |  └── math_utils.py
+|  |  └── version.py
+|  ├── pyproject.toml
+|  ├── requirements.txt
+|  └── secrets
+|     └── gee-service-account.json
+├── infra
+|  ├── Dockerfile.frontend
+|  ├── docker-compose.yml
+|  └── nginx.conf
+├── openplanet_climate.egg-info
+|  ├── PKG-INFO
+|  ├── SOURCES.txt
+|  ├── dependency_links.txt
+|  ├── requires.txt
+|  └── top_level.txt
+├── ops_shield.duckdb
+├── package-lock.json
+├── package.json
+├── project_structure.txt
+├── pyproject.toml
+├── requirements.txt
+├── scripts
+|  ├── backup_db.sh
+|  └── seed_database.py
+├── shared
+├── start.sh
+├── test_api.py
+└── tests
+   └── test_pipeline.py
+
+directory: 1563 file: 5849
+
+ignored: directory (211)
+
+
+[2K[1G
