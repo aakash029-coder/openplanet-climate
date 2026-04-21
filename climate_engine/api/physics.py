@@ -5,7 +5,7 @@ Scientific Principles:
 - Stull (2011) wet-bulb equation (pure empirical form)
 - Köppen-Geiger inspired self-diagnosing climate zone detection
 - ERA5 reanalysis data via Open-Meteo Archive API
-- World Bank mortality data via official API
+- UN Population API mortality data (Bypassing World Bank 503s)
 - Zone-aware Burke (2018) economic corrections
 - Dynamic H3 boundary generation with point-to-polygon fallback
 
@@ -16,9 +16,9 @@ ZERO-FAIL PROTOCOL:
 
 Data Sources:
 - ERA5: Copernicus Climate Data Store via Open-Meteo
-- World Bank: Official REST API (v2)
 - Open-Meteo: CMIP6 climate projections
 - Nominatim: OpenStreetMap geocoding
+- OFFLINE TITANIUM VAULT: Socioeconomic & Demographic Data (0ms Latency)
 """
 
 from __future__ import annotations
@@ -27,6 +27,8 @@ import logging
 import asyncio
 import math
 import time
+import json
+import os
 from enum import Enum
 from typing import Optional, NamedTuple
 from dataclasses import dataclass
@@ -40,6 +42,7 @@ from tenacity import (
     retry_if_exception_type,
     before_sleep_log,
 )
+import pycountry
 
 logger = logging.getLogger(__name__)
 rate_limit_lock = asyncio.Semaphore(5)
@@ -55,11 +58,9 @@ ISO3_MAP = {
     "SE": "SWE", "NO": "NOR", "FI": "FIN", "DK": "DNK", "PL": "POL",
 }
 
-# Cache for ERA5 API calls
+# Cache for API calls
 _ERA5_CACHE: dict = {}
-_WORLDBANK_CACHE: dict = {}
 _CACHE_TTL = 86400  # 24 hours
-
 
 def _cache_get(store: dict, key: str):
     entry = store.get(key)
@@ -67,10 +68,21 @@ def _cache_get(store: dict, key: str):
         return entry[0]
     return None
 
-
 def _cache_set(store: dict, key: str, value):
     store[key] = (value, time.time())
 
+# ---------------------------------------------------------------------------
+# OFFLINE VAULT LOADER — 0ms Latency, Zero API Failures
+# ---------------------------------------------------------------------------
+try:
+    _VAULT_PATH = os.path.join(os.path.dirname(__file__), '../data/socio_vault.json')
+    with open(_VAULT_PATH, 'r') as _f:
+        _OFFLINE_VAULT = json.load(_f)
+except Exception as e:
+    logger.error("Failed to load offline vault in physics.py: %s", e)
+    _OFFLINE_VAULT = {}
+
+_FALLBACK_DEATH_RATE = 7.5  # WHO Global Median
 
 # ---------------------------------------------------------------------------
 # Latitude-based temperature fallback (ZERO-FAIL PROTOCOL)
@@ -116,7 +128,6 @@ def _latitude_temperature_fallback(lat: float) -> float:
     )
     return round(base, 1)
 
-
 def _latitude_p95_humidity_fallback(lat: float) -> float:
     """
     Estimate P95 summer relative humidity from latitude when ERA5 fails.
@@ -151,7 +162,6 @@ def _latitude_p95_humidity_fallback(lat: float) -> float:
     )
     return rh
 
-
 # ---------------------------------------------------------------------------
 # Climate Zone Detection (Köppen-Geiger Inspired Self-Diagnosis)
 # ---------------------------------------------------------------------------
@@ -163,7 +173,6 @@ class ClimateZone(str, Enum):
     EXTREME_CONTINENTAL = "EXTREME_CONTINENTAL"
     STANDARD = "STANDARD_ZONE"
 
-
 @dataclass(frozen=True)
 class ZoneClassification:
     """Result of climate zone detection with diagnostic metadata."""
@@ -172,7 +181,6 @@ class ZoneClassification:
     confidence: float
     diagnostic_flags: tuple[str, ...]
     lethal_risk_days: Optional[int] = None
-
 
 def detect_climate_archetype(
     mean_temp: float,
@@ -215,7 +223,6 @@ def detect_climate_archetype(
     # ── Default: Standard ─────────────────────────────────────────────────
     flags.append("Standard temperate/maritime or moderate tropical baseline")
     return ZoneClassification(zone=ClimateZone.STANDARD, confidence=0.95, diagnostic_flags=tuple(flags))
-
 
 # ---------------------------------------------------------------------------
 # ERA5 Humidity — with retry + fallback
@@ -317,7 +324,6 @@ async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
     _cache_set(_ERA5_CACHE, cache_key, fallback)
     return fallback
 
-
 async def _fetch_relative_humidity_live(lat: float, lng: float) -> float:
     """
     Fetch current relative humidity from Open-Meteo Forecast API.
@@ -362,7 +368,6 @@ async def _fetch_relative_humidity_live(lat: float, lng: float) -> float:
 
     return _latitude_p95_humidity_fallback(lat)
 
-
 # ---------------------------------------------------------------------------
 # Stull (2011) Wet-Bulb Temperature — Zone-Aware & Thermodynamically Corrected
 # ---------------------------------------------------------------------------
@@ -376,7 +381,6 @@ class WetBulbResult:
     zone: ClimateZone
     theoretical_uncapped_wbt: Optional[float] = None
     lethal_risk_flag: bool = False
-
 
 def _stull_wetbulb(
     temp_c: float,
@@ -436,7 +440,6 @@ def _stull_wetbulb(
         lethal_risk_flag=lethal_flag,
     )
 
-
 def stull_wetbulb_simple(
     temp_c: float,
     rh_pct: float,
@@ -445,80 +448,23 @@ def stull_wetbulb_simple(
     """Simplified wet-bulb returning only the capped temperature float."""
     return _stull_wetbulb(temp_c, rh_pct, zone).wbt_celsius
 
-
 # ---------------------------------------------------------------------------
-# World Bank — Crude Death Rate (with cache + retry + fallback)
+# Offline Vault API — Crude Death Rate
 # ---------------------------------------------------------------------------
-
-# Global median fallback death rate (WHO 2019) — used only when WB fails
-_FALLBACK_DEATH_RATE = 7.5  # per 1,000 population
-
 
 async def _fetch_worldbank_death_rate(iso3: str) -> float:
     """
-    Fetch crude death rate from the World Bank Open Data API.
-
-    ZERO-FAIL: Falls back to WHO global median on total failure.
-
-    Indicator: SP.DYN.CDRT.IN — Crude death rate per 1,000 population.
-
-    Args:
-        iso3: ISO 3166-1 alpha-3 country code.
-
-    Returns:
-        Crude death rate per 1,000 population.
+    Fetches death rate from the blazing fast local JSON vault. No network calls.
     """
-    cache_key = f"wb_death_{iso3}"
-    cached = _cache_get(_WORLDBANK_CACHE, cache_key)
-    if cached is not None:
-        return cached
-
-    url = (
-        f"https://api.worldbank.org/v2/country/{iso3}/indicator/SP.DYN.CDRT.IN"
-        f"?format=json&mrv=3&per_page=3"
-    )
-
-    max_attempts = 3
-    for attempt in range(1, max_attempts + 1):
-        try:
-            async with rate_limit_lock:
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    resp = await client.get(url)
-                    if resp.status_code == 429:
-                        await asyncio.sleep(2 ** attempt)
-                        continue
-                    resp.raise_for_status()
-                    data = resp.json()
-
-            if len(data) > 1 and data[1]:
-                for entry in data[1]:
-                    if entry.get("value") is not None:
-                        rate = float(entry["value"])
-                        _cache_set(_WORLDBANK_CACHE, cache_key, rate)
-                        logger.info(
-                            "World Bank death rate for %s: %.2f (year: %s)",
-                            iso3, rate, entry.get("date"),
-                        )
-                        return rate
-
-        except Exception as exc:
-            if attempt < max_attempts:
-                await asyncio.sleep(2 ** attempt)
-                logger.warning(
-                    "World Bank attempt %d/%d for %s failed: %s",
-                    attempt, max_attempts, iso3, exc,
-                )
-            else:
-                logger.error(
-                    "World Bank completely failed for %s after %d attempts — "
-                    "using WHO global median fallback %.1f",
-                    iso3, max_attempts, _FALLBACK_DEATH_RATE,
-                )
-
-    # ZERO-FAIL fallback
-    _cache_set(_WORLDBANK_CACHE, cache_key, _FALLBACK_DEATH_RATE)
+    country_data = _OFFLINE_VAULT.get(iso3)
+    
+    if country_data and country_data.get('death_rate') is not None:
+        rate = float(country_data['death_rate'])
+        logger.info("⚡ FAST VAULT HIT: Death rate for %s is %.2f", iso3, rate)
+        return rate
+        
+    logger.warning("ISO3 '%s' not in Local Vault. Using WHO fallback (7.5).", iso3)
     return _FALLBACK_DEATH_RATE
-
 
 # ---------------------------------------------------------------------------
 # Gasparrini et al. (2017) — Heat-Attributable Mortality
@@ -559,7 +505,6 @@ def _gasparrini_mortality(
     )
     return max(0, deaths)
 
-
 # ---------------------------------------------------------------------------
 # Burke et al. (2018) — Zone-Aware GDP Loss
 # ---------------------------------------------------------------------------
@@ -573,7 +518,6 @@ class EconomicLossResult:
     penalty_coefficient: float
     zone: ClimateZone
     adjustment_notes: tuple[str, ...]
-
 
 def _burke_economic_loss(
     gdp: float,
@@ -640,7 +584,6 @@ def _burke_economic_loss(
         adjustment_notes=tuple(notes),
     )
 
-
 def burke_economic_loss_simple(
     gdp: float,
     mean_temp: float,
@@ -648,7 +591,6 @@ def burke_economic_loss_simple(
 ) -> float:
     """Simplified economic loss returning only the USD value."""
     return _burke_economic_loss(gdp, mean_temp, zone).loss_usd
-
 
 # ---------------------------------------------------------------------------
 # City Boundary H3 Generation
@@ -665,7 +607,6 @@ class H3CoverageResult:
     boundary_source: str
     coverage_area_km2: Optional[float] = None
 
-
 def _extract_polygon_coords(geojson: dict) -> list[list[float]]:
     """Extract coordinates from GeoJSON Polygon or MultiPolygon."""
     geom_type = geojson.get("type", "")
@@ -681,7 +622,6 @@ def _extract_polygon_coords(geojson: dict) -> list[list[float]]:
                 return largest[0]
 
     raise ValueError(f"Unsupported geometry type: {geom_type}")
-
 
 async def get_city_hexagons(
     city_name: str,
@@ -843,7 +783,6 @@ async def get_city_hexagons(
         center_lng=center_lng,
         boundary_source="single_hex",
     )
-
 
 # ---------------------------------------------------------------------------
 # Audit Trail

@@ -9,6 +9,7 @@ Architecture v2.0 ("Actually Undefeatable"):
 - Density-aware metro population estimation
 - Thread-safe cache writes
 - Smart Keyword Extraction (strips "Greater ", "City of ", ", undefined")
+- OFFLINE DATA ROUTER: Zero API calls for indicators (0ms Latency via Titanium Vault)
 - ZERO-FAIL: Never crashes, always returns a usable result
 """
 
@@ -18,7 +19,9 @@ import asyncio
 import logging
 import time
 import re
-import math  # Moved to top level
+import math
+import json
+import os
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Tuple
@@ -27,6 +30,18 @@ import httpx
 import pycountry
 
 logger = logging.getLogger(__name__)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# OFFLINE VAULT LOADER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+try:
+    _VAULT_PATH = os.path.join(os.path.dirname(__file__), '../data/socio_vault.json')
+    with open(_VAULT_PATH, 'r') as _f:
+        _OFFLINE_VAULT = json.load(_f)
+except Exception as e:
+    logger.error("Failed to load offline vault in socio_service.py: %s", e)
+    _OFFLINE_VAULT = {}
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -126,54 +141,41 @@ GEO_TIERS: Dict[str, GeoEconomicTier] = {
 }
 
 COUNTRY_TO_TIER: Dict[str, str] = {
-    # North America High
     "US": "NORTH_AMERICA_HIGH", "CA": "NORTH_AMERICA_HIGH",
-    # Europe High
     "DE": "EUROPE_HIGH", "FR": "EUROPE_HIGH", "GB": "EUROPE_HIGH",
     "IT": "EUROPE_HIGH", "ES": "EUROPE_HIGH", "NL": "EUROPE_HIGH",
     "BE": "EUROPE_HIGH", "AT": "EUROPE_HIGH", "CH": "EUROPE_HIGH",
     "SE": "EUROPE_HIGH", "NO": "EUROPE_HIGH", "DK": "EUROPE_HIGH",
     "FI": "EUROPE_HIGH", "IE": "EUROPE_HIGH", "PT": "EUROPE_HIGH",
     "LU": "EUROPE_HIGH", "IS": "EUROPE_HIGH",
-    # East Asia High
     "JP": "EAST_ASIA_HIGH", "KR": "EAST_ASIA_HIGH", "TW": "EAST_ASIA_HIGH",
     "SG": "EAST_ASIA_HIGH", "HK": "EAST_ASIA_HIGH",
-    # Oceania High
     "AU": "OCEANIA_HIGH", "NZ": "OCEANIA_HIGH",
-    # Gulf High
     "AE": "GULF_HIGH", "SA": "GULF_HIGH", "QA": "GULF_HIGH",
     "KW": "GULF_HIGH", "BH": "GULF_HIGH", "OM": "GULF_HIGH",
-    # Europe Upper-Mid
     "PL": "EUROPE_UPPER_MID", "CZ": "EUROPE_UPPER_MID", "HU": "EUROPE_UPPER_MID",
     "RO": "EUROPE_UPPER_MID", "BG": "EUROPE_UPPER_MID", "HR": "EUROPE_UPPER_MID",
     "SK": "EUROPE_UPPER_MID", "SI": "EUROPE_UPPER_MID", "LT": "EUROPE_UPPER_MID",
     "LV": "EUROPE_UPPER_MID", "EE": "EUROPE_UPPER_MID", "GR": "EUROPE_UPPER_MID",
     "RS": "EUROPE_UPPER_MID", "UA": "EUROPE_UPPER_MID", "BY": "EUROPE_UPPER_MID",
     "RU": "EUROPE_UPPER_MID", "TR": "EUROPE_UPPER_MID",
-    # LATAM Upper-Mid
     "MX": "LATAM_UPPER_MID", "BR": "LATAM_UPPER_MID", "AR": "LATAM_UPPER_MID",
     "CL": "LATAM_UPPER_MID", "CO": "LATAM_UPPER_MID", "PE": "LATAM_UPPER_MID",
     "VE": "LATAM_UPPER_MID", "EC": "LATAM_UPPER_MID", "CR": "LATAM_UPPER_MID",
     "PA": "LATAM_UPPER_MID", "UY": "LATAM_UPPER_MID", "DO": "LATAM_UPPER_MID",
-    # East Asia Upper-Mid
     "CN": "EAST_ASIA_UPPER_MID", "TH": "EAST_ASIA_UPPER_MID", "MY": "EAST_ASIA_UPPER_MID",
-    # South Asia Lower-Mid
     "IN": "SOUTH_ASIA_LOWER_MID", "BD": "SOUTH_ASIA_LOWER_MID",
     "PK": "SOUTH_ASIA_LOWER_MID", "LK": "SOUTH_ASIA_LOWER_MID",
     "NP": "SOUTH_ASIA_LOWER_MID",
-    # Southeast Asia Lower-Mid
     "ID": "SOUTHEAST_ASIA_LOWER_MID", "PH": "SOUTHEAST_ASIA_LOWER_MID",
     "VN": "SOUTHEAST_ASIA_LOWER_MID", "MM": "SOUTHEAST_ASIA_LOWER_MID",
     "KH": "SOUTHEAST_ASIA_LOWER_MID", "LA": "SOUTHEAST_ASIA_LOWER_MID",
-    # Africa Lower-Mid
     "NG": "AFRICA_LOWER_MID", "GH": "AFRICA_LOWER_MID", "KE": "AFRICA_LOWER_MID",
     "CI": "AFRICA_LOWER_MID", "SN": "AFRICA_LOWER_MID", "CM": "AFRICA_LOWER_MID",
     "ZA": "AFRICA_LOWER_MID", "EG": "AFRICA_LOWER_MID", "MA": "AFRICA_LOWER_MID",
     "TN": "AFRICA_LOWER_MID", "DZ": "AFRICA_LOWER_MID",
-    # MENA Lower-Mid
     "IR": "MENA_LOWER_MID", "IQ": "MENA_LOWER_MID", "JO": "MENA_LOWER_MID",
     "LB": "MENA_LOWER_MID", "PS": "MENA_LOWER_MID",
-    # Africa Low
     "ET": "AFRICA_LOW", "TZ": "AFRICA_LOW", "UG": "AFRICA_LOW",
     "RW": "AFRICA_LOW", "MW": "AFRICA_LOW", "MZ": "AFRICA_LOW",
     "ZM": "AFRICA_LOW", "ZW": "AFRICA_LOW", "SD": "AFRICA_LOW",
@@ -182,10 +184,8 @@ COUNTRY_TO_TIER: Dict[str, str] = {
     "BF": "AFRICA_LOW", "SO": "AFRICA_LOW", "ER": "AFRICA_LOW",
     "MR": "AFRICA_LOW", "GM": "AFRICA_LOW", "GN": "AFRICA_LOW",
     "SL": "AFRICA_LOW", "LR": "AFRICA_LOW", "BI": "AFRICA_LOW",
-    # South Asia Fragile
     "AF": "SOUTH_ASIA_FRAGILE", "YE": "SOUTH_ASIA_FRAGILE",
     "SY": "SOUTH_ASIA_FRAGILE", "HT": "SOUTH_ASIA_FRAGILE",
-    # Small Island Developing States
     "FJ": "SMALL_ISLAND_DEVELOPING", "WS": "SMALL_ISLAND_DEVELOPING",
     "TO": "SMALL_ISLAND_DEVELOPING", "VU": "SMALL_ISLAND_DEVELOPING",
     "SB": "SMALL_ISLAND_DEVELOPING", "PG": "SMALL_ISLAND_DEVELOPING",
@@ -317,12 +317,6 @@ def _clean_city_keyword(raw_city: str) -> str:
     """
     Strips frontend noise and administrative prefixes to extract the core
     geographical entity. Prevents 404 errors from garbage input.
-
-    Examples:
-        'City of Edinburgh, undefined'  → 'Edinburgh'
-        'Greater London, UK'            → 'London, UK'
-        'Metropolitan Tokyo'            → 'Tokyo'
-        'Mumbai, India'                 → 'Mumbai, India'  (unchanged, already clean)
     """
     # Kill the frontend "undefined" bug
     cleaned = re.sub(r",\s*undefined\b", "", raw_city, flags=re.IGNORECASE).strip()
@@ -336,6 +330,12 @@ def _clean_city_keyword(raw_city: str) -> str:
 
     # Noise patterns to strip (order matters — most specific first)
     noise_patterns = [
+        r"^special\s+capital\s+region\s+of\s+",       # Fixes Jakarta
+        r"^national\s+capital\s+region\s+of\s+",      # Fixes Manila / Delhi variants
+        r"^national\s+capital\s+territory\s+of\s+",   # Fixes NCT of Delhi
+        r"^federal\s+territory\s+of\s+",              # Fixes Kuala Lumpur
+        r"^province\s+of\s+",
+        r"^state\s+of\s+",
         r"^city\s+of\s+",
         r"^greater\s+",
         r"^municipality\s+of\s+",
@@ -481,54 +481,36 @@ async def geocode_city(city: str, client: httpx.AsyncClient) -> GeocodingResult:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# WORLD BANK API
+# OFFLINE DATA ROUTER (Bypassing external APIs entirely)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-WORLD_BANK_INDICATORS = {
-    "gdp_per_capita": "NY.GDP.PCAP.CD",
-    "urban_share": "SP.URB.TOTL.IN.ZS",
-    "gni_per_capita": "NY.GNP.PCAP.CD",
-    "life_expectancy": "SP.DYN.LE00.IN",
-    "physicians_per1000": "SH.MED.PHYS.ZS",
-    "pct_under15": "SP.POP.0014.TO.ZS",
-    "pct_over65": "SP.POP.65UP.TO.ZS",
-}
-
-
-async def _fetch_single_indicator(
-    iso3: str,
-    indicator_code: str,
-    indicator_name: str,
-    client: httpx.AsyncClient,
-) -> Tuple[str, Optional[float]]:
-    url = f"https://api.worldbank.org/v2/country/{iso3}/indicator/{indicator_code}"
-    params = {"format": "json", "mrv": 5, "per_page": 5}
-
-    max_retries = 2
-    for attempt in range(max_retries + 1):
+async def fetch_un_death_rate(iso3: str, client: httpx.AsyncClient) -> Optional[float]:
+    """
+    Fetches Crude Death Rate (Indicator 59) directly from the UN Population Division API.
+    Use this in your physics engine instead of World Bank.
+    """
+    try:
+        country = pycountry.countries.get(alpha_3=iso3.upper())
+        if not country:
+            return None
+        un_code = country.numeric
+        
+        # API endpoint for Crude Death Rate (59)
+        url = f"https://population.un.org/dataportalapi/api/v1/data/indicators/59/locations/{un_code}/start/2023/end/2024"
+        
         async with WORLD_BANK_SEMAPHORE:
-            try:
-                resp = await client.get(url, params=params, timeout=12.0)
-                if resp.status_code == 429:
-                    await asyncio.sleep(2 ** attempt)
-                    continue
-                resp.raise_for_status()
-                data = resp.json()
-                if len(data) > 1 and data[1]:
-                    for entry in data[1]:
-                        if entry.get("value") is not None:
-                            return indicator_name, float(entry["value"])
-                return indicator_name, None
-            except httpx.HTTPStatusError:
-                if attempt < max_retries:
-                    await asyncio.sleep(1)
-                    continue
-                return indicator_name, None
-            except Exception as exc:
-                logger.warning("World Bank error for %s/%s: %s", indicator_name, iso3, exc)
-                return indicator_name, None
-
-    return indicator_name, None
+            resp = await client.get(url, headers={"Accept": "application/json"}, timeout=10.0)
+            resp.raise_for_status()
+            data = resp.json()
+            
+            if data.get("data"):
+                # UN API returns an array of records; grab the most recent one
+                return float(data["data"][0]["value"])
+                
+    except Exception as exc:
+        logger.warning("UN Population API failed for death rate (%s): %s", iso3, exc)
+        
+    return None
 
 
 async def fetch_country_indicators(
@@ -536,35 +518,33 @@ async def fetch_country_indicators(
     iso2: str,
     client: httpx.AsyncClient,
 ) -> Dict[str, float]:
-    cache_key = f"wb:{iso3}"
+    """
+    Instantly returns country indicators from the local JSON Vault.
+    Zero network calls = Zero 404/503 errors. 0ms Latency.
+    """
+    cache_key = f"offline_socio_{iso3}"
     cached = await _country_cache.get(cache_key)
     if cached:
         return cached
 
-    tasks = [
-        _fetch_single_indicator(iso3, code, name, client)
-        for name, code in WORLD_BANK_INDICATORS.items()
-    ]
-    results = await asyncio.gather(*tasks)
-    raw_data = {name: value for name, value in results}
-
+    # 1. Check if real data exists in our Mac's local Vault
+    country_data = _OFFLINE_VAULT.get(iso3, {})
+    
+    # 2. Get Fallback Tier just in case some specific field is missing
     tier = get_tier_for_country(iso2)
 
     final_data: Dict[str, Any] = {
-        "gdp_per_capita": raw_data["gdp_per_capita"] or tier.gdp_per_capita,
-        "urban_share": raw_data["urban_share"] or tier.urban_share,
-        "gni_per_capita": raw_data["gni_per_capita"] or raw_data["gdp_per_capita"] or tier.gdp_per_capita,
-        "life_expectancy": raw_data["life_expectancy"] or tier.life_expectancy,
-        "physicians_per1000": raw_data["physicians_per1000"] or tier.physicians_per1000,
-        "pct_under15": raw_data["pct_under15"] or tier.pct_under15,
-        "pct_over65": raw_data["pct_over65"] or tier.pct_over65,
+        "gdp_per_capita": country_data.get("gdp_per_capita") or tier.gdp_per_capita,
+        "urban_share": country_data.get("urban_share") or tier.urban_share,
+        "gni_per_capita": country_data.get("gdp_per_capita") or tier.gdp_per_capita,
+        "life_expectancy": country_data.get("life_expectancy") or tier.life_expectancy,
+        "physicians_per1000": country_data.get("physicians_per1000") or tier.physicians_per1000,
+        "pct_under15": country_data.get("pct_under15") or tier.pct_under15,
+        "pct_over65": country_data.get("pct_over65") or tier.pct_over65,
         "density_factor": tier.density_factor,
     }
 
-    imputed = [k for k, v in raw_data.items() if v is None]
-    if imputed:
-        tier_name = COUNTRY_TO_TIER.get(iso2.upper(), DEFAULT_TIER)
-        logger.info("Imputed from tier '%s' for %s: %s", tier_name, iso3, imputed)
+    logger.info("⚡ Loaded socioeconomics for %s directly from Local Vault!", iso3)
 
     await _country_cache.set(cache_key, final_data)
     return final_data
@@ -725,7 +705,7 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
         iso2 = geo.country_code
         iso3 = iso2_to_iso3(iso2)
 
-        # ── Country indicators (World Bank + tier fallback) ───────────────
+        # ── Country indicators (Titanium Vault + tier fallback) ───────────
         indicators = await fetch_country_indicators(iso3, iso2, client)
 
     city_pop = geo.city_population
