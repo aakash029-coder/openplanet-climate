@@ -270,7 +270,7 @@ export const RightPanel = ({ isInitialized, simData, isSimulating, mitigatedData
         </div>
       ) : (
         <div className="flex flex-col flex-grow overflow-y-auto custom-scrollbar divide-y divide-slate-800/40">
-          
+
           {/* ── DEATHS ── */}
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">

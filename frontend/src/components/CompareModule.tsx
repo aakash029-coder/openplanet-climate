@@ -316,10 +316,14 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   const [searchQuery2, setSearchQuery2] = useState("");
   const [suggestions2, setSuggestions2] = useState<any[]>([]);
   const [city2Geo, setCity2Geo]         = useState<{ lat: number; lng: number; display_name: string } | null>(null);
-  const [ssp, setSsp]                   = useState("SSP2-4.5");
-  const [canopy, setCanopy]             = useState(0);
-  const [albedo, setAlbedo]             = useState(0);
-  const [compareYear, setCompareYear]   = useState(2050);
+
+  // 🔴 SYNC STATE WITH LOCAL STORAGE 🔴
+  const savedState = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('op_sync_state') || '{}') : {};
+  const [ssp, setSsp]                   = useState(savedState.ssp || "SSP2-4.5");
+  const [canopy, setCanopy]             = useState(savedState.canopy !== undefined ? savedState.canopy : 0);
+  const [albedo, setAlbedo]             = useState(savedState.albedo !== undefined ? savedState.albedo : 0);
+  const [compareYear, setCompareYear]   = useState(savedState.year ? Number(savedState.year) : 2050);
+
   const [results, setResults]           = useState<CityResult[]>([]);
   const [running, setRunning]           = useState(false);
   const [globalError, setGlobalError]   = useState<string | null>(null);
@@ -332,6 +336,16 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   }>({ open: false, metricLabel: '', metricKey: '', valA: null, valB: null });
 
   const city1FetchedRef = useRef<string>("");
+
+  // 🔴 UPDATE LOCAL STORAGE WHEN USER CHANGES SLIDERS/DROPDOWNS HERE 🔴
+  useEffect(() => {
+    localStorage.setItem('op_sync_state', JSON.stringify({ 
+      ssp, 
+      year: compareYear.toString(), 
+      canopy, 
+      albedo 
+    }));
+  }, [ssp, compareYear, canopy, albedo]);
 
   useEffect(() => {
     if (!baseTarget || baseTarget === city1FetchedRef.current) return;
