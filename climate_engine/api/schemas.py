@@ -127,15 +127,16 @@ class CompareAnalysisRequest(BaseModel):
             raise ValueError("city_a and city_b must be different cities.")
         return self
 
-
+# 🔴 FIX: ONLY ONE SimulationResponse IS HERE, WITH ALL FIELDS 🔴
 class SimulationResponse(BaseModel):
     """Response schema for frontend simulation results."""
 
-    metrics:     Dict[str, Any]
-    hexGrid:     List[Dict[str, Any]]  # Empty list — spatial rendering via PMTiles
-    aiAnalysis:  Optional[Dict[str, str]]  = None
-    auditTrail:  Optional[Dict[str, Any]]  = None
-    charts:      Dict[str, List[Dict[str, Any]]]
+    metrics:         Dict[str, Any]
+    hexGrid:         List[Dict[str, Any]]
+    aiAnalysis:      Optional[Dict[str, str]]        = None
+    auditTrail:      Optional[Dict[str, Any]]        = None
+    charts:          Dict[str, List[Dict[str, Any]]] = None
+    historicalEras:  Optional[Dict[str, Any]]        = None  # Added here correctly
 
 
 # ---------------------------------------------------------------------------
