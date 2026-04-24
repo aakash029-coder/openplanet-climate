@@ -9,7 +9,7 @@ export default function Navbar() {
   const { data: session } = useSession()
   const pathname = usePathname()
 
-  // ✅ Mobile menu state
+  // Mobile menu state
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const getLinkStyle = (path: string) => {
@@ -20,7 +20,7 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ✅ FIX: GPU-accelerated navbar — scroll pe kabhi nahi hilega */}
+      {/* FIX: GPU-accelerated navbar — scroll pe kabhi nahi hilega */}
       <nav
         className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-8 lg:px-16 xl:px-24 h-20 bg-[#050505]/40 backdrop-blur-2xl border-b border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.9)]"
         style={{

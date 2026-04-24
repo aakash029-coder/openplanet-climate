@@ -1,16 +1,13 @@
 """
-climate_engine/services/socioeconomic_service.py — Hardened Socioeconomic Data Service
-
-Architecture v2.0 ("Actually Undefeatable"):
+climate_engine/services/socioeconomic_service.py — Socioeconomic Data Service
+Architecture v2.0:
 - LRU cache with TTL and memory bounds
-- Dual-geocoder fallback (Open-Meteo → Nominatim)
+- Dual-geocoder fallback (Open-Meteo -> Nominatim)
 - Proper rate limiting with exponential backoff
-- Real Geo-Economic Vault
+- Offline Geo-Economic Vault routing
 - Density-aware metro population estimation
-- Thread-safe cache writes
-- Smart Keyword Extraction (strips "Greater ", "City of ", ", undefined")
-- OFFLINE DATA ROUTER: Zero API calls for indicators (0ms Latency via Titanium Vault)
-- ZERO-FAIL: Never crashes, always returns a usable result
+- Thread-safe cache operations
+- Administrative keyword extraction
 """
 
 from __future__ import annotations
@@ -310,15 +307,15 @@ def iso2_to_iso3(iso2: str) -> str:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SMART KEYWORD EXTRACTOR (NINJA REGEX CLEANER)
+# SMART KEYWORD EXTRACTOR
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _clean_city_keyword(raw_city: str) -> str:
     """
-    Strips frontend noise and administrative prefixes to extract the core
-    geographical entity. Prevents 404 errors from garbage input.
+    Strips administrative prefixes to extract the core geographical entity.
+    Prevents lookup errors from varied naming conventions.
     """
-    # Kill the frontend "undefined" bug
+    # Handle literal 'undefined' passed by client configurations
     cleaned = re.sub(r",\s*undefined\b", "", raw_city, flags=re.IGNORECASE).strip()
     cleaned = re.sub(r"\bundefined\b", "", cleaned, flags=re.IGNORECASE).strip()
 
@@ -328,12 +325,12 @@ def _clean_city_keyword(raw_city: str) -> str:
     parts = [p.strip() for p in cleaned.split(",")]
     core_city = parts[0]
 
-    # Noise patterns to strip (order matters — most specific first)
+    # Pattern stripping (order matters: most specific to least specific)
     noise_patterns = [
-        r"^special\s+capital\s+region\s+of\s+",       # Fixes Jakarta
-        r"^national\s+capital\s+region\s+of\s+",      # Fixes Manila / Delhi variants
-        r"^national\s+capital\s+territory\s+of\s+",   # Fixes NCT of Delhi
-        r"^federal\s+territory\s+of\s+",              # Fixes Kuala Lumpur
+        r"^special\s+capital\s+region\s+of\s+",
+        r"^national\s+capital\s+region\s+of\s+",
+        r"^national\s+capital\s+territory\s+of\s+",
+        r"^federal\s+territory\s+of\s+",
         r"^province\s+of\s+",
         r"^state\s+of\s+",
         r"^city\s+of\s+",
@@ -350,7 +347,7 @@ def _clean_city_keyword(raw_city: str) -> str:
         core_city = re.sub(pattern, "", core_city, flags=re.IGNORECASE).strip()
 
     if not core_city:
-        # Degenerate case — return original to avoid empty query
+        # Return original input if aggressive stripping leaves string empty
         return raw_city
 
     parts[0] = core_city
@@ -401,12 +398,20 @@ async def _fetch_openmeteo_geocoding(
     if not results:
         raise ValueError(f"Open-Meteo: no results for '{city}'")
 
-    # Prefer results with population data
     hit = max(results, key=lambda r: r.get("population") or 0)
+    country_code = hit.get("country_code", "").upper()
+
+    base_population = hit.get("population") or 0
+    tier = get_tier_for_country(country_code)
+    
+    if base_population > 0:
+        metro_population = int(base_population * tier.density_factor)
+    else:
+        metro_population = int(500_000 * tier.density_factor) 
 
     return GeocodingResult(
-        city_population=hit.get("population") or 0,
-        country_code=hit.get("country_code", "").upper(),
+        city_population=metro_population,
+        country_code=country_code,
         latitude=hit.get("latitude", 0.0),
         longitude=hit.get("longitude", 0.0),
         source="open-meteo",
@@ -426,7 +431,7 @@ async def _fetch_nominatim_geocoding(
                 **HEADERS,
                 "User-Agent": "ClimateRisk-Research/2.1 (https://github.com/aakash029-coder/openplanet-climate; officialaakash029@gmail.com)",
             }
-            # Adding a deliberate tiny sleep to ensure we strictly obey the 1 req/sec ToS
+            # Add micro-sleep to comply with Nominatim's 1 req/sec ToS
             await asyncio.sleep(1.1)
             resp = await client.get(url, params=params, headers=nom_headers, timeout=15.0)
             resp.raise_for_status()
@@ -443,8 +448,11 @@ async def _fetch_nominatim_geocoding(
     address = hit.get("address", {})
     country_code = address.get("country_code", "").upper()
 
+    tier = get_tier_for_country(country_code)
+    fallback_population = int(1_000_000 * tier.density_factor)
+
     return GeocodingResult(
-        city_population=0,
+        city_population=fallback_population,
         country_code=country_code,
         latitude=float(hit.get("lat", 0)),
         longitude=float(hit.get("lon", 0)),
@@ -454,40 +462,35 @@ async def _fetch_nominatim_geocoding(
 
 async def geocode_city(city: str, client: httpx.AsyncClient) -> GeocodingResult:
     """
-    Geocode a city with smart keyword extraction and automatic dual-provider fallback.
-
-    ZERO-FAIL:
-    1. Clean input with regex.
-    2. Try Open-Meteo (fast, global, has population).
-    3. Try Nominatim (authoritative OSM, slower).
-    4. If both fail, raise descriptive ValueError.
+    Geocode a city utilizing automatic dual-provider fallback.
+    1. Primary: Open-Meteo (fast, includes population metrics).
+    2. Fallback: Nominatim (authoritative OSM, slower).
     """
     smart_city = _clean_city_keyword(city)
     if smart_city.lower() != city.lower():
-        logger.info("Smart keyword: '%s' → '%s'", city, smart_city)
+        logger.info("Smart keyword extraction: '%s' -> '%s'", city, smart_city)
 
     try:
         return await _fetch_openmeteo_geocoding(smart_city, client)
     except ValueError as e:
-        logger.warning("Open-Meteo failed for '%s', trying Nominatim: %s", smart_city, e)
+        logger.warning("Open-Meteo resolution failed for '%s', transitioning to Nominatim: %s", smart_city, e)
 
     try:
         return await _fetch_nominatim_geocoding(smart_city, client)
     except ValueError as e:
         raise ValueError(
-            f"All geocoders failed for '{city}' (cleaned: '{smart_city}'). "
-            f"Check spelling or try a nearby major city. Last error: {e}"
+            f"All geocoding providers failed for '{city}' (parsed: '{smart_city}'). "
+            f"Please verify spelling or input a major surrounding municipality. Log: {e}"
         ) from e
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# OFFLINE DATA ROUTER (Bypassing external APIs entirely)
+# OFFLINE DATA ROUTER
 # ═══════════════════════════════════════════════════════════════════════════════
 
 async def fetch_un_death_rate(iso3: str, client: httpx.AsyncClient) -> Optional[float]:
     """
     Fetches Crude Death Rate (Indicator 59) directly from the UN Population Division API.
-    Use this in your physics engine instead of World Bank.
     """
     try:
         country = pycountry.countries.get(alpha_3=iso3.upper())
@@ -504,11 +507,10 @@ async def fetch_un_death_rate(iso3: str, client: httpx.AsyncClient) -> Optional[
             data = resp.json()
             
             if data.get("data"):
-                # UN API returns an array of records; grab the most recent one
                 return float(data["data"][0]["value"])
                 
     except Exception as exc:
-        logger.warning("UN Population API failed for death rate (%s): %s", iso3, exc)
+        logger.warning("UN Population API request failed for death rate (%s): %s", iso3, exc)
         
     return None
 
@@ -519,18 +521,14 @@ async def fetch_country_indicators(
     client: httpx.AsyncClient,
 ) -> Dict[str, float]:
     """
-    Instantly returns country indicators from the local JSON Vault.
-    Zero network calls = Zero 404/503 errors. 0ms Latency.
+    Resolves country indicators locally via vault mappings, providing resilient access.
     """
     cache_key = f"offline_socio_{iso3}"
     cached = await _country_cache.get(cache_key)
     if cached:
         return cached
 
-    # 1. Check if real data exists in our Mac's local Vault
     country_data = _OFFLINE_VAULT.get(iso3, {})
-    
-    # 2. Get Fallback Tier just in case some specific field is missing
     tier = get_tier_for_country(iso2)
 
     final_data: Dict[str, Any] = {
@@ -544,7 +542,7 @@ async def fetch_country_indicators(
         "density_factor": tier.density_factor,
     }
 
-    logger.info("⚡ Loaded socioeconomics for %s directly from Local Vault!", iso3)
+    logger.info("Loaded socioeconomic indicators for %s from Local Vault", iso3)
 
     await _country_cache.set(cache_key, final_data)
     return final_data
@@ -610,17 +608,11 @@ def compute_vulnerability_multiplier(
     physicians_per1000: float,
 ) -> float:
     """
-    Composite vulnerability score combining:
-    - Wealth proxy (AC access / adaptive capacity)
-    - Population age structure (physiological heat sensitivity)
-    - Healthcare system capacity (emergency response)
-
-    Returns a multiplier in [0.25, 2.5]:
-    < 1.0 = lower-than-average vulnerability (wealthy, young, well-served)
-    > 1.0 = higher-than-average vulnerability (poor, elderly, under-served)
+    Composite vulnerability score integrating wealth proxies, physiological risk 
+    (via age structures), and capacity of regional healthcare systems.
+    Outputs a multiplier bounding [0.25, 2.5].
     """
-
-    # ── AC / adaptive capacity factor ────────────────────────────────────
+    # Adaptive capacity / AC factor
     if gdp_per_capita > 40_000:
         ac_factor = 0.35
     elif gdp_per_capita > 20_000:
@@ -632,7 +624,7 @@ def compute_vulnerability_multiplier(
     else:
         ac_factor = 1.50
 
-    # ── Age structure factor ──────────────────────────────────────────────
+    # Age structure factor
     if median_age > 45:
         age_factor = 1.60
     elif median_age > 38:
@@ -644,7 +636,7 @@ def compute_vulnerability_multiplier(
     else:
         age_factor = 0.70
 
-    # ── Healthcare capacity factor ────────────────────────────────────────
+    # Healthcare capacity factor
     if physicians_per1000 > 4.0:
         health_factor = 0.70
     elif physicians_per1000 > 2.5:
@@ -656,8 +648,6 @@ def compute_vulnerability_multiplier(
     else:
         health_factor = 1.50
 
-    # Geometric mean of the three factors — prevents any single dimension
-    # from dominating the composite score.
     combined = (ac_factor * age_factor * health_factor) ** (1.0 / 3.0)
     return round(max(0.25, min(2.5, combined)), 3)
 
@@ -668,22 +658,7 @@ def compute_vulnerability_multiplier(
 
 async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
     """
-    Fetch comprehensive city socioeconomics with full resilience.
-
-    ZERO-FAIL: Only raises ValueError if geocoding completely fails.
-    All other data gaps are filled from the Geo-Economic Tier Vault.
-
-    Args:
-        city: City name string (e.g. "Mumbai", "Greater London", "City of Tokyo").
-
-    Returns:
-        Complete socioeconomic profile dict with keys:
-            population, city_gdp_usd, country_code, vulnerability_multiplier,
-            gdp_per_capita, median_age, life_expectancy, physicians_per1000,
-            _geocoder_source, _tier_imputed, _cache_stats
-
-    Raises:
-        ValueError: Only when all geocoders fail (unrecognisable city string).
+    Fetch comprehensive city socioeconomics, ensuring resolution via tier-based backups.
     """
     cache_key = city.strip().lower().split(",")[0].strip()
     cached = await _city_cache.get(cache_key)
@@ -695,57 +670,53 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
         )
         return cached
 
-    async with httpx.AsyncClient(headers=HEADERS, timeout=30.0) as client:
-        # ── Geocoding ─────────────────────────────────────────────────────
+    async with httpx.AsyncClient(headers=HEADERS, timeout=30.0, trust_env=False) as client:
+        # Geocoding resolution
         geo = await geocode_city(city, client)
 
         if not geo.country_code:
-            raise ValueError(f"Geocoding returned no country for '{city}'")
+            raise ValueError(f"Geocoding returned no identifiable country parameters for '{city}'")
 
         iso2 = geo.country_code
         iso3 = iso2_to_iso3(iso2)
 
-        # ── Country indicators (Titanium Vault + tier fallback) ───────────
+        # Indicator resolution
         indicators = await fetch_country_indicators(iso3, iso2, client)
 
     city_pop = geo.city_population
 
     if city_pop == 0:
         logger.warning(
-            "No exact population found for '%s' (source: %s). "
-            "Climate calculations will proceed without population-scaling.",
+            "Precision population unresolvable for '%s'. Downstream scaling will be bypassed.",
             city,
-            geo.source,
         )
 
-    # ── Metro-area population ─────────────────────────────────────────────
+    # Calculate regional populations
     metro_pop = compute_metro_population(
         city_pop,
         indicators["urban_share"],
         indicators["density_factor"],
     )
 
-    # ── Demographics ──────────────────────────────────────────────────────
     median_age = compute_median_age(
         indicators["pct_under15"],
         indicators["pct_over65"],
     )
 
-    # ── City GDP (metro scale × urban productivity premium) ───────────────
+    # Economic scaling
     if metro_pop > 0:
         urban_ratio = compute_urban_productivity_ratio(indicators["gdp_per_capita"])
         city_gdp = metro_pop * indicators["gdp_per_capita"] * urban_ratio
     else:
-        # Honest fallback: conservative estimate when population unknown
+        # Conservative fallback assumption applied to unknown regional clusters
         tier = get_tier_for_country(iso2)
-        city_gdp = tier.gdp_per_capita * 500_000   # assume small city baseline
+        city_gdp = tier.gdp_per_capita * 500_000
         logger.warning(
-            "No population for '%s' — using conservative city GDP estimate: $%.1fM",
+            "Missing accurate population data for '%s'; applying baseline regional GDP estimate: $%.1fM",
             city,
             city_gdp / 1e6,
         )
 
-    # ── Vulnerability multiplier ──────────────────────────────────────────
     vulnerability = compute_vulnerability_multiplier(
         indicators["gdp_per_capita"],
         median_age,
@@ -769,7 +740,7 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
     await _city_cache.set(cache_key, result)
 
     logger.info(
-        "Socio '%s' (%s/%s): metro=%d | gdp=$%.1fB | vuln=%s | age=%s | source=%s",
+        "Resolved Profile '%s' (%s/%s): metro=%d | gdp=$%.1fB | vuln=%s | age=%s | cache=%s",
         city,
         iso2,
         iso3,
@@ -789,13 +760,7 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
 
 def get_cache_stats() -> Dict[str, Any]:
     """
-    Return combined live statistics for both the city and country caches.
-
-    Useful for a /health or /debug endpoint to expose cache health.
-
-    Returns:
-        Dict with 'city' and 'country' sub-dicts, each containing:
-            size, max_size, hits, misses, hit_rate
+    Return combined live statistics for system caches.
     """
     return {
         "city": _city_cache.stats,
@@ -805,32 +770,23 @@ def get_cache_stats() -> Dict[str, Any]:
 
 async def invalidate_city_cache(city: str) -> bool:
     """
-    Manually evict a city from the cache (e.g. after a data correction).
-
-    Args:
-        city: Raw city name as originally submitted.
-
-    Returns:
-        True if the key existed and was removed, False if it was not cached.
+    Manually evicts a localized index from the cache tree.
     """
     cache_key = city.strip().lower().split(",")[0].strip()
     removed = await _city_cache.invalidate(cache_key)
     if removed:
-        logger.info("Cache evicted: '%s'", cache_key)
+        logger.info("Evicted index from cache: '%s'", cache_key)
     return removed
 
 
 async def flush_all_caches() -> Dict[str, int]:
     """
-    Flush both the city and country caches entirely.
-
-    Returns:
-        Dict with 'city_evicted' and 'country_evicted' counts.
+    Drops all cache pointers and resets memory buffers.
     """
     city_count = await _city_cache.clear()
     country_count = await _country_cache.clear()
     logger.warning(
-        "All caches flushed: city=%d entries, country=%d entries removed.",
+        "Caches reset initialized: %d city buffers, %d country buffers dropped.",
         city_count,
         country_count,
     )

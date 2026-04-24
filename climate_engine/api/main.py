@@ -1,14 +1,12 @@
 """
 climate_engine/api/main.py — FastAPI Application Factory
-
 Route responsibilities:
   1. Validate request schema (Pydantic).
   2. Normalize SSP strings to compact service-layer format ONCE at entry.
   3. Call physics / service layer functions.
-  4. Propagate data-unavailability as HTTP 404 (never silently swallow).
+  4. Propagate data-unavailability as HTTP 404.
   5. Return typed response schemas.
-
-Zero science here — all formulas live in physics.py and services/.
+Scientific logic is delegated to the physics and services layers.
 """
 
 from __future__ import annotations
@@ -44,6 +42,7 @@ from climate_engine.services.cmip6_service import (
     fetch_cmip6_projection,
 )
 from climate_engine.services.socioeconomic_service import fetch_live_socioeconomics
+from climate_engine.services.historical_service import fetch_historical_eras
 from climate_engine.services.llm_service import (
     generate_strategic_analysis,
     generate_strategic_analysis_raw,
@@ -68,9 +67,7 @@ from .physics import (
     stull_wetbulb_simple,
     _fetch_worldbank_death_rate,
     _gasparrini_mortality,
-    EconomicLossResult,
-    _burke_economic_loss,
-    burke_economic_loss_simple,
+    compute_hybrid_economic_loss,
     _build_audit_trail,
     H3CoverageResult,
     get_city_hexagons,
@@ -87,7 +84,6 @@ logger = logging.getLogger(__name__)
 def _iso2_to_iso3(iso2: str) -> str:
     """
     Convert an ISO 3166-1 alpha-2 code to alpha-3 using pycountry.
-
     Falls back gracefully:
       1. pycountry lookup (covers all 249 UN-recognised countries).
       2. Legacy ISO3_MAP (for "UN" → "WLD" and any custom mappings).
@@ -143,7 +139,7 @@ def _is_high_emission(ssp_code: str) -> bool:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _data_unavailable(detail: str) -> HTTPException:
-    logger.error("🔴 DATA UNAVAILABLE 404: %s", detail)
+    logger.error("DATA UNAVAILABLE 404: %s", detail)
     return HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Scientific Data Unavailable: {detail}",
@@ -162,7 +158,6 @@ async def _generate_hex_grid_data(
 ) -> list[dict]:
     """
     Generate H3 hex grid with UHI distance-decay modelling.
-
     1. Filters out water using global_land_mask.
     2. Applies a scientifically-accepted Urban Heat Island Distance-Decay Model.
     """
@@ -218,7 +213,7 @@ async def _generate_hex_grid_data(
 def create_app() -> FastAPI:
     app = FastAPI(
         title="OpenPlanet Climate Engine",
-        description="Hyper-local urban heat risk intelligence — honest physics, zero fallbacks.",
+        description="High-resolution urban heat risk intelligence.",
         version="2.0.0",
         docs_url="/docs" if settings.ENV_MODE.value == "development" else None,
         redoc_url="/redoc" if settings.ENV_MODE.value == "development" else None,
@@ -245,14 +240,13 @@ def create_app() -> FastAPI:
     # ── Rate limit exceeded handler ───────────────────────────────────────
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    # ── Global exception handler — ensures Vercel tunnel NEVER receives HTML ──
+    # ── Global exception handler ──────────────────────────────────────────
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
 
         if isinstance(exc, HTTPException):
-            # FastAPI HTTP exceptions — clean pass-through
             return JSONResponse(
                 status_code=exc.status_code,
                 content={
@@ -262,7 +256,6 @@ def create_app() -> FastAPI:
                 },
             )
 
-        # Unexpected exception — log full trace, return sanitised JSON
         tb = traceback.format_exc()
         logger.error(
             "Unhandled exception | request_id=%s | path=%s | %s\n%s",
@@ -272,7 +265,6 @@ def create_app() -> FastAPI:
             tb,
         )
 
-        # In development, expose the detail. In production, hide it.
         if settings.ENV_MODE.value == "development":
             detail = f"{type(exc).__name__}: {exc}"
         else:
@@ -290,12 +282,12 @@ def create_app() -> FastAPI:
             },
         )
 
-    # ── Health check (no auth, no rate limit) ────────────────────────────
+    # ── Health check ──────────────────────────────────────────────────────
 
     @app.get("/", tags=["Health"])
     async def root():
         return {
-            "status": "OpenPlanet Risk Engine — Honest Physics, No Fallbacks",
+            "status": "OpenPlanet Risk Engine",
             "version": "2.0.0",
             "env": settings.ENV_MODE.value,
         }
@@ -329,7 +321,7 @@ def create_app() -> FastAPI:
             f"- Peak Tx5d: {req.metrics.get('temp')}\n"
             f"- Elevation: {req.metrics.get('elevation')}\n"
             f"- Annual heatwave/heat-stress days: {req.metrics.get('heatwave')}\n"
-            f"- Economic loss (Burke 2018): {req.metrics.get('loss')}\n"
+            f"- Economic loss: {req.metrics.get('loss')}\n"
             "RULES: ONE paragraph. No lists. No bullets. "
             "Authoritative IPCC scientist tone. Use exact numbers provided."
         )
@@ -414,10 +406,11 @@ def create_app() -> FastAPI:
 
         # ── 3. External data (parallel) ───────────────────────────────────
         try:
-            death_rate, rh_live, rh_p95 = await asyncio.gather(
+            death_rate, rh_live, rh_p95, historical_eras = await asyncio.gather(
                 _fetch_worldbank_death_rate(iso3),
                 _fetch_relative_humidity_live(req.lat, req.lng),
                 _fetch_era5_humidity_p95(req.lat, req.lng),
+                fetch_historical_eras(req.lat, req.lng)
             )
         except Exception as exc:
             raise _data_unavailable(str(exc))
@@ -493,12 +486,12 @@ def create_app() -> FastAPI:
                 p95_rh=rh_p95,
                 tx5d=tx5d,
             )
-            econ_result: EconomicLossResult = _burke_economic_loss(
-                gdp=gdp,
-                mean_temp=mean_temp,
-                zone=zone_obj.zone,
+            loss = compute_hybrid_economic_loss(
+                city_gdp=gdp,
+                t_mean=mean_temp,
+                tx5d=tx5d,
+                hw_days=hw_days,
             )
-            loss = econ_result.loss_usd
             loss_mit = loss * (1.0 - total_cooling * 0.05)
 
             heatwave_chart.append({"year": str(yr), "val": int(hw_days)})
@@ -541,12 +534,12 @@ def create_app() -> FastAPI:
             vulnerability_multiplier=vuln,
         )
 
-        final_econ_result: EconomicLossResult = _burke_economic_loss(
-            gdp=gdp,
-            mean_temp=mean_temp_tgt,
-            zone=zone_obj_target.zone,
+        final_loss = compute_hybrid_economic_loss(
+            city_gdp=gdp,
+            t_mean=mean_temp_tgt,
+            tx5d=tx5d,
+            hw_days=hw_days_tgt,
         )
-        final_loss = final_econ_result.loss_usd
 
         wbt_result_proj: WetBulbResult = _stull_wetbulb(
             temp_c=tx5d,
@@ -582,7 +575,7 @@ def create_app() -> FastAPI:
         )
 
         logger.info(
-            "[predict] ✅ city=%r  year=%d  tx5d=%.1f°C  "
+            "[predict] Processed city=%r  year=%d  tx5d=%.1f°C  "
             "hw=%d  deaths=%.0f  loss=%s  zone=%s",
             req.city,
             target_year,
@@ -634,6 +627,7 @@ def create_app() -> FastAPI:
                 "zone_confidence": zone_obj_target.confidence,
                 "lethal_risk_flag": wbt_result_proj.lethal_risk_flag,
             },
+            "historicalEras": historical_eras,
             "hexGrid": hex_grid_data,
             "aiAnalysis": ai,
             "auditTrail": audit,
@@ -792,12 +786,12 @@ def create_app() -> FastAPI:
                     vulnerability_multiplier=vuln,
                 )
 
-                econ_result: EconomicLossResult = _burke_economic_loss(
-                    gdp=gdp,
-                    mean_temp=mean_temp,
-                    zone=zone_obj.zone,
+                econ_loss = compute_hybrid_economic_loss(
+                    city_gdp=gdp,
+                    t_mean=mean_temp,
+                    tx5d=tx5d,
+                    hw_days=hw_days,
                 )
-                econ_loss = econ_result.loss_usd
 
                 cdd = round(max(0.0, mean_temp - 18.0) * hw_days, 1)
 
@@ -843,7 +837,7 @@ def create_app() -> FastAPI:
                     "zone_confidence": zone_obj.confidence,
                     "zone_diagnostics": list(zone_obj.diagnostic_flags),
                     "lethal_risk_flag": wbt_result.lethal_risk_flag,
-                    "methodology": econ_result.methodology,
+                    "methodology": "Hybrid Bipartite Model (Burke Baseline + ILO Extreme Shocks)",
                     "audit_trail": audit,
                 })
 
@@ -858,7 +852,7 @@ def create_app() -> FastAPI:
             )
 
         logger.info(
-            "[climate-risk] ✅ %d projections  city=%r",
+            "[climate-risk] Processed %d projections for city=%r",
             len(projection_records),
             city_name,
         )

@@ -105,12 +105,17 @@ async def _tunnel_get(
     if not VERCEL_TUNNEL_URL:
         raise ValueError("VERCEL_TUNNEL_URL is not set in environment variables.")
 
+    # 🔴 THE FIX: Ensure the Vercel Tunnel URL has a protocol!
+    safe_tunnel_url = VERCEL_TUNNEL_URL
+    if not safe_tunnel_url.startswith("http://") and not safe_tunnel_url.startswith("https://"):
+        safe_tunnel_url = "https://" + safe_tunnel_url
+
     last_exc: Optional[Exception] = None
 
     for attempt in range(1, max_attempts + 1):
         try:
             resp = await client.post(
-                VERCEL_TUNNEL_URL,
+                safe_tunnel_url,
                 json={"target_url": url},
                 timeout=timeout,
             )

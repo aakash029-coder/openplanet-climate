@@ -2,23 +2,23 @@
 climate_engine/api/physics.py — Scientific Climate Physics Engine v2
 
 Scientific Principles:
-- Stull (2011) wet-bulb equation (pure empirical form)
-- Köppen-Geiger inspired self-diagnosing climate zone detection
+- Stull (2011) wet-bulb equation
+- Köppen-Geiger inspired climate zone detection
 - ERA5 reanalysis data via Open-Meteo Archive API
-- UN Population API mortality data (Bypassing World Bank 503s)
-- Zone-aware Burke (2018) economic corrections
+- UN Population API mortality data
+- Bipartite Economic Damage Model (Burke 2018 + ILO Standards)
 - Dynamic H3 boundary generation with point-to-polygon fallback
 
-ZERO-FAIL PROTOCOL:
-- Every external API call has exponential-backoff retry logic.
-- If ERA5 completely fails, a latitude-based mathematical fallback is used.
-- No silent None returns — all failures raise descriptive ValueError.
+Resilience Protocol:
+- Exponential-backoff retry logic for external API calls.
+- Latitude-based mathematical fallback for ERA5 outages.
+- Strict error propagation.
 
 Data Sources:
 - ERA5: Copernicus Climate Data Store via Open-Meteo
 - Open-Meteo: CMIP6 climate projections
 - Nominatim: OpenStreetMap geocoding
-- OFFLINE TITANIUM VAULT: Socioeconomic & Demographic Data (0ms Latency)
+- Offline Data Vault: Socioeconomic & Demographic Data
 """
 
 from __future__ import annotations
@@ -72,7 +72,7 @@ def _cache_set(store: dict, key: str, value):
     store[key] = (value, time.time())
 
 # ---------------------------------------------------------------------------
-# OFFLINE VAULT LOADER — 0ms Latency, Zero API Failures
+# OFFLINE VAULT LOADER
 # ---------------------------------------------------------------------------
 try:
     _VAULT_PATH = os.path.join(os.path.dirname(__file__), '../data/socio_vault.json')
@@ -85,17 +85,14 @@ except Exception as e:
 _FALLBACK_DEATH_RATE = 7.5  # WHO Global Median
 
 # ---------------------------------------------------------------------------
-# Latitude-based temperature fallback (ZERO-FAIL PROTOCOL)
+# Latitude-based temperature fallback
 # ---------------------------------------------------------------------------
 
 def _latitude_temperature_fallback(lat: float) -> float:
     """
     Estimate annual mean temperature purely from latitude when ERA5 fails.
-
     Uses a simplified cosine model calibrated against ERA5 climatology.
     Accuracy: ±4°C for continental regions, ±6°C for maritime/polar.
-
-    This is explicitly a last-resort fallback — always logs a WARNING.
 
     Args:
         lat: Latitude in decimal degrees.
@@ -120,9 +117,9 @@ def _latitude_temperature_fallback(lat: float) -> float:
         base = -15.0 - (abs_lat - 75) * 0.6
 
     logger.warning(
-        "⚠️  ERA5 FALLBACK ACTIVATED for lat=%.2f — "
-        "using latitude-model temperature %.1f°C. "
-        "Accuracy is ±4-6°C. Results are indicative only.",
+        "ERA5 fallback activated for lat=%.2f. "
+        "Using latitude-model temperature %.1f°C. "
+        "Results are indicative.",
         lat,
         base,
     )
@@ -131,7 +128,6 @@ def _latitude_temperature_fallback(lat: float) -> float:
 def _latitude_p95_humidity_fallback(lat: float) -> float:
     """
     Estimate P95 summer relative humidity from latitude when ERA5 fails.
-
     Approximates the broad tropical–dry–temperate humidity gradient.
 
     Args:
@@ -155,15 +151,15 @@ def _latitude_p95_humidity_fallback(lat: float) -> float:
         rh = 78.0  # Polar / tundra
 
     logger.warning(
-        "⚠️  ERA5 RH FALLBACK ACTIVATED for lat=%.2f — "
-        "using latitude-model P95 RH %.1f%%.",
+        "ERA5 RH fallback activated for lat=%.2f. "
+        "Using latitude-model P95 RH %.1f%%.",
         lat,
         rh,
     )
     return rh
 
 # ---------------------------------------------------------------------------
-# Climate Zone Detection (Köppen-Geiger Inspired Self-Diagnosis)
+# Climate Zone Detection
 # ---------------------------------------------------------------------------
 
 class ClimateZone(str, Enum):
@@ -190,49 +186,45 @@ def detect_climate_archetype(
     flags: list[str] = []
     seasonality_index = tx5d - mean_temp
 
-    # CALCULATE TRUE HEAT STRESS (Solves the Phoenix Bug)
+    # Calculate wet-bulb temperature
     true_wbt = stull_wetbulb_simple(tx5d, p95_rh)
 
-    # ── Priority 1: Permafrost ────────────────────────────────────────────
+    # Priority 1: Permafrost
     if mean_temp <= 2.0:
         confidence = min(1.0, (2.0 - mean_temp) / 10.0 + 0.7)
         flags.append(f"Mean temp {mean_temp:.1f}°C below permafrost threshold")
         return ZoneClassification(zone=ClimateZone.PERMAFROST, confidence=round(confidence, 2), diagnostic_flags=tuple(flags))
 
-    # ── Priority 2: Lethal humid (True WBT Logic) ─────────────────────────
-    # FIX: Ensures humidity actually high, prevents desert misclassification
+    # Priority 2: Lethal humid
     if true_wbt >= 31.0 and p95_rh >= 60.0:
         confidence = min(1.0, 0.75 + (true_wbt - 31.0) / 4.0)
         flags.append(f"Projected Wet-Bulb {true_wbt:.1f}°C exceeds critical physiological limits")
         return ZoneClassification(zone=ClimateZone.LETHAL_HUMID, confidence=round(confidence, 2), diagnostic_flags=tuple(flags), lethal_risk_days=15)
 
-    # ── Priority 3: Hyper-arid ────────────────────────────────────────────
-    # Deserts can hit 40-45% max RH at night, so 45% is a realistic boundary
+    # Priority 3: Hyper-arid
     if p95_rh <= 45.0 and tx5d >= 38.0:
         confidence = min(1.0, (45.0 - p95_rh) / 15.0 + 0.7)
-        flags.append(f"Nighttime Max RH {p95_rh:.1f}% indicates profound daytime aridity")
+        flags.append(f"Nighttime Max RH {p95_rh:.1f}% indicates daytime aridity")
         return ZoneClassification(zone=ClimateZone.HYPER_ARID, confidence=round(confidence, 2), diagnostic_flags=tuple(flags))
 
-    # ── Priority 4: Extreme continental (Solves the London Bug) ───────────
-    # FIX: Gap increased to 28 and mean_temp < 20 to prevent London misclassification
+    # Priority 4: Extreme continental
     if seasonality_index >= 28.0 and mean_temp < 20.0:
         confidence = min(1.0, (seasonality_index - 28.0) / 10.0 + 0.75)
         flags.append(f"Extreme thermal amplitude: {seasonality_index:.1f}°C gap")
         return ZoneClassification(zone=ClimateZone.EXTREME_CONTINENTAL, confidence=round(confidence, 2), diagnostic_flags=tuple(flags))
 
-    # ── Default: Standard ─────────────────────────────────────────────────
+    # Default: Standard
     flags.append("Standard temperate/maritime or moderate tropical baseline")
     return ZoneClassification(zone=ClimateZone.STANDARD, confidence=0.95, diagnostic_flags=tuple(flags))
 
 # ---------------------------------------------------------------------------
-# ERA5 Humidity — with retry + fallback
+# ERA5 Humidity
 # ---------------------------------------------------------------------------
 
 async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
     """
     Fetch ERA5 95th-percentile relative humidity from Open-Meteo Archive API.
-
-    ZERO-FAIL: If all retries fail, falls back to latitude-model estimate.
+    Falls back to latitude-model estimate on failure.
 
     Args:
         lat: Latitude in decimal degrees.
@@ -260,7 +252,7 @@ async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
     for attempt in range(1, max_attempts + 1):
         try:
             async with rate_limit_lock:
-                async with httpx.AsyncClient(timeout=30.0) as client:
+                async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
                     resp = await client.get(url)
                     if resp.status_code == 429:
                         wait = 2 ** attempt
@@ -314,10 +306,9 @@ async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
                 )
                 await asyncio.sleep(wait)
 
-    # All retries exhausted — use latitude fallback (ZERO-FAIL)
     logger.error(
-        "ERA5 P95 RH completely failed for (%.2f, %.2f) after %d attempts: %s — "
-        "activating latitude-model fallback.",
+        "ERA5 P95 RH completely failed for (%.2f, %.2f) after %d attempts: %s. "
+        "Activating latitude-model fallback.",
         lat, lng, max_attempts, last_exc,
     )
     fallback = _latitude_p95_humidity_fallback(lat)
@@ -327,8 +318,7 @@ async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
 async def _fetch_relative_humidity_live(lat: float, lng: float) -> float:
     """
     Fetch current relative humidity from Open-Meteo Forecast API.
-
-    ZERO-FAIL: Falls back to latitude-model estimate on total failure.
+    Falls back to latitude-model estimate on total failure.
 
     Args:
         lat: Latitude in decimal degrees.
@@ -348,7 +338,7 @@ async def _fetch_relative_humidity_live(lat: float, lng: float) -> float:
     for attempt in range(1, max_attempts + 1):
         try:
             async with rate_limit_lock:
-                async with httpx.AsyncClient(timeout=8.0) as client:
+                async with httpx.AsyncClient(timeout=8.0, trust_env=False) as client:
                     resp = await client.get(url)
                     if resp.status_code == 429:
                         await asyncio.sleep(2 ** attempt)
@@ -369,7 +359,7 @@ async def _fetch_relative_humidity_live(lat: float, lng: float) -> float:
     return _latitude_p95_humidity_fallback(lat)
 
 # ---------------------------------------------------------------------------
-# Stull (2011) Wet-Bulb Temperature — Zone-Aware & Thermodynamically Corrected
+# Stull (2011) Wet-Bulb Temperature
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
@@ -392,21 +382,14 @@ def _stull_wetbulb(
     Includes Clausius-Clapeyron diurnal correction to convert nighttime maximum 
     RH into co-occurring afternoon RH.
     """
-    
-    # ── THE CLAUSIUS-CLAPEYRON DIURNAL FIX ──
-    # If it's a hot day, we convert the nighttime max RH to the afternoon RH.
     if temp_c > 20.0:
-        # Estimate nighttime temperature (assume standard 12°C diurnal swing)
         night_temp = temp_c - 12.0
         
-        # Clausius-Clapeyron Saturation Vapor Pressure approximations
         e_s_day = math.exp(17.67 * temp_c / (temp_c + 243.5))
         e_s_night = math.exp(17.67 * night_temp / (night_temp + 243.5))
         
-        # Assuming absolute humidity is constant, relative humidity drops as air warms
         afternoon_rh = rh_pct * (e_s_night / e_s_day)
         
-        # FIX: Cut RH aggressively for hot regions to prevent inflated WBT
         if temp_c > 35.0:
             rh_to_use = max(10.0, min(60.0, afternoon_rh))
         elif temp_c > 30.0:
@@ -424,8 +407,7 @@ def _stull_wetbulb(
         - 4.686035
     )
 
-    # FIX: Remove hard cap for core logic calculation (only cap for display if needed)
-    wbt_final = wbt_raw  # No artificial limit applied
+    wbt_final = wbt_raw
     
     SURVIVABILITY_LIMIT = 35.0
     capped = wbt_raw > SURVIVABILITY_LIMIT
@@ -454,16 +436,16 @@ def stull_wetbulb_simple(
 
 async def _fetch_worldbank_death_rate(iso3: str) -> float:
     """
-    Fetches death rate from the blazing fast local JSON vault. No network calls.
+    Fetches death rate from the local JSON vault. No network calls.
     """
     country_data = _OFFLINE_VAULT.get(iso3)
     
     if country_data and country_data.get('death_rate') is not None:
         rate = float(country_data['death_rate'])
-        logger.info("⚡ FAST VAULT HIT: Death rate for %s is %.2f", iso3, rate)
+        logger.info("Vault retrieved death rate for %s: %.2f", iso3, rate)
         return rate
         
-    logger.warning("ISO3 '%s' not in Local Vault. Using WHO fallback (7.5).", iso3)
+    logger.warning("ISO3 '%s' not in Vault. Using fallback (7.5).", iso3)
     return _FALLBACK_DEATH_RATE
 
 # ---------------------------------------------------------------------------
@@ -486,11 +468,6 @@ def _gasparrini_mortality(
         D   = Pop × (DR / 1000) × (HW / 365) × AF × V
 
     β = 0.0801 (global meta-analysis coefficient)
-
-    Reference:
-        Gasparrini, A., et al. (2017). Projections of temperature-related
-        excess mortality under climate change scenarios. Lancet Planetary
-        Health, 1(9), e360–e367. DOI: 10.1016/S2542-5196(17)30156-0
     """
     if baseline_death_rate_per1000 <= 0:
         baseline_death_rate_per1000 = _FALLBACK_DEATH_RATE
@@ -506,91 +483,49 @@ def _gasparrini_mortality(
     return max(0, deaths)
 
 # ---------------------------------------------------------------------------
-# Burke et al. (2018) — Zone-Aware GDP Loss
+# Bipartite Economic Damage Model (Burke 2018 + ILO Heat Stress)
 # ---------------------------------------------------------------------------
 
-@dataclass(frozen=True)
-class EconomicLossResult:
-    """Economic loss calculation result with zone-aware methodology tracking."""
-
-    loss_usd: float
-    methodology: str
-    penalty_coefficient: float
-    zone: ClimateZone
-    adjustment_notes: tuple[str, ...]
-
-def _burke_economic_loss(
-    gdp: float,
-    mean_temp: float,
-    zone: ClimateZone = ClimateZone.STANDARD,
-) -> EconomicLossResult:
+def apply_burke_formula(gdp_share: float, t_mean: float) -> float:
     """
-    Estimate GDP loss from mean temperature using Burke et al. (2018) with
-    zone-aware corrections.
-
-    Reference:
-        Burke, M., et al. (2018). Large potential reduction in economic damages
-        under UN mitigation targets. Nature, 557(7706), 549–553.
-        DOI: 10.1038/s41586-018-0071-9
+    Simplified Burke (2018) macroeconomic damage function.
+    Optimum annual temperature is ~13C. Non-linear penalty scales identically 
+    as T_mean deviates from optimal.
     """
-    notes: list[str] = []
+    temp_diff = t_mean - 13.0
+    penalty_pct = max(0.0, 0.0127 * (temp_diff ** 2)) / 100.0
+    return gdp_share * penalty_pct
 
-    # ── Permafrost: Infrastructure Thaw Penalty ───────────────────────────
-    if zone == ClimateZone.PERMAFROST:
-        thaw_coefficient = 0.025
-        penalty = thaw_coefficient * max(0.0, mean_temp)
-        loss = gdp * penalty
-        notes.append("Permafrost infrastructure thaw model applied")
-        notes.append(f"Penalty: 2.5% GDP per °C above 0°C (actual: {mean_temp:.1f}°C)")
-        notes.append("Source: Hjort et al. (2018), Streletskiy et al. (2019)")
-        return EconomicLossResult(
-            loss_usd=max(0.0, loss),
-            methodology="permafrost_thaw_penalty",
-            penalty_coefficient=round(penalty, 6),
-            zone=zone,
-            adjustment_notes=tuple(notes),
-        )
-
-    # ── Standard Burke calculation ────────────────────────────────────────
-    t_optimal = 13.0
-    burke_penalty = 0.0127 * ((mean_temp - t_optimal) ** 2) / 100.0
-
-    # ── Extreme Continental: Volatility Amplification ─────────────────────
-    if zone == ClimateZone.EXTREME_CONTINENTAL:
-        volatility_multiplier = 1.35
-        adjusted_penalty = burke_penalty * volatility_multiplier
-        loss = gdp * adjusted_penalty
-        notes.append("Extreme continental volatility adjustment applied")
-        notes.append(f"Base Burke penalty: {burke_penalty:.6f}")
-        notes.append(f"Volatility multiplier: {volatility_multiplier}×")
-        notes.append("Accounts for thermal cycling infrastructure stress")
-        return EconomicLossResult(
-            loss_usd=max(0.0, loss),
-            methodology="burke_continental_adjusted",
-            penalty_coefficient=round(adjusted_penalty, 6),
-            zone=zone,
-            adjustment_notes=tuple(notes),
-        )
-
-    # ── Standard / Hyper-Arid / Lethal Humid ─────────────────────────────
-    loss = gdp * burke_penalty
-    notes.append("Standard Burke (2018) formula applied")
-    notes.append(f"T_optimal = 13°C, T_actual = {mean_temp:.1f}°C")
-    return EconomicLossResult(
-        loss_usd=max(0.0, loss),
-        methodology="burke_standard",
-        penalty_coefficient=round(burke_penalty, 6),
-        zone=zone,
-        adjustment_notes=tuple(notes),
-    )
-
-def burke_economic_loss_simple(
-    gdp: float,
-    mean_temp: float,
-    zone: ClimateZone = ClimateZone.STANDARD,
+def compute_hybrid_economic_loss(
+    city_gdp: float, 
+    t_mean: float, 
+    tx5d: float, 
+    hw_days: float
 ) -> float:
-    """Simplified economic loss returning only the USD value."""
-    return _burke_economic_loss(gdp, mean_temp, zone).loss_usd
+    """
+    Resolves economic damages using a bipartite modeling approach:
+    1. Baseline: Burke (2018) macro-economic function for standard operational days.
+    2. Shocks: ILO Heat Stress damage limits for days reaching extreme physiological thresholds.
+    """
+    total_days = 365
+    hw_days_capped = min(365.0, max(0.0, float(hw_days)))
+    normal_days = total_days - hw_days_capped
+
+    # 1. Baseline standard operation allocation
+    normal_economy_share = (normal_days / total_days) * city_gdp
+    baseline_loss = apply_burke_formula(normal_economy_share, t_mean)
+
+    # 2. Extreme event operational allocation
+    extreme_economy_share = (hw_days_capped / total_days) * city_gdp
+
+    # ILO limits logic: Non-linear labor constraint past 34C
+    if tx5d > 34.0:
+        heat_penalty_pct = (tx5d - 34.0) * 0.015  # 1.5% economic shock per degree over physiological limit
+        extreme_loss = extreme_economy_share * heat_penalty_pct
+    else:
+        extreme_loss = apply_burke_formula(extreme_economy_share, t_mean)
+
+    return baseline_loss + extreme_loss
 
 # ---------------------------------------------------------------------------
 # City Boundary H3 Generation
@@ -630,14 +565,14 @@ async def get_city_hexagons(
     """
     Generate H3 hexagons covering a city boundary.
 
-    ZERO-FAIL: Three-tier fallback:
+    Three-tier fallback:
       1. Nominatim polygon/multipolygon → polyfill
       2. Nominatim bounding box → synthetic polygon polyfill
       3. Single center hexagon (exact pinpoint only)
 
     Args:
         city_name: City name string.
-        resolution: H3 resolution (default 9 ≈ 0.1 km²).
+        resolution: H3 resolution (default 9).
 
     Returns:
         H3CoverageResult with hexagons and coverage metadata.
@@ -655,7 +590,7 @@ async def get_city_hexagons(
     for attempt in range(1, max_attempts + 1):
         try:
             async with rate_limit_lock:
-                async with httpx.AsyncClient(timeout=15.0) as client:
+                async with httpx.AsyncClient(timeout=15.0, trust_env=False) as client:
                     resp = await client.get(url, headers=headers)
                     if resp.status_code == 429:
                         await asyncio.sleep(2 ** attempt)
@@ -671,10 +606,9 @@ async def get_city_hexagons(
                 logger.error("Nominatim completely failed for '%s': %s", city_name, exc)
 
     if not results:
-        # Hard fallback: geocode via Open-Meteo and return single hex
-        logger.warning("Nominatim returned no results for '%s' — using Open-Meteo geocoder", city_name)
+        logger.warning("Nominatim returned no results for '%s' — utilizing fallback geocoder", city_name)
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
                 resp = await client.get(
                     "https://geocoding-api.open-meteo.com/v1/search",
                     params={"name": city_name, "count": 1, "format": "json"},
@@ -693,17 +627,15 @@ async def get_city_hexagons(
                     boundary_source="open_meteo_geocoder",
                 )
         except Exception as geo_exc:
-            logger.error("Open-Meteo geocoder fallback also failed for '%s': %s", city_name, geo_exc)
+            logger.error("Fallback geocoder failed for '%s': %s", city_name, geo_exc)
 
-        # Added explicit error logging before raising the ValueError
         error_msg = (
             f"All geocoders failed for '{city_name}'. "
-            "Check spelling or try a nearby major city."
+            "Please verify spelling or input a major surrounding municipality."
         )
         logger.error("[get_city_hexagons] %s", error_msg)
         raise ValueError(error_msg)
 
-    # Find best administrative boundary result
     best_result = None
     for res in results:
         if res.get("class") == "boundary" or res.get("type") == "administrative":
@@ -719,7 +651,6 @@ async def get_city_hexagons(
     center_lng = float(best_result.get("lon", 0))
     geojson = best_result.get("geojson")
 
-    # ── Attempt polygon extraction ────────────────────────────────────────
     if geojson and geojson.get("type") in ("Polygon", "MultiPolygon"):
         try:
             coords = _extract_polygon_coords(geojson)
@@ -742,7 +673,6 @@ async def get_city_hexagons(
         except Exception as exc:
             logger.warning("Polygon extraction failed for '%s': %s", city_name, exc)
 
-    # ── Fallback 1: Official bounding box ─────────────────────────────────
     bbox = best_result.get("boundingbox")
     if bbox and len(bbox) == 4:
         lat_min, lat_max, lon_min, lon_max = map(float, bbox)
@@ -773,7 +703,6 @@ async def get_city_hexagons(
             coverage_area_km2=round(area_km2, 2),
         )
 
-    # ── Fallback 2: Exact point only ──────────────────────────────────────
     logger.info("No boundary data for '%s' — using exact pinpoint only", city_name)
     center_hex = h3.geo_to_h3(center_lat, center_lng, resolution)
     return H3CoverageResult(
@@ -810,7 +739,7 @@ def _build_audit_trail(
     hwf = round(min(hw_days / 365.0, 1.0), 4)
     deaths_result = int(pop * (death_rate / 1000.0) * hwf * af * vuln)
 
-    econ_result = _burke_economic_loss(gdp, mean_temp, zone.zone)
+    econ_loss = compute_hybrid_economic_loss(gdp, mean_temp, tx5d, hw_days)
     wbt_result = _stull_wetbulb(tx5d, rh, zone.zone)
 
     return {
@@ -841,20 +770,23 @@ def _build_audit_trail(
             "source": "Gasparrini et al. (2017), Lancet Planetary Health",
         },
         "economics": {
-            "formula": econ_result.methodology,
+            "formula": "Hybrid Bipartite Model (Burke Baseline + ILO Extreme Shocks)",
             "zone_adjustment": zone.zone.value,
             "variables": {
                 "GDP": round(gdp),
                 "T_mean": round(mean_temp, 2),
-                "penalty_coefficient": econ_result.penalty_coefficient,
+                "Tx5d": round(tx5d, 2),
+                "HW_days": round(hw_days, 1),
             },
-            "adjustment_notes": list(econ_result.adjustment_notes),
+            "adjustment_notes": [
+                "Burke (2018) applied to standard operational days",
+                "ILO Heat Stress guidelines applied to days exceeding 34.0°C"
+            ],
             "computation": (
-                f"${econ_result.loss_usd / 1e6:.1f}M = "
-                f"GDP × {econ_result.penalty_coefficient:.6f}"
+                f"${econ_loss / 1e6:.1f}M = Baseline Allocation + Extreme Shock Allocation"
             ),
-            "result": round(econ_result.loss_usd),
-            "source": "Burke et al. (2018), Nature — with zone-aware corrections",
+            "result": round(econ_loss),
+            "source": "Burke et al. (2018), Nature & ILO Heat Stress Standards",
         },
         "wetbulb": {
             "formula": "WBT = Stull (2011) pure empirical equation",
