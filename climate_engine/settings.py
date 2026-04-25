@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: LogLevel = LogLevel.INFO
 
     # ── Vercel Tunnel ─────────────────────────────────────────────────────
-    VERCEL_TUNNEL_URL: str = "https://openplanet-ai.vercel.app/api/tunnel"
+    VERCEL_TUNNEL_URL: str = "https://www.openplanetrisk.com/api/tunnel"
 
     # ── Engine Tuning ─────────────────────────────────────────────────────
     ERA5_CACHE_TTL_SECONDS: int = 86400       # 24 hours
