@@ -44,6 +44,17 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const openAudit = (k: any) => { setAuditKey(k); setAuditOpen(true); };
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
+  // 🔴 2. Auto-Reset Logic: Jab koi nayi location search karne lage toh purana analysis turant hide/reset ho jaye
+  useEffect(() => {
+    if (isInitialized && selectedCity && searchQuery !== selectedCity.name && searchQuery.length > 0) {
+      setIsInitialized(false);
+      setHistoricalEras(null);
+      setSelectedCity(null);
+      setHexData([]);
+      setSimData({ temp: '--', deaths: '--', loss: '--', heatwave: '--', wbt: '--', baseTemp: '--' });
+    }
+  }, [searchQuery]);
+
   useEffect(() => {
     const t = setTimeout(async () => {
       if (searchQuery.length > 2 && !selectedCity) {
@@ -98,15 +109,11 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     }
   }, [hexData]);
 
-  // 🔴 FIX: Prevent React onClick 'Event' object from breaking the coordinates
   const handleInitialize = async (passedCity?: any) => {
-    // Agar clicked event pass hua hai, toh selectedCity use karo. 
-    // Agar manually city pass ki hai (suggestions se), toh wo use karo.
     const cityToLoad = (passedCity && (passedCity.lat || passedCity.latitude)) ? passedCity : selectedCity;
     
     if (!cityToLoad) return;
     
-    // 🔴 CLEAR EVERYTHING FIRST TO PREVENT "STATE GHOSTING" BETWEEN CITIES
     setIsLoading(true); setApiError(null); setCanopy(0); setCoolRoof(0);
     setHistoricalEras(null); 
     setSimData({ temp: '--', deaths: '--', loss: '--', heatwave: '--', wbt: '--', baseTemp: '--' });
@@ -126,7 +133,6 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     try {
       const cleanCityName = cityToLoad.country ? `${cityToLoad.name}, ${cityToLoad.country}` : cityToLoad.name;
       
-      // 🔴 Fetch directly from powerful backend
       const res = await fetch('/api/engine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -147,7 +153,6 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
       
       if (onTargetLocked) onTargetLocked(cityToLoad.name);
       
-      // Set values ensuring everything maps correctly
       setHexData(data.hexGrid || []);
       setSimData(data.metrics || { temp: '--', deaths: '--', loss: '--', heatwave: '--', wbt: '--', baseTemp: '--' });
       setAuditTrail(data.auditTrail ?? null); 
@@ -172,7 +177,6 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     const factor = Math.max(0.1, 1 - cooling * 0.08);
     
     const mitTemp = Math.max(0, baseT - cooling);
-    // WBT drops slightly slower than dry bulb temp
     const mitWbt = Math.max(0, baseW - (cooling * 0.75)); 
     const mitHW = Math.max(0, Math.round(baseH - cooling * 3));
     
@@ -218,6 +222,17 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     }),
   ], [h3Data, viewState.zoom]);
 
+  // 🔴 Tooltip Component for Sustained Heat
+  const SustainedHeatLabel = () => (
+    <div className="flex items-center gap-1.5 mb-1 relative group w-max">
+      <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">Sustained Heat Average</p>
+      <span className="flex items-center justify-center w-3 h-3 rounded-full border border-slate-600 text-[7px] text-slate-400 cursor-help">i</span>
+      <div className="absolute bottom-full left-0 mb-1 w-56 p-2 bg-[#060f1e] border border-slate-700 text-slate-400 text-[8px] leading-relaxed rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+        Note: This represents the decadal average of the hottest consecutive 5-day periods (Tx5d) across a 31km spatial grid. It smooths out 1-day anomalous spikes to provide stable actuarial baselines for economic models.
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-full flex flex-col items-center py-6 px-4 bg-[#020617] min-h-screen gap-6">
       
@@ -245,10 +260,10 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
               viewState={viewState}
               onViewStateChange={({ viewState: vs }) => setViewState(vs)}
               controller={{ 
-                scrollZoom: false, // 🔴 Ab scroll karne par page move hoga, map nahi!
-                doubleClickZoom: true, // Double click se zoom in chalega
+                scrollZoom: false,
+                doubleClickZoom: true,
                 dragRotate: false,
-                dragPan: true // Drag karke map idhar-udhar move kar payenge
+                dragPan: true
               }}
               layers={layers}
             >
@@ -303,7 +318,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         />
       </div>
 
-      {/* 🔴 ── HISTORICAL DATA (NEW CLEAN LAYOUT) ── 🔴 */}
+      {/* ── HISTORICAL DATA ── */}
       {isInitialized && historicalEras && (
         <div className="w-full max-w-[1440px] bg-[#030b18] border border-slate-800/50 rounded-2xl p-6 mt-2 relative overflow-hidden">
           
@@ -322,7 +337,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-1">Peak Temperature</p>
+                  <SustainedHeatLabel />
                   <p className="text-3xl font-mono text-cyan-400 font-bold">
                     {historicalEras.era1?.peak_temp}°C
                   </p>
@@ -354,7 +369,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-1">Peak Temperature</p>
+                  <SustainedHeatLabel />
                   <p className="text-3xl font-mono text-orange-400 font-bold">
                     {historicalEras.era2?.peak_temp}°C
                   </p>
@@ -386,7 +401,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
               <div className="space-y-4">
                 <div>
-                  <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-1">Peak Temperature</p>
+                  <SustainedHeatLabel />
                   <p className="text-3xl font-mono text-red-400 font-bold">
                     {historicalEras.era3?.peak_temp}°C
                   </p>

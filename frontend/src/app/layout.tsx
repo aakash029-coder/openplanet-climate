@@ -6,7 +6,7 @@ import { Providers } from '@/components/Providers';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://openplanet-ai.vercel.app'),
+  metadataBase: new URL('https://www.openplanetrisk.com'),
   
   title: 'OpenPlanet | Risk Intelligence',
   description: 'OpenPlanet is a globally scalable climate intelligence engine. We translate complex planetary physics into highly actionable, localized survival strategies.',
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'OpenPlanet | Risk Intelligence',
     description: 'OpenPlanet is a globally scalable climate intelligence engine. We translate complex planetary physics into highly actionable, localized survival strategies.',
-    url: 'https://openplanet-ai.vercel.app',
+    url: 'https://www.openplanetrisk.com',
     siteName: 'OpenPlanet',
     locale: 'en_US',
     type: 'website',

@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (compatible; OpenPlanet/1.0)',
-        'Origin': 'https://openplanet-ai.vercel.app',
-        'Referer': 'https://openplanet-ai.vercel.app/',
+        'Origin': 'https://www.openplanetrisk.com',
+        'Referer': 'https://www.openplanetrisk.com/',
       },
       body: JSON.stringify(payload),
     });

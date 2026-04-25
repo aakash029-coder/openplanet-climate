@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*', // Sabhi search engines (Google, Bing, etc.) ko allow karna
       allow: '/',
     },
-    sitemap: 'https://openplanet-ai.vercel.app/sitemap.xml', // Sitemap ka rasta
+    sitemap: 'https://www.openplanetrisk.com/sitemap.xml', // Sitemap ka rasta
   };
 }
