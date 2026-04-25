@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://openplanet-ai.vercel.app';
+  const baseUrl = 'https://www.openplanetrisk.com';
 
   return [
     {
