@@ -303,7 +303,7 @@ const METRICS = [
   { key: "heatwave_days",       label: "Heatwave Days",       unit: "d/yr",   source: "CMIP6 Ensemble · ERA5 P95",         fmt: (v: number) => `${fmt(v, 0)}d`,                             hasCalc: false },
   { key: "peak_tx5d_c",         label: "Peak Tx5d",           unit: "°C",     source: "Open-Meteo CMIP6",                  fmt: (v: number) => `${fmt(v)}°C`,                               hasCalc: false },
   { key: "wbt_max_c",           label: "Max Wet-Bulb",        unit: "°C",     source: "Stull (2011) · ERA5 P95 Humidity",  fmt: (v: number) => formatWBT(v),                                hasCalc: false },
-  { key: "uhi_intensity_c",     label: "Surface UHI",       unit: "°C",     source: "Oke (1982) cap 8°C",                fmt: (v: number) => `+${fmt(v)}°C`,                              hasCalc: false },
+  { key: "uhi_intensity_c",     label: "Surface UHI",       unit: "°C",     source: "",                fmt: (v: number) => `+${fmt(v)}°C`,                              hasCalc: false },
   { key: "attributable_deaths", label: "Attributable Deaths", unit: "est/yr", source: "Gasparrini (2017), Lancet",         fmt: (v: number) => Math.round(v).toLocaleString(),              hasCalc: true  },
   { key: "economic_decay_usd",  label: "Economic Decay",      unit: "USD",    source: "Burke (2018) · ILO (2019)",         fmt: (v: number) => fmtUSD(v),                                   hasCalc: true  },
 ];
