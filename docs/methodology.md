@@ -1,7 +1,6 @@
 # OpenPlanet: Scientific Protocol & Methodology
 
-Version: 1.0.0 (Release Candidate)  
-Status: Pending DPGA / OS-Climate Peer Review  
+Version: 1.0.0 (Release Candidate)   
 Architecture: Stateless, vectorized pure-function pipeline (Python/NumPy)  
 
 ---
