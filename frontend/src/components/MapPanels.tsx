@@ -51,7 +51,7 @@ const AuditButton = ({ label, onClick }: { label: string; onClick: () => void })
 /* ─── LEFT PANEL ─── */
 export const LeftPanel = ({
   selectedCity, searchQuery, setSearchQuery, suggestions, setSuggestions, setSelectedCity,
-  year, setYear, ssp, setSsp, handleInitialize, isLoading, isInitialized,
+  year, setYear, ssp, setSsp,   handleInitialize, isLoading, isInitialized, canGenerate,
   canopy, coolRoof, handleMitigationChange, isSimulating,
 }: any) => {
   return (
@@ -90,15 +90,21 @@ export const LeftPanel = ({
                   <div
                     key={`${city.id}-${idx}`}
                     onClick={() => {
-                      setSelectedCity({ name: city.name, lat: city.latitude, lng: city.longitude });
-                      setSearchQuery(`${city.name}${city.country ? ', ' + city.country : ''}`);
+                      const locationQuery = (city.display_name || `${city.name}${city.country ? ', ' + city.country : ''}`).trim();
+                      setSelectedCity({
+                        locationQuery,
+                        name: city.name,
+                        country: city.country,
+                        lat: city.latitude,
+                        lng: city.longitude,
+                      });
+                      setSearchQuery(locationQuery);
                       setSuggestions([]);
                     }}
                     className="flex items-center gap-2.5 px-3 py-2.5 text-[11px] text-slate-300 hover:bg-cyan-950/30 hover:text-white cursor-pointer border-b border-slate-800/40 last:border-0 transition-colors duration-150"
                   >
                     <div className="w-1 h-1 rounded-full bg-slate-600 shrink-0" />
-                    <span>{city.name}</span>
-                    {city.country && <span className="text-slate-600 text-[10px] ml-auto">{city.country}</span>}
+                    <span className="truncate">{city.display_name || city.name}</span>
                   </div>
                 ))}
               </div>
@@ -149,7 +155,7 @@ export const LeftPanel = ({
         {/* GENERATE BUTTON */}
         <button
           onClick={handleInitialize}
-          disabled={!selectedCity || isLoading}
+          disabled={!canGenerate || isLoading}
           className="relative w-full py-3 rounded-xl text-[10px] font-mono text-white font-bold uppercase tracking-[0.2em] shadow-lg transition-all duration-200 disabled:opacity-25 disabled:cursor-not-allowed overflow-hidden group"
           style={{ background: 'linear-gradient(135deg, #0891b2, #059669)' }}
         >

@@ -67,7 +67,7 @@ def _validate_year_range(start: int, end: int) -> None:
 class PredictionRequest(BaseModel):
     """Request schema for frontend climate risk prediction."""
 
-    city:     str   = Field(..., min_length=2, max_length=100)
+    city:     str   = Field(..., min_length=2, max_length=200)
     lat:      float = Field(..., ge=-90.0,  le=90.0)
     lng:      float = Field(..., ge=-180.0, le=180.0)
     ssp:      str   = Field(..., pattern=r"^SSP[1-5]-[0-9.]+$")
@@ -131,6 +131,7 @@ class CompareAnalysisRequest(BaseModel):
 class SimulationResponse(BaseModel):
     """Response schema for frontend simulation results."""
 
+    resolvedLocation: Optional[Dict[str, Any]] = None
     metrics:         Dict[str, Any]
     hexGrid:         List[Dict[str, Any]]
     aiAnalysis:      Optional[Dict[str, str]]        = None
