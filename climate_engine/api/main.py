@@ -884,11 +884,11 @@ def create_app() -> FastAPI:
         logger.info(
             "[climate-risk] Processed %d projections for city=%r",
             len(projection_records),
-            city_name,
+            location_query,
         )
 
         hex_grid_data = await _generate_hex_grid_data(
-            city_name=city_name,
+            city_name=location_query,
             city_wbt=wbt,
             city_temp=tx5d,
             resolution=9,
