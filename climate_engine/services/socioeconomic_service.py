@@ -21,7 +21,7 @@ import json
 import os
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import httpx
 import pycountry
@@ -354,6 +354,75 @@ def _clean_city_keyword(raw_city: str) -> str:
     return ", ".join(p for p in parts if p)
 
 
+def _prepare_geocoding_query(raw_city: str) -> str:
+    """
+    Normalize client artifacts while preserving the full location string
+    (city, region, country) for geocoder APIs.
+    """
+    return _clean_city_keyword(raw_city.strip())
+
+
+def _location_country_hint(location: str) -> Optional[str]:
+    """Return trailing segment when user supplies 'City, Country' style hints."""
+    parts = [p.strip() for p in location.split(",") if p.strip()]
+    if len(parts) < 2:
+        return None
+    return parts[-1]
+
+
+def _country_codes_from_hint(hint: str) -> Set[str]:
+    """Map a country name or ISO code hint to alpha-2 codes."""
+    normalized = hint.strip().lower()
+    if not normalized:
+        return set()
+
+    codes: Set[str] = set()
+    for country in pycountry.countries:
+        names = {country.name.lower()}
+        if getattr(country, "common_name", None):
+            names.add(country.common_name.lower())
+        official = getattr(country, "official_name", None)
+        if official:
+            names.add(official.lower())
+
+        if normalized in names:
+            codes.add(country.alpha_2.upper())
+        if normalized in (country.alpha_2.lower(), country.alpha_3.lower()):
+            codes.add(country.alpha_2.upper())
+
+    return codes
+
+
+def _select_openmeteo_hit(results: List[Dict[str, Any]], location_query: str) -> Dict[str, Any]:
+    """Prefer geocoder hits that match an explicit country hint in the query."""
+    country_hint = _location_country_hint(location_query)
+    if country_hint:
+        codes = _country_codes_from_hint(country_hint)
+        if codes:
+            matching = [
+                r for r in results
+                if (r.get("country_code") or "").upper() in codes
+            ]
+            if matching:
+                return max(matching, key=lambda r: r.get("population") or 0)
+
+    return max(results, key=lambda r: r.get("population") or 0)
+
+
+def _select_nominatim_hit(results: List[Dict[str, Any]], location_query: str) -> Dict[str, Any]:
+    """Prefer Nominatim hits that match an explicit country hint in the query."""
+    country_hint = _location_country_hint(location_query)
+    if country_hint:
+        codes = _country_codes_from_hint(country_hint)
+        if codes:
+            for hit in results:
+                cc = (hit.get("address", {}).get("country_code") or "").upper()
+                if cc in codes:
+                    return hit
+
+    return results[0]
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # GEOCODING (Dual Provider)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -368,11 +437,11 @@ class GeocodingResult:
 
 
 async def _fetch_openmeteo_geocoding(
-    city: str,
+    location_query: str,
     client: httpx.AsyncClient,
 ) -> GeocodingResult:
     url = "https://geocoding-api.open-meteo.com/v1/search"
-    params = {"name": city, "count": 3, "format": "json"}
+    params = {"name": location_query, "count": 10, "format": "json"}
 
     data: Dict[str, Any] = {}
     max_attempts = 3
@@ -391,14 +460,14 @@ async def _fetch_openmeteo_geocoding(
                     await asyncio.sleep(2 ** attempt)
                 else:
                     raise ValueError(
-                        f"Open-Meteo geocoding failed for '{city}': {exc}"
+                        f"Open-Meteo geocoding failed for '{location_query}': {exc}"
                     ) from exc
 
     results = data.get("results", [])
     if not results:
-        raise ValueError(f"Open-Meteo: no results for '{city}'")
+        raise ValueError(f"Open-Meteo: no results for '{location_query}'")
 
-    hit = max(results, key=lambda r: r.get("population") or 0)
+    hit = _select_openmeteo_hit(results, location_query)
     country_code = hit.get("country_code", "").upper()
 
     base_population = hit.get("population") or 0
@@ -419,11 +488,16 @@ async def _fetch_openmeteo_geocoding(
 
 
 async def _fetch_nominatim_geocoding(
-    city: str,
+    location_query: str,
     client: httpx.AsyncClient,
 ) -> GeocodingResult:
     url = "https://nominatim.openstreetmap.org/search"
-    params = {"q": city, "format": "json", "limit": 1, "addressdetails": 1}
+    params = {
+        "q": location_query,
+        "format": "json",
+        "limit": 5,
+        "addressdetails": 1,
+    }
 
     async with NOMINATIM_SEMAPHORE:
         try:
@@ -438,13 +512,13 @@ async def _fetch_nominatim_geocoding(
             data = resp.json()
         except Exception as exc:
             raise ValueError(
-                f"Nominatim geocoding failed for '{city}': {exc}"
+                f"Nominatim geocoding failed for '{location_query}': {exc}"
             ) from exc
 
     if not data:
-        raise ValueError(f"Nominatim: no results for '{city}'")
+        raise ValueError(f"Nominatim: no results for '{location_query}'")
 
-    hit = data[0]
+    hit = _select_nominatim_hit(data, location_query)
     address = hit.get("address", {})
     country_code = address.get("country_code", "").upper()
 
@@ -462,24 +536,31 @@ async def _fetch_nominatim_geocoding(
 
 async def geocode_city(city: str, client: httpx.AsyncClient) -> GeocodingResult:
     """
-    Geocode a city utilizing automatic dual-provider fallback.
+    Geocode a location utilizing automatic dual-provider fallback.
     1. Primary: Open-Meteo (fast, includes population metrics).
     2. Fallback: Nominatim (authoritative OSM, slower).
+
+    The full location string (e.g. 'Athens, Greece') is sent to both providers
+    so country disambiguation is preserved.
     """
-    smart_city = _clean_city_keyword(city)
-    if smart_city.lower() != city.lower():
-        logger.info("Smart keyword extraction: '%s' -> '%s'", city, smart_city)
+    location_query = _prepare_geocoding_query(city)
+    if location_query.lower() != city.strip().lower():
+        logger.info("Geocoding query normalized: '%s' -> '%s'", city, location_query)
 
     try:
-        return await _fetch_openmeteo_geocoding(smart_city, client)
+        return await _fetch_openmeteo_geocoding(location_query, client)
     except ValueError as e:
-        logger.warning("Open-Meteo resolution failed for '%s', transitioning to Nominatim: %s", smart_city, e)
+        logger.warning(
+            "Open-Meteo resolution failed for '%s', transitioning to Nominatim: %s",
+            location_query,
+            e,
+        )
 
     try:
-        return await _fetch_nominatim_geocoding(smart_city, client)
+        return await _fetch_nominatim_geocoding(location_query, client)
     except ValueError as e:
         raise ValueError(
-            f"All geocoding providers failed for '{city}' (parsed: '{smart_city}'). "
+            f"All geocoding providers failed for '{city}' (query: '{location_query}'). "
             f"Please verify spelling or input a major surrounding municipality. Log: {e}"
         ) from e
 
@@ -660,7 +741,7 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
     """
     Fetch comprehensive city socioeconomics, ensuring resolution via tier-based backups.
     """
-    cache_key = city.strip().lower().split(",")[0].strip()
+    cache_key = city.strip().lower()
     cached = await _city_cache.get(cache_key)
     if cached:
         logger.info(
@@ -772,7 +853,7 @@ async def invalidate_city_cache(city: str) -> bool:
     """
     Manually evicts a localized index from the cache tree.
     """
-    cache_key = city.strip().lower().split(",")[0].strip()
+    cache_key = city.strip().lower()
     removed = await _city_cache.invalidate(cache_key)
     if removed:
         logger.info("Evicted index from cache: '%s'", cache_key)

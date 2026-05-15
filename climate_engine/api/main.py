@@ -676,18 +676,18 @@ def create_app() -> FastAPI:
         tx5d_baseline = baseline["tx5d_baseline_c"]
 
         # ── Socioeconomics ────────────────────────────────────────────────
-        city_name = req.location_hint.split(",")[0].strip()
-        if not city_name:
+        location_query = req.location_hint.strip()
+        if not location_query.split(",")[0].strip():
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="location_hint must contain at least a city name.",
             )
 
         try:
-            socio = await fetch_live_socioeconomics(city_name)
+            socio = await fetch_live_socioeconomics(location_query)
         except Exception as exc:
             raise _data_unavailable(
-                f"Socioeconomic data unavailable for '{city_name}': {exc}"
+                f"Socioeconomic data unavailable for '{location_query}': {exc}"
             )
 
         pop = socio["population"]
