@@ -1,5 +1,33 @@
 'use client';
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+
+type SelectedCity = {
+  locationQuery: string;
+  name?: string;
+  country?: string;
+  lat?: number;
+  lng?: number;
+  latitude?: number;
+  longitude?: number;
+};
+
+function flyToCoordinates(
+  setViewState: React.Dispatch<React.SetStateAction<any>>,
+  lat: number,
+  lng: number,
+  zoom = 10,
+) {
+  setViewState((prev: any) => ({
+    ...prev,
+    latitude: lat,
+    longitude: lng,
+    zoom,
+    pitch: 0,
+    bearing: 0,
+    transitionDuration: 1500,
+    transitionInterpolator: new FlyToInterpolator(),
+  }));
+}
 import Map from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import DeckGL from '@deck.gl/react';
@@ -15,7 +43,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const [apiError, setApiError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [selectedCity, setSelectedCity] = useState<any | null>(null);
+  const [selectedCity, setSelectedCity] = useState<SelectedCity | null>(null);
   const [viewState, setViewState] = useState<any>({ longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0 });
   
   // 🔴 1. Dashboard State ko LocalStorage se Sync Kiya
@@ -44,16 +72,20 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const openAudit = (k: any) => { setAuditKey(k); setAuditOpen(true); };
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  // 🔴 2. Auto-Reset Logic: Jab koi nayi location search karne lage toh purana analysis turant hide/reset ho jaye
+  const canGenerate = Boolean(
+    selectedCity?.locationQuery?.trim() || searchQuery.trim().length >= 3,
+  );
+
   useEffect(() => {
-    if (isInitialized && selectedCity && searchQuery !== selectedCity.name && searchQuery.length > 0) {
+    const lockedQuery = selectedCity?.locationQuery?.trim();
+    if (isInitialized && lockedQuery && searchQuery.trim() && searchQuery.trim() !== lockedQuery) {
       setIsInitialized(false);
       setHistoricalEras(null);
       setSelectedCity(null);
       setHexData([]);
       setSimData({ temp: '--', deaths: '--', loss: '--', heatwave: '--', wbt: '--', baseTemp: '--' });
     }
-  }, [searchQuery]);
+  }, [searchQuery, isInitialized, selectedCity?.locationQuery]);
 
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -71,10 +103,12 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
           if (!res.ok) return;
           const data = await res.json();
           setSuggestions(data.map((c: any) => {
-            const parts = c.display_name.split(',');
+            const displayName = (c.display_name || '').trim();
+            const parts = displayName.split(',');
             return {
               id: c.place_id,
-              name: c.name || parts[0],
+              name: c.name || parts[0]?.trim() || displayName,
+              display_name: displayName,
               country: parts.length > 1 ? parts[parts.length - 1].trim() : '',
               latitude: parseFloat(c.lat),
               longitude: parseFloat(c.lon),
@@ -109,60 +143,87 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     }
   }, [hexData]);
 
-  const handleInitialize = async (passedCity?: any) => {
-    const cityToLoad = (passedCity && (passedCity.lat || passedCity.latitude)) ? passedCity : selectedCity;
-    
-    if (!cityToLoad) return;
-    
-    setIsLoading(true); setApiError(null); setCanopy(0); setCoolRoof(0);
-    setHistoricalEras(null); 
+  const handleInitialize = useCallback(async (passedCity?: SelectedCity) => {
+    const locationQuery = (
+      passedCity?.locationQuery ||
+      selectedCity?.locationQuery ||
+      searchQuery
+    ).trim();
+
+    if (!locationQuery) return;
+
+    const cityToLoad: SelectedCity = passedCity || selectedCity || { locationQuery };
+    const requestLat = cityToLoad.lat ?? cityToLoad.latitude ?? 0;
+    const requestLng = cityToLoad.lng ?? cityToLoad.longitude ?? 0;
+
+    setIsLoading(true);
+    setApiError(null);
+    setCanopy(0);
+    setCoolRoof(0);
+    setHistoricalEras(null);
     setSimData({ temp: '--', deaths: '--', loss: '--', heatwave: '--', wbt: '--', baseTemp: '--' });
     setHexData([]);
-    setIsInitialized(false); 
-    
-    setViewState((p: any) => ({ 
-      ...p, 
-      longitude: cityToLoad.lng || cityToLoad.longitude, 
-      latitude: cityToLoad.lat || cityToLoad.latitude, 
-      zoom: 10, 
-      pitch: 0, 
-      transitionDuration: 1500, 
-      transitionInterpolator: new FlyToInterpolator() 
-    }));
-    
+    setIsInitialized(false);
+
     try {
-      const cleanCityName = cityToLoad.country ? `${cityToLoad.name}, ${cityToLoad.country}` : cityToLoad.name;
-      
       const res = await fetch('/api/engine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          endpoint: '/api/predict', 
-          payload: { 
-            city: cleanCityName, 
-            lat: cityToLoad.lat || cityToLoad.latitude, 
-            lng: cityToLoad.lng || cityToLoad.longitude, 
-            ssp, year, canopy, coolRoof 
-          } 
+        body: JSON.stringify({
+          endpoint: '/api/predict',
+          payload: {
+            city: locationQuery,
+            lat: requestLat,
+            lng: requestLng,
+            ssp,
+            year,
+            canopy,
+            coolRoof,
+          },
         }),
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      
-      if (onTargetLocked) onTargetLocked(cityToLoad.name);
-      
+
+      const resolved = data.resolvedLocation;
+      const resolvedLat = resolved?.lat ?? resolved?.latitude;
+      const resolvedLng = resolved?.lng ?? resolved?.longitude;
+
+      const lockedCity: SelectedCity = {
+        ...cityToLoad,
+        locationQuery,
+        lat: typeof resolvedLat === 'number' ? resolvedLat : requestLat,
+        lng: typeof resolvedLng === 'number' ? resolvedLng : requestLng,
+        name: cityToLoad.name || locationQuery.split(',')[0]?.trim() || locationQuery,
+      };
+      setSelectedCity(lockedCity);
+      setSearchQuery(locationQuery);
+
+      if (typeof resolvedLat === 'number' && typeof resolvedLng === 'number') {
+        flyToCoordinates(setViewState, resolvedLat, resolvedLng, 10);
+      }
+
+      if (onTargetLocked) onTargetLocked(locationQuery);
+
       setHexData(data.hexGrid || []);
       setSimData(data.metrics || { temp: '--', deaths: '--', loss: '--', heatwave: '--', wbt: '--', baseTemp: '--' });
-      setAuditTrail(data.auditTrail ?? null); 
+      setAuditTrail(data.auditTrail ?? null);
       setAiAnalysis(data.aiAnalysis ?? null);
-      setHistoricalEras(data.historicalEras ?? null); 
-      
-      if (data.charts) setChartData({ heatwave: data.charts.heatwave || [], economic: data.charts.economic || [] });
+      setHistoricalEras(data.historicalEras ?? null);
+
+      if (data.charts) {
+        setChartData({ heatwave: data.charts.heatwave || [], economic: data.charts.economic || [] });
+      }
       setIsInitialized(true);
-    } catch (err: any) { setApiError(err.message); setIsInitialized(false); } finally { setIsLoading(false); }
-  };
+    } catch (err: any) {
+      setApiError(err.message);
+      setIsInitialized(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedCity, searchQuery, ssp, year, canopy, coolRoof, onTargetLocked]);
 
   const mitigatedData = useMemo(() => {
     if (!isInitialized || simData.temp === '--') return null;
@@ -245,6 +306,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
           suggestions={suggestions} setSuggestions={setSuggestions} setSelectedCity={setSelectedCity}
           year={year} setYear={setYear} ssp={ssp} setSsp={setSsp}
           handleInitialize={handleInitialize} isLoading={isLoading} isInitialized={isInitialized}
+          canGenerate={canGenerate}
           canopy={canopy} coolRoof={coolRoof}
           handleMitigationChange={(t: any, v: any) => t === 'canopy' ? setCanopy(v) : setCoolRoof(v)}
           isSimulating={isSimulating}
@@ -306,7 +368,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
           
           {isInitialized && selectedCity && (
             <p className="text-[11px] italic text-slate-400/70 text-center font-serif tracking-wide pt-1">
-              {selectedCity.name} · {year} Projection · H3 Spatial Risk Model
+              {selectedCity.locationQuery || selectedCity.name} · {year} Projection · H3 Spatial Risk Model
             </p>
           )}
         </div>

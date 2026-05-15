@@ -41,7 +41,11 @@ from climate_engine.services.cmip6_service import (
     fetch_historical_baseline_full,
     fetch_cmip6_projection,
 )
-from climate_engine.services.socioeconomic_service import fetch_live_socioeconomics
+from climate_engine.services.socioeconomic_service import (
+    fetch_live_socioeconomics,
+    geocode_city,
+)
+import httpx
 from climate_engine.services.historical_service import fetch_historical_eras
 from climate_engine.services.llm_service import (
     generate_strategic_analysis,
@@ -366,10 +370,11 @@ def create_app() -> FastAPI:
 
         ssp_code = _normalize_ssp(req.ssp)
         extreme = _is_high_emission(ssp_code)
+        location_hint = req.city.strip()
         logger.info(
             "[predict] city=%r  ssp_raw=%r  ssp_code=%r  extreme=%s  "
             "target_year=%d  cooling=%.3f",
-            req.city,
+            location_hint,
             req.ssp,
             ssp_code,
             extreme,
@@ -377,13 +382,31 @@ def create_app() -> FastAPI:
             total_cooling,
         )
 
+        try:
+            async with httpx.AsyncClient(timeout=30.0, trust_env=False) as geo_client:
+                geo = await geocode_city(location_hint, geo_client)
+        except Exception as exc:
+            raise _data_unavailable(
+                f"Could not geocode '{location_hint}': {exc}"
+            )
+
+        lat = geo.latitude
+        lng = geo.longitude
+        logger.info(
+            "[predict] geocoded '%s' -> (%.4f, %.4f) via %s",
+            location_hint,
+            lat,
+            lng,
+            geo.source,
+        )
+
         # ── 1. Historical baseline ────────────────────────────────────────
         try:
-            baseline = await fetch_historical_baseline_full(req.lat, req.lng)
+            baseline = await fetch_historical_baseline_full(lat, lng)
         except Exception as exc:
             raise _data_unavailable(
                 f"ERA5 historical baseline unavailable for "
-                f"({req.lat:.2f}, {req.lng:.2f}): {exc}"
+                f"({lat:.2f}, {lng:.2f}): {exc}"
             )
 
         p95 = baseline["p95_threshold_c"]
@@ -392,10 +415,10 @@ def create_app() -> FastAPI:
 
         # ── 2. Socioeconomics ─────────────────────────────────────────────
         try:
-            socio = await fetch_live_socioeconomics(req.city)
+            socio = await fetch_live_socioeconomics(location_hint)
         except Exception as exc:
             raise _data_unavailable(
-                f"Socioeconomic data unavailable for city '{req.city}': {exc}"
+                f"Socioeconomic data unavailable for city '{location_hint}': {exc}"
             )
 
         pop = socio["population"]
@@ -408,9 +431,9 @@ def create_app() -> FastAPI:
         try:
             death_rate, rh_live, rh_p95, historical_eras = await asyncio.gather(
                 _fetch_worldbank_death_rate(iso3),
-                _fetch_relative_humidity_live(req.lat, req.lng),
-                _fetch_era5_humidity_p95(req.lat, req.lng),
-                fetch_historical_eras(req.lat, req.lng)
+                _fetch_relative_humidity_live(lat, lng),
+                _fetch_era5_humidity_p95(lat, lng),
+                fetch_historical_eras(lat, lng)
             )
         except Exception as exc:
             raise _data_unavailable(str(exc))
@@ -423,7 +446,7 @@ def create_app() -> FastAPI:
         results = await asyncio.gather(
             *[
                 fetch_cmip6_projection(
-                    req.lat, req.lng, ssp_code, yr, p95, total_cooling
+                    lat, lng, ssp_code, yr, p95, total_cooling
                 )
                 for yr in fetch_years
             ],
@@ -577,7 +600,7 @@ def create_app() -> FastAPI:
         logger.info(
             "[predict] Processed city=%r  year=%d  tx5d=%.1f°C  "
             "hw=%d  deaths=%.0f  loss=%s  zone=%s",
-            req.city,
+            location_hint,
             target_year,
             tx5d,
             int(hw_days_tgt),
@@ -588,7 +611,7 @@ def create_app() -> FastAPI:
 
         # ── 8. H3 hex grid ────────────────────────────────────────────────
         hex_grid_data = await _generate_hex_grid_data(
-            city_name=req.city,
+            city_name=location_hint,
             city_wbt=wbt_proj,
             city_temp=tx5d,
             resolution=9,
@@ -598,7 +621,7 @@ def create_app() -> FastAPI:
         ai: Optional[dict] = None
         try:
             ai = await generate_strategic_analysis(
-                req.city,
+                location_hint,
                 req.ssp,
                 req.year,
                 req.canopy,
@@ -612,6 +635,13 @@ def create_app() -> FastAPI:
             logger.warning("[predict] AI narrative failed (non-fatal): %s", exc)
 
         return {
+            "resolvedLocation": {
+                "city": location_hint,
+                "lat": lat,
+                "lng": lng,
+                "country_code": geo.country_code,
+                "geocoder_source": geo.source,
+            },
             "metrics": {
                 "baseTemp": str(tx5d_baseline),
                 "temp": f"{tx5d:.1f}",
