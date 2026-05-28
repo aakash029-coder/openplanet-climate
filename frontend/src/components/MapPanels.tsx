@@ -398,7 +398,7 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               )}
             </div>
             <p className="text-[8px] font-mono text-slate-600 leading-relaxed">
-              95% CI · {getScientificRange(projection?.attributable_deaths ?? 0, 'num')}
+              Sensitivity Bounds ±15% · {getScientificRange(projection?.attributable_deaths ?? 0, 'num')}
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedDeaths || '0'} />}
             <AuditButton label="Calculation Log · IPCC AR6" onClick={() => openAudit('mortality')} />

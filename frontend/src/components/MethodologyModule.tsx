@@ -241,26 +241,32 @@ export default function MethodologyModule() {
           <p>Heat-attributable mortality utilizes the <span className="text-white font-bold">Gasparrini et al. (2017) Lancet Planetary Health</span> dose-response framework combined with live UN Population data.</p>
           <Formula
             label="Attributable Fraction (AF) Formulation"
-            formula={"Deaths = Pop × (DR/1000) × (HW/365) × AF × V"}
+            formula={"Deaths = Pop × (DR/1000) × (HW/365) × AF × OP-CVI"}
             note={<div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
               <div><span className="text-blue-400">Pop</span> = Scaled Metropolitan Population</div>
               <div><span className="text-blue-400">DR</span> = UN API Crude Death Rate (Fallback: WHO)</div>
               <div><span className="text-blue-400">AF</span> = (RR−1)/RR, where RR = exp(0.0801 × ΔT)</div>
-              <div><span className="text-blue-400">V</span> = Composite Vulnerability Multiplier</div>
+              <div><span className="text-blue-400">OP-CVI</span> = OpenPlanet Composite Vulnerability Index</div>
+              <div className="col-span-2 text-amber-500/70">β = 0.0801 is the Gasparrini et al. (2017) global pooled mean — applied as a cross-city macro-benchmarking constant.</div>
             </div>}
           />
-          <p className="mt-4">The Vulnerability Multiplier (V) evaluates adaptive capacity through three data-driven dimensions:</p>
+          <p className="mt-4">The <span className="text-white font-bold">OpenPlanet Composite Vulnerability Index (OP-CVI)</span> is an original cross-city macro-benchmarking proxy constructed from three socioeconomic axes:</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { label:"Wealth Proxy",  text:"Capital access for active cooling / AC adoption curves." },
-              { label:"Age Structure", text:"Physiological sensitivity scaling for elderly cohorts (>65)." },
-              { label:"Health Capacity", text:"Emergency response viability via physicians per 1,000." },
+              { label:"Wealth Proxy",    text:"Capital access for active cooling and AC adoption. Derived from World Bank GDP per capita (inverse scaling)." },
+              { label:"Age Structure",   text:"Physiological sensitivity weight for elderly cohorts (65+). Anchored to Gasparrini et al. (2017) age-stratified analysis." },
+              { label:"Health Capacity", text:"Emergency response viability via physicians per 1,000 (World Bank SH.MED.PHYS.ZS)." },
             ].map((item) => (
               <div key={item.label} className="bg-[#09090b] border border-slate-800 p-4 rounded-lg">
                 <p className="text-slate-300 font-bold text-[10px] tracking-widest mb-2">{item.label}</p>
                 <p className="text-slate-500 text-[9px] tracking-widest">{item.text}</p>
               </div>
             ))}
+          </div>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 mt-2">
+            <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest leading-relaxed">
+              OP-CVI is an original OpenPlanet normalization index for comparative cross-city portfolio screening. It is not a reproduction of any certified actuarial or epidemiological vulnerability standard.
+            </p>
           </div>
         </div>
       ),
@@ -270,11 +276,13 @@ export default function MethodologyModule() {
       title: "CMIP6 Ensemble & Climatology",
       content: (
         <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>Near-term scenarios (2015–2050) utilize an equal-weighted multi-model ensemble of CMIP6 projections, anchoring local anomaly thresholds to the ERA5 1991-2020 climatology.</p>
+          <p>Near-term scenarios (2015–2050) utilize an equal-weighted multi-model ensemble of CMIP6 projections, anchoring local anomaly thresholds to a <span className="text-white font-bold">Contemporary Non-Stationary Baseline (2011–2020)</span>.</p>
           <Formula
-            label="Empirical Heatwave Threshold"
-            formula={"T_threshold = P95(ERA5 Tmax, 1991–2020)"}
-            note="Thresholds are strictly emergent from localized 30-year meteorological physics. We compute the 95th percentile from ~10,950 daily maximum temperature observations per coordinate."
+            label="Empirical Heatwave Threshold — Contemporary Baseline"
+            formula={"T_threshold = P95(ERA5 Tmax, 2011–2020)"}
+            note={<div className="space-y-1">
+              <div>The analytical calculation engine isolates the most recent complete decade (2011–2020, ~3,650 daily observations per coordinate) as its localized empirical baseline. Using a modern decade-scale window captures accelerated anthropogenic extreme heat velocities more accurately than a 30-year average that dilutes current thermal regimes with pre-acceleration climatology from the 1990s, while also ensuring reliable upstream API throughput. Macro-climatic context (1995–2024 trend) is surfaced separately in the overview display layer for orientation only.</div>
+            </div>}
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
             {[
@@ -299,10 +307,11 @@ export default function MethodologyModule() {
           <p>OpenPlanet operates as a <span className="text-white font-bold">macroscopic climate risk intelligence engine</span>. It is engineered for rapid portfolio screening and directional asset risk allocation. It is explicitly not a substitute for microclimate CFD engineering or localized actuarial reporting.</p>
           <div className="space-y-3 mt-4">
             {[
-              { label:"Spatial Averaging",             text:"The spatial grid resolves to H3 boundaries using ERA5 (~31km) and CMIP6 (~50km) resolutions. Hyper-local street-canyon heat retention is modeled heuristically via distance-decay algorithms rather than real-time fluid dynamics." },
-              { label:"Adaptation & Mitigation Offsets",text:"Urban canopy and albedo offsets are approximated via generalized linear correlations (e.g., Bowler et al. 2010). They do not reflect nuanced wind shear or structural shadow casting parameters." },
-              { label:"Economic Proxy Dependency",     text:"Bipartite loss calculations deploy derived metropolitan GDP metrics. Supply chain contagion and secondary market volatility are excluded from direct loss estimates." },
-              { label:"Zero Fallback Mandate",         text:"The engine enforces strict data requirements. If accurate APIs (geocoding, UN demographic data) fail after structured retry protocols, calculations are intentionally halted rather than defaulting to arbitrary global means." },
+              { label:"Spatial Resolution",             text:"Risk calculations are computed at the geocoded city centroid and projected outward via a spatial decay model to populate the H3 Resolution 9 hex grid (avg. cell ≈ 0.1053 km², edge ≈ 0.14 km). ERA5 native resolution is ~31 km and CMIP6 is ~20–50 km — the H3 grid provides a city-scale spatial indexing framework for visualization, not independent sub-cell temperature measurements." },
+              { label:"Model Variance Sensitivity Bounds", text:"Displayed uncertainty ranges (±15% mortality, ±8% economic) are scaling constants for directional range orientation, not statistically derived confidence intervals from ensemble spread or Monte Carlo simulation." },
+              { label:"Adaptation & Mitigation Offsets",text:"Urban canopy and albedo offsets are approximated via generalized linear correlations (e.g., Bowler et al. 2010). They do not reflect nuanced wind shear or structural shadow casting parameters. The simulator is a directional tool only." },
+              { label:"Economic Proxy Dependency",     text:"Bipartite loss calculations deploy derived metropolitan GDP metrics. Supply chain contagion and secondary market volatility are excluded from direct loss estimates. OP-CVI is a macro-benchmarking proxy, not a certified actuarial index." },
+              { label:"Data Lineage Transparency",     text:"Every API response carries a metadata.data_lineage field. When 'statistical_fallback' is active, a latitude-based piecewise regression was substituted for upstream ERA5 or CMIP6 API calls that timed out. Fallback outputs carry materially higher uncertainty and are flagged in the RightPanel lineage badge." },
             ].map((item) => (
               <div key={item.label} className="border border-slate-800 bg-[#09090b] rounded-lg p-4">
                 <p className="font-bold text-[11px] tracking-widest mb-2 text-white">{item.label}</p>
@@ -404,8 +413,8 @@ export default function MethodologyModule() {
           <span>⚠</span> Regulatory Disclaimer
         </p>
         <p className="text-[8px] font-mono text-slate-600 leading-relaxed">
-          All outputs are directional actuarial proxies derived from public scientific datasets (Copernicus C3S ERA5, Open-Meteo CMIP6, World Bank WDI). They do not constitute certified financial instruments, insurance underwriting opinions, or binding actuarial certifications. When{' '}
-          <span className="text-amber-500/70">metadata.data_lineage = &quot;statistical_fallback&quot;</span>, one or more upstream API calls failed and a latitude-based piecewise model was substituted — treat such outputs as indicative order-of-magnitude estimates only. The authors accept zero liability for capital allocation decisions taken in reliance on these outputs. Users must perform independent validation before operational deployment.
+          All outputs are directional macro-scale proxies derived from public scientific datasets (Copernicus C3S ERA5 · Open-Meteo CMIP6 · World Bank WDI). They do not constitute certified weather forecasts, audited engineering assessments, insurance underwriting opinions, or financial instruments of any kind. The mortality model uses the Gasparrini et al. (2017) global pooled β = 0.0801 as a cross-city benchmarking constant. Model Variance Sensitivity Bounds (±15% / ±8%) are scaling constants, not statistically derived confidence intervals. When{' '}
+          <span className="text-amber-500/70">metadata.data_lineage = &quot;statistical_fallback&quot;</span>, a latitude-based piecewise regression was substituted for a failed upstream API call — treat as indicative only. The authors accept zero civil or commercial liability for any consequential action taken in reliance on these outputs. Independent validation is mandatory before operational deployment.
         </p>
       </div>
     </div>
