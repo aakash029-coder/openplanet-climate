@@ -205,7 +205,27 @@ uvicorn climate_engine.api.main:app --reload --port 7860
 
 API documentation is available at `http://localhost:7860/docs`.
 
-> **Platform Independence Note:** The engine is fully self-contained and runs standalone in any local Python 3.11+ environment or Docker container. `VERCEL_TUNNEL_URL` is an *optional* architectural proxy used to route upstream ERA5 / CMIP6 API calls through a Vercel edge function — this sidesteps client-side CORS restrictions when the frontend is hosted on Vercel. It is not required for local deployments or Docker-based setups. When `VERCEL_TUNNEL_URL` is not set, the engine calls Open-Meteo APIs directly.
+> ### Edge Proxy / Reverse Proxy Anti-Throttling Pipeline Pattern
+>
+> **Why a proxy layer is required in shared-hosting production environments:**
+> Shared-cloud hosting platforms — including Hugging Face Spaces free tiers, Render, Railway, and similar infrastructure — operate from dense IP ranges that are aggressively rate-limited and in some cases firewall-blocked by upstream public data APIs (Open-Meteo ERA5 archive, CMIP6 climate API, Nominatim geocoder). Direct API calls from these shared IP pools routinely receive HTTP 429 / 403 responses regardless of per-key rate limits, because the upstream provider blocks the hosting provider's egress IP block entirely.
+>
+> **The solution — serverless edge proxy:** The engine routes all upstream ERA5 / CMIP6 / Nominatim requests through a serverless edge function deployed at a clean, non-shared IP. This is a canonical reverse-proxy anti-throttling pattern, not a Vercel-specific lock-in. `VERCEL_TUNNEL_URL` points to the active proxy adapter endpoint.
+>
+> **Deployment modes — auto-detected at runtime:**
+>
+> | Mode | Condition | Behavior |
+> |------|-----------|----------|
+> | **Edge Proxy (production)** | `VERCEL_TUNNEL_URL` is set | All upstream API requests POST through the configured serverless proxy |
+> | **Direct (local / Docker)** | `VERCEL_TUNNEL_URL` is unset | Upstream APIs called directly via HTTP GET — suitable for dedicated IP environments |
+>
+> **DPGA Platform Independence:** Vercel Functions is the reference implementation of the proxy adapter, but the interface contract is a simple `POST { target_url }` → proxied `GET` response. Any of the following can serve as a drop-in replacement with no engine code changes:
+> - **Cloudflare Workers** — deploy `infra/tunnel-worker.js` (edge runtime, zero cold-start)
+> - **AWS Lambda + API Gateway** — standard serverless function behind an API Gateway endpoint
+> - **Nginx reverse proxy** — `proxy_pass` configuration on a VPS or dedicated server
+> - **Any HTTP relay function** that accepts `{ "target_url": "..." }` and returns the upstream JSON response
+>
+> This architecture satisfies DPGA's platform-independence criterion: the engine is not coupled to Vercel's infrastructure — Vercel is the *default* anti-throttling adapter, replaceable by any conforming proxy implementation.
 
 ### 3. Start the Next.js frontend
 
@@ -296,7 +316,7 @@ All `/api/*` routes are proxied through the Next.js `/api/engine` route handler 
 
 **3 — Data Lineage Transparency.** Every API response carries a `metadata.data_lineage` field. When this reads `"statistical_fallback"`, a latitude-based piecewise regression was substituted for one or more upstream API calls (Copernicus C3S ERA5 or Open-Meteo CMIP6) that timed out or returned an error. Fallback outputs carry materially higher uncertainty and must be treated as indicative order-of-magnitude estimates only.
 
-**4 — Platform Independence.** The engine is deployable as a fully standalone Python/Docker service. `VERCEL_TUNNEL_URL` is an optional architectural proxy for hosted deployments; it is not required for local or self-hosted operation.
+**4 — Platform Independence.** The engine is deployable as a fully standalone Python/Docker service. `VERCEL_TUNNEL_URL` configures the Edge Proxy Anti-Throttling adapter required in shared-cloud production environments to bypass upstream API IP-range blocks. The proxy interface (`POST { target_url }`) is implementation-agnostic: Vercel Functions is the reference adapter, with Cloudflare Workers, AWS Lambda, and Nginx reverse proxy all serving as conforming drop-in replacements. Local and dedicated-IP deployments operate in direct mode without any proxy.
 
 **5 — Zero Liability.** To the maximum extent permitted by applicable law, the authors and contributors accept zero civil or commercial liability for capital allocation decisions, portfolio actions, insurance pricing changes, public policy choices, or any consequential action taken in reliance on this engine's outputs. Users assume full responsibility for independent validation before any operational deployment.
 
