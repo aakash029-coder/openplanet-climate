@@ -10,9 +10,9 @@
 
 ## Executive Summary
 
-OpenPlanet translates continental-scale atmospheric reanalysis and forward-projection datasets into hyper-localised, block-level physical climate risk and human survival outcomes. It converts raw ERA5 climatology and CMIP6 ensemble projections into directly actionable metrics: heat-attributable mortality, GDP-denominated economic damage, and wet-bulb survivability thresholds — rendered at Uber H3 Resolution 9 spatial granularity over any city on Earth.
+OpenPlanet translates continental-scale atmospheric reanalysis and forward-projection datasets into city-scale physical climate risk indicators and human survival thresholds. It converts raw ERA5 climatology and CMIP6 ensemble projections into directly actionable screening metrics: heat-attributable mortality estimates, GDP-denominated economic damage proxies, and wet-bulb survivability assessments — rendered at Uber H3 Resolution 9 spatial granularity (avg. cell ≈ 0.1053 km²) over any city on Earth.
 
-The system is designed for institutional climate risk analysts, sovereign wealth fund managers, real-asset portfolio teams, and climate scientists who require transparent, auditable, and reproducible risk calculations. Every number the engine produces is traceable to a peer-reviewed source, a public dataset API, and an explicit formula.
+The system is designed for climate risk researchers, portfolio screening teams, and urban resilience analysts who require transparent, auditable, and reproducible directional calculations. Every output is traceable to a peer-reviewed source, a public dataset API, and an explicit formula. All outputs are macro-scale directional proxies and do not constitute certified financial instruments, engineering assessments, or regulatory filings.
 
 ---
 
@@ -29,12 +29,12 @@ The primary interface presents an H3 hex-grid thermal risk map overlaid on a Map
 
 The right panel displays live risk metrics drawn exclusively from `ClimateDataContext` — the single source of truth populated by a single `/api/climate-risk` call:
 
-| Metric | Formula source |
-|--------|---------------|
-| Attributable Deaths | Gasparrini et al. (2017) AF = (RR−1)/RR |
-| Economic Impact | Burke et al. (2018) + ILO (2019) bipartite model |
-| Heatwave Days | ERA5 P95 threshold exceedance |
-| Peak Tx5d | CMIP6 ensemble 5-day maximum temperature |
+| Metric | Formula source | Uncertainty display |
+|--------|---------------|---------------------|
+| Attributable Deaths | Gasparrini et al. (2017) AF = (RR−1)/RR · OP-CVI | Model Variance Sensitivity Bounds ±15% |
+| Economic Impact | Burke et al. (2018) + ILO (2019) bipartite model | Model Variance Sensitivity Bounds ±8% |
+| Heatwave Days | ERA5 P95 threshold exceedance | — |
+| Peak Tx5d | CMIP6 ensemble 5-day maximum temperature | — |
 
 ### 2. Deep Dive Research Tab
 
@@ -61,10 +61,18 @@ All projections are deterministic functions of public datasets. No proprietary m
 
 **Source:** Copernicus Climate Change Service (C3S) ERA5 global reanalysis via the Open-Meteo Historical API.
 
-The engine queries 30 years of daily maximum temperature observations (1991–2020) at the target coordinate. From this 10,950-observation series it computes:
+#### Contemporary Non-Stationary Baseline Calibration
+
+The engine uses a dual-layer baseline architecture:
+
+**Layer A — Macroclimatic Context (display only):** The frontend overview surfaces a long-term decadal retrospective trend spanning approximately 1995–2024 for macro-climatic orientation. This gives analysts a sense of the long-run temperature trajectory at a location.
+
+**Layer B — Analytical Calculation Baseline (canonical):** All mortality, economic, and wet-bulb calculations are anchored to the most recent complete decade — **2011–2020** (~3,650 daily maximum temperature observations per coordinate). This is a deliberate design choice termed *Contemporary Non-Stationary Baseline Calibration*: under accelerating anthropogenic forcing, the most recent decade captures observed extreme heat velocity far more accurately than a 30-year average that dilutes current thermal regimes with pre-acceleration climatology from the 1990s. It also ensures reliable upstream API throughput without triggering rate limits on the Copernicus historical archive.
+
+From the 2011–2020 ERA5 series the engine computes:
 
 - **Tx5d baseline** — rolling 5-day maximum temperature mean at the 95th percentile (WMO heatwave definition). This is the site-specific heatwave onset threshold.
-- **ERA5 P95** — absolute 95th percentile of daily maximum temperature over the baseline period. Used as the mortality dose-response reference temperature.
+- **ERA5 P95** — absolute 95th percentile of daily maximum temperature over the baseline window. Used as the mortality dose-response reference temperature.
 - **ERA5 humidity P95** — afternoon-corrected relative humidity at P95 events (see Step 3).
 - **Cooling offset** — applied algebraically to projected temperatures when mitigation sliders are active.
 
@@ -104,24 +112,26 @@ The 35 °C WBT ceiling per Sherwood & Huber (2010) is enforced as a hard display
 **Source:** Gasparrini et al. (2017), *Lancet Planetary Health* — "Projections of temperature-related excess mortality under climate change scenarios."
 
 ```
-Deaths = Pop × (DR / 1000) × (HW / 365) × AF × V
+Deaths = Pop × (DR / 1000) × (HW / 365) × AF × OP-CVI
 
 where:
-  Pop  = scaled metropolitan population (GeoNames + UN Population Division)
-  DR   = crude death rate per 1,000 (World Bank WDI API; WHO fallback)
-  HW   = projected heatwave days for target year
-  AF   = attributable fraction = (RR − 1) / RR
-  RR   = relative risk = exp(β × ΔT),  β = 0.0801  [Gasparrini et al. 2017]
-  ΔT   = peak_Tx5d − ERA5_P95_threshold
-  V    = composite vulnerability multiplier
+  Pop    = scaled metropolitan population (GeoNames + UN Population Division)
+  DR     = crude death rate per 1,000 (World Bank WDI API; WHO fallback)
+  HW     = projected heatwave days for target year
+  AF     = attributable fraction = (RR − 1) / RR
+  RR     = relative risk = exp(β × ΔT)
+  β      = 0.0801  [Gasparrini et al. 2017 global pooled mean — applied as a
+           cross-city macro-benchmarking constant; city-specific ERFs not computed]
+  ΔT     = peak_Tx5d − ERA5_P95_threshold
+  OP-CVI = OpenPlanet Composite Vulnerability Index (see below)
 ```
 
-**Vulnerability multiplier (V)** is constructed from three independent axes:
+**OpenPlanet Composite Vulnerability Index (OP-CVI)** is a cross-city macro-benchmarking proxy constructed from three independent socioeconomic axes:
 - **Wealth proxy** — inverse of GDP per capita (AC adoption and cooling infrastructure access).
-- **Age structure** — cohorts aged 65+ carry a **3.2× physiological sensitivity multiplier** per Gasparrini et al. (2017) age-decomposition supplementary analysis.
+- **Age structure** — cohorts aged 65+ carry a **3.2× physiological sensitivity weight** derived from Gasparrini et al. (2017) age-stratified supplementary analysis.
 - **Health system capacity** — physicians per 1,000 persons (World Bank SH.MED.PHYS.ZS).
 
-All three socioeconomic dimensions are pulled live from the World Bank API at query time, with the pre-computed `socio_vault.json` as the structured fallback.
+The OP-CVI multiplicative composite is an original OpenPlanet cross-city normalization index designed for comparative portfolio screening. It is not a direct reproduction of any single published vulnerability index. All three dimensions are pulled live from the World Bank API at query time, with the pre-computed `socio_vault.json` as the structured fallback.
 
 ### Step 5 — Econometrics
 
@@ -152,9 +162,11 @@ Metropolitan GDP is estimated as national GDP per capita × urban population × 
 
 **Source:** Uber H3 geospatial indexing library at Resolution 9.
 
-Each city's administrative boundary polygon is polyfilled at H3 Resolution 9 (average hexagon area ≈ 0.1053 km², mean edge length ≈ 0.14 km). Each hex cell is assigned a thermal risk weight computed from the ERA5 P95 temperature relative to global baselines, the CMIP6 projected anomaly, and the urban heat island intensity. The resulting hex grid is rendered client-side via DeckGL `H3HexagonLayer` with a continuous green → yellow → orange → red colour ramp mapped to [0.0, 1.0] normalized risk.
+The city boundary is polyfilled at H3 Resolution 9 (canonical specs: average hexagon area ≈ 0.1053 km², mean edge length ≈ 0.14 km). Each hex cell is assigned a thermal risk weight derived from the ERA5 P95 temperature relative to global baselines, the CMIP6 projected anomaly, and a distance-decay urban heat island function anchored at the geocoded city centroid.
 
-When mitigation sliders are active, hex risk weights are scaled by `max(0.1, 1 − cooling_factor × 0.08)` for directional visualization — this is a display-only approximation and does not feed the canonical mortality or economic calculations.
+**Spatial scope note:** Risk calculations are computed at the city centroid and projected outward via a spatial decay model. The hex grid provides a city-scale risk surface for visual orientation; it does not represent independent sub-cell temperature measurements. ERA5 native resolution is ~31 km and CMIP6 native resolution is ~20–50 km — the H3 Resolution 9 cell size (≈ 0.1053 km²) exceeds the source data resolution and should be understood as a spatial indexing framework, not a measurement grid.
+
+The resulting hex grid is rendered client-side via DeckGL `H3HexagonLayer` with a continuous green → yellow → orange → red colour ramp mapped to [0.0, 1.0] normalized risk. When mitigation sliders are active, hex risk weights are scaled by `max(0.1, 1 − cooling_factor × 0.08)` — display-only approximation, does not feed mortality or economic calculations.
 
 ---
 
@@ -192,6 +204,8 @@ uvicorn climate_engine.api.main:app --reload --port 7860
 ```
 
 API documentation is available at `http://localhost:7860/docs`.
+
+> **Platform Independence Note:** The engine is fully self-contained and runs standalone in any local Python 3.11+ environment or Docker container. `VERCEL_TUNNEL_URL` is an *optional* architectural proxy used to route upstream ERA5 / CMIP6 API calls through a Vercel edge function — this sidesteps client-side CORS restrictions when the frontend is hosted on Vercel. It is not required for local deployments or Docker-based setups. When `VERCEL_TUNNEL_URL` is not set, the engine calls Open-Meteo APIs directly.
 
 ### 3. Start the Next.js frontend
 
@@ -261,7 +275,7 @@ All `/api/*` routes are proxied through the Next.js `/api/engine` route handler 
 
 | Reference | Used for |
 |-----------|---------|
-| Gasparrini A. et al. (2017). *Lancet Planetary Health.* | Mortality dose-response, AF formula, β = 0.0801 |
+| Gasparrini A. et al. (2017). *Lancet Planetary Health.* | Mortality dose-response, AF formula, β = 0.0801 (global pooled mean); age-stratified sensitivity weights in OP-CVI |
 | Burke M. et al. (2018). *Nature.* | Macroeconomic damage function, T_optimal = 13 °C |
 | ILO (2019). *Working on a Warmer Planet.* | Labour productivity heat-stress loss |
 | Stull R. (2011). *J. Applied Meteorology and Climatology.* | Wet-bulb temperature calculation |
@@ -276,13 +290,17 @@ All `/api/*` routes are proxied through the Next.js `/api/engine` route handler 
 
 ## Regulatory Compliance, Limitation of Liability & Legal Disclaimer
 
-**Non-Binding Directional Proxy.** All outputs produced by the OpenPlanet Climate Risk Intelligence Engine — including but not limited to attributable mortality estimates, economic damage projections, wet-bulb temperature trajectories, heatwave day counts, and H3 hex-grid risk scores — are directional actuarial proxies derived from public scientific datasets. They are not certified financial instruments, audited engineering reports, insurance underwriting opinions, or regulatory filings. No output constitutes investment advice, credit ratings, or binding actuarial certifications under any applicable jurisdiction.
+**1 — Non-Binding Directional Screening Tool.** All outputs produced by the OpenPlanet Climate Risk Intelligence Engine — including but not limited to heat-attributable mortality estimates, economic damage projections, wet-bulb temperature trajectories, heatwave day counts, and H3 hex-grid risk scores — are *directional macro-scale proxies* derived from public scientific datasets and open APIs. They are not certified weather forecasts, audited engineering assessments, actuarial certifications, insurance underwriting opinions, credit ratings, or financial instruments of any kind. No output constitutes investment advice or a binding recommendation under any applicable jurisdiction.
 
-**Data Lineage Transparency.** Each API response carries a `metadata.data_lineage` field. When this field reads `"statistical_fallback"`, the engine has substituted a latitude-based piecewise linear model for one or more upstream API calls (Copernicus C3S ERA5 or Open-Meteo CMIP6) that timed out or returned an error. Fallback outputs carry materially higher uncertainty than empirical API outputs and should be treated as indicative order-of-magnitude estimates only.
+**2 — Methodology Transparency & Known Constraints.** The mortality model applies the Gasparrini et al. (2017) global pooled β = 0.0801 coefficient as a cross-city macro-benchmarking constant; city-specific Exposure-Response Functions are not computed. The OpenPlanet Composite Vulnerability Index (OP-CVI) is an original cross-city normalization proxy — not a reproduction of any certified vulnerability index. Model Variance Sensitivity Bounds (±15% mortality, ±8% economic) are scaling constants for directional range display, not statistically derived confidence intervals. The 2011–2020 ERA5 Contemporary Non-Stationary Baseline is a deliberate design choice; outputs will differ from analyses using the WMO 30-year standard normal (1991–2020).
 
-**Limitation of Liability.** To the maximum extent permitted by applicable law, the authors, contributors, and affiliated institutions accept zero civil or commercial liability for capital allocation decisions, portfolio rebalancing actions, insurance pricing changes, public policy choices, or any other consequential action taken in reliance on outputs from this engine. Users assume full responsibility for independent validation of all outputs against authoritative scientific and regulatory sources before operational deployment.
+**3 — Data Lineage Transparency.** Every API response carries a `metadata.data_lineage` field. When this reads `"statistical_fallback"`, a latitude-based piecewise regression was substituted for one or more upstream API calls (Copernicus C3S ERA5 or Open-Meteo CMIP6) that timed out or returned an error. Fallback outputs carry materially higher uncertainty and must be treated as indicative order-of-magnitude estimates only.
 
-**Open-Source Licensing.** This software is released under the MIT License. The MIT License does not grant any warranty, express or implied, including any warranty of fitness for a particular purpose or non-infringement. See [LICENSE](LICENSE) for the complete terms.
+**4 — Platform Independence.** The engine is deployable as a fully standalone Python/Docker service. `VERCEL_TUNNEL_URL` is an optional architectural proxy for hosted deployments; it is not required for local or self-hosted operation.
+
+**5 — Zero Liability.** To the maximum extent permitted by applicable law, the authors and contributors accept zero civil or commercial liability for capital allocation decisions, portfolio actions, insurance pricing changes, public policy choices, or any consequential action taken in reliance on this engine's outputs. Users assume full responsibility for independent validation before any operational deployment.
+
+**Open-Source Licensing:** MIT License. No warranty express or implied. See [LICENSE](LICENSE).
 
 ---
 

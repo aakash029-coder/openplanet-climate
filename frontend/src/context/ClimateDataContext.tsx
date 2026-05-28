@@ -409,7 +409,7 @@ export function formatEconomicRange(usd: number): string {
 }
 
 /**
- * Format deaths with confidence interval (±15% per Gasparrini 2017)
+ * Format deaths with model variance sensitivity bounds (±15% scaling constant)
  */
 export function formatDeathsRange(deaths: number): string {
   const low  = Math.floor(deaths * 0.85);
