@@ -541,6 +541,7 @@ class H3CoverageResult:
     center_lng: float
     boundary_source: str
     coverage_area_km2: Optional[float] = None
+    resolution_used: int = 9
 
 def _extract_polygon_coords(geojson: dict) -> list[list[float]]:
     """Extract coordinates from GeoJSON Polygon or MultiPolygon."""
@@ -557,6 +558,88 @@ def _extract_polygon_coords(geojson: dict) -> list[list[float]]:
                 return largest[0]
 
     raise ValueError(f"Unsupported geometry type: {geom_type}")
+
+
+# ---------------------------------------------------------------------------
+# Adaptive H3 Resolution — prevents CPU freeze on massive admin boundaries
+# ---------------------------------------------------------------------------
+
+# Approximate H3 cell areas (km²) per resolution
+_H3_CELL_AREA_KM2: dict[int, float] = {
+    9: 0.1053,
+    8: 0.7373,
+    7: 5.1609,
+    6: 36.1290,
+}
+_HEX_OVERFLOW_THRESHOLD = 15_000  # cells — trigger step-down above this
+_HEX_HARD_CAP           = 8_000   # cells — serialised payload hard cap
+_HEX_RESOLUTION_MIN     = 6       # absolute coarsest resolution (hard stop)
+
+
+def _estimate_polygon_area_km2(coords: list[list[float]]) -> float:
+    """
+    Shoelace area over [lon, lat] GeoJSON pairs, projected to km² via centre-latitude.
+    Fast O(n) estimate — no external dependencies.
+    """
+    n = len(coords)
+    if n < 3:
+        return 0.0
+    area_deg2 = 0.0
+    for i in range(n - 1):
+        area_deg2 += coords[i][0] * coords[i + 1][1]
+        area_deg2 -= coords[i + 1][0] * coords[i][1]
+    area_deg2 = abs(area_deg2) / 2.0
+    lat_c   = sum(c[1] for c in coords) / n
+    lat_rad = math.radians(lat_c)
+    return area_deg2 * 110.574 * (111.32 * math.cos(lat_rad))
+
+
+def _adaptive_polyfill(
+    geo_dict: dict,
+    coords: list[list[float]],
+    start_resolution: int = 9,
+) -> tuple[set, int]:
+    """
+    Run h3.polyfill at the highest resolution whose estimated cell count stays
+    within _HEX_OVERFLOW_THRESHOLD.  Never executes an over-budget polyfill —
+    the area estimate is computed first, then a single polyfill is run at the
+    chosen resolution.
+
+    Returns (hex_set, resolution_used).
+    """
+    area_km2   = _estimate_polygon_area_km2(coords)
+    chosen_res = _HEX_RESOLUTION_MIN  # safe default before loop narrows it
+
+    for res in range(start_resolution, _HEX_RESOLUTION_MIN - 1, -1):
+        cell_area = _H3_CELL_AREA_KM2.get(res, _H3_CELL_AREA_KM2[9])
+        estimated = int(area_km2 / cell_area) if cell_area > 0 else 0
+        if estimated <= _HEX_OVERFLOW_THRESHOLD or res == _HEX_RESOLUTION_MIN:
+            chosen_res = res
+            break
+
+    if chosen_res < start_resolution:
+        logger.warning(
+            "[hex_grid] Resolution %d overflow detected. "
+            "Stepping down resolution to balance compute constraints. "
+            "(polygon %.1f km² → using Resolution %d)",
+            start_resolution, area_km2, chosen_res,
+        )
+
+    hex_set = h3.polyfill(geo_dict, chosen_res, geo_json_conformant=True)
+    return hex_set, chosen_res
+
+
+def _cap_hexagons(hexagons: list[str], cap: int = _HEX_HARD_CAP) -> list[str]:
+    """
+    Stride-subsample to at most `cap` cells for lightweight JSON payloads.
+    Sorting first makes the subsample deterministic and spatially coherent.
+    """
+    if len(hexagons) <= cap:
+        return hexagons
+    hexagons.sort()
+    stride = max(1, len(hexagons) // cap)
+    return hexagons[::stride][:cap]
+
 
 async def get_city_hexagons(
     city_name: str,
@@ -632,15 +715,17 @@ async def get_city_hexagons(
                 ]
                 circle.append(circle[0])  # close the ring
                 geo_dict = {"type": "Polygon", "coordinates": [circle]}
-                hex_set = h3.polyfill(geo_dict, resolution, geo_json_conformant=True)
+                hex_set, res_used = _adaptive_polyfill(geo_dict, circle, resolution)
 
                 if hex_set:
+                    hexagons = _cap_hexagons(list(hex_set))
                     return H3CoverageResult(
-                        hexagons=tuple(hex_set),
+                        hexagons=tuple(hexagons),
                         coverage_method="synthetic_circle_fallback",
                         center_lat=clat,
                         center_lng=clng,
                         boundary_source="open_meteo_geocoder",
+                        resolution_used=res_used,
                     )
 
                 # Degenerate polyfill edge case — single centre hex
@@ -651,6 +736,7 @@ async def get_city_hexagons(
                     center_lat=clat,
                     center_lng=clng,
                     boundary_source="open_meteo_geocoder",
+                    resolution_used=resolution,
                 )
         except Exception as geo_exc:
             logger.error("Fallback geocoder failed for '%s': %s", city_name, geo_exc)
@@ -681,13 +767,13 @@ async def get_city_hexagons(
         try:
             coords = _extract_polygon_coords(geojson)
             if len(coords) >= 4:
-                geo_dict = {"type": "Polygon", "coordinates": [coords]}
-                hex_set = h3.polyfill(geo_dict, resolution, geo_json_conformant=True)
-                hexagons = list(hex_set)
+                geo_dict  = {"type": "Polygon", "coordinates": [coords]}
+                hex_set, res_used = _adaptive_polyfill(geo_dict, coords, resolution)
+                hexagons  = _cap_hexagons(list(hex_set))
                 if hexagons:
                     logger.info(
-                        "H3 coverage for '%s': %d hexagons from %s boundary",
-                        city_name, len(hexagons), geojson["type"],
+                        "H3 coverage for '%s': %d hexagons (res %d) from %s boundary",
+                        city_name, len(hexagons), res_used, geojson["type"],
                     )
                     return H3CoverageResult(
                         hexagons=tuple(hexagons),
@@ -695,6 +781,7 @@ async def get_city_hexagons(
                         center_lat=center_lat,
                         center_lng=center_lng,
                         boundary_source="nominatim_polygon",
+                        resolution_used=res_used,
                     )
         except Exception as exc:
             logger.warning("Polygon extraction failed for '%s': %s", city_name, exc)
@@ -702,31 +789,33 @@ async def get_city_hexagons(
     bbox = best_result.get("boundingbox")
     if bbox and len(bbox) == 4:
         lat_min, lat_max, lon_min, lon_max = map(float, bbox)
-        coords = [
+        bbox_coords = [
             [lon_min, lat_min],
             [lon_max, lat_min],
             [lon_max, lat_max],
             [lon_min, lat_max],
             [lon_min, lat_min],
         ]
-        geo_dict = {"type": "Polygon", "coordinates": [coords]}
-        hex_set = h3.polyfill(geo_dict, resolution, geo_json_conformant=True)
+        geo_dict = {"type": "Polygon", "coordinates": [bbox_coords]}
+        hex_set, res_used = _adaptive_polyfill(geo_dict, bbox_coords, resolution)
+        hexagons = _cap_hexagons(list(hex_set))
 
-        lat_rad = math.radians(abs(center_lat))
+        lat_rad        = math.radians(abs(center_lat))
         lng_km_per_deg = 111.32 * math.cos(lat_rad)
-        area_km2 = (abs(lat_max - lat_min) * 110.574) * (abs(lon_max - lon_min) * lng_km_per_deg)
+        area_km2       = (abs(lat_max - lat_min) * 110.574) * (abs(lon_max - lon_min) * lng_km_per_deg)
 
         logger.info(
-            "H3 coverage for '%s': using official bounding box (%.1f km²)",
-            city_name, area_km2,
+            "H3 coverage for '%s': %d hexagons (res %d) from bounding box (%.1f km²)",
+            city_name, len(hexagons), res_used, area_km2,
         )
         return H3CoverageResult(
-            hexagons=tuple(list(hex_set)),
+            hexagons=tuple(hexagons),
             coverage_method="official_bounding_box",
             center_lat=center_lat,
             center_lng=center_lng,
             boundary_source="nominatim_bbox",
             coverage_area_km2=round(area_km2, 2),
+            resolution_used=res_used,
         )
 
     logger.info("No boundary data for '%s' — using exact pinpoint only", city_name)
@@ -737,6 +826,7 @@ async def get_city_hexagons(
         center_lat=center_lat,
         center_lng=center_lng,
         boundary_source="single_hex",
+        resolution_used=resolution,
     )
 
 # ---------------------------------------------------------------------------
