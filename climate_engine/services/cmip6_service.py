@@ -98,37 +98,46 @@ async def _tunnel_get(
     max_attempts: int = 3,
 ) -> dict:
     """
-    Fetch a URL via the Vercel tunnel with retry + exponential backoff.
+    Fetch a remote URL with retry + exponential backoff.
 
-    ZERO-FAIL: raises ValueError only after all retries exhausted.
+    Two execution modes — selected automatically at runtime:
+      TUNNEL mode  (VERCEL_TUNNEL_URL is set): POSTs the target URL to the
+                   Vercel edge proxy, which forwards the GET request server-side.
+                   Required when the engine is hosted on Vercel to avoid CORS
+                   restrictions and client-IP rate limits on Open-Meteo.
+      DIRECT mode  (VERCEL_TUNNEL_URL is not set): Calls Open-Meteo APIs directly
+                   via HTTP GET. Used in local and Docker deployments where no
+                   client-side CORS restriction exists.
     """
-    if not VERCEL_TUNNEL_URL:
-        raise ValueError("VERCEL_TUNNEL_URL is not set in environment variables.")
-
-    # 🔴 THE FIX: Ensure the Vercel Tunnel URL has a protocol!
-    safe_tunnel_url = VERCEL_TUNNEL_URL
-    if not safe_tunnel_url.startswith("http://") and not safe_tunnel_url.startswith("https://"):
-        safe_tunnel_url = "https://" + safe_tunnel_url
-
+    use_tunnel = bool(VERCEL_TUNNEL_URL)
     last_exc: Optional[Exception] = None
+
+    if use_tunnel:
+        safe_tunnel_url = VERCEL_TUNNEL_URL
+        if not safe_tunnel_url.startswith("http://") and not safe_tunnel_url.startswith("https://"):
+            safe_tunnel_url = "https://" + safe_tunnel_url
 
     for attempt in range(1, max_attempts + 1):
         try:
-            resp = await client.post(
-                safe_tunnel_url,
-                json={"target_url": url},
-                timeout=timeout,
-            )
+            if use_tunnel:
+                resp = await client.post(
+                    safe_tunnel_url,
+                    json={"target_url": url},
+                    timeout=timeout,
+                )
+            else:
+                resp = await client.get(url, timeout=timeout)
+
             if resp.status_code == 429:
                 wait = 2 ** attempt
-                logger.warning("Tunnel 429 (attempt %d), waiting %ds", attempt, wait)
+                logger.warning("API 429 (attempt %d), waiting %ds", attempt, wait)
                 await asyncio.sleep(wait)
                 continue
 
             resp.raise_for_status()
             data = resp.json()
 
-            if isinstance(data, dict) and "error" in data:
+            if use_tunnel and isinstance(data, dict) and "error" in data:
                 raise ValueError(f"Tunnel error response: {data['error']}")
 
             return data
@@ -138,13 +147,14 @@ async def _tunnel_get(
             if attempt < max_attempts:
                 wait = 2 ** attempt
                 logger.warning(
-                    "Tunnel attempt %d/%d failed: %s — retrying in %ds",
-                    attempt, max_attempts, exc, wait,
+                    "Fetch attempt %d/%d failed (%s mode): %s — retrying in %ds",
+                    attempt, max_attempts, "tunnel" if use_tunnel else "direct", exc, wait,
                 )
                 await asyncio.sleep(wait)
 
     raise ValueError(
-        f"All {max_attempts} tunnel attempts failed. Last error: {last_exc}"
+        f"All {max_attempts} fetch attempts failed "
+        f"({'tunnel' if use_tunnel else 'direct'} mode). Last error: {last_exc}"
     )
 
 
