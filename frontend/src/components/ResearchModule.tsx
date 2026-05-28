@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   formatWBT, formatEconomicRange, formatCoordinates,
+  useClimateData, CityClimateData,
 } from "@/context/ClimateDataContext";
 import { ExcelExportIconButton, type ExcelExportData } from "@/components/ExcelExport";
 
@@ -12,317 +13,162 @@ import {
 } from "./ResearchComponents";
 
 // ─────────────────────────────────────────────────────────────────
-// CACHES
-// ─────────────────────────────────────────────────────────────────
-const nominatimCache = new Map<string, any>();
-const elevationCache = new Map<string, number>();
-
-async function fetchNominatimSafe(query: string): Promise<any | null> {
-  const key = query.toLowerCase().trim();
-  if (nominatimCache.has(key)) return nominatimCache.get(key);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 6000);
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`,
-      { headers: { "Accept-Language": "en", "User-Agent": "OpenPlanetRiskIntelligence/1.0" }, signal: controller.signal }
-    );
-    clearTimeout(timer);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data?.length) return null;
-    nominatimCache.set(key, data[0]);
-    return data[0];
-  } catch { clearTimeout(timer); return null; }
-}
-
-async function fetchElevationSafe(lat: number, lng: number): Promise<number> {
-  const key = `${lat.toFixed(3)},${lng.toFixed(3)}`;
-  if (elevationCache.has(key)) return elevationCache.get(key)!;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 5000);
-  try {
-    const res = await fetch(
-      `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`,
-      { signal: controller.signal }
-    );
-    clearTimeout(timer);
-    if (!res.ok) return 0;
-    const data = await res.json();
-    const elev = data?.elevation?.[0] ?? 0;
-    elevationCache.set(key, elev);
-    return elev;
-  } catch { clearTimeout(timer); return 0; }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Deep-logging fetch helper
-// ─────────────────────────────────────────────────────────────────
-async function fetchClimateRiskResearch(payload: {
-  lat: number; lng: number; elevation: number;
-  ssp: string; canopy_offset_pct: number; albedo_offset_pct: number;
-  location_hint: string;
-}, signal: AbortSignal): Promise<any> {
-  console.log(
-    "[fetchClimateRiskResearch] payload →\n",
-    JSON.stringify(payload, null, 2)
-  );
-
-  const resp = await fetch("/api/engine", {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify({ endpoint: "/api/climate-risk", payload }),
-    signal,
-  });
-
-  if (!resp.ok) {
-    const rawText = await resp.text();
-    let humanMessage = rawText;
-    try {
-      const parsed = JSON.parse(rawText) as { detail?: unknown };
-      if (parsed.detail) {
-        console.error(
-          `[fetchClimateRiskResearch] FastAPI ${resp.status} validation errors:\n`,
-          JSON.stringify(parsed.detail, null, 2)
-        );
-        if (Array.isArray(parsed.detail)) {
-          humanMessage = parsed.detail
-            .map((e: { loc?: string[]; msg?: string; type?: string }) =>
-              `[${(e.loc ?? []).join(" → ")}] ${e.msg ?? e.type ?? "unknown"}`
-            )
-            .join("  |  ");
-        } else {
-          humanMessage = String(parsed.detail);
-        }
-      }
-    } catch {
-      console.error(
-        `[fetchClimateRiskResearch] Non-JSON error body (status ${resp.status}):\n`,
-        rawText
-      );
-    }
-    throw new Error(`API ${resp.status}: ${humanMessage}`);
-  }
-
-  const d = await resp.json();
-  if (d.error) throw new Error(d.error);
-  return d;
-}
-
-// ─────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────
 export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
-  // 🔴 2. Deep Dive directly Dashboard wale saved inputs ko read karega
-  const savedState = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('op_sync_state') || '{}') : {};
-  const [ssp, setSsp]                   = useState(savedState.ssp || "SSP2-4.5");
-  const [canopy, setCanopy]             = useState(savedState.canopy !== undefined ? savedState.canopy : 0);
-  const [albedo, setAlbedo]             = useState(savedState.albedo !== undefined ? savedState.albedo : 0);
-  const [selectedYear, setSelectedYear] = useState<number | null>(savedState.year ? Number(savedState.year) : null);
+  const { primaryData, primaryLoading, primaryError, fetchPrimaryCity } = useClimateData();
 
-  // Agar user Deep Dive ke andar aakar koi change kare, toh wo bhi wapas save ho jaye
-  useEffect(() => {
-    localStorage.setItem('op_sync_state', JSON.stringify({ 
-      ssp, 
-      year: selectedYear?.toString() || '2050', 
-      canopy, 
-      albedo 
-    }));
-  }, [ssp, selectedYear, canopy, albedo]);
-
-  const [geo, setGeo]                   = useState<{ lat: number; lng: number; elevation: number; display_name: string } | null>(null);
-  const [result, setResult]             = useState<RiskResult | null>(null);
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState<string | null>(null);
-  const [aiAnalysis, setAiAnalysis]     = useState<string | null>(null);
-  const [aiLoading, setAiLoading]       = useState(false);
-  const [retryStatus, setRetryStatus]   = useState<string | null>(null);
+  // SSP / mitigation state — initialize from primaryData if already loaded, else localStorage
+  const savedState = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('op_sync_state') || '{}')
+    : {};
+  const [ssp,    setSsp]    = useState(() => primaryData?.ssp    || savedState.ssp    || "SSP2-4.5");
+  const [canopy, setCanopy] = useState(() => primaryData?.canopy_offset_pct ?? (savedState.canopy ?? 0));
+  const [albedo, setAlbedo] = useState(() => primaryData?.albedo_offset_pct ?? (savedState.albedo ?? 0));
+  const [selectedYear, setSelectedYear] = useState<number | null>(
+    savedState.year ? Number(savedState.year) : null
+  );
 
   const [calcModal, setCalcModal] = useState<{ open: boolean; key: "mortality" | "economics" }>({
     open: false, key: "mortality",
   });
 
-  const isRunningRef      = useRef(false);
-  const lastAutoRunTarget = useRef<string>("");
+  // AI analysis state — fetched independently; not a core risk metric
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [aiLoading,  setAiLoading]  = useState(false);
+  const lastAiKeyRef   = useRef('');
+  const aiControllerRef = useRef<AbortController | null>(null);
 
+  // Keep a ref to primaryData to avoid stale closures in effects
+  const primaryDataRef = useRef(primaryData);
+  useEffect(() => { primaryDataRef.current = primaryData; });
+
+  // Sync to localStorage whenever controls change
   useEffect(() => {
-    if (!baseTarget || baseTarget === lastAutoRunTarget.current) return;
-    lastAutoRunTarget.current = baseTarget;
-    handleAnalyse(baseTarget, ssp);
-  }, [baseTarget]);
+    localStorage.setItem('op_sync_state', JSON.stringify({
+      ssp,
+      year: selectedYear?.toString() || '2050',
+      canopy,
+      albedo,
+    }));
+  }, [ssp, selectedYear, canopy, albedo]);
 
+  // Set initial year from projections once data arrives
   useEffect(() => {
-    if (result && lastAutoRunTarget.current) handleAnalyse(lastAutoRunTarget.current, ssp);
-  }, [ssp]);
-
-  const handleAnalyse = useCallback(async (
-    queryToRun: string = baseTarget,
-    sspVal: string     = ssp,
-  ) => {
-    if (isRunningRef.current) return;
-    isRunningRef.current = true;
-    setLoading(true); setError(null); setAiAnalysis(null); setRetryStatus(null);
-
-    try {
-      let currentGeo: { lat: number; lng: number; elevation: number; display_name: string } | null = null;
-      let geoRetries = 3;
-      while (geoRetries > 0 && !currentGeo) {
-        if (geoRetries < 3) setRetryStatus(`Locating ${queryToRun}... (${4 - geoRetries}/3)`);
-        const g = await fetchNominatimSafe(queryToRun);
-        if (g) {
-          const lat       = parseFloat(g.lat);
-          const lng       = parseFloat(g.lon);
-          const elevation = await fetchElevationSafe(lat, lng);
-          currentGeo      = { display_name: g.display_name, lat, lng, elevation };
-          setGeo(currentGeo); setRetryStatus(null);
-        } else {
-          geoRetries--;
-          if (geoRetries > 0) await new Promise(r => setTimeout(r, 2000));
-        }
-      }
-      if (!currentGeo) throw new Error("Geocoding failed after 3 retries.");
-
-      let riskData: any   = null;
-      let riskRetries     = 3;
-      let lastRiskError: any = null;
-
-      while (riskRetries > 0 && !riskData) {
-        if (riskRetries < 3) setRetryStatus(`Fetching risk metrics... (${4 - riskRetries}/3)`);
-        try {
-          const ctrl  = new AbortController();
-          const timer = setTimeout(() => ctrl.abort(), 30000);
-
-          riskData = await fetchClimateRiskResearch(
-            {
-              lat:               currentGeo.lat,
-              lng:               currentGeo.lng,
-              elevation:         currentGeo.elevation,
-              ssp:               sspVal,           
-              canopy_offset_pct: canopy,
-              albedo_offset_pct: albedo,
-              location_hint:     currentGeo.display_name, 
-            },
-            ctrl.signal
-          );
-
-          clearTimeout(timer);
-          setRetryStatus(null);
-        } catch (err) {
-          lastRiskError = err;
-          riskRetries--;
-          if (riskRetries > 0) await new Promise(r => setTimeout(r, 3000));
-        }
-      }
-      if (!riskData) throw new Error(lastRiskError?.message ?? "Engine connection failed.");
-
-      setResult(riskData);
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "openplanet_last_risk_data",
-          JSON.stringify({
-            ...riskData,
-            city_name: baseTarget,
-            lat:       currentGeo.lat,
-            lng:       currentGeo.lng,
-          })
-        );
-      }
-
-      let targetYr = selectedYear;
-      if (!targetYr && riskData.projections?.length > 0) {
-        targetYr = riskData.projections[0].year;
-        setSelectedYear(targetYr);
-      }
-      setLoading(false);
-
-      if (riskData.projections?.length > 0) {
-        setAiLoading(true);
-        await new Promise(r => setTimeout(r, 2000));
-        let aiRetries = 3;
-        let aiSuccess = false;
-
-        while (!aiSuccess && aiRetries > 0) {
-          try {
-            if (aiRetries < 3) setRetryStatus(`Generating AI analysis... (${4 - aiRetries}/3)`);
-            const pData = riskData.projections.find((p: any) => p.year === (targetYr ?? 2050))
-              ?? riskData.projections[0];
-            const ctrl  = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), 30000);
-
-            const aiResp = await fetch("/api/engine", {
-              method:  "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                endpoint: "/api/research-analysis",
-                payload: {
-                  city_name: currentGeo.display_name,
-                  context:   "Deep Dive Research Analysis",
-                  metrics: {
-                    temp:      `${fmt(pData.peak_tx5d_c)}°C`,
-                    elevation: `${fmt(currentGeo.elevation, 0)}m`,
-                    heatwave:  `${fmt(pData.heatwave_days, 0)} days`,
-                    loss:      fmtUSD(pData.economic_decay_usd),
-                    lat:       currentGeo.lat,
-                    lng:       currentGeo.lng,
-                  },
-                },
-              }),
-              signal: ctrl.signal,
-            });
-
-            clearTimeout(timer);
-
-            if (!aiResp.ok) {
-              const t = await aiResp.text();
-              console.error("[ResearchModule] AI endpoint error:", t);
-              throw new Error(`AI ${aiResp.status}`);
-            }
-
-            const aiData = await aiResp.json();
-            setAiAnalysis(aiData.reasoning);
-            aiSuccess = true; setRetryStatus(null);
-          } catch {
-            aiRetries--;
-            if (aiRetries > 0) await new Promise(r => setTimeout(r, 3000));
-            else setAiAnalysis(null);
-          }
-        }
-        setAiLoading(false); setRetryStatus(null);
-      }
-    } catch (err: any) {
-      const msg = err?.message ?? "Analysis Failed";
-      console.error("[ResearchModule] handleAnalyse error:", msg);
-      setError(msg);
-      setLoading(false); setRetryStatus(null);
-    } finally {
-      isRunningRef.current = false;
+    if (primaryData?.projections?.length && !selectedYear) {
+      const fromStorage = savedState.year ? Number(savedState.year) : null;
+      const matchYear   = fromStorage
+        ? primaryData.projections.find(p => p.year === fromStorage)?.year
+        : null;
+      setSelectedYear(matchYear ?? primaryData.projections[0].year);
     }
-  }, [baseTarget, selectedYear, canopy, albedo]);
+  }, [primaryData]);
+
+  // When SSP / mitigation changes, re-fetch via context (cache prevents duplicates)
+  const lastFetchParamsRef = useRef({ ssp: '', canopy: -1, albedo: -1 });
+  useEffect(() => {
+    const pd = primaryDataRef.current;
+    if (!pd) return;
+    const p = lastFetchParamsRef.current;
+    if (p.ssp === ssp && p.canopy === canopy && p.albedo === albedo) return;
+    lastFetchParamsRef.current = { ssp, canopy, albedo };
+    fetchPrimaryCity({
+      city_name:         pd.city_name,
+      lat:               pd.lat,
+      lng:               pd.lng,
+      ssp,
+      canopy_offset_pct: canopy,
+      albedo_offset_pct: albedo,
+      elevation:         pd.elevation,
+    });
+  }, [ssp, canopy, albedo]); // intentionally omit primaryData/fetchPrimaryCity
+
+  // Trigger AI analysis whenever the city or SSP changes
+  const runAiAnalysis = useCallback(async (data: CityClimateData, targetYear: number) => {
+    const pData = data.projections.find(p => p.year === targetYear) ?? data.projections[0];
+    if (!pData) return;
+
+    setAiLoading(true);
+    setAiAnalysis(null);
+
+    // Cancel any previous in-flight request
+    aiControllerRef.current?.abort();
+    const ctrl = new AbortController();
+    aiControllerRef.current = ctrl;
+
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const timer = setTimeout(() => ctrl.abort(), 30000);
+        const aiResp = await fetch("/api/engine", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            endpoint: "/api/research-analysis",
+            payload: {
+              city_name: data.city_name,
+              context:   "Deep Dive Research Analysis",
+              metrics: {
+                temp:      `${fmt(pData.peak_tx5d_c)}°C`,
+                elevation: `${data.elevation ?? 0}m`,
+                heatwave:  `${fmt(pData.heatwave_days, 0)} days`,
+                loss:      fmtUSD(pData.economic_decay_usd),
+                lat:       data.lat,
+                lng:       data.lng,
+              },
+            },
+          }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(timer);
+        if (!aiResp.ok) throw new Error(`AI ${aiResp.status}`);
+        const aiData = await aiResp.json();
+        if (!ctrl.signal.aborted) setAiAnalysis(aiData.reasoning ?? null);
+        break;
+      } catch (e: any) {
+        if (e?.name === 'AbortError') break;
+        retries--;
+        if (retries > 0) await new Promise(r => setTimeout(r, 3000));
+        else setAiAnalysis(null);
+      }
+    }
+    setAiLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!primaryData || primaryLoading) return;
+    const aiKey = `${primaryData.city_name}__${primaryData.ssp}`;
+    if (aiKey === lastAiKeyRef.current) return;
+    lastAiKeyRef.current = aiKey;
+    const yr = selectedYear ?? primaryData.projections[0]?.year ?? 2050;
+    runAiAnalysis(primaryData, yr);
+  }, [primaryData, primaryLoading]); // intentionally omit selectedYear to avoid re-triggering on year change
+
+  // ─── Derived values ────────────────────────────────────────────
+  const result      = primaryData;   // alias for readability
+  const selectedProj = result?.projections?.find(p => p.year === selectedYear) ?? null;
 
   const getMitigatedData = () => {
-    if (!result) return null;
-    const sp = result.projections?.find(p => p.year === selectedYear);
-    if (!sp) return null;
+    if (!result || !selectedProj) return null;
     const cooling    = (canopy / 100) * 1.2 + (albedo / 100) * 0.8;
-    const effHW      = Math.max(0, sp.heatwave_days - cooling * 3.5);
-    const hwR        = sp.heatwave_days > 0 ? effHW / sp.heatwave_days : 1;
+    const effHW      = Math.max(0, selectedProj.heatwave_days - cooling * 3.5);
+    const hwR        = selectedProj.heatwave_days > 0 ? effHW / selectedProj.heatwave_days : 1;
     const combined   = hwR * Math.max(0, 1 - cooling * 0.08);
-    const rawWBT     = sp.wbt_max_c ?? (sp.peak_tx5d_c * 0.7 + 8);
-    const baseUHI    = sp.uhi_intensity_c ?? (result.baseline?.baseline_mean_c ? (sp.peak_tx5d_c - result.baseline.baseline_mean_c) : 2.1);
-    const baseCdd    = sp.grid_stress_factor ?? ((sp.peak_tx5d_c - 18) * sp.heatwave_days);
-    const mitDeaths  = Math.round(sp.attributable_deaths * combined);
-    const savedDeaths= Math.round(sp.attributable_deaths - mitDeaths);
-    const mitLoss    = sp.economic_decay_usd * combined;
+    const rawWBT     = selectedProj.wbt_max_c ?? (selectedProj.peak_tx5d_c * 0.7 + 8);
+    const baseUHI    = selectedProj.uhi_intensity_c ?? (result.baseline?.baseline_mean_c ? (selectedProj.peak_tx5d_c - result.baseline.baseline_mean_c) : 2.1);
+    const baseCdd    = selectedProj.grid_stress_factor ?? ((selectedProj.peak_tx5d_c - 18) * selectedProj.heatwave_days);
+    const mitDeaths  = Math.round(selectedProj.attributable_deaths * combined);
+    const savedDeaths = Math.round(selectedProj.attributable_deaths - mitDeaths);
+    const mitLoss    = selectedProj.economic_decay_usd * combined;
     return {
       wbt:           Math.min(35, Math.max(0, rawWBT - cooling * 0.85)),
       uhi:           Math.max(0, Math.min(8, baseUHI - cooling)),
       cdd:           Math.max(0, baseCdd * hwR),
-      peakTemp:      Math.max(0, sp.peak_tx5d_c - cooling),
+      peakTemp:      Math.max(0, selectedProj.peak_tx5d_c - cooling),
       loss:          mitLoss,
       deaths:        mitDeaths,
       savedDeaths,
-      savedLoss:     sp.economic_decay_usd - mitLoss,
+      savedLoss:     selectedProj.economic_decay_usd - mitLoss,
       combinedRatio: combined,
       hwDays:        Math.round(effHW),
     };
@@ -330,37 +176,37 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
 
   const dynamicData    = getMitigatedData();
   const wbtStatus      = dynamicData ? getWBTStatus(dynamicData.wbt) : getWBTStatus(0);
-  const selectedProj   = result?.projections?.find(p => p.year === selectedYear) ?? null;
   const hasMitigation  = canopy > 0 || albedo > 0;
   const mortalityAudit = selectedProj?.audit_trail?.mortality ?? null;
   const economicsAudit = selectedProj?.audit_trail?.economics ?? null;
 
-  const excelData: ExcelExportData | null = (result && selectedProj && geo)
+  const excelData: ExcelExportData | null = (result && selectedProj)
     ? {
-        city_name:          baseTarget,
-        lat:                geo.lat,
-        lng:                geo.lng,
+        city_name:           result.city_name,
+        lat:                 result.lat,
+        lng:                 result.lng,
         ssp,
-        target_year:        selectedYear ?? 2050,
-        era5_baseline_c:    result.baseline?.baseline_mean_c ?? 0,
-        era5_p95_c:         result.threshold_c,
-        era5_humidity_p95:  result.era5_humidity_p95 ?? 70,
-        peak_tx5d_c:        selectedProj.peak_tx5d_c,
-        heatwave_days:      selectedProj.heatwave_days,
-        mean_temp_c:        selectedProj.peak_tx5d_c - 8,
-        population:         result.population ?? 0,
-        gdp_usd:            result.gdp_usd ?? 0,
-        death_rate:         7.7,
-        vulnerability:      selectedProj.audit_trail?.mortality?.variables?.V ?? 1.0,
-        canopy_pct:         canopy,
-        albedo_pct:         albedo,
-        attributable_deaths:selectedProj.attributable_deaths,
-        economic_decay_usd: selectedProj.economic_decay_usd,
-        wbt_c:              selectedProj.wbt_max_c ?? 0,
-        cmip6_source:       selectedProj.source,
+        target_year:         selectedYear ?? 2050,
+        era5_baseline_c:     result.baseline?.baseline_mean_c ?? 0,
+        era5_p95_c:          result.threshold_c,
+        era5_humidity_p95:   result.era5_humidity_p95 ?? 70,
+        peak_tx5d_c:         selectedProj.peak_tx5d_c,
+        heatwave_days:       selectedProj.heatwave_days,
+        mean_temp_c:         selectedProj.peak_tx5d_c - 8,
+        population:          result.population ?? 0,
+        gdp_usd:             result.gdp_usd ?? 0,
+        death_rate:          7.7,
+        vulnerability:       selectedProj.audit_trail?.mortality?.variables?.V ?? 1.0,
+        canopy_pct:          canopy,
+        albedo_pct:          albedo,
+        attributable_deaths: selectedProj.attributable_deaths,
+        economic_decay_usd:  selectedProj.economic_decay_usd,
+        wbt_c:               selectedProj.wbt_max_c ?? 0,
+        cmip6_source:        selectedProj.source,
       }
     : null;
 
+  // ─── Render ────────────────────────────────────────────────────
   return (
     <div className="space-y-5 animate-in fade-in duration-700">
 
@@ -385,9 +231,10 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           <h1 className="text-2xl sm:text-3xl font-mono font-bold text-white uppercase tracking-tighter truncate max-w-2xl">
             {baseTarget.split(",")[0]}
           </h1>
-          {geo && (
+          {result && (
             <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-2">
-              {formatCoordinates(geo.lat, geo.lng)} · ELEV: {geo.elevation}m
+              {formatCoordinates(result.lat, result.lng)}
+              {result.elevation ? ` · ELEV: ${result.elevation}m` : ''}
             </p>
           )}
         </div>
@@ -405,7 +252,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             <select
               value={ssp}
               onChange={e => setSsp(e.target.value)}
-              disabled={loading}
+              disabled={primaryLoading}
               className="w-full bg-[#0a0f1d] border border-slate-700 p-2.5 text-[11px] font-mono text-slate-200 outline-none rounded-lg focus:border-indigo-500 transition-colors disabled:opacity-50"
             >
               <option value="SSP2-4.5">SSP2-4.5 (Moderate)</option>
@@ -437,16 +284,22 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             />
           </div>
           <div className="flex flex-col justify-end">
-            <div className="w-full bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] rounded-lg flex items-center justify-center gap-2">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />ENGINE SYNCED
-            </div>
+            {primaryLoading ? (
+              <div className="w-full bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] rounded-lg flex items-center justify-center gap-2">
+                <div className="w-2 h-2 border border-indigo-400/40 border-t-indigo-400 rounded-full animate-spin" />
+                FETCHING...
+              </div>
+            ) : primaryError ? (
+              <div className="w-full bg-red-600/10 border border-red-500/30 text-red-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] rounded-lg flex items-center justify-center gap-2">
+                ENGINE ERROR
+              </div>
+            ) : (
+              <div className="w-full bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] rounded-lg flex items-center justify-center gap-2">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />ENGINE SYNCED
+              </div>
+            )}
           </div>
         </div>
-        {retryStatus && (
-          <p className="mt-2 text-[9px] font-mono text-indigo-400 uppercase tracking-widest animate-pulse">
-            {retryStatus}
-          </p>
-        )}
       </div>
 
       {/* ── YEAR SELECTOR ── */}
@@ -471,28 +324,27 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
         </div>
       )}
 
-      {loading && !result && (
+      {/* Loading state */}
+      {primaryLoading && !result && (
         <div className="w-full h-64 flex flex-col items-center justify-center bg-[#050814] border border-slate-800 rounded-xl">
           <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4" />
           <span className="font-mono text-[10px] text-indigo-400 tracking-[0.3em] uppercase animate-pulse">
             Running Physics Engine...
           </span>
-          {retryStatus && (
-            <span className="mt-3 font-mono text-[9px] text-slate-500 tracking-widest uppercase">{retryStatus}</span>
-          )}
         </div>
       )}
 
-      {error && (
+      {/* Error state */}
+      {primaryError && (
         <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl space-y-2">
           <p className="text-red-400 font-mono text-xs font-bold uppercase tracking-widest">ERR: Analysis Failed</p>
           <pre className="text-[9px] font-mono text-red-300/70 bg-red-950/20 border border-red-900/30 rounded-lg px-3 py-2 whitespace-pre-wrap break-all leading-relaxed">
-            {error}
+            {primaryError}
           </pre>
         </div>
       )}
 
-      {!loading && result && dynamicData && selectedProj && (
+      {!primaryLoading && result && dynamicData && selectedProj && (
         <>
           {/* ── BASELINE vs MITIGATION ── */}
           {hasMitigation && (
@@ -548,7 +400,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
                 )}
               </div>
               <p className="text-[9px] font-mono text-slate-500 leading-relaxed">
-                Values ≥ 31°C critical. Capped at 35°C per Sherwood & Huber (2010) PNAS.
+                Values ≥ 31°C critical. Capped at 35°C per Sherwood &amp; Huber (2010) PNAS.
               </p>
               {result.baseline?.baseline_mean_c && (
                 <p className="text-[8px] font-mono text-slate-600 italic mt-2">
@@ -705,7 +557,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               <div className="flex items-center gap-3 py-2">
                 <div className="w-4 h-4 border-2 border-indigo-500/20 border-t-indigo-400 rounded-full animate-spin" />
                 <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest">
-                  {retryStatus ?? "Generating scientific summary..."}
+                  Generating scientific summary...
                 </span>
               </div>
             ) : aiAnalysis ? (

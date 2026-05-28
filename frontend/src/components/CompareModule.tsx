@@ -7,6 +7,7 @@ import {
   formatDeathsRange,
   formatCoordinates,
   getSourceLabel,
+  useClimateData,
 } from "@/context/ClimateDataContext";
 
 interface Projection {
@@ -312,52 +313,58 @@ const METRICS = [
 // MAIN
 // ─────────────────────────────────────────────────────────────────
 export default function CompareModule({ baseTarget }: { baseTarget: string }) {
-  const [city1Geo, setCity1Geo]         = useState<{ lat: number; lng: number; display_name: string } | null>(null);
+  const { primaryData, primaryLoading, fetchPrimaryCity } = useClimateData();
+
   const [searchQuery2, setSearchQuery2] = useState("");
   const [suggestions2, setSuggestions2] = useState<any[]>([]);
   const [city2Geo, setCity2Geo]         = useState<{ lat: number; lng: number; display_name: string } | null>(null);
 
-  // 🔴 SYNC STATE WITH LOCAL STORAGE 🔴
   const savedState = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('op_sync_state') || '{}') : {};
-  const [ssp, setSsp]                   = useState(savedState.ssp || "SSP2-4.5");
-  const [canopy, setCanopy]             = useState(savedState.canopy !== undefined ? savedState.canopy : 0);
-  const [albedo, setAlbedo]             = useState(savedState.albedo !== undefined ? savedState.albedo : 0);
-  const [compareYear, setCompareYear]   = useState(savedState.year ? Number(savedState.year) : 2050);
+  const [ssp, setSsp]                 = useState(() => primaryData?.ssp    || savedState.ssp    || "SSP2-4.5");
+  const [canopy, setCanopy]           = useState(() => primaryData?.canopy_offset_pct ?? (savedState.canopy ?? 0));
+  const [albedo, setAlbedo]           = useState(() => primaryData?.albedo_offset_pct ?? (savedState.albedo ?? 0));
+  const [compareYear, setCompareYear] = useState(savedState.year ? Number(savedState.year) : 2050);
 
-  const [results, setResults]           = useState<CityResult[]>([]);
-  const [running, setRunning]           = useState(false);
-  const [globalError, setGlobalError]   = useState<string | null>(null);
-  const [aiAnalysis, setAiAnalysis]     = useState<string | null>(null);
-  const [aiLoading, setAiLoading]       = useState(false);
-  const [retryStatus, setRetryStatus]   = useState<string | null>(null);
-  const [mathModal, setMathModal]       = useState<{
+  const [results, setResults]         = useState<CityResult[]>([]);
+  const [running, setRunning]         = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [aiAnalysis, setAiAnalysis]   = useState<string | null>(null);
+  const [aiLoading, setAiLoading]     = useState(false);
+  const [retryStatus, setRetryStatus] = useState<string | null>(null);
+  const [mathModal, setMathModal]     = useState<{
     open: boolean; metricLabel: string; metricKey: string;
     valA: number | null; valB: number | null;
   }>({ open: false, metricLabel: '', metricKey: '', valA: null, valB: null });
 
-  const city1FetchedRef = useRef<string>("");
+  // Keep a ref to avoid stale closure in the SSP/canopy/albedo effect
+  const primaryDataRef = useRef(primaryData);
+  useEffect(() => { primaryDataRef.current = primaryData; });
 
-  // 🔴 UPDATE LOCAL STORAGE WHEN USER CHANGES SLIDERS/DROPDOWNS HERE 🔴
+  // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('op_sync_state', JSON.stringify({ 
-      ssp, 
-      year: compareYear.toString(), 
-      canopy, 
-      albedo 
+    localStorage.setItem('op_sync_state', JSON.stringify({
+      ssp, year: compareYear.toString(), canopy, albedo,
     }));
   }, [ssp, compareYear, canopy, albedo]);
 
+  // When SSP / mitigation changes, re-fetch City A via context (cache prevents duplicates)
+  const lastFetchParamsRef = useRef({ ssp: '', canopy: -1, albedo: -1 });
   useEffect(() => {
-    if (!baseTarget || baseTarget === city1FetchedRef.current) return;
-    city1FetchedRef.current = baseTarget;
-    fetchNominatimSafe(baseTarget).then((data) => {
-      if (data?.[0]) setCity1Geo({
-        display_name: baseTarget,
-        lat:          parseFloat(data[0].lat),
-        lng:          parseFloat(data[0].lon),
-      });
+    const pd = primaryDataRef.current;
+    if (!pd) return;
+    const p = lastFetchParamsRef.current;
+    if (p.ssp === ssp && p.canopy === canopy && p.albedo === albedo) return;
+    lastFetchParamsRef.current = { ssp, canopy, albedo };
+    fetchPrimaryCity({
+      city_name:         pd.city_name,
+      lat:               pd.lat,
+      lng:               pd.lng,
+      ssp,
+      canopy_offset_pct: canopy,
+      albedo_offset_pct: albedo,
+      elevation:         pd.elevation,
     });
-  }, [baseTarget]);
+  }, [ssp, canopy, albedo]); // intentionally omit primaryData/fetchPrimaryCity
 
   useEffect(() => {
     if (city2Geo || searchQuery2.length <= 2) { setSuggestions2([]); return; }
@@ -375,46 +382,70 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   }, [searchQuery2, city2Geo]);
 
   const handleCompare = async () => {
-    if (!city2Geo || running) return;
+    if (!primaryData || !city2Geo || running) return;
     setGlobalError(null); setRunning(true); setAiAnalysis(null); setRetryStatus(null);
 
-    const queries = [baseTarget, city2Geo.display_name];
-    const initialResults = queries.map((q) => ({
-      query: q, display_name: q, lat: 0, lng: 0, elevation: 0,
-      threshold_c: 0, cooling_offset_c: 0, gdp_usd: null, population: null,
-      projections: [], baseline: { baseline_mean_c: null }, loading: true, error: null,
-    }));
-    setResults(initialResults);
+    // City A comes directly from the global source of truth — no re-fetch
+    const cityAResult: CityResult = {
+      query:            primaryData.city_name,
+      display_name:     primaryData.city_name,
+      lat:              primaryData.lat,
+      lng:              primaryData.lng,
+      elevation:        primaryData.elevation ?? 0,
+      threshold_c:      primaryData.threshold_c,
+      cooling_offset_c: primaryData.cooling_offset_c,
+      gdp_usd:          primaryData.gdp_usd ?? null,
+      population:       primaryData.population ?? null,
+      projections:      primaryData.projections.map(p => ({
+        year:                p.year,
+        source:              p.source,
+        heatwave_days:       p.heatwave_days,
+        peak_tx5d_c:         p.peak_tx5d_c,
+        wbt_max_c:           p.wbt_max_c,
+        uhi_intensity_c:     p.uhi_intensity_c,
+        attributable_deaths: p.attributable_deaths,
+        economic_decay_usd:  p.economic_decay_usd,
+        region:              p.region,
+        audit_trail:         p.audit_trail,
+      })),
+      baseline: primaryData.baseline,
+      loading:  false,
+      error:    null,
+    };
 
-    const newResults: CityResult[] = [];
-    for (let i = 0; i < queries.length; i++) {
-      let success = false; let retries = 3; let lastError: any = null;
-      while (!success && retries > 0) {
-        try {
-          if (retries < 3) setRetryStatus(`Retrying ${queries[i]}... (${4 - retries}/3)`);
-          const data = await geocodeAndFetch(queries[i], ssp);
-          newResults.push({ ...(data as any), loading: false, error: null });
-          success = true; setRetryStatus(null);
-        } catch (err: any) {
-          lastError = err; retries--;
-          if (retries > 0) await new Promise(r => setTimeout(r, 3000));
-        }
+    // Show City A immediately; City B loading placeholder
+    setResults([cityAResult, {
+      query: city2Geo.display_name, display_name: city2Geo.display_name, lat: 0, lng: 0,
+      elevation: 0, threshold_c: 0, cooling_offset_c: 0, gdp_usd: null, population: null,
+      projections: [], baseline: { baseline_mean_c: null }, loading: true, error: null,
+    }]);
+
+    // Fetch only City B
+    const newResults: CityResult[] = [cityAResult];
+    let success = false; let retries = 3; let lastError: any = null;
+    while (!success && retries > 0) {
+      try {
+        if (retries < 3) setRetryStatus(`Retrying ${city2Geo.display_name}... (${4 - retries}/3)`);
+        const data = await geocodeAndFetch(city2Geo.display_name, ssp);
+        newResults.push({ ...(data as any), loading: false, error: null });
+        success = true; setRetryStatus(null);
+      } catch (err: any) {
+        lastError = err; retries--;
+        if (retries > 0) await new Promise(r => setTimeout(r, 3000));
       }
-      if (!success) {
-        const errMsg = String(lastError?.message ?? lastError).replace('Error: ', '');
-        console.error(`[CompareModule] Final error for "${queries[i]}":`, errMsg);
-        newResults.push({
-          query: queries[i], display_name: queries[i], lat: 0, lng: 0,
-          elevation: 0, threshold_c: 0, cooling_offset_c: 0,
-          gdp_usd: null, population: null, projections: [],
-          baseline: { baseline_mean_c: null },
-          loading: false, error: errMsg,
-        });
-        setRetryStatus(null);
-      }
-      setResults([...newResults, ...initialResults.slice(i + 1)]);
-      if (i < queries.length - 1) await new Promise(r => setTimeout(r, 3500));
     }
+    if (!success) {
+      const errMsg = String(lastError?.message ?? lastError).replace('Error: ', '');
+      console.error(`[CompareModule] Final error for "${city2Geo.display_name}":`, errMsg);
+      newResults.push({
+        query: city2Geo.display_name, display_name: city2Geo.display_name, lat: 0, lng: 0,
+        elevation: 0, threshold_c: 0, cooling_offset_c: 0,
+        gdp_usd: null, population: null, projections: [],
+        baseline: { baseline_mean_c: null },
+        loading: false, error: errMsg,
+      });
+    }
+    setResults(newResults);
     setRunning(false);
 
     const okRes = newResults.filter(r => !r.error);
@@ -519,14 +550,25 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
 
         {/* City cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-          {/* City 1 locked */}
+          {/* City A — locked to primaryData */}
           <div className="relative rounded-xl border border-cyan-500/50 overflow-hidden min-h-[120px] flex flex-col justify-center p-5 bg-[#020617] shadow-[0_0_20px_rgba(34,211,238,0.1)]">
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(34,211,238,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,0.3) 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
             <div className="absolute inset-0 bg-gradient-to-r from-[#020617] via-[#020617]/80 to-transparent z-10" />
             <div className="relative z-20">
               <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block mb-1 font-bold">City A — Locked</span>
-              <h3 className="text-lg md:text-xl font-mono text-white tracking-wider uppercase truncate" title={baseTarget}>{baseTarget}</h3>
-              {city1Geo && <span className="text-[9px] font-mono text-slate-400 tracking-widest block mt-1">{formatCoordinates(city1Geo.lat, city1Geo.lng)}</span>}
+              <h3 className="text-lg md:text-xl font-mono text-white tracking-wider uppercase truncate" title={primaryData?.city_name ?? baseTarget}>
+                {primaryData?.city_name ?? baseTarget}
+              </h3>
+              {primaryData && (
+                <span className="text-[9px] font-mono text-slate-400 tracking-widest block mt-1">
+                  {formatCoordinates(primaryData.lat, primaryData.lng)}
+                </span>
+              )}
+              {primaryLoading && (
+                <span className="text-[9px] font-mono text-cyan-500/60 tracking-widest block mt-1 animate-pulse">
+                  Loading...
+                </span>
+              )}
             </div>
           </div>
 
@@ -609,11 +651,11 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
 
         <button
           onClick={handleCompare}
-          disabled={running || !city2Geo}
+          disabled={running || !city2Geo || !primaryData || primaryLoading}
           className="w-full md:w-auto px-10 py-3 bg-cyan-900 border border-cyan-500/50 text-white font-mono text-xs font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-cyan-800 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(34,211,238,0.2)]"
           style={{ touchAction: 'manipulation' }}
         >
-          {running ? "PROCESSING..." : "RUN COMPARISON"}
+          {running ? "PROCESSING..." : primaryLoading ? "LOADING CITY A..." : "RUN COMPARISON"}
         </button>
 
         {retryStatus && (

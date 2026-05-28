@@ -10,6 +10,8 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
 } from 'recharts';
+import { fmtLoss } from './MapHelpers';
+import type { Projection } from '@/context/ClimateDataContext';
 
 export const LoadingSpinner = () => (
   <div className="flex flex-col items-center justify-center w-full py-32 bg-[#020617]">
@@ -176,9 +178,18 @@ export const AnalyticsSection = ({
   aiAnalysis,
   selectedCity,
   mitigatedData,
-  simData,
+  projection,
   baseDeathsNum,
-}: any) => {
+}: {
+  isLoading: boolean;
+  isInitialized: boolean;
+  chartData: { heatwave: any[]; economic: any[] };
+  aiAnalysis: any;
+  selectedCity: any;
+  mitigatedData: any;
+  projection: Projection | null;
+  baseDeathsNum: number;
+}) => {
 
   const overallReduction = (() => {
     if (!mitigatedData || !baseDeathsNum || isNaN(baseDeathsNum) || baseDeathsNum === 0) return 0;
@@ -189,10 +200,11 @@ export const AnalyticsSection = ({
   if (isLoading) return <LoadingSpinner />;
   if (!isInitialized) return null;
 
-  const renderDeaths = simData?.deaths || '--';
-  const renderLoss = simData?.loss || '--';
-  const renderTemp = simData?.temp || '--';
-  const renderHeatwave = simData?.heatwave || '--';
+  // Baseline values always from the single source of truth (primaryData projection)
+  const renderDeaths   = projection ? Math.round(projection.attributable_deaths).toLocaleString() : '--';
+  const renderLoss     = projection ? fmtLoss(projection.economic_decay_usd) : '--';
+  const renderTemp     = projection ? projection.peak_tx5d_c.toFixed(1) : '--';
+  const renderHeatwave = projection ? Math.round(projection.heatwave_days).toString() : '--';
 
   return (
     <div className="w-full space-y-0">
@@ -446,7 +458,7 @@ export const AnalyticsSection = ({
                     accentColor: 'text-yellow-400',
                     icon: '☀',
                   },
-                ].map((item, i) => (
+                ].map((item) => (
                   <div key={item.label} className="flex flex-col p-5 gap-4 relative group">
                     {/* Hover highlight */}
                     <div className="absolute inset-0 bg-white/[0.01] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
