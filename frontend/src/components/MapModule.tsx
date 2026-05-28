@@ -176,7 +176,8 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         try {
           const viewport = new WebMercatorViewport({ width, height });
           const { longitude, latitude, zoom } = viewport.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 40 });
-          setViewState({ longitude, latitude, zoom, pitch: 0, bearing: 0, transitionDuration: 2000, transitionInterpolator: new FlyToInterpolator() });
+          const clampedZoom = Math.min(zoom, 11.5);
+          setViewState({ longitude, latitude, zoom: clampedZoom, pitch: 0, bearing: 0, transitionDuration: 2000, transitionInterpolator: new FlyToInterpolator() });
         } catch { /* fitBounds failed — retain current viewState */ }
       }
     }
