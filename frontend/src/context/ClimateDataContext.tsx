@@ -232,7 +232,7 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          target_url: `${process.env.NEXT_PUBLIC_ENGINE_URL}/api/climate-risk`,
+          endpoint: "/api/climate-risk",
           payload: {
             lat:               params.lat,
             lng:               params.lng,

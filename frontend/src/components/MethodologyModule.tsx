@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { ExcelExportFullButton, type ExcelExportData } from "@/components/ExcelExport";
-import { useClimateData } from "@/context/ClimateDataContext";
+import { useClimateData, type CityClimateData, type Projection } from "@/context/ClimateDataContext";
 
 function Code({ children }: { children: string }) {
   return (
@@ -79,75 +79,48 @@ export default function MethodologyModule() {
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('openplanet_last_risk_data');
         if (saved) {
-          try { 
-            sourceData = JSON.parse(saved); 
-          } catch (e) { console.error("Cache read fail"); }
+          try { sourceData = JSON.parse(saved); } catch { /* ignore stale cache */ }
         }
       }
 
       if (sourceData) {
         try {
-          const _source: any = sourceData;
-          const projections = Array.isArray(_source.projections) ? _source.projections : [_source];
-          const proj: any = projections.find((p: any) => Number(p.year || p.target_year) === 2050) || projections[0];
+          const _source: CityClimateData = sourceData;
+          const projections: Projection[] = Array.isArray(_source.projections) ? _source.projections : [];
+          const proj: Projection | undefined = projections.find((p) => p.year === 2050) ?? projections[0];
 
           if (proj) {
-            const safeNum = (val: any, fallback = 0): number => {
-              if (val == null || val === "" || val === undefined) return fallback;
-              if (typeof val === 'number') {
-                return (isFinite(val) && !isNaN(val)) ? val : fallback;
-              }
-              const str = String(val).toUpperCase().trim().replace(/,/g, '').replace(/\s/g, '');
-              if (/^-?[\d.]+E[+-]?\d+$/i.test(str)) {
-                const parsed = parseFloat(str);
-                return (isFinite(parsed) && !isNaN(parsed)) ? parsed : fallback;
-              }
-              const cleanStr = str.replace(/^\$/, '');
-              let multi = 1;
-              let numStr = cleanStr;
-              if (cleanStr.endsWith('T') || cleanStr.includes('TRILLION')) {
-                multi = 1e12;
-                numStr = cleanStr.replace(/T$|TRILLION/g, '');
-              } else if (cleanStr.endsWith('B') || cleanStr.includes('BILLION')) {
-                multi = 1e9;
-                numStr = cleanStr.replace(/B$|BILLION/g, '');
-              } else if (cleanStr.endsWith('M') || cleanStr.includes('MILLION')) {
-                multi = 1e6;
-                numStr = cleanStr.replace(/M$|MILLION/g, '');
-              } else if (cleanStr.endsWith('K')) {
-                multi = 1e3;
-                numStr = cleanStr.replace(/K$/, '');
-              }
-              const parsed = parseFloat(numStr.replace(/[^0-9.\-]/g, ''));
-              return (isNaN(parsed) || !isFinite(parsed)) ? fallback : parsed * multi;
+            const safeNum = (val: unknown, fallback = 0): number => {
+              if (val == null || val === '') return fallback;
+              if (typeof val === 'number') return (isFinite(val) && !isNaN(val)) ? val : fallback;
+              const n = parseFloat(String(val).replace(/[^0-9.\-]/g, ''));
+              return (isNaN(n) || !isFinite(n)) ? fallback : n;
             };
 
-            const baselineMean = _source.baseline?.baseline_mean_c || proj.era5_baseline_c || 20;
-            const extractedLat = _source.lat ?? proj.lat ?? _source.location?.lat ?? _source.geo?.lat ?? _source.metadata?.lat ?? 0;
-            const extractedLng = _source.lng ?? proj.lng ?? _source.location?.lng ?? _source.geo?.lng ?? _source.metadata?.lng ?? 0;
+            const baselineMean = _source.baseline?.baseline_mean_c ?? 20;
 
             const mappedData: ExcelExportData = {
-              city_name:           _source.city_name || proj.city_name || "Target Settlement",
-              lat:                 safeNum(extractedLat),
-              lng:                 safeNum(extractedLng),
-              ssp:                 _source.ssp || proj.ssp || "SSP2-4.5",
-              target_year:         safeNum(proj.year || proj.target_year, 2050),
+              city_name:           _source.city_name || 'Target Settlement',
+              lat:                 safeNum(_source.lat),
+              lng:                 safeNum(_source.lng),
+              ssp:                 _source.ssp || 'SSP2-4.5',
+              target_year:         proj.year ?? 2050,
               era5_baseline_c:     safeNum(baselineMean),
-              era5_p95_c:          safeNum(_source.threshold_c || proj.era5_p95_c),
-              era5_humidity_p95:   safeNum(_source.era5_humidity_p95 || proj.era5_humidity_p95 || 70),
-              peak_tx5d_c:         safeNum(proj.peak_tx5d_c || proj.temp),
-              heatwave_days:       safeNum(proj.heatwave_days || proj.heatwave),
-              mean_temp_c:         safeNum(proj.mean_temp_c || (baselineMean + 2)),
-              population:          safeNum(_source.population || proj.population),
-              gdp_usd:             safeNum(_source.gdp_usd || proj.gdp_usd),
-              death_rate:          safeNum(proj.death_rate || 7.5),
-              vulnerability:       safeNum(proj.vulnerability || 1.0),
-              canopy_pct:          safeNum(_source.canopy_offset_pct || 0),
-              albedo_pct:          safeNum(_source.albedo_offset_pct || 0),
-              attributable_deaths: safeNum(proj.attributable_deaths || proj.deaths),
-              economic_decay_usd:  safeNum(proj.economic_decay_usd || proj.loss),
-              wbt_c:               safeNum(proj.wbt_max_c || proj.wbt),
-              cmip6_source:        proj.source || "CMIP6 Multi-Model Ensemble",
+              era5_p95_c:          safeNum(_source.threshold_c),
+              era5_humidity_p95:   safeNum(_source.era5_humidity_p95 || 70),
+              peak_tx5d_c:         safeNum(proj.peak_tx5d_c),
+              heatwave_days:       safeNum(proj.heatwave_days),
+              mean_temp_c:         safeNum(baselineMean + 2),
+              population:          safeNum(_source.population),
+              gdp_usd:             safeNum(_source.gdp_usd),
+              death_rate:          7.5,
+              vulnerability:       1.0,
+              canopy_pct:          safeNum(_source.canopy_offset_pct),
+              albedo_pct:          safeNum(_source.albedo_offset_pct),
+              attributable_deaths: safeNum(proj.attributable_deaths),
+              economic_decay_usd:  safeNum(proj.economic_decay_usd),
+              wbt_c:               safeNum(proj.wbt_max_c),
+              cmip6_source:        proj.source || 'CMIP6 Multi-Model Ensemble',
             };
 
             setCurrentExcelData(mappedData);

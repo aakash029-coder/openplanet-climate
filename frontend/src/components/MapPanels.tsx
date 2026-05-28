@@ -3,6 +3,61 @@ import { Database } from 'lucide-react';
 import { getScientificRange, fmtLoss } from './MapHelpers';
 import { formatCoordinates, useClimateData } from '@/context/ClimateDataContext';
 
+export interface SuggestionCity {
+  id:          string | number;
+  name:        string;
+  country:     string;
+  latitude:    number;
+  longitude:   number;
+  display_name?: string;
+}
+
+export interface PanelSelectedCity {
+  locationQuery: string;
+  name?:         string;
+  country?:      string;
+  lat?:          number;
+  lng?:          number;
+  latitude?:     number;
+  longitude?:    number;
+}
+
+export interface MitigatedData {
+  temp:           string;
+  tempDelta:      string;
+  wbt:            string;
+  wbtDelta:       string;
+  heatwave:       string;
+  hwDelta:        string;
+  deaths:         string;
+  savedDeaths:    string;
+  savedDeathsNum: number;
+  loss:           string;
+  savedLoss:      string;
+  savedLossNum:   number;
+}
+
+interface LeftPanelProps {
+  selectedCity:          PanelSelectedCity | null;
+  searchQuery:           string;
+  setSearchQuery:        (v: string) => void;
+  suggestions:           SuggestionCity[];
+  setSuggestions:        (v: SuggestionCity[]) => void;
+  setSelectedCity:       (v: PanelSelectedCity | null) => void;
+  year:                  string;
+  setYear:               (v: string) => void;
+  ssp:                   string;
+  setSsp:                (v: string) => void;
+  handleInitialize:      () => void;
+  isLoading:             boolean;
+  isInitialized:         boolean;
+  canGenerate:           boolean;
+  canopy:                number;
+  coolRoof:              number;
+  handleMitigationChange:(type: 'canopy' | 'coolRoof', value: number) => void;
+  isSimulating:          boolean;
+}
+
 /* ─── Shared sub-components ─── */
 const MetricRow = ({
   label, value, sub, color,
@@ -51,9 +106,9 @@ const AuditButton = ({ label, onClick }: { label: string; onClick: () => void })
 /* ─── LEFT PANEL ─── */
 export const LeftPanel = ({
   selectedCity, searchQuery, setSearchQuery, suggestions, setSuggestions, setSelectedCity,
-  year, setYear, ssp, setSsp,   handleInitialize, isLoading, isInitialized, canGenerate,
+  year, setYear, ssp, setSsp, handleInitialize, isLoading, isInitialized, canGenerate,
   canopy, coolRoof, handleMitigationChange, isSimulating,
-}: any) => {
+}: LeftPanelProps) => {
   return (
     <div className="bg-[#060f1e]/98 backdrop-blur-2xl border border-slate-800/60 rounded-2xl p-4 w-full md:w-[272px] md:min-w-[272px] flex flex-col shadow-[0_8px_40px_rgba(0,0,0,0.6)] h-full pointer-events-auto overflow-y-auto custom-scrollbar">
       {/* Panel header */}
@@ -86,35 +141,36 @@ export const LeftPanel = ({
             />
             {suggestions.length > 0 && !selectedCity && (
               <div className="absolute top-full left-0 w-full mt-1.5 bg-[#0a1828] border border-slate-700/50 rounded-xl overflow-hidden z-[9999] shadow-[0_16px_48px_rgba(0,0,0,0.6)]">
-                {suggestions.map((city: any, idx: number) => (
-                  <div
-                    key={`${city.id}-${idx}`}
-                    onClick={() => {
-                      // Strict "City, Country" format — strip verbose administrative text
-                      const locationQuery = [city.name, city.country].filter(Boolean).join(', ');
-                      setSelectedCity({
-                        locationQuery,
-                        name:    city.name,
-                        country: city.country,
-                        lat:     city.latitude,
-                        lng:     city.longitude,
-                      });
-                      setSearchQuery(locationQuery);
-                      setSuggestions([]);
-                    }}
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-[11px] text-slate-300 hover:bg-cyan-950/30 hover:text-white cursor-pointer border-b border-slate-800/40 last:border-0 transition-colors duration-150"
-                  >
-                    <div className="w-1 h-1 rounded-full bg-slate-600 shrink-0" />
-                    <span className="truncate">{city.display_name || city.name}</span>
-                  </div>
-                ))}
+                {suggestions.map((city, idx) => {
+                  const label = [city.name, city.country].filter(Boolean).join(', ');
+                  return (
+                    <div
+                      key={`${city.id}-${idx}`}
+                      onClick={() => {
+                        setSelectedCity({
+                          locationQuery: label,
+                          name:          city.name,
+                          country:       city.country,
+                          lat:           city.latitude,
+                          lng:           city.longitude,
+                        });
+                        setSearchQuery(label);
+                        setSuggestions([]);
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2.5 text-[11px] text-slate-300 hover:bg-cyan-950/30 hover:text-white cursor-pointer border-b border-slate-800/40 last:border-0 transition-colors duration-150"
+                    >
+                      <div className="w-1 h-1 rounded-full bg-slate-600 shrink-0" />
+                      <span className="truncate">{label}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
           {selectedCity && (
             <div className="flex items-center gap-1.5 pl-1">
               <div className="w-1 h-1 rounded-full bg-emerald-500/60" />
-              <p className="text-[8px] font-mono text-slate-600 italic">{formatCoordinates(selectedCity.lat, selectedCity.lng)}</p>
+              <p className="text-[8px] font-mono text-slate-600 italic">{formatCoordinates(selectedCity.lat ?? 0, selectedCity.lng ?? 0)}</p>
             </div>
           )}
         </div>
@@ -253,8 +309,8 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
   isInitialized: boolean;
   year: number;
   isSimulating: boolean;
-  mitigatedData: any;
-  openAudit: (k: string) => void;
+  mitigatedData: MitigatedData | null;
+  openAudit: (k: 'mortality' | 'economics' | 'wetbulb') => void;
 }) => {
   const { primaryData, primaryLoading } = useClimateData();
 
