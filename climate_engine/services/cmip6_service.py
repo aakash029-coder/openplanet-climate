@@ -341,6 +341,8 @@ async def fetch_historical_baseline_full(lat: float, lng: float) -> dict:
             "p95_threshold_c": p95_threshold,
             "tx5d_baseline_c": tx5d_baseline,
             "hw_days_baseline": hw_baseline,
+            "_lineage": "empirical_api",
+            "_compiled_at": time.time(),
         }
 
         logger.info(
@@ -356,7 +358,6 @@ async def fetch_historical_baseline_full(lat: float, lng: float) -> dict:
             lat, lng, exc,
         )
         fallback_temp = _latitude_temperature_fallback(lat)
-        # Estimate plausible p95 and tx5d from mean temp
         p95_fallback = round(fallback_temp + 8.0, 2)
         tx5d_fallback = round(fallback_temp + 10.0, 2)
         hw_fallback = max(0.0, round((fallback_temp - 20.0) * 3.0, 1))
@@ -366,6 +367,8 @@ async def fetch_historical_baseline_full(lat: float, lng: float) -> dict:
             "p95_threshold_c": p95_fallback,
             "tx5d_baseline_c": tx5d_fallback,
             "hw_days_baseline": hw_fallback,
+            "_lineage": "statistical_fallback",
+            "_compiled_at": time.time(),
         }
         _cache_set(cache_key, result)
         return result

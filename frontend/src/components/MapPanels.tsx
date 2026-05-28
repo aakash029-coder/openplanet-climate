@@ -304,6 +304,30 @@ export const LeftPanel = ({
   );
 };
 
+/* ─── DATA LINEAGE BADGE ─── */
+const LineageBadge = ({ metadata }: { metadata: { data_lineage: 'empirical_api' | 'statistical_fallback'; cache_freshness_hours: number } | undefined }) => {
+  if (!metadata) return null;
+  const isEmpirical = metadata.data_lineage === 'empirical_api';
+  return (
+    <div className={`mx-4 mb-4 p-3 rounded-xl border ${isEmpirical ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-amber-950/20 border-amber-900/35'}`}>
+      <div className="flex items-center gap-2 mb-1.5">
+        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isEmpirical ? 'bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.7)]' : 'bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.7)]'}`} />
+        <span className={`text-[7px] font-mono font-bold uppercase tracking-widest ${isEmpirical ? 'text-emerald-400' : 'text-amber-400'}`}>
+          {isEmpirical ? '✓ Verified Empirical API Data Stream' : '⚠ Statistical Estimation Layer Active'}
+        </span>
+      </div>
+      {!isEmpirical && (
+        <p className="text-[7px] font-mono text-amber-500/70 leading-snug mb-1.5 pl-3.5">
+          Authoritative API timeout — latitude piecewise fallback deployed.
+        </p>
+      )}
+      <p className="text-[7px] font-mono text-slate-600 pl-3.5">
+        Data Quality Ledger · Cached {metadata.cache_freshness_hours}h ago
+      </p>
+    </div>
+  );
+};
+
 /* ─── RIGHT PANEL ─── */
 export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, openAudit }: {
   isInitialized: boolean;
@@ -434,6 +458,12 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               <p className="text-[8px] font-mono text-slate-600">Range · {getScientificRange(projection?.peak_tx5d_c ?? 0, 'temp')}</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {isInitialized && !primaryLoading && (
+        <div className="shrink-0 border-t border-slate-800/40 pt-3">
+          <LineageBadge metadata={primaryData?.metadata} />
         </div>
       )}
     </div>
