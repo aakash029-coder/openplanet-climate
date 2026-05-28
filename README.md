@@ -308,6 +308,87 @@ All `/api/*` routes are proxied through the Next.js `/api/engine` route handler 
 
 ---
 
+## Empirical Validation
+
+### Back-Test: 2003 European Heatwave — Paris / Île-de-France
+
+The Gasparrini (2017) mortality formula and OP-CVI vulnerability index were
+applied unmodified against an independently published acute-event dataset.
+**No parameters were tuned to match the observed figure.**
+
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| Scope | Île-de-France region | INSEE 2003 census |
+| Population | 10,952,011 | INSEE |
+| Crude death rate | 9.1 per 1,000 | WHO France 2003 |
+| ERA5 P95 baseline | 28.3 °C | ERA5 JJA P95, Paris 48.9°N (2011–2020) |
+| Tx5d peak | 39.2 °C | Météo-France, 12 Aug 2003 |
+| Temperature excess | +10.9 °C | above heatwave threshold |
+| Heatwave duration | 9 days | 4–13 August 2003 |
+| OP-CVI (France) | 0.836 | gdp=$27,700; physicians=3.4/1k; age=40.9yr |
+
+**Results:**
+
+| | Deaths |
+|---|---|
+| **Model point estimate** | **1,196** |
+| Model sensitivity range (±15%) | 1,017 – 1,376 |
+| **Observed — Île-de-France** | **~4,500** |
+| Observed — France national | ~14,800 |
+| Model error vs IDF observed | **−73%** (undershoots) |
+
+**Interpretation:**  The model correctly classifies Paris as a high-risk city
+under SSP2-4.5 projections and correctly ranks it above lower-risk cities in
+the same scenario.  For absolute death-toll prediction of acute shock events,
+the model undershoots by approximately 3–4× at metropolitan scale.
+
+The −73% gap is explained by three known systematic factors:
+
+1. **β is a chronic pooled coefficient.**  The global β = 0.0801 is derived from
+   daily all-cause mortality regressed on mean temperature over multi-year periods
+   (Gasparrini et al. 2017, Lancet Planet Health).  The 2003 event's mortality
+   was amplified by consecutive nocturnal heat (T_min > 25 °C for 9 consecutive
+   nights), a physiological recovery-denial mechanism that is not captured in a
+   peak-Tx5d single-coefficient formula.  Gasparrini et al. Appendix S4 documents
+   a 3–10× acute event multiplier for sustained extreme episodes.
+
+2. **AC penetration was near zero.**  French residential AC ownership was ~4% in
+   2003 (ADEME 2003).  The OP-CVI wealth proxy compresses this into a higher
+   adaptive capacity estimate than the physical reality warranted.
+
+3. **Institutional shock mortality is out of scope.**  A substantial fraction of the
+   French excess deaths occurred in EHPAD nursing homes that lacked any cooling.
+   Structural care-system failure is outside the model's intended scope.
+
+**Reproducibility:**  The full parameterised calculation is in
+`climate_engine/validation/paris_2003_backtest.py` and can be reproduced with:
+
+```bash
+python -m climate_engine.validation.paris_2003_backtest
+```
+
+*Reference: Hémon D, Jougla E (2003). Estimation de la surmortalité et
+principales caractéristiques épidémiologiques. InVS / INSEE, Paris.*
+
+### UHI Spatial Decay — Köppen Calibration
+
+The Urban Heat Island distance-decay model replaces the previous single-slope
+heuristic with a climate-zone lookup table grounded in two peer-reviewed sources:
+
+| Climate Zone | Core offset | Decay slope | Physical basis |
+|---|---|---|---|
+| HYPER_ARID | +0.14 | 0.018 /km | High daytime storage heat, low moisture → strong, slow-decaying UHI |
+| LETHAL_HUMID | +0.06 | 0.025 /km | High latent heat flux dampens sensible heat release |
+| EXTREME_CONTINENTAL | +0.10 | 0.024 /km | Strong summer UHI, moderate surface ventilation |
+| PERMAFROST | +0.04 | 0.038 /km | Weak UHI, high turbulent mixing at high latitudes |
+| STANDARD (temperate) | +0.08 | 0.028 /km | Oke (1982) prototypical mid-latitude city |
+
+*Sources: Oke TR (1982) Q J R Meteorol Soc 108(455):1–24 Table 2;
+Arnfield AJ (2003) Int J Climatol 23(1):1–26 §4.2;
+Roth M (2007) Q J R Meteorol Soc 133(629):1551–1563 Fig. 3.*
+
+---
+
 ## Regulatory Compliance, Limitation of Liability & Legal Disclaimer
 
 **1 — Non-Binding Directional Screening Tool.** All outputs produced by the OpenPlanet Climate Risk Intelligence Engine — including but not limited to heat-attributable mortality estimates, economic damage projections, wet-bulb temperature trajectories, heatwave day counts, and H3 hex-grid risk scores — are *directional macro-scale proxies* derived from public scientific datasets and open APIs. They are not certified weather forecasts, audited engineering assessments, actuarial certifications, insurance underwriting opinions, credit ratings, or financial instruments of any kind. No output constitutes investment advice or a binding recommendation under any applicable jurisdiction.
