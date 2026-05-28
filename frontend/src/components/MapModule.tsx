@@ -153,8 +153,8 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
               longitude: parseFloat(c.lon),
             };
           }));
-        } catch (err) {
-          console.error("Geocoding fetch error:", err);
+        } catch {
+          // Nominatim request failed — suggestions stay empty, user can retry
         }
       } else {
         setSuggestions([]);
@@ -177,7 +177,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
           const viewport = new WebMercatorViewport({ width, height });
           const { longitude, latitude, zoom } = viewport.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 40 });
           setViewState({ longitude, latitude, zoom, pitch: 0, bearing: 0, transitionDuration: 2000, transitionInterpolator: new FlyToInterpolator() });
-        } catch (e) { console.warn('Auto-zoom failed:', e); }
+        } catch { /* fitBounds failed — retain current viewState */ }
       }
     }
   }, [hexData]);

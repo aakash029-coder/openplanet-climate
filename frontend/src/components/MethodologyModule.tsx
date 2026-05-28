@@ -126,9 +126,7 @@ export default function MethodologyModule() {
             setCurrentExcelData(mappedData);
             setIsLive(true);
           }
-        } catch (err) {
-          console.error("Methodology Data Sync Error:", err);
-        }
+        } catch { /* malformed source data — retain demo template */ }
       }
     };
 
