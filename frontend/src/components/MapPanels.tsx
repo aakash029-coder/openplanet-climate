@@ -1,7 +1,7 @@
 import React from 'react';
 import { Database } from 'lucide-react';
-import { getScientificRange } from './MapHelpers';
-import { formatCoordinates } from '@/context/ClimateDataContext';
+import { getScientificRange, fmtLoss } from './MapHelpers';
+import { formatCoordinates, useClimateData } from '@/context/ClimateDataContext';
 
 /* ─── Shared sub-components ─── */
 const MetricRow = ({
@@ -90,13 +90,14 @@ export const LeftPanel = ({
                   <div
                     key={`${city.id}-${idx}`}
                     onClick={() => {
-                      const locationQuery = (city.display_name || `${city.name}${city.country ? ', ' + city.country : ''}`).trim();
+                      // Strict "City, Country" format — strip verbose administrative text
+                      const locationQuery = [city.name, city.country].filter(Boolean).join(', ');
                       setSelectedCity({
                         locationQuery,
-                        name: city.name,
+                        name:    city.name,
                         country: city.country,
-                        lat: city.latitude,
-                        lng: city.longitude,
+                        lat:     city.latitude,
+                        lng:     city.longitude,
                       });
                       setSearchQuery(locationQuery);
                       setSuggestions([]);
@@ -248,7 +249,28 @@ export const LeftPanel = ({
 };
 
 /* ─── RIGHT PANEL ─── */
-export const RightPanel = ({ isInitialized, simData, isSimulating, mitigatedData, openAudit }: any) => {
+export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, openAudit }: {
+  isInitialized: boolean;
+  year: number;
+  isSimulating: boolean;
+  mitigatedData: any;
+  openAudit: (k: string) => void;
+}) => {
+  const { primaryData, primaryLoading } = useClimateData();
+
+  // Always read from the single source of truth — same data as DeepDive and Compare
+  const projection = primaryData?.projections?.find(p => p.year === year) ??
+    (primaryData?.projections?.length
+      ? primaryData.projections.reduce((c, p) => Math.abs(p.year - year) < Math.abs(c.year - year) ? p : c)
+      : null);
+
+  const deaths   = projection ? Math.round(projection.attributable_deaths).toLocaleString() : '--';
+  const loss     = projection ? fmtLoss(projection.economic_decay_usd) : '--';
+  const heatwave = projection ? Math.round(projection.heatwave_days).toString() : '--';
+  const temp     = projection ? projection.peak_tx5d_c.toFixed(1) : '--';
+
+  const isReady = isInitialized && !primaryLoading && projection != null;
+
   return (
     <div className="bg-[#060f1e]/98 backdrop-blur-2xl border border-slate-800/60 rounded-2xl w-full md:w-[272px] md:min-w-[272px] flex flex-col shadow-[0_8px_40px_rgba(0,0,0,0.6)] h-full pointer-events-auto overflow-hidden">
       {/* Header */}
@@ -257,11 +279,14 @@ export const RightPanel = ({ isInitialized, simData, isSimulating, mitigatedData
           <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
           <span className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.25em] font-bold">Risk Metrics</span>
         </div>
-        {isInitialized && (
+        {isReady && (
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_5px_rgba(52,211,153,0.6)]" />
             <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-wider">Live</span>
           </div>
+        )}
+        {primaryLoading && isInitialized && (
+          <div className="w-3 h-3 border border-cyan-500/40 border-t-cyan-400 rounded-full animate-spin" />
         )}
       </div>
 
@@ -279,23 +304,21 @@ export const RightPanel = ({ isInitialized, simData, isSimulating, mitigatedData
 
           {/* ── DEATHS ── */}
           <div className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
-                Attributable Deaths
-              </span>
-            </div>
+            <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
+              Attributable Deaths
+            </span>
             <div>
               {isSimulating ? (
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-mono text-slate-600">{simData?.deaths || '--'} <span className="text-slate-700 text-[8px]">baseline</span></p>
-                  <p className="text-[26px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.deaths || '--'}</p>
+                  <p className="text-[10px] font-mono text-slate-600">{deaths} <span className="text-slate-700 text-[8px]">baseline</span></p>
+                  <p className="text-[26px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.deaths || deaths}</p>
                 </div>
               ) : (
-                <p className="text-[30px] font-mono font-bold leading-none text-red-400 tabular-nums">{simData?.deaths || '--'}</p>
+                <p className="text-[30px] font-mono font-bold leading-none text-red-400 tabular-nums">{deaths}</p>
               )}
             </div>
             <p className="text-[8px] font-mono text-slate-600 leading-relaxed">
-              95% CI · {getScientificRange(simData?.deaths || '--', 'num')}
+              95% CI · {getScientificRange(projection?.attributable_deaths ?? 0, 'num')}
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedDeaths || '0'} />}
             <AuditButton label="Calculation Log · IPCC AR6" onClick={() => openAudit('mortality')} />
@@ -303,23 +326,21 @@ export const RightPanel = ({ isInitialized, simData, isSimulating, mitigatedData
 
           {/* ── ECONOMIC ── */}
           <div className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
-                Economic Impact
-              </span>
-            </div>
+            <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
+              Economic Impact
+            </span>
             <div>
               {isSimulating ? (
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-mono text-slate-600">{simData?.loss || '--'} <span className="text-slate-700 text-[8px]">baseline</span></p>
-                  <p className="text-[22px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.loss || '--'}</p>
+                  <p className="text-[10px] font-mono text-slate-600">{loss} <span className="text-slate-700 text-[8px]">baseline</span></p>
+                  <p className="text-[22px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.loss || loss}</p>
                 </div>
               ) : (
-                <p className="text-[26px] font-mono font-bold leading-none text-amber-400 tabular-nums">{simData?.loss || '--'}</p>
+                <p className="text-[26px] font-mono font-bold leading-none text-amber-400 tabular-nums">{loss}</p>
               )}
             </div>
             <p className="text-[8px] font-mono text-slate-600">
-              Range · {getScientificRange(simData?.loss || '--', 'num')}
+              Range · {getScientificRange(loss, 'num')}
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedLoss || '0'} />}
             <AuditButton label="Calculation Log · Burke 2018" onClick={() => openAudit('economics')} />
@@ -327,36 +348,34 @@ export const RightPanel = ({ isInitialized, simData, isSimulating, mitigatedData
 
           {/* ── HEATWAVE + TEMP ── */}
           <div className="p-4 space-y-4">
-            {/* Heatwave Days */}
             <div className="space-y-2">
               <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
                 Heatwave Days
               </span>
               {isSimulating ? (
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-mono text-slate-600">{simData?.heatwave || '--'}d <span className="text-slate-700 text-[8px]">baseline</span></p>
-                  <p className="text-[22px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.heatwave || '--'}d</p>
+                  <p className="text-[10px] font-mono text-slate-600">{heatwave}d <span className="text-slate-700 text-[8px]">baseline</span></p>
+                  <p className="text-[22px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.heatwave || heatwave}d</p>
                 </div>
               ) : (
-                <p className="text-[24px] font-mono font-bold leading-none text-red-400 tabular-nums">{simData?.heatwave || '--'}d</p>
+                <p className="text-[24px] font-mono font-bold leading-none text-red-400 tabular-nums">{heatwave}d</p>
               )}
-              <p className="text-[8px] font-mono text-slate-600">Range · {getScientificRange(simData?.heatwave || '--', 'days')}</p>
+              <p className="text-[8px] font-mono text-slate-600">Range · {getScientificRange(projection?.heatwave_days ?? 0, 'days')}</p>
             </div>
 
-            {/* Peak Temp */}
             <div className="space-y-2 pt-4 border-t border-slate-800/40">
               <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
                 Peak Tx5d
               </span>
               {isSimulating ? (
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-mono text-slate-600">{simData?.temp || '--'}°C <span className="text-slate-700 text-[8px]">baseline</span></p>
-                  <p className="text-[22px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.temp || '--'}°C</p>
+                  <p className="text-[10px] font-mono text-slate-600">{temp}°C <span className="text-slate-700 text-[8px]">baseline</span></p>
+                  <p className="text-[22px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.temp || temp}°C</p>
                 </div>
               ) : (
-                <p className="text-[24px] font-mono font-bold leading-none text-red-400 tabular-nums">{simData?.temp || '--'}°C</p>
+                <p className="text-[24px] font-mono font-bold leading-none text-red-400 tabular-nums">{temp}°C</p>
               )}
-              <p className="text-[8px] font-mono text-slate-600">Range · {getScientificRange(simData?.temp || '--', 'temp')}</p>
+              <p className="text-[8px] font-mono text-slate-600">Range · {getScientificRange(projection?.peak_tx5d_c ?? 0, 'temp')}</p>
             </div>
           </div>
         </div>

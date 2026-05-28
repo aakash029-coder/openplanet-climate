@@ -24,6 +24,24 @@ export function fmtLoss(n: number): string {
   return `$${n.toLocaleString()}`;
 }
 
+export async function fetchElevationSafe(lat: number, lng: number): Promise<number> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
+  try {
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lng}`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timer);
+    if (!res.ok) return 0;
+    const data = await res.json();
+    return data?.elevation?.[0] ?? 0;
+  } catch {
+    clearTimeout(timer);
+    return 0;
+  }
+}
+
 export const getScientificRange = (val: string | number, type: 'num' | 'temp' | 'days' = 'num') => {
   const n = typeof val === 'string' ? parseFloat(val.replace(/[\$,B,M,d,°C]/g, '')) || 0 : val;
   if (!n) return '--';

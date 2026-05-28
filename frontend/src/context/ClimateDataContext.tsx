@@ -61,6 +61,9 @@ export interface CityClimateData {
   // Humidity locked to ERA5 P95 (deterministic for projections)
   era5_humidity_p95: number;
 
+  // Elevation (metres) — display & AI analysis only
+  elevation: number;
+
   // Fetch metadata
   fetched_at: number;  // timestamp — for cache validation
   fetch_duration_ms: number;
@@ -162,6 +165,7 @@ export interface FetchParams {
   ssp:               string;
   canopy_offset_pct: number;
   albedo_offset_pct: number;
+  elevation?:        number;
 }
 
 export interface DashboardParams {
@@ -260,6 +264,7 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
         projections:        raw.projections ?? [],
         baseline:           raw.baseline,
         era5_humidity_p95:  raw.era5_humidity_p95 ?? 70.0,
+        elevation:          params.elevation ?? 0,
         fetched_at:         Date.now(),
         fetch_duration_ms:  Date.now() - t0,
       };
