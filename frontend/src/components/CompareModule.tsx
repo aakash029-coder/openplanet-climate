@@ -20,7 +20,7 @@ interface Projection {
   attributable_deaths: number;
   economic_decay_usd: number;
   region?: string;
-  audit_trail?: any;
+  audit_trail?: Record<string, unknown>;
 }
 
 interface CityResult {
@@ -34,7 +34,7 @@ interface CityResult {
   gdp_usd: number | null;
   population: number | null;
   projections: Projection[];
-  baseline: { baseline_mean_c: number | null }; // 🔴 Needed for UHI math
+  baseline: { baseline_mean_c: number | null };
   loading: boolean;
   error: string | null;
 }
@@ -78,10 +78,10 @@ const SideBySideMathModal = ({
   const auditA = projA.audit_trail;
   const auditB = projB.audit_trail;
 
-  const getSection = (audit: any) => {
+  const getSection = (audit: Record<string, unknown> | undefined): AuditSection | null => {
     if (!audit) return null;
-    if (metricKey === 'attributable_deaths') return audit.mortality;
-    if (metricKey === 'economic_decay_usd')  return audit.economics;
+    if (metricKey === 'attributable_deaths') return audit.mortality as AuditSection ?? null;
+    if (metricKey === 'economic_decay_usd')  return audit.economics as AuditSection ?? null;
     return null;
   };
   const secA = getSection(auditA);
@@ -103,7 +103,7 @@ const SideBySideMathModal = ({
             <div className="bg-[#020617] border border-cyan-500/20 rounded-xl p-4 mb-5">
               <p className="text-[9px] font-mono text-cyan-200 uppercase tracking-[0.2em] mb-2">Formula (identical for both)</p>
               <p className="text-white font-mono text-sm">{secA.formula}</p>
-              <SourceLine source={secA.source} />
+              {secA.source && <SourceLine source={secA.source} />}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[{ city: cityA, sec: secA, val: valA }, { city: cityB, sec: secB, val: valB }].map(({ city, sec, val }) => (
@@ -169,10 +169,19 @@ const SideBySideMathModal = ({
 // ─────────────────────────────────────────────────────────────────
 // CACHES
 // ─────────────────────────────────────────────────────────────────
-const nominatimCache = new Map<string, any[]>();
+interface NominatimResult { place_id: string; name: string; display_name: string; lat: string; lon: string }
+
+interface AuditSection {
+  formula?:    string;
+  source?:     string;
+  variables?:  Record<string, unknown>;
+  computation?: string;
+}
+
+const nominatimCache = new Map<string, NominatimResult[]>();
 const elevationCache = new Map<string, number>();
 
-async function fetchNominatimSafe(query: string): Promise<any[]> {
+async function fetchNominatimSafe(query: string): Promise<NominatimResult[]> {
   const key = query.toLowerCase().trim();
   if (nominatimCache.has(key)) return nominatimCache.get(key)!;
   const controller = new AbortController();
@@ -213,12 +222,7 @@ async function fetchClimateRisk(payload: {
   lat: number; lng: number; elevation: number;
   ssp: string; canopy_offset_pct: number; albedo_offset_pct: number;
   location_hint: string;
-}, signal: AbortSignal): Promise<any> {
-
-  console.log(
-    "[fetchClimateRisk] Sending payload to /api/climate-risk:\n",
-    JSON.stringify(payload, null, 2)
-  );
+}, signal: AbortSignal): Promise<Record<string, unknown>> {
 
   const riskResp = await fetch("/api/engine", {
     method:  "POST",
@@ -233,25 +237,18 @@ async function fetchClimateRisk(payload: {
     try {
       const parsed = JSON.parse(rawText) as { detail?: unknown };
       if (parsed.detail) {
-        console.error(
-          `[fetchClimateRisk] FastAPI ${riskResp.status} validation errors:\n`,
-          JSON.stringify(parsed.detail, null, 2)
-        );
         if (Array.isArray(parsed.detail)) {
           humanMessage = parsed.detail
             .map((e: { loc?: string[]; msg?: string; type?: string }) =>
-              `[${(e.loc ?? []).join(" → ")}] ${e.msg ?? e.type ?? "unknown"}`
+              `[${(e.loc ?? []).join(' → ')}] ${e.msg ?? e.type ?? 'unknown'}`
             )
-            .join("  |  ");
+            .join('  |  ');
         } else {
           humanMessage = String(parsed.detail);
         }
       }
     } catch {
-      console.error(
-        `[fetchClimateRisk] Non-JSON error body (status ${riskResp.status}):\n`,
-        rawText
-      );
+      // rawText is already the fallback message
     }
     throw new Error(`API ${riskResp.status}: ${humanMessage}`);
   }
@@ -291,7 +288,7 @@ async function geocodeAndFetch(
       controller.signal
     );
     clearTimeout(timer);
-    return { query, display_name: g.display_name, lat, lng, elevation, ...riskData };
+    return { query, display_name: g.display_name, lat, lng, elevation, ...riskData } as Omit<CityResult, 'loading' | 'error'>;
   } catch (err) {
     clearTimeout(timer);
     throw err;
@@ -370,10 +367,10 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     if (city2Geo || searchQuery2.length <= 2) { setSuggestions2([]); return; }
     const timer = setTimeout(async () => {
       const data = await fetchNominatimSafe(searchQuery2);
-      setSuggestions2(data.map((c: any) => ({
+      setSuggestions2(data.map((c) => ({
         id:        c.place_id,
         name:      c.name || c.display_name.split(',')[0],
-        country:   c.display_name.split(',').pop()?.trim() || '',
+        country:   c.display_name.split(',').pop()?.trim() ?? '',
         latitude:  parseFloat(c.lat),
         longitude: parseFloat(c.lon),
       })));
@@ -422,21 +419,20 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
 
     // Fetch only City B
     const newResults: CityResult[] = [cityAResult];
-    let success = false; let retries = 3; let lastError: any = null;
+    let success = false; let retries = 3; let lastError: unknown = null;
     while (!success && retries > 0) {
       try {
         if (retries < 3) setRetryStatus(`Retrying ${city2Geo.display_name}... (${4 - retries}/3)`);
         const data = await geocodeAndFetch(city2Geo.display_name, ssp);
-        newResults.push({ ...(data as any), loading: false, error: null });
+        if (data) newResults.push({ ...data, loading: false, error: null });
         success = true; setRetryStatus(null);
-      } catch (err: any) {
+      } catch (err: unknown) {
         lastError = err; retries--;
         if (retries > 0) await new Promise(r => setTimeout(r, 3000));
       }
     }
     if (!success) {
-      const errMsg = String(lastError?.message ?? lastError).replace('Error: ', '');
-      console.error(`[CompareModule] Final error for "${city2Geo.display_name}":`, errMsg);
+      const errMsg = String(lastError instanceof Error ? lastError.message : lastError).replace('Error: ', '');
       newResults.push({
         query: city2Geo.display_name, display_name: city2Geo.display_name, lat: 0, lng: 0,
         elevation: 0, threshold_c: 0, cooling_offset_c: 0,
@@ -485,9 +481,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
 
           clearTimeout(timer);
           if (!aiResp.ok) {
-            const t = await aiResp.text();
-            console.error("[CompareModule] AI endpoint error:", t);
-            throw new Error(`API ${aiResp.status}`);
+            throw new Error(`AI API ${aiResp.status}`);
           }
           const aiData = await aiResp.json();
           const text   = aiData.comparison || aiData.reasoning || "";
@@ -771,14 +765,16 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                       const p = r.projections?.find(pr => pr.year === compareYear);
                       if (!p) return null;
                       
-                      let val = (p as any)[m.key];
-                      
-                      // 🔴 THE FIX: If UHI is null/undefined in the table mapping, calculate it using baseline
+                      let val: number | null | undefined = (p as unknown as Record<string, number | null | undefined>)[m.key];
+
+                      // UHI is optional on Projection; derive from baseline if absent
                       if (m.key === 'uhi_intensity_c' && val == null) {
-                        val = r.baseline?.baseline_mean_c ? (p.peak_tx5d_c - r.baseline.baseline_mean_c) : 2.1;
+                        val = r.baseline?.baseline_mean_c != null
+                          ? (p.peak_tx5d_c - r.baseline.baseline_mean_c)
+                          : 2.1;
                       }
-                      
-                      return val as number;
+
+                      return val ?? null;
                     });
                     const mitigatedVals = okResults.map((r, i) => {
                       const p = r.projections?.find(pr => pr.year === compareYear);
