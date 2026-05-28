@@ -1,0 +1,533 @@
+{
+    "mumbai_india": {
+        "population": 12442373,
+        "metro_population": 21300000,
+        "gdp_pc": 2500,
+        "physicians": 0.7,
+        "death_rate": 5.9,
+        "country_code": "IN",
+        "source": "Census of India 2011 (projected 2023); WHO/World Bank India 2023"
+    },
+    "new_york_city_usa": {
+        "population": 8335897,
+        "metro_population": 20140470,
+        "gdp_pc": 90000,
+        "physicians": 4.5,
+        "death_rate": 7.2,
+        "country_code": "US",
+        "source": "US Census Bureau 2023 ACS; BEA metro GDP 2023"
+    },
+    "san_francisco_usa": {
+        "population": 873965,
+        "metro_population": 4749008,
+        "gdp_pc": 120000,
+        "physicians": 3.2,
+        "death_rate": 6.8,
+        "country_code": "US",
+        "source": "US Census Bureau 2023 ACS; BEA San Francisco MSA 2023"
+    },
+    "london_uk": {
+        "population": 8799800,
+        "metro_population": 14800000,
+        "gdp_pc": 63000,
+        "physicians": 3.0,
+        "death_rate": 8.8,
+        "country_code": "GB",
+        "source": "ONS UK Mid-Year Estimates 2023; World Bank UK 2023"
+    },
+    "tokyo_japan": {
+        "population": 13960000,
+        "metro_population": 37400000,
+        "gdp_pc": 42000,
+        "physicians": 2.6,
+        "death_rate": 12.0,
+        "country_code": "JP",
+        "source": "Tokyo Metropolitan Government 2023; UN World Urbanization Prospects 2023"
+    },
+    "shanghai_china": {
+        "population": 24870895,
+        "metro_population": 29210000,
+        "gdp_pc": 25000,
+        "physicians": 2.6,
+        "death_rate": 5.3,
+        "country_code": "CN",
+        "source": "China NBS Shanghai Statistical Yearbook 2023; World Bank China 2023"
+    },
+    "beijing_china": {
+        "population": 21893095,
+        "metro_population": 24900000,
+        "gdp_pc": 28000,
+        "physicians": 4.1,
+        "death_rate": 5.0,
+        "country_code": "CN",
+        "source": "China NBS Beijing Statistical Yearbook 2023; World Bank China 2023"
+    },
+    "delhi_india": {
+        "population": 16787941,
+        "metro_population": 32226000,
+        "gdp_pc": 4000,
+        "physicians": 1.5,
+        "death_rate": 4.8,
+        "country_code": "IN",
+        "source": "Census of India 2011 (projected 2023); UN World Urbanization Prospects 2023"
+    },
+    "lagos_nigeria": {
+        "population": 15388000,
+        "metro_population": 16637000,
+        "gdp_pc": 2200,
+        "physicians": 0.4,
+        "death_rate": 9.6,
+        "country_code": "NG",
+        "source": "Nigeria NBS 2023; UN World Urbanization Prospects 2023; World Bank Nigeria 2023"
+    },
+    "cairo_egypt": {
+        "population": 10100166,
+        "metro_population": 21750000,
+        "gdp_pc": 4200,
+        "physicians": 0.8,
+        "death_rate": 5.6,
+        "country_code": "EG",
+        "source": "Egypt CAPMAS Census 2023; UN World Urbanization Prospects 2023"
+    },
+    "karachi_pakistan": {
+        "population": 16051521,
+        "metro_population": 17120000,
+        "gdp_pc": 1600,
+        "physicians": 1.0,
+        "death_rate": 6.2,
+        "country_code": "PK",
+        "source": "Pakistan PBS 2023; UN World Urbanization Prospects 2023; World Bank Pakistan 2023"
+    },
+    "jakarta_indonesia": {
+        "population": 10562088,
+        "metro_population": 35380000,
+        "gdp_pc": 4700,
+        "physicians": 0.6,
+        "death_rate": 6.4,
+        "country_code": "ID",
+        "source": "Indonesia BPS Census 2020 (projected 2023); UN World Urbanization Prospects 2023"
+    },
+    "dhaka_bangladesh": {
+        "population": 10278882,
+        "metro_population": 22478000,
+        "gdp_pc": 2700,
+        "physicians": 0.6,
+        "death_rate": 5.1,
+        "country_code": "BD",
+        "source": "Bangladesh BBS 2022; UN World Urbanization Prospects 2023; World Bank Bangladesh 2023"
+    },
+    "mexico_city_mexico": {
+        "population": 9209944,
+        "metro_population": 22085140,
+        "gdp_pc": 10000,
+        "physicians": 2.4,
+        "death_rate": 6.7,
+        "country_code": "MX",
+        "source": "INEGI Mexico City 2020 (projected 2023); UN World Urbanization Prospects 2023"
+    },
+    "sao_paulo_brazil": {
+        "population": 12325232,
+        "metro_population": 22430000,
+        "gdp_pc": 9000,
+        "physicians": 2.3,
+        "death_rate": 7.1,
+        "country_code": "BR",
+        "source": "IBGE Brazil Census 2022; UN World Urbanization Prospects 2023; World Bank Brazil 2023"
+    },
+    "buenos_aires_argentina": {
+        "population": 3121707,
+        "metro_population": 15490000,
+        "gdp_pc": 11000,
+        "physicians": 3.9,
+        "death_rate": 8.2,
+        "country_code": "AR",
+        "source": "INDEC Argentina 2022; UN World Urbanization Prospects 2023; World Bank Argentina 2023"
+    },
+    "rio_de_janeiro_brazil": {
+        "population": 6775561,
+        "metro_population": 13634000,
+        "gdp_pc": 9000,
+        "physicians": 2.1,
+        "death_rate": 7.4,
+        "country_code": "BR",
+        "source": "IBGE Brazil Census 2022; UN World Urbanization Prospects 2023"
+    },
+    "manila_philippines": {
+        "population": 1846513,
+        "metro_population": 24100000,
+        "gdp_pc": 3500,
+        "physicians": 0.8,
+        "death_rate": 6.0,
+        "country_code": "PH",
+        "source": "PSA Philippines 2020 Census (projected 2023); UN World Urbanization Prospects 2023"
+    },
+    "nairobi_kenya": {
+        "population": 4922000,
+        "metro_population": 5545000,
+        "gdp_pc": 2000,
+        "physicians": 0.3,
+        "death_rate": 6.8,
+        "country_code": "KE",
+        "source": "Kenya KNBS 2019 Census (projected 2023); World Bank Kenya 2023"
+    },
+    "kinshasa_drc": {
+        "population": 15628085,
+        "metro_population": 17071000,
+        "gdp_pc": 600,
+        "physicians": 0.1,
+        "death_rate": 9.4,
+        "country_code": "CD",
+        "source": "DRC INS 2023; UN World Urbanization Prospects 2023; World Bank DRC 2023"
+    },
+    "istanbul_turkey": {
+        "population": 15655924,
+        "metro_population": 15655924,
+        "gdp_pc": 10600,
+        "physicians": 1.9,
+        "death_rate": 5.8,
+        "country_code": "TR",
+        "source": "TURKSTAT Address-Based Population System 2023; World Bank Turkey 2023"
+    },
+    "moscow_russia": {
+        "population": 13149803,
+        "metro_population": 17332000,
+        "gdp_pc": 12600,
+        "physicians": 5.6,
+        "death_rate": 11.2,
+        "country_code": "RU",
+        "source": "Rosstat Russia 2023; UN World Urbanization Prospects 2023; World Bank Russia 2023"
+    },
+    "paris_france": {
+        "population": 2102650,
+        "metro_population": 12341418,
+        "gdp_pc": 44000,
+        "physicians": 3.4,
+        "death_rate": 9.2,
+        "country_code": "FR",
+        "source": "INSEE France 2023; Eurostat 2023; World Bank France 2023"
+    },
+    "berlin_germany": {
+        "population": 3755251,
+        "metro_population": 6144600,
+        "gdp_pc": 48200,
+        "physicians": 4.5,
+        "death_rate": 10.9,
+        "country_code": "DE",
+        "source": "Statistisches Amt Berlin-Brandenburg 2023; Destatis Germany 2023"
+    },
+    "madrid_spain": {
+        "population": 3305408,
+        "metro_population": 7020000,
+        "gdp_pc": 30000,
+        "physicians": 4.4,
+        "death_rate": 9.5,
+        "country_code": "ES",
+        "source": "INE Spain Municipal Register 2023; World Bank Spain 2023"
+    },
+    "rome_italy": {
+        "population": 2870493,
+        "metro_population": 4355000,
+        "gdp_pc": 34000,
+        "physicians": 4.0,
+        "death_rate": 12.3,
+        "country_code": "IT",
+        "source": "ISTAT Italy 2023; World Bank Italy 2023"
+    },
+    "amsterdam_netherlands": {
+        "population": 921402,
+        "metro_population": 2480394,
+        "gdp_pc": 55000,
+        "physicians": 3.7,
+        "death_rate": 8.4,
+        "country_code": "NL",
+        "source": "CBS Netherlands 2023; World Bank Netherlands 2023"
+    },
+    "dubai_uae": {
+        "population": 3604029,
+        "metro_population": 3604029,
+        "gdp_pc": 43000,
+        "physicians": 2.6,
+        "death_rate": 1.8,
+        "country_code": "AE",
+        "source": "Dubai Statistics Center 2023; World Bank UAE 2023"
+    },
+    "riyadh_saudi_arabia": {
+        "population": 7676654,
+        "metro_population": 7676654,
+        "gdp_pc": 26000,
+        "physicians": 2.4,
+        "death_rate": 3.4,
+        "country_code": "SA",
+        "source": "Saudi Arabia GASTAT 2022; World Bank Saudi Arabia 2023"
+    },
+    "tehran_iran": {
+        "population": 9259009,
+        "metro_population": 16170000,
+        "gdp_pc": 5000,
+        "physicians": 1.6,
+        "death_rate": 5.5,
+        "country_code": "IR",
+        "source": "Iran SCI Census 2016 (projected 2023); World Bank Iran 2023"
+    },
+    "baghdad_iraq": {
+        "population": 7682136,
+        "metro_population": 8765000,
+        "gdp_pc": 4800,
+        "physicians": 0.9,
+        "death_rate": 4.9,
+        "country_code": "IQ",
+        "source": "Iraq COSIT 2018 estimate; UN World Urbanization Prospects 2023; World Bank Iraq 2023"
+    },
+    "kolkata_india": {
+        "population": 4631392,
+        "metro_population": 15133000,
+        "gdp_pc": 2000,
+        "physicians": 0.7,
+        "death_rate": 6.0,
+        "country_code": "IN",
+        "source": "Census of India 2011 (projected 2023); UN World Urbanization Prospects 2023"
+    },
+    "chennai_india": {
+        "population": 7088000,
+        "metro_population": 10971000,
+        "gdp_pc": 4500,
+        "physicians": 1.2,
+        "death_rate": 5.5,
+        "country_code": "IN",
+        "source": "Census of India 2011 (projected 2023); UN World Urbanization Prospects 2023"
+    },
+    "bangalore_india": {
+        "population": 8443675,
+        "metro_population": 13193000,
+        "gdp_pc": 7000,
+        "physicians": 1.4,
+        "death_rate": 4.9,
+        "country_code": "IN",
+        "source": "Census of India 2011 (projected 2023); UN World Urbanization Prospects 2023"
+    },
+    "hyderabad_india": {
+        "population": 6809970,
+        "metro_population": 10534000,
+        "gdp_pc": 5500,
+        "physicians": 1.3,
+        "death_rate": 5.2,
+        "country_code": "IN",
+        "source": "Census of India 2011 (projected 2023); UN World Urbanization Prospects 2023"
+    },
+    "lahore_pakistan": {
+        "population": 13095000,
+        "metro_population": 14974000,
+        "gdp_pc": 1600,
+        "physicians": 1.0,
+        "death_rate": 6.0,
+        "country_code": "PK",
+        "source": "Pakistan PBS 2023; UN World Urbanization Prospects 2023; World Bank Pakistan 2023"
+    },
+    "kabul_afghanistan": {
+        "population": 4601789,
+        "metro_population": 5029000,
+        "gdp_pc": 370,
+        "physicians": 0.3,
+        "death_rate": 12.5,
+        "country_code": "AF",
+        "source": "Afghanistan CSO 2023 estimate; UN World Urbanization Prospects 2023; World Bank Afghanistan 2022"
+    },
+    "accra_ghana": {
+        "population": 2514000,
+        "metro_population": 4562000,
+        "gdp_pc": 2400,
+        "physicians": 0.2,
+        "death_rate": 6.7,
+        "country_code": "GH",
+        "source": "Ghana GSS Population and Housing Census 2021; World Bank Ghana 2023"
+    },
+    "abidjan_cote_divoire": {
+        "population": 5203041,
+        "metro_population": 5928000,
+        "gdp_pc": 2300,
+        "physicians": 0.2,
+        "death_rate": 8.0,
+        "country_code": "CI",
+        "source": "Cote d'Ivoire INS 2021 Census; UN World Urbanization Prospects 2023; World Bank CI 2023"
+    },
+    "johannesburg_south_africa": {
+        "population": 5635127,
+        "metro_population": 9600000,
+        "gdp_pc": 6200,
+        "physicians": 0.9,
+        "death_rate": 9.1,
+        "country_code": "ZA",
+        "source": "Stats SA Census 2022; World Bank South Africa 2023"
+    },
+    "cape_town_south_africa": {
+        "population": 4618000,
+        "metro_population": 4618000,
+        "gdp_pc": 6200,
+        "physicians": 0.9,
+        "death_rate": 8.6,
+        "country_code": "ZA",
+        "source": "Stats SA Census 2022; World Bank South Africa 2023"
+    },
+    "addis_ababa_ethiopia": {
+        "population": 3715000,
+        "metro_population": 5006000,
+        "gdp_pc": 1000,
+        "physicians": 0.1,
+        "death_rate": 7.2,
+        "country_code": "ET",
+        "source": "Ethiopia CSA 2022 estimate; UN World Urbanization Prospects 2023; World Bank Ethiopia 2023"
+    },
+    "casablanca_morocco": {
+        "population": 3752000,
+        "metro_population": 4615000,
+        "gdp_pc": 3400,
+        "physicians": 0.7,
+        "death_rate": 5.3,
+        "country_code": "MA",
+        "source": "Morocco HCP 2014 Census (projected 2023); World Bank Morocco 2023"
+    },
+    "algiers_algeria": {
+        "population": 3415811,
+        "metro_population": 4500000,
+        "gdp_pc": 3800,
+        "physicians": 1.8,
+        "death_rate": 4.5,
+        "country_code": "DZ",
+        "source": "Algeria ONS 2022; World Bank Algeria 2023"
+    },
+    "khartoum_sudan": {
+        "population": 6160327,
+        "metro_population": 7282000,
+        "gdp_pc": 700,
+        "physicians": 0.3,
+        "death_rate": 6.9,
+        "country_code": "SD",
+        "source": "Sudan CBS 2021 estimate; UN World Urbanization Prospects 2023; World Bank Sudan 2022"
+    },
+    "bogota_colombia": {
+        "population": 7828000,
+        "metro_population": 10978000,
+        "gdp_pc": 6500,
+        "physicians": 2.3,
+        "death_rate": 5.5,
+        "country_code": "CO",
+        "source": "Colombia DANE 2018 Census (projected 2023); World Bank Colombia 2023"
+    },
+    "lima_peru": {
+        "population": 10719188,
+        "metro_population": 11044000,
+        "gdp_pc": 7000,
+        "physicians": 1.3,
+        "death_rate": 5.4,
+        "country_code": "PE",
+        "source": "Peru INEI Census 2017 (projected 2023); World Bank Peru 2023"
+    },
+    "santiago_chile": {
+        "population": 5614000,
+        "metro_population": 7112808,
+        "gdp_pc": 15700,
+        "physicians": 2.7,
+        "death_rate": 6.3,
+        "country_code": "CL",
+        "source": "Chile INE Census 2017 (projected 2023); World Bank Chile 2023"
+    },
+    "guadalajara_mexico": {
+        "population": 1495182,
+        "metro_population": 5268642,
+        "gdp_pc": 10000,
+        "physicians": 2.4,
+        "death_rate": 6.0,
+        "country_code": "MX",
+        "source": "INEGI Mexico 2020 Census (projected 2023); World Bank Mexico 2023"
+    },
+    "ho_chi_minh_city_vietnam": {
+        "population": 9320866,
+        "metro_population": 13891000,
+        "gdp_pc": 4200,
+        "physicians": 1.0,
+        "death_rate": 5.3,
+        "country_code": "VN",
+        "source": "Vietnam GSO 2019 Census (projected 2023); UN World Urbanization Prospects 2023; World Bank Vietnam 2023"
+    },
+    "bangkok_thailand": {
+        "population": 10539415,
+        "metro_population": 17573000,
+        "gdp_pc": 7800,
+        "physicians": 1.5,
+        "death_rate": 7.1,
+        "country_code": "TH",
+        "source": "Thailand NSO 2020 Census (projected 2023); UN World Urbanization Prospects 2023; World Bank Thailand 2023"
+    },
+    "singapore_singapore": {
+        "population": 5917600,
+        "metro_population": 5917600,
+        "gdp_pc": 82800,
+        "physicians": 2.5,
+        "death_rate": 5.1,
+        "country_code": "SG",
+        "source": "Singapore DOS 2023; World Bank Singapore 2023"
+    },
+    "sydney_australia": {
+        "population": 5312000,
+        "metro_population": 5312000,
+        "gdp_pc": 55000,
+        "physicians": 3.8,
+        "death_rate": 6.4,
+        "country_code": "AU",
+        "source": "Australia ABS 2021 Census (projected 2023); World Bank Australia 2023"
+    },
+    "melbourne_australia": {
+        "population": 5078193,
+        "metro_population": 5078193,
+        "gdp_pc": 55000,
+        "physicians": 3.8,
+        "death_rate": 6.1,
+        "country_code": "AU",
+        "source": "Australia ABS 2021 Census (projected 2023); World Bank Australia 2023"
+    },
+    "los_angeles_usa": {
+        "population": 3898747,
+        "metro_population": 13200998,
+        "gdp_pc": 70000,
+        "physicians": 2.9,
+        "death_rate": 6.9,
+        "country_code": "US",
+        "source": "US Census Bureau 2023 ACS; BEA Los Angeles MSA 2023"
+    },
+    "chicago_usa": {
+        "population": 2696555,
+        "metro_population": 9478801,
+        "gdp_pc": 67000,
+        "physicians": 3.1,
+        "death_rate": 7.4,
+        "country_code": "US",
+        "source": "US Census Bureau 2023 ACS; BEA Chicago MSA 2023"
+    },
+    "houston_usa": {
+        "population": 2314157,
+        "metro_population": 7340440,
+        "gdp_pc": 63000,
+        "physicians": 2.5,
+        "death_rate": 7.0,
+        "country_code": "US",
+        "source": "US Census Bureau 2023 ACS; BEA Houston MSA 2023"
+    },
+    "phoenix_usa": {
+        "population": 1608139,
+        "metro_population": 5002221,
+        "gdp_pc": 57000,
+        "physicians": 2.3,
+        "death_rate": 7.5,
+        "country_code": "US",
+        "source": "US Census Bureau 2023 ACS; BEA Phoenix MSA 2023"
+    },
+    "miami_usa": {
+        "population": 442241,
+        "metro_population": 6166488,
+        "gdp_pc": 68000,
+        "physicians": 3.0,
+        "death_rate": 7.1,
+        "country_code": "US",
+        "source": "US Census Bureau 2023 ACS; BEA Miami MSA 2023"
+    }
+}

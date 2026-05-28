@@ -295,7 +295,7 @@ async function geocodeAndFetch(
   }
 }
 
-const COMPARE_YEARS = [2030, 2050, 2075, 2100];
+const COMPARE_YEARS = [2030, 2050];
 
 const METRICS = [
   { key: "heatwave_days",       label: "Heatwave Days",       unit: "d/yr",   source: "CMIP6 Ensemble · ERA5 P95",         fmt: (v: number) => `${fmt(v, 0)}d`,                             hasCalc: false },

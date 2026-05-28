@@ -187,10 +187,10 @@ export const LeftPanel = ({
               className="w-full bg-[#0a1828] border border-slate-800 focus:border-cyan-700/60 rounded-xl px-3 py-2.5 text-[11px] text-slate-300 cursor-pointer outline-none transition-colors duration-200 appearance-none"
               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
             >
-              <option value="2030">2030</option>
+              <option value="2030">2030 – Near-term</option>
               <option value="2050">2050 – Mid-century</option>
-              <option value="2070">2070</option>
-              <option value="2100">2100</option>
+              <option value="2070" disabled className="text-slate-600">2070 – Extended horizon (premium)</option>
+              <option value="2100" disabled className="text-slate-600">2100 – Extended horizon (premium)</option>
             </select>
           </div>
           <div className="space-y-1.5">

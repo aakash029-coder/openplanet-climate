@@ -29,7 +29,7 @@ import pycountry
 logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# OFFLINE VAULT LOADER
+# OFFLINE VAULT LOADERS
 # ═══════════════════════════════════════════════════════════════════════════════
 
 try:
@@ -39,6 +39,59 @@ try:
 except Exception as e:
     logger.error("Failed to load offline vault in socio_service.py: %s", e)
     _OFFLINE_VAULT = {}
+
+try:
+    _CITY_VAULT_PATH = os.path.join(os.path.dirname(__file__), '../data/city_vault.json')
+    with open(_CITY_VAULT_PATH, 'r') as _f:
+        _CITY_VAULT: dict = json.load(_f)
+    logger.info("City Vault loaded: %d verified city entries", len(_CITY_VAULT))
+except Exception as e:
+    logger.error("Failed to load city vault: %s", e)
+    _CITY_VAULT = {}
+
+
+# ── Census Data Validator ──────────────────────────────────────────────────────
+
+def validate_census_data(pop: int, city: str) -> bool:
+    """
+    Strict boundary check on population figures before they enter the pipeline.
+    Megacities cap: 35M (Tokyo metro is ~37M — the single realistic upper bound).
+    Minimum: 10K (below this, geocoder likely returned a village, not a city).
+    """
+    if pop > 35_000_000 or pop < 10_000:
+        logger.critical(
+            "CRITICAL: Data Poisoning Detected — population %d for '%s' "
+            "is outside defensible bounds [10K, 35M]. Defaulting to "
+            "World Bank national averages.",
+            pop, city,
+        )
+        return False
+    return True
+
+
+def _city_vault_key(city: str) -> Optional[str]:
+    """
+    Map a raw city query string to a city vault key via slug matching.
+    Tries exact slug match, then partial first-token match.
+    """
+    import unicodedata
+    def _slug(s: str) -> str:
+        s = unicodedata.normalize('NFD', s).encode('ascii', 'ignore').decode()
+        s = re.sub(r'[^a-z0-9 ]', '', s.lower())
+        return re.sub(r'\s+', '_', s.strip())
+
+    parts = [p.strip() for p in city.split(',')]
+    # Try "city_country" slug first
+    if len(parts) >= 2:
+        slug = _slug(f"{parts[0]} {parts[-1]}")
+        if slug in _CITY_VAULT:
+            return slug
+    # Try city-only slug
+    city_slug = _slug(parts[0])
+    for key in _CITY_VAULT:
+        if key.startswith(city_slug):
+            return key
+    return None
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -441,7 +494,10 @@ async def _fetch_openmeteo_geocoding(
     client: httpx.AsyncClient,
 ) -> GeocodingResult:
     url = "https://geocoding-api.open-meteo.com/v1/search"
-    params = {"name": location_query, "count": 10, "format": "json"}
+    # Open-Meteo only understands city names in `name`; country filtering is
+    # applied post-query via _select_openmeteo_hit using the full location_query.
+    city_name_only = location_query.split(",")[0].strip()
+    params = {"name": city_name_only, "count": 10, "format": "json"}
 
     data: Dict[str, Any] = {}
     max_attempts = 3
@@ -739,7 +795,9 @@ def compute_vulnerability_multiplier(
 
 async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
     """
-    Fetch comprehensive city socioeconomics, ensuring resolution via tier-based backups.
+    Fetch comprehensive city socioeconomics.
+    Priority: (1) Verified City Vault → (2) Geocoder + Country Vault → (3) Tier fallback.
+    Runs validate_census_data before any population value enters the pipeline.
     """
     cache_key = city.strip().lower()
     cached = await _city_cache.get(cache_key)
@@ -751,8 +809,53 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
         )
         return cached
 
+    # ── Priority 1: Verified City Vault ──────────────────────────────────────
+    vault_key = _city_vault_key(city)
+    if vault_key:
+        entry = _CITY_VAULT[vault_key]
+        raw_pop = entry.get("metro_population") or entry.get("population", 0)
+        if not validate_census_data(raw_pop, city):
+            # Poisoned entry — skip vault, fall through to geocoder
+            logger.warning("[vault] Skipping poisoned vault entry for '%s'", city)
+        else:
+            iso2 = entry.get("country_code", "")
+            iso3 = iso2_to_iso3(iso2)
+            gdp_pc = entry["gdp_pc"]
+            physicians = entry["physicians"]
+            death_rate_vault = entry.get("death_rate", 8.0)
+            tier = get_tier_for_country(iso2)
+            country_data = _OFFLINE_VAULT.get(iso3, {})
+            life_exp = country_data.get("life_expectancy") or tier.life_expectancy
+            pct_u15  = country_data.get("pct_under15")  or tier.pct_under15
+            pct_o65  = country_data.get("pct_over65")   or tier.pct_over65
+            median_age = compute_median_age(pct_u15, pct_o65)
+            urban_ratio = compute_urban_productivity_ratio(gdp_pc)
+            city_gdp = raw_pop * gdp_pc * urban_ratio
+            vulnerability = compute_vulnerability_multiplier(gdp_pc, median_age, physicians)
+            result: Dict[str, Any] = {
+                "population": raw_pop,
+                "city_gdp_usd": city_gdp,
+                "country_code": iso2,
+                "vulnerability_multiplier": vulnerability,
+                "gdp_per_capita": gdp_pc,
+                "median_age": median_age,
+                "life_expectancy": life_exp,
+                "physicians_per1000": physicians,
+                "death_rate_per1000": death_rate_vault,
+                "_geocoder_source": "verified_city_vault",
+                "_vault_key": vault_key,
+                "_tier_imputed": COUNTRY_TO_TIER.get(iso2.upper(), DEFAULT_TIER),
+                "_cache_stats": _city_cache.stats,
+            }
+            await _city_cache.set(cache_key, result)
+            logger.info(
+                "[vault] City Vault hit for '%s' → key=%s  metro=%d  gdp_pc=$%d",
+                city, vault_key, raw_pop, gdp_pc,
+            )
+            return result
+
+    # ── Priority 2: Live geocoder + Country Vault ─────────────────────────────
     async with httpx.AsyncClient(headers=HEADERS, timeout=30.0, trust_env=False) as client:
-        # Geocoding resolution
         geo = await geocode_city(city, client)
 
         if not geo.country_code:
@@ -760,8 +863,6 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
 
         iso2 = geo.country_code
         iso3 = iso2_to_iso3(iso2)
-
-        # Indicator resolution
         indicators = await fetch_country_indicators(iso3, iso2, client)
 
     city_pop = geo.city_population
@@ -772,30 +873,32 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
             city,
         )
 
-    # Calculate regional populations
     metro_pop = compute_metro_population(
         city_pop,
         indicators["urban_share"],
         indicators["density_factor"],
     )
 
+    # Validate population before it enters any calculation
+    if not validate_census_data(metro_pop, city):
+        tier = get_tier_for_country(iso2)
+        metro_pop = int(500_000 * tier.density_factor)
+        logger.warning("[census] Defaulting '%s' to national-average population %d", city, metro_pop)
+
     median_age = compute_median_age(
         indicators["pct_under15"],
         indicators["pct_over65"],
     )
 
-    # Economic scaling
     if metro_pop > 0:
         urban_ratio = compute_urban_productivity_ratio(indicators["gdp_per_capita"])
         city_gdp = metro_pop * indicators["gdp_per_capita"] * urban_ratio
     else:
-        # Conservative fallback assumption applied to unknown regional clusters
         tier = get_tier_for_country(iso2)
         city_gdp = tier.gdp_per_capita * 500_000
         logger.warning(
             "Missing accurate population data for '%s'; applying baseline regional GDP estimate: $%.1fM",
-            city,
-            city_gdp / 1e6,
+            city, city_gdp / 1e6,
         )
 
     vulnerability = compute_vulnerability_multiplier(
@@ -833,6 +936,10 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
     )
 
     return result
+
+
+# Public alias used in verification scripts and external tooling
+get_socioeconomic_profile = fetch_live_socioeconomics
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
