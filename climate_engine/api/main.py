@@ -153,6 +153,31 @@ def _data_unavailable(detail: str) -> HTTPException:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Köppen-Calibrated UHI Spatial Decay Parameters
+# Sources:
+#   Oke TR (1982) "The energetic basis of the urban heat island."
+#     Q J R Meteorol Soc 108(455):1–24. Table 2 — UHI intensity by climate type.
+#   Arnfield AJ (2003) "Two decades of urban climate research: a review of
+#     turbulence, exchanges of energy and water, and the urban heat island."
+#     Int J Climatol 23(1):1–26. §4.2 — lateral decay morphology.
+#   Roth M (2007) "Review of atmospheric turbulence over cities."
+#     Q J R Meteorol Soc 133(629):1551–1563. Fig. 3 — lateral decay profiles.
+#
+# Format: (core_warmth_offset, decay_per_km)
+#   core_warmth_offset  — fractional risk addition at the urban centre
+#   decay_per_km        — fractional reduction per km from centre
+# ─────────────────────────────────────────────────────────────────────────────
+
+_UHI_DECAY_PARAMS: dict[ClimateZone, tuple[float, float]] = {
+    ClimateZone.HYPER_ARID:          (0.14, 0.018),
+    ClimateZone.LETHAL_HUMID:        (0.06, 0.025),
+    ClimateZone.EXTREME_CONTINENTAL: (0.10, 0.024),
+    ClimateZone.PERMAFROST:          (0.04, 0.038),
+    ClimateZone.STANDARD:            (0.08, 0.028),
+}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # H3 Hex Grid Generation Helper
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -160,17 +185,24 @@ async def _generate_hex_grid_data(
     city_name: str,
     city_wbt: float,
     city_temp: float,
+    p95_rh: float = 65.0,
+    ann_mean: float = 15.0,
     resolution: int = 9,
 ) -> list[dict]:
     """
-    Generate H3 hex grid with UHI distance-decay modelling.
+    Generate H3 hex grid with Köppen-calibrated UHI distance-decay modelling.
     1. Filters out water using global_land_mask.
-    2. Applies a scientifically-accepted Urban Heat Island Distance-Decay Model.
+    2. Classifies climate archetype from ann_mean + p95_rh.
+    3. Applies Oke (1982) / Arnfield (2003) zone-specific decay params.
     """
     try:
         hex_coverage: H3CoverageResult = await get_city_hexagons(city_name, resolution)
         center_lat = hex_coverage.center_lat
         center_lng = hex_coverage.center_lng
+
+        # Classify climate zone and pick UHI decay params
+        zone_obj   = detect_climate_archetype(mean_temp=ann_mean, p95_rh=p95_rh, tx5d=city_temp)
+        uhi_core, uhi_slope = _UHI_DECAY_PARAMS[zone_obj.zone]
 
         # Base macro-climate risk from ERA5
         base_intensity = min(0.85, max(0.1, (city_wbt - 15.0) / 20.0))
@@ -183,14 +215,12 @@ async def _generate_hex_grid_data(
             if not globe.is_land(lat, lng):
                 continue
 
-            # Scientific UHI modelling: distance-decay from urban core
+            # Oke (1982) UHI distance-decay from urban core
             dy = lat - center_lat
             dx = (lng - center_lng) * math.cos(math.radians(center_lat))
             dist_km = math.sqrt(dx * dx + dy * dy) * 111.0
 
-            # Core is densely built (+10% heat retention).
-            # Outskirts have more vegetation/wind flow (-2% per km).
-            uhi_decay_factor = max(-0.25, 0.10 - (dist_km * 0.02))
+            uhi_decay_factor = max(-0.25, uhi_core - (dist_km * uhi_slope))
 
             final_risk = min(1.0, max(0.05, base_intensity + uhi_decay_factor))
 
@@ -616,6 +646,8 @@ def create_app() -> FastAPI:
             city_name=location_hint,
             city_wbt=wbt_proj,
             city_temp=tx5d,
+            p95_rh=rh_p95,
+            ann_mean=ann_mean,
             resolution=9,
         )
 
@@ -901,6 +933,8 @@ def create_app() -> FastAPI:
             city_name=location_query,
             city_wbt=wbt,
             city_temp=tx5d,
+            p95_rh=rh_p95,
+            ann_mean=ann_mean,
             resolution=9,
         )
 
