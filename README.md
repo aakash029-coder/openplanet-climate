@@ -152,7 +152,7 @@ Metropolitan GDP is estimated as national GDP per capita × urban population × 
 
 **Source:** Uber H3 geospatial indexing library at Resolution 9.
 
-Each city's administrative boundary polygon is polyfilled at H3 Resolution 9 (average hexagon area ≈ 0.1 km²). Each hex cell is assigned a thermal risk weight computed from the ERA5 P95 temperature relative to global baselines, the CMIP6 projected anomaly, and the urban heat island intensity. The resulting hex grid is rendered client-side via DeckGL `H3HexagonLayer` with a continuous green → yellow → orange → red colour ramp mapped to [0.0, 1.0] normalized risk.
+Each city's administrative boundary polygon is polyfilled at H3 Resolution 9 (average hexagon area ≈ 0.1053 km², mean edge length ≈ 0.14 km). Each hex cell is assigned a thermal risk weight computed from the ERA5 P95 temperature relative to global baselines, the CMIP6 projected anomaly, and the urban heat island intensity. The resulting hex grid is rendered client-side via DeckGL `H3HexagonLayer` with a continuous green → yellow → orange → red colour ramp mapped to [0.0, 1.0] normalized risk.
 
 When mitigation sliders are active, hex risk weights are scaled by `max(0.1, 1 − cooling_factor × 0.08)` for directional visualization — this is a display-only approximation and does not feed the canonical mortality or economic calculations.
 
@@ -271,6 +271,18 @@ All `/api/*` routes are proxied through the Next.js `/api/engine` route handler 
 | World Bank WDI (2024). | Death rates, GDP, age structure, health capacity |
 | UN Population Division (2024). | Metropolitan population scaling |
 | Bowler D.E. et al. (2010). *Landscape and Urban Planning.* | Urban canopy cooling coefficient |
+
+---
+
+## Regulatory Compliance, Limitation of Liability & Legal Disclaimer
+
+**Non-Binding Directional Proxy.** All outputs produced by the OpenPlanet Climate Risk Intelligence Engine — including but not limited to attributable mortality estimates, economic damage projections, wet-bulb temperature trajectories, heatwave day counts, and H3 hex-grid risk scores — are directional actuarial proxies derived from public scientific datasets. They are not certified financial instruments, audited engineering reports, insurance underwriting opinions, or regulatory filings. No output constitutes investment advice, credit ratings, or binding actuarial certifications under any applicable jurisdiction.
+
+**Data Lineage Transparency.** Each API response carries a `metadata.data_lineage` field. When this field reads `"statistical_fallback"`, the engine has substituted a latitude-based piecewise linear model for one or more upstream API calls (Copernicus C3S ERA5 or Open-Meteo CMIP6) that timed out or returned an error. Fallback outputs carry materially higher uncertainty than empirical API outputs and should be treated as indicative order-of-magnitude estimates only.
+
+**Limitation of Liability.** To the maximum extent permitted by applicable law, the authors, contributors, and affiliated institutions accept zero civil or commercial liability for capital allocation decisions, portfolio rebalancing actions, insurance pricing changes, public policy choices, or any other consequential action taken in reliance on outputs from this engine. Users assume full responsibility for independent validation of all outputs against authoritative scientific and regulatory sources before operational deployment.
+
+**Open-Source Licensing.** This software is released under the MIT License. The MIT License does not grant any warranty, express or implied, including any warranty of fitness for a particular purpose or non-infringement. See [LICENSE](LICENSE) for the complete terms.
 
 ---
 

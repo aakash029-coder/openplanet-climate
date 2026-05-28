@@ -397,6 +397,17 @@ export default function MethodologyModule() {
           }
         </p>
       </div>
+
+      {/* ── Legal Disclaimer ── */}
+      <div className="bg-slate-950/60 border border-slate-800/50 rounded-xl p-5">
+        <p className="text-[7px] font-mono text-amber-500/60 uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5">
+          <span>⚠</span> Regulatory Disclaimer
+        </p>
+        <p className="text-[8px] font-mono text-slate-600 leading-relaxed">
+          All outputs are directional actuarial proxies derived from public scientific datasets (Copernicus C3S ERA5, Open-Meteo CMIP6, World Bank WDI). They do not constitute certified financial instruments, insurance underwriting opinions, or binding actuarial certifications. When{' '}
+          <span className="text-amber-500/70">metadata.data_lineage = &quot;statistical_fallback&quot;</span>, one or more upstream API calls failed and a latitude-based piecewise model was substituted — treat such outputs as indicative order-of-magnitude estimates only. The authors accept zero liability for capital allocation decisions taken in reliance on these outputs. Users must perform independent validation before operational deployment.
+        </p>
+      </div>
     </div>
   );
 }

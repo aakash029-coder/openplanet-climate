@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -127,7 +127,12 @@ class CompareAnalysisRequest(BaseModel):
             raise ValueError("city_a and city_b must be different cities.")
         return self
 
-# 🔴 FIX: ONLY ONE SimulationResponse IS HERE, WITH ALL FIELDS 🔴
+class ResponseMetadata(BaseModel):
+    """Data lineage and cache freshness for compliance and audit tracing."""
+    data_lineage: Literal["empirical_api", "statistical_fallback"]
+    cache_freshness_hours: int
+
+
 class SimulationResponse(BaseModel):
     """Response schema for frontend simulation results."""
 
@@ -137,7 +142,8 @@ class SimulationResponse(BaseModel):
     aiAnalysis:      Optional[Dict[str, str]]        = None
     auditTrail:      Optional[Dict[str, Any]]        = None
     charts:          Dict[str, List[Dict[str, Any]]] = None
-    historicalEras:  Optional[Dict[str, Any]]        = None  # Added here correctly
+    historicalEras:  Optional[Dict[str, Any]]        = None
+    metadata:        Optional[ResponseMetadata]      = None
 
 
 # ---------------------------------------------------------------------------

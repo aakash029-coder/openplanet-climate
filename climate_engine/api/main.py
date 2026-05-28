@@ -16,6 +16,7 @@ import math
 import re
 import asyncio
 import traceback
+import time
 import uuid
 from typing import Optional
 
@@ -59,6 +60,7 @@ from .schemas import (
     ResearchAIRequest,
     CompareAnalysisRequest,
     SimulationResponse,
+    ResponseMetadata,
 )
 from .physics import (
     ClimateZone,
@@ -634,6 +636,12 @@ def create_app() -> FastAPI:
         except Exception as exc:
             logger.warning("[predict] AI narrative failed (non-fatal): %s", exc)
 
+        any_fallback = (
+            baseline.get("_lineage") == "statistical_fallback"
+            or any("fallback" in str(projections.get(yr, {}).get("source", "")) for yr in projections)
+        )
+        cache_age_hours = round((time.time() - baseline.get("_compiled_at", time.time())) / 3600)
+
         return {
             "resolvedLocation": {
                 "city": location_hint,
@@ -664,6 +672,10 @@ def create_app() -> FastAPI:
             "charts": {
                 "heatwave": heatwave_chart,
                 "economic": economic_chart,
+            },
+            "metadata": {
+                "data_lineage": "statistical_fallback" if any_fallback else "empirical_api",
+                "cache_freshness_hours": cache_age_hours,
             },
         }
 
@@ -894,6 +906,12 @@ def create_app() -> FastAPI:
             resolution=9,
         )
 
+        any_fallback = (
+            baseline.get("_lineage") == "statistical_fallback"
+            or any("fallback" in str(r.get("source", "")) for r in projection_records)
+        )
+        cache_age_hours = round((time.time() - baseline.get("_compiled_at", time.time())) / 3600)
+
         return {
             "threshold_c": p95,
             "tx5d_baseline_c": tx5d_baseline,
@@ -904,6 +922,10 @@ def create_app() -> FastAPI:
             "baseline": {"baseline_mean_c": ann_mean},
             "era5_humidity_p95": rh_p95,
             "hexGrid": hex_grid_data,
+            "metadata": {
+                "data_lineage": "statistical_fallback" if any_fallback else "empirical_api",
+                "cache_freshness_hours": cache_age_hours,
+            },
         }
 
     return app

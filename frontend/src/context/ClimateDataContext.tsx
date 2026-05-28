@@ -34,6 +34,11 @@ export interface ClimateBaseline {
   baseline_mean_c: number;
 }
 
+export interface ResponseMetadata {
+  data_lineage: 'empirical_api' | 'statistical_fallback';
+  cache_freshness_hours: number;
+}
+
 export interface CityClimateData {
   // Identity
   city_name: string;
@@ -63,6 +68,9 @@ export interface CityClimateData {
 
   // Elevation (metres) — display & AI analysis only
   elevation: number;
+
+  // Data lineage and cache freshness from backend compliance metadata
+  metadata?: ResponseMetadata;
 
   // Fetch metadata
   fetched_at: number;  // timestamp — for cache validation
@@ -265,6 +273,7 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
         baseline:           raw.baseline,
         era5_humidity_p95:  raw.era5_humidity_p95 ?? 70.0,
         elevation:          params.elevation ?? 0,
+        metadata:           raw.metadata ?? undefined,
         fetched_at:         Date.now(),
         fetch_duration_ms:  Date.now() - t0,
       };
@@ -326,8 +335,8 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          target_url: `${process.env.NEXT_PUBLIC_ENGINE_URL}/api/predict`,
-          payload: params,
+          endpoint: "/api/predict",
+          payload:  params,
         }),
       });
 
