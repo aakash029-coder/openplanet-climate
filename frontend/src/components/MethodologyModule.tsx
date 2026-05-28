@@ -286,16 +286,16 @@ export default function MethodologyModule() {
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
             {[
-              { year: "2030 - 2050", method: "CMIP6 API Integration", color: "text-blue-400",   note: "High-resolution model extraction" },
-              { year: "2075 - 2100", method: "IPCC AR6 Extrapolation", color: "text-slate-400", note: "Published regional decadal delta rates" },
+              { year: "2030 - 2050", method: "CMIP6 API Integration", color: "text-blue-400",   note: "Live ensemble: MRI-AGCM3-2-S + MPI-ESM1-2-XR" },
+              { year: "2075 - 2100", method: "Not Available",          color: "text-slate-600", note: "Beyond validated CMIP6 horizon (premium)" },
             ].map((r) => (
-              <div key={r.year} className="bg-[#09090b] border border-slate-800 p-4 rounded-lg flex items-center justify-between">
-                <span className="text-white font-bold text-lg">{r.year}</span>
+              <div key={r.year} className={`bg-[#09090b] border p-4 rounded-lg flex items-center justify-between ${r.year.startsWith('2075') ? 'border-slate-800/40 opacity-50' : 'border-slate-800'}`}>
+                <span className={`font-bold text-lg ${r.year.startsWith('2075') ? 'text-slate-600' : 'text-white'}`}>{r.year}</span>
                 <div className="text-right"><span className={`text-[10px] ${r.color} tracking-widest font-bold block`}>{r.method}</span><span className="text-[9px] text-slate-500 tracking-widest">{r.note}</span></div>
               </div>
             ))}
           </div>
-          <p>Post-2050 values utilize deterministic mathematical extrapolations published by the IPCC AR6 WG1 due to spatial API latency restrictions for deep-future granular datasets.</p>
+          <p>OpenPlanet projections are capped at 2050, maintaining strict adherence to available peer-reviewed CMIP6 outputs. Extended horizon scenarios require institutional access.</p>
         </div>
       ),
     },

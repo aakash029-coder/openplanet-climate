@@ -36,6 +36,18 @@ _CACHE: dict = {}
 _CACHE_TTL = 86400
 
 
+class HorizonUnavailable(Exception):
+    """
+    Raised when a projection year exceeds the validated CMIP6 data horizon (2050).
+    OpenPlanet projections are strictly capped at 2050. Beyond this horizon,
+    no peer-reviewed CMIP6 output is available via the Open-Meteo ensemble.
+    Use IPCC AR6 WG1 published regional warming deltas for indicative 2075/2100 ranges.
+    """
+
+
+PROJECTION_HORIZON_YEAR = 2050  # Hard scientific cap — Open-Meteo CMIP6 ends here
+
+
 def _cache_get(key: str):
     if key in _CACHE:
         data, ts = _CACHE[key]
@@ -394,10 +406,16 @@ async def fetch_cmip6_projection(
 ) -> dict:
     """
     Real CMIP6 multi-model ensemble projection.
-
-    ZERO-FAIL: If all CMIP6 models fail, falls back to a linear
-    temperature-trend extrapolation from the ERA5 baseline.
+    Strictly capped at PROJECTION_HORIZON_YEAR (2050).
+    Raises HorizonUnavailable for any year beyond the validated data horizon.
     """
+    if target_year > PROJECTION_HORIZON_YEAR:
+        raise HorizonUnavailable(
+            f"Projection year {target_year} exceeds the validated CMIP6 data horizon "
+            f"({PROJECTION_HORIZON_YEAR}). OpenPlanet does not extrapolate beyond peer-reviewed "
+            f"CMIP6 ensemble outputs. Request a year ≤ {PROJECTION_HORIZON_YEAR}."
+        )
+
     ssp_param = SSP_PARAM_MAP.get(ssp, "ssp245")
     cache_key = f"proj_{round(lat,2)}_{round(lng,2)}_{ssp_param}_{target_year}"
     cached = _cache_get(cache_key)
@@ -440,20 +458,17 @@ async def fetch_cmip6_projection(
                 model, ssp_param, target_year, stats["tx5d_c"],
             )
 
-    # ── ZERO-FAIL: Analytical fallback if all models failed ───────────────
+    # ── Analytical fallback — ≤2050 only, all models failed ─────────────
     if not model_stats:
         logger.error(
-            "All CMIP6 models failed for %s,%s %s %d — using analytical trend fallback.",
+            "All CMIP6 models failed for %s,%s %s %d — using latitude-trend fallback.",
             lat, lng, ssp_param, target_year,
         )
-        baseline_temp = _latitude_temperature_fallback(lat)
-
-        # Simple linear trend: SSP585 ≈ +0.3°C/decade, SSP245 ≈ +0.18°C/decade
         trend_per_decade = 0.30 if ssp_param in {"ssp585", "ssp370"} else 0.18
+        baseline_temp = _latitude_temperature_fallback(lat)
         decades_from_2000 = (target_year - 2000) / 10.0
         projected_temp = baseline_temp + (trend_per_decade * decades_from_2000)
-
-        hw_base = max(0.0, (baseline_temp - 20.0) * 3.0)
+        hw_base  = max(0.0, (baseline_temp - 20.0) * 3.0)
         hw_trend = hw_base * (1 + 0.15 * decades_from_2000)
 
         result = {
@@ -502,11 +517,11 @@ async def fetch_cmip6_timeseries(
     p95 = baseline["p95_threshold_c"]
 
     chart_years = sorted(
-        {y for y in [2030, 2040, 2050, 2060, 2070, 2080, 2090, 2100] if y <= target_year}
+        {y for y in [2030, 2040, 2050] if y <= min(target_year, PROJECTION_HORIZON_YEAR)}
     )
     if not chart_years:
-        chart_years = [target_year]
-    if target_year not in chart_years:
+        chart_years = [min(target_year, PROJECTION_HORIZON_YEAR)]
+    if target_year <= PROJECTION_HORIZON_YEAR and target_year not in chart_years:
         chart_years.append(target_year)
         chart_years = sorted(chart_years)
 

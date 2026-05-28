@@ -41,6 +41,8 @@ from climate_engine.api.security import (
 from climate_engine.services.cmip6_service import (
     fetch_historical_baseline_full,
     fetch_cmip6_projection,
+    HorizonUnavailable,
+    PROJECTION_HORIZON_YEAR,
 )
 from climate_engine.services.socioeconomic_service import (
     fetch_live_socioeconomics,
@@ -209,7 +211,7 @@ async def _generate_hex_grid_data(
 
         hex_grid_data: list[dict] = []
         for hx in hex_coverage.hexagons:
-            lat, lng = h3.h3_to_geo(hx)
+            lat, lng = h3.cell_to_latlng(hx)
 
             # Water masking — skip ocean/lake hexagons
             if not globe.is_land(lat, lng):
@@ -398,6 +400,17 @@ def create_app() -> FastAPI:
     @limiter.limit(rate_limit)
     async def predict(request: Request, req: PredictionRequest, response: Response):
         target_year = int(req.year)
+        if target_year > PROJECTION_HORIZON_YEAR:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Projection year {target_year} exceeds the validated CMIP6 data horizon "
+                    f"({PROJECTION_HORIZON_YEAR}). OpenPlanet projections are capped at "
+                    f"{PROJECTION_HORIZON_YEAR} per strict adherence to available peer-reviewed "
+                    f"CMIP6 outputs. Request a year ≤ {PROJECTION_HORIZON_YEAR}."
+                ),
+            )
+
         total_cooling = (req.canopy / 100.0 * 1.2) + (req.coolRoof / 100.0 * 0.8)
 
         ssp_code = _normalize_ssp(req.ssp)

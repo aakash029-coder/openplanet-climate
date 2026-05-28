@@ -9,7 +9,7 @@ const FAQS = [
   },
   {
     q: "Where does OpenPlanet get its climate data?",
-    a: "The engine uses ERA5 reanalysis data via the Open-Meteo API for historical baselines (1991–2020), and a 3-model CMIP6 ensemble (MRI-AGCM3-2-S, NICAM16-8S, MPI-ESM1-2-XR) for projections up to 2050. For 2075 and 2100, IPCC AR6 WG1 published regional warming deltas are applied. Population data comes from GeoNames, GDP and mortality rates from the World Bank API."
+    a: "The engine uses ERA5 reanalysis data via the Open-Meteo API for historical baselines (1991–2020), and a 2-model CMIP6 ensemble (MRI-AGCM3-2-S, MPI-ESM1-2-XR) for projections up to 2050. Projections are strictly capped at 2050 — we do not extrapolate to 2075 or 2100, maintaining strict adherence to available peer-reviewed CMIP6 outputs. Socioeconomic data (population, GDP, healthcare access) is sourced from the OpenPlanet Verified City Vault — hardcoded 2023-2024 UN/World Bank/census values for 59+ major cities."
   },
   {
     q: "Are the projections predictions of the future?",

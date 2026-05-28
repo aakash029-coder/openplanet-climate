@@ -15,7 +15,7 @@ const CITIES = [
 const STATS = [
   { value: '8,000+', label: 'Cities Modelled' },
   { value: '4', label: 'Climate Scenarios' },
-  { value: '2100', label: 'End-Century Coverage' },
+  { value: '2050', label: 'Validated Horizon' },
   { value: '±15%', label: 'Mortality CI' },
 ];
 
@@ -304,7 +304,7 @@ export default function HomePage() {
               { model: 'Economics', source: 'Burke et al. (2018)', journal: 'Nature', detail: 'T_optimal = 13°C · GDP penalty function' },
               { model: 'Labor loss', source: 'ILO (2019)', journal: 'Working on a Warmer Planet', detail: '40% workforce · 20% productivity loss / heatwave day' },
               { model: 'Wet-bulb', source: 'Stull (2011)', journal: 'J. Applied Meteorology', detail: 'Capped 35°C — Sherwood & Huber (2010) PNAS' },
-              { model: 'Climate data', source: 'Open-Meteo CMIP6', journal: 'ERA5 + MRI/NICAM/MPI ensemble', detail: '2015–2050 live · 2075–2100 IPCC AR6 delta' },
+              { model: 'Climate data', source: 'Open-Meteo CMIP6', journal: 'ERA5 + MRI/MPI ensemble', detail: '2015–2050 validated CMIP6 · horizon capped at 2050' },
             ].map(m => (
               <div key={m.model} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 flex gap-4 items-start">
                 <div className="w-2 h-2 rounded-full bg-cyan-500 shrink-0 mt-1.5" />
