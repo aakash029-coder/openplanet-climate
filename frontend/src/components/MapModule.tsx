@@ -2,23 +2,17 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useClimateData } from '@/context/ClimateDataContext';
 
-type SelectedCity = {
-  locationQuery: string;
-  name?: string;
-  country?: string;
-  lat?: number;
-  lng?: number;
-  latitude?: number;
-  longitude?: number;
-};
+type SelectedCity = PanelSelectedCity;
+
+type ViewState = { longitude: number; latitude: number; zoom: number; pitch: number; bearing: number; transitionDuration?: number; transitionInterpolator?: FlyToInterpolator };
 
 function flyToCoordinates(
-  setViewState: React.Dispatch<React.SetStateAction<any>>,
+  setViewState: React.Dispatch<React.SetStateAction<ViewState>>,
   lat: number,
   lng: number,
   zoom = 10,
 ) {
-  setViewState((prev: any) => ({
+  setViewState(prev => ({
     ...prev,
     latitude: lat,
     longitude: lng,
@@ -35,7 +29,7 @@ import DeckGL from '@deck.gl/react';
 import { H3HexagonLayer } from '@deck.gl/geo-layers';
 import { FlyToInterpolator, WebMercatorViewport } from '@deck.gl/core';
 import { cartoDarkStyle, parseLoss, fmtLoss, fetchElevationSafe } from './MapHelpers';
-import { LeftPanel, RightPanel } from './MapPanels';
+import { LeftPanel, RightPanel, type SuggestionCity, type PanelSelectedCity, type MitigatedData } from './MapPanels';
 import { AnalyticsSection } from './MapCharts';
 
 export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: string) => void }) {
@@ -45,9 +39,9 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<SuggestionCity[]>([]);
   const [selectedCity, setSelectedCity] = useState<SelectedCity | null>(null);
-  const [viewState, setViewState] = useState<any>({ longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0 });
+  const [viewState, setViewState] = useState<ViewState>({ longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0 });
 
   const savedState = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('op_sync_state') || '{}') : {};
   const [ssp, setSsp] = useState(savedState.ssp || 'SSP2-4.5');
@@ -59,21 +53,20 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     localStorage.setItem('op_sync_state', JSON.stringify({ ssp, year, canopy, albedo: coolRoof }));
   }, [ssp, year, canopy, coolRoof]);
 
-  const [hexData, setHexData] = useState<any[]>([]);
-  const [auditTrail, setAuditTrail] = useState<any>(null);
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
-  const [chartData, setChartData] = useState({ heatwave: [], economic: [] });
-  const [historicalEras, setHistoricalEras] = useState<any>(null);
+  const [hexData, setHexData] = useState<Array<{ hex_id: string; position: [number, number]; risk_weight?: number }>>([]);
+  const [auditTrail, setAuditTrail] = useState<Record<string, unknown> | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<Record<string, string> | null>(null);
+  const [chartData, setChartData] = useState<{ heatwave: Array<{ year: string; val: number }>; economic: Array<{ year: string; noAction: number; adapt: number }> }>({ heatwave: [], economic: [] });
+  const [historicalEras, setHistoricalEras] = useState<Record<string, { label: string; peak_temp: string; avg_mean_temp: string }> | null>(null);
   const [auditOpen, setAuditOpen] = useState(false);
   const [auditKey, setAuditKey] = useState<'mortality' | 'economics' | 'wetbulb'>('mortality');
 
   const isSimulating = canopy > 0 || coolRoof > 0;
-  const openAudit = (k: any) => { setAuditKey(k); setAuditOpen(true); };
+  const openAudit = (k: 'mortality' | 'economics' | 'wetbulb') => { setAuditKey(k); setAuditOpen(true); };
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  const canGenerate = Boolean(
-    selectedCity?.locationQuery?.trim() || searchQuery.trim().length >= 3,
-  );
+  // Button only enabled after explicit dropdown selection — disabled while freely typing
+  const canGenerate = selectedCity !== null;
 
   // Current projection from the single source of truth
   const currentProjection = useMemo(() => {
@@ -88,7 +81,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   }, [primaryData, year]);
 
   // Mitigated values computed from primaryData projection (consistent with DeepDive/Compare)
-  const mitigatedData = useMemo(() => {
+  const mitigatedData = useMemo((): MitigatedData | null => {
     if (!isInitialized || !currentProjection) return null;
     const cooling = (canopy / 100) * 1.2 + (coolRoof / 100) * 0.8;
     const baseT  = currentProjection.peak_tx5d_c;
@@ -149,13 +142,12 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
             }
           );
           if (!res.ok) return;
-          const data = await res.json();
-          setSuggestions(data.map((c: any) => {
+          const data: Array<{ place_id: string; name: string; display_name: string; lat: string; lon: string }> = await res.json();
+          setSuggestions(data.map((c) => {
             const parts = (c.display_name || '').split(',');
             return {
               id:        c.place_id,
               name:      c.name || parts[0]?.trim() || c.display_name,
-              display_name: c.display_name,
               country:   parts.length > 1 ? parts[parts.length - 1].trim() : '',
               latitude:  parseFloat(c.lat),
               longitude: parseFloat(c.lon),
@@ -281,8 +273,8 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
       if (onTargetLocked) onTargetLocked(cleanName);
 
-    } catch (err: any) {
-      setApiError(err.message);
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : 'Unknown error');
       setIsInitialized(false);
     } finally {
       setIsLoading(false);
@@ -296,15 +288,19 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     return hexData.map((d) => ({ hex: d.hex_id, risk: (d.risk_weight || 0) * riskReductionMultiplier }));
   }, [hexData, canopy, coolRoof]);
 
+  type H3Datum = { hex: string; risk: number };
   const layers = useMemo(() => [
-    new H3HexagonLayer({
+    new H3HexagonLayer<H3Datum>({
       id: 'h3-core-layer',
       data: h3Data,
-      getHexagon: (d: any) => d.hex,
-      getFillColor: (d: any) => {
+      getHexagon: (d) => d.hex,
+      getFillColor: (d) => {
         const risk = Math.max(0, Math.min(1, d.risk || 0));
-        const green = [34, 197, 94], yellow = [234, 179, 8], orange = [249, 115, 22], red = [239, 68, 68];
-        let c1, c2, t;
+        const green: [number,number,number] = [34, 197, 94];
+        const yellow: [number,number,number] = [234, 179, 8];
+        const orange: [number,number,number] = [249, 115, 22];
+        const red: [number,number,number] = [239, 68, 68];
+        let c1: [number,number,number], c2: [number,number,number], t: number;
         if (risk < 0.4) { c1 = green; c2 = yellow; t = risk / 0.4; }
         else if (risk < 0.7) { c1 = yellow; c2 = orange; t = (risk - 0.4) / 0.3; }
         else { c1 = orange; c2 = red; t = (risk - 0.7) / 0.3; }
@@ -353,7 +349,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
           >
             <DeckGL
               viewState={viewState}
-              onViewStateChange={({ viewState: vs }) => setViewState(vs)}
+              onViewStateChange={({ viewState: vs }) => setViewState(vs as ViewState)}
               controller={{ scrollZoom: false, doubleClickZoom: true, dragRotate: false, dragPan: true }}
               layers={layers}
             >
@@ -363,11 +359,11 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
             {/* Zoom controls */}
             <div className="absolute top-3 right-3 z-50 flex flex-col bg-[#060f1e]/95 border border-slate-800/80 rounded-xl overflow-hidden backdrop-blur-xl shadow-lg">
               <button
-                onClick={() => setViewState((p: any) => ({ ...p, zoom: p.zoom + 1 }))}
+                onClick={() => setViewState(p => ({ ...p, zoom: p.zoom + 1 }))}
                 className="w-8 h-8 flex items-center justify-center border-b border-slate-800/60 text-slate-500 hover:text-white hover:bg-slate-800/50 transition-all text-sm font-mono"
               >+</button>
               <button
-                onClick={() => setViewState((p: any) => ({ ...p, zoom: p.zoom - 1 }))}
+                onClick={() => setViewState(p => ({ ...p, zoom: p.zoom - 1 }))}
                 className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-800/50 transition-all text-sm font-mono"
               >−</button>
             </div>
