@@ -305,7 +305,7 @@ export const LeftPanel = ({
 };
 
 /* ─── DATA LINEAGE BADGE ─── */
-const LineageBadge = ({ metadata }: { metadata: { data_lineage: 'empirical_api' | 'statistical_fallback'; cache_freshness_hours: number } | undefined }) => {
+const LineageBadge = ({ metadata }: { metadata: { data_lineage: 'empirical_api' | 'statistical_fallback' } | undefined }) => {
   if (!metadata) return null;
   const isEmpirical = metadata.data_lineage === 'empirical_api';
   return (
@@ -317,13 +317,10 @@ const LineageBadge = ({ metadata }: { metadata: { data_lineage: 'empirical_api' 
         </span>
       </div>
       {!isEmpirical && (
-        <p className="text-[7px] font-mono text-amber-500/70 leading-snug mb-1.5 pl-3.5">
+        <p className="text-[7px] font-mono text-amber-500/70 leading-snug pl-3.5">
           Authoritative API timeout — latitude piecewise fallback deployed.
         </p>
       )}
-      <p className="text-[7px] font-mono text-slate-600 pl-3.5">
-        Data Quality Ledger · Cached {metadata.cache_freshness_hours}h ago
-      </p>
     </div>
   );
 };

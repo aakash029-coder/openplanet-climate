@@ -128,9 +128,8 @@ class CompareAnalysisRequest(BaseModel):
         return self
 
 class ResponseMetadata(BaseModel):
-    """Data lineage and cache freshness for compliance and audit tracing."""
+    """Data lineage marker for compliance and audit tracing."""
     data_lineage: Literal["empirical_api", "statistical_fallback"]
-    cache_freshness_hours: int
 
 
 class SimulationResponse(BaseModel):

@@ -640,7 +640,6 @@ def create_app() -> FastAPI:
             baseline.get("_lineage") == "statistical_fallback"
             or any("fallback" in str(projections.get(yr, {}).get("source", "")) for yr in projections)
         )
-        cache_age_hours = round((time.time() - baseline.get("_compiled_at", time.time())) / 3600)
 
         return {
             "resolvedLocation": {
@@ -675,7 +674,6 @@ def create_app() -> FastAPI:
             },
             "metadata": {
                 "data_lineage": "statistical_fallback" if any_fallback else "empirical_api",
-                "cache_freshness_hours": cache_age_hours,
             },
         }
 
@@ -910,7 +908,6 @@ def create_app() -> FastAPI:
             baseline.get("_lineage") == "statistical_fallback"
             or any("fallback" in str(r.get("source", "")) for r in projection_records)
         )
-        cache_age_hours = round((time.time() - baseline.get("_compiled_at", time.time())) / 3600)
 
         return {
             "threshold_c": p95,
@@ -924,7 +921,6 @@ def create_app() -> FastAPI:
             "hexGrid": hex_grid_data,
             "metadata": {
                 "data_lineage": "statistical_fallback" if any_fallback else "empirical_api",
-                "cache_freshness_hours": cache_age_hours,
             },
         }
 

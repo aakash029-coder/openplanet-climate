@@ -36,7 +36,6 @@ export interface ClimateBaseline {
 
 export interface ResponseMetadata {
   data_lineage: 'empirical_api' | 'statistical_fallback';
-  cache_freshness_hours: number;
 }
 
 export interface CityClimateData {
