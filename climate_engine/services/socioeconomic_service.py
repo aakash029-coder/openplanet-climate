@@ -468,7 +468,7 @@ async def _fetch_openmeteo_geocoding(
         raise ValueError(f"Open-Meteo: no results for '{location_query}'")
 
     hit = _select_openmeteo_hit(results, location_query)
-    country_code = hit.get("country_code", "").upper()
+    country_code = (hit.get("country_code") or "").upper()
 
     base_population = hit.get("population") or 0
     tier = get_tier_for_country(country_code)
@@ -520,7 +520,7 @@ async def _fetch_nominatim_geocoding(
 
     hit = _select_nominatim_hit(data, location_query)
     address = hit.get("address", {})
-    country_code = address.get("country_code", "").upper()
+    country_code = (address.get("country_code") or "").upper()
 
     tier = get_tier_for_country(country_code)
     fallback_population = int(1_000_000 * tier.density_factor)

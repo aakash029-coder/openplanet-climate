@@ -618,6 +618,32 @@ async def get_city_hexagons(
             if geo_results:
                 clat = float(geo_results[0]["latitude"])
                 clng = float(geo_results[0]["longitude"])
+
+                # Synthetic circular boundary ~10 km radius → polyfill for a full metro mesh
+                RADIUS_KM = 10.0
+                N_POINTS  = 32
+                dlat = RADIUS_KM / 111.0
+                cos_lat = math.cos(math.radians(clat))
+                dlng = RADIUS_KM / (111.0 * cos_lat) if cos_lat > 1e-6 else dlat
+                circle = [
+                    [clng + dlng * math.sin(2 * math.pi * i / N_POINTS),
+                     clat + dlat * math.cos(2 * math.pi * i / N_POINTS)]
+                    for i in range(N_POINTS)
+                ]
+                circle.append(circle[0])  # close the ring
+                geo_dict = {"type": "Polygon", "coordinates": [circle]}
+                hex_set = h3.polyfill(geo_dict, resolution, geo_json_conformant=True)
+
+                if hex_set:
+                    return H3CoverageResult(
+                        hexagons=tuple(hex_set),
+                        coverage_method="synthetic_circle_fallback",
+                        center_lat=clat,
+                        center_lng=clng,
+                        boundary_source="open_meteo_geocoder",
+                    )
+
+                # Degenerate polyfill edge case — single centre hex
                 center_hex = h3.geo_to_h3(clat, clng, resolution)
                 return H3CoverageResult(
                     hexagons=(center_hex,),
