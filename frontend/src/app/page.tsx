@@ -57,22 +57,18 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen" style={{ overscrollBehavior: 'none' }}>
-      <main className="w-full max-w-7xl px-5 md:px-8 flex flex-col items-center pb-24 gap-24 md:gap-36">
+      <main className="w-full max-w-7xl px-5 md:px-8 flex flex-col items-center pb-24 gap-24 md:gap-36 pt-16">
 
         {/* ── 1. HERO ── */}
-        <section className="w-full min-h-[90vh] flex flex-col items-center justify-center text-center relative z-10 pt-24 pb-16 md:pt-32">
+        <section className="h-[calc(100vh-4rem)] w-full flex flex-col justify-between items-center py-6 md:py-10 overflow-hidden relative z-10 text-center">
 
           {/* Eyebrow */}
-          <div className="flex items-center gap-2 mb-8 px-3 py-1.5"
-               style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--positive)' }} />
-            <span className="text-[9px] font-mono uppercase tracking-[0.3em]" style={{ color: 'var(--muted)' }}>
-              Live · CMIP6 · ERA5 · Peer-Reviewed
-            </span>
-          </div>
+          <span className="font-mono text-[9px] uppercase tracking-[0.2em] block" style={{ color: 'var(--muted)' }}>
+            ● Live · CMIP6 · ERA5 · Peer-Reviewed
+          </span>
 
           {/* ── HEADLINE — expansive reading-editorial register ── */}
-          <div className="w-full max-w-5xl mx-auto text-center px-4 sm:px-6 lg:px-8 mt-12 md:mt-20 mb-5 md:mb-7">
+          <div className="w-full max-w-5xl mx-auto text-center px-4 mt-6 md:mt-8">
             <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-medium tracking-tight leading-[1.1]"
                 style={{ color: '#E4E4E7' }}>
               By {city.year},{' '}
@@ -94,7 +90,7 @@ export default function HomePage() {
           </p>
 
           {/* ── HORIZONTAL INK-LINE LEDGER STRIP ── */}
-          <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-0 my-12 md:my-16"
+          <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-0 my-6 py-4 md:py-6"
                style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             {[
               {
@@ -144,26 +140,6 @@ export default function HomePage() {
                   {s.source}
                 </p>
               </div>
-            ))}
-          </div>
-
-          {/* City selector — aligned to ledger width */}
-          <div className="w-full max-w-6xl mx-auto flex flex-wrap gap-2 mb-8 justify-center px-4">
-            {CITIES.map((c, i) => (
-              <button
-                key={c.name}
-                onClick={() => setActiveCityIdx(i)}
-                style={{
-                  touchAction: 'manipulation',
-                  minHeight: '40px',
-                  ...(i === activeCityIdx
-                    ? { border: '1px solid var(--hairline-strong)', color: 'var(--text)', background: 'var(--raised)' }
-                    : { border: '1px solid var(--hairline)', color: 'var(--muted)', background: 'transparent' }),
-                }}
-                className="font-mono text-[10px] uppercase tracking-[0.14em] px-5 transition-all duration-200 hover:border-white/10 hover:text-zinc-300"
-              >
-                {c.name}
-              </button>
             ))}
           </div>
 

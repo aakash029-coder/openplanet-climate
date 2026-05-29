@@ -22,10 +22,12 @@ function Eq({ math, display = false }: { math: string; display?: boolean }) {
 
 // ── Section header (numbered, Inter eyebrow) ─────────────────────────────────
 function SectionHead({ n, title }: { n: string; title: string }) {
+  const raw = n.replace('§', '');
+  const label = /^\d+$/.test(raw) ? raw.padStart(2, '0') + ' //' : raw + ' //';
   return (
     <div className="flex items-baseline gap-4 mt-16 mb-6 pb-3"
          style={{ borderBottom: '1px solid var(--hairline)' }}>
-      <span className="font-mono text-[0.6875rem]" style={{ color: 'var(--muted)' }}>{n}</span>
+      <span className="font-mono text-xs tracking-widest" style={{ color: '#71717A' }}>{label}</span>
       <h2 className="font-sans text-h2 font-semibold tracking-tight" style={{ color: 'var(--text)' }}>{title}</h2>
     </div>
   );
@@ -34,7 +36,7 @@ function SectionHead({ n, title }: { n: string; title: string }) {
 // ── Body paragraph (Source Serif 4) ─────────────────────────────────────────
 function P({ children }: { children: React.ReactNode }) {
   return (
-    <p className="font-serif text-body-s leading-[1.6] mb-4 max-w-[72ch]"
+    <p className="font-serif text-body-s leading-[1.6] mb-4"
        style={{ color: 'var(--text-2)' }}>
       {children}
     </p>
@@ -100,7 +102,7 @@ export default function MethodologyModule() {
   const [excelData] = useState<ExcelExportData>(DEMO_EXCEL);
 
   return (
-    <article className="max-w-[720px] mx-auto px-4 py-16">
+    <article className="w-full max-w-5xl lg:max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-10">
 
       {/* ── Title block ── */}
       <header className="mb-16 pb-8" style={{ borderBottom: '1px solid var(--hairline)' }}>
