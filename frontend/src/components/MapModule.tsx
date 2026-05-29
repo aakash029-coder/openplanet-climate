@@ -297,13 +297,13 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         ];
       },
       extruded: false,
-      coverage: 1.0,
+      coverage: viewState.zoom >= 11.5 ? 1.0 : 0.88,
       stroked: false,
       // @ts-expect-error -- beforeId is read by @deck.gl/mapbox interleaved resolver at runtime; not in LayerProps types
       beforeId: 'settlement-label',
-      updateTriggers: { getFillColor: h3Data },
+      updateTriggers: { getFillColor: h3Data, coverage: viewState.zoom },
     }),
-  ], [h3Data]);
+  ], [h3Data, viewState.zoom]);
 
   const SustainedHeatLabel = () => (
     <div className="flex items-center gap-1.5 mb-1 relative group w-max">

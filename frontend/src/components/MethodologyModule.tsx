@@ -102,7 +102,7 @@ export default function MethodologyModule() {
   const [excelData] = useState<ExcelExportData>(DEMO_EXCEL);
 
   return (
-    <article className="w-full max-w-5xl lg:max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-10">
+    <article className="w-full max-w-none px-6 sm:px-12 md:px-16 lg:px-24 xl:px-32 py-10 text-left">
 
       {/* ── Title block ── */}
       <header className="mb-16 pb-8" style={{ borderBottom: '1px solid var(--hairline)' }}>
