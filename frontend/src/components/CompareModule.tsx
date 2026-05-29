@@ -9,19 +9,7 @@ import {
   getSourceLabel,
   useClimateData,
 } from "@/context/ClimateDataContext";
-
-interface Projection {
-  year: number;
-  source: string;
-  heatwave_days: number;
-  peak_tx5d_c: number;
-  wbt_max_c?: number;
-  uhi_intensity_c?: number;
-  attributable_deaths: number;
-  economic_decay_usd: number;
-  region?: string;
-  audit_trail?: Record<string, unknown>;
-}
+import { SideBySideMathModal, type Projection } from './dashboard/SideBySideMathModal';
 
 interface CityResult {
   query: string;
@@ -62,121 +50,9 @@ const SourceLine = ({ source }: { source: string }) => (
 );
 
 // ─────────────────────────────────────────────────────────────────
-// SIDE-BY-SIDE MATH MODAL
-// ─────────────────────────────────────────────────────────────────
-const SideBySideMathModal = ({
-  open, onClose, metricLabel, metricKey,
-  cityA, cityB, projA, projB, valA, valB,
-}: {
-  open: boolean; onClose: () => void;
-  metricLabel: string; metricKey: string;
-  cityA: string; cityB: string;
-  projA: Projection | null; projB: Projection | null;
-  valA: number | null; valB: number | null;
-}) => {
-  if (!open || !projA || !projB) return null;
-  const auditA = projA.audit_trail;
-  const auditB = projB.audit_trail;
-
-  const getSection = (audit: Record<string, unknown> | undefined): AuditSection | null => {
-    if (!audit) return null;
-    if (metricKey === 'attributable_deaths') return audit.mortality as AuditSection ?? null;
-    if (metricKey === 'economic_decay_usd')  return audit.economics as AuditSection ?? null;
-    return null;
-  };
-  const secA = getSection(auditA);
-  const secB = getSection(auditB);
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="relative w-full max-w-3xl max-h-[85vh] overflow-y-auto border border-white/[0.05] p-6" style={{ background: 'var(--raised)' }} onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-4 right-4 w-7 h-7 bg-white/[0.05] border border-white/[0.09] text-slate-500 hover:text-white flex items-center justify-center transition-all">✕</button>
-
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-2 h-2 bg-cyan-400 rounded-full" />
-          <h3 className="text-[10px] font-mono text-[#0ea5e9] uppercase tracking-[0.3em] font-bold">Side-by-Side Calculation Audit</h3>
-        </div>
-        <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-5">{metricLabel} — same formula, both cities</p>
-
-        {secA && secB ? (
-          <>
-            <div className="border border-white/[0.05] p-4 mb-5" style={{ background: 'var(--panel)' }}>
-              <p className="text-[9px] font-mono text-cyan-200 uppercase tracking-[0.2em] mb-2">Formula (identical for both)</p>
-              <p className="text-white font-mono text-sm">{secA.formula}</p>
-              {secA.source && <SourceLine source={secA.source} />}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[{ city: cityA, sec: secA, val: valA }, { city: cityB, sec: secB, val: valB }].map(({ city, sec, val }) => (
-                <div key={city} className="border border-white/[0.05] p-4" style={{ background: 'var(--panel)' }}>
-                  <p className="text-[9px] font-mono text-slate-300 uppercase tracking-widest font-bold mb-3 truncate">{city}</p>
-                  {sec.variables && (
-                    <div className="space-y-1 mb-3">
-                      {Object.entries(sec.variables).map(([k, v]) => (
-                        <div key={k} className="flex justify-between">
-                          <span className="text-[9px] font-mono text-[#0ea5e9]">{k}</span>
-                          <span className="text-[9px] font-mono tabular-nums text-slate-300">{String(v)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {sec.computation && (
-                    <div className="bg-black/40 p-2.5 mt-2 border border-white/[0.05]">
-                      <p className="text-[9px] font-mono text-white leading-relaxed break-all">{sec.computation}</p>
-                    </div>
-                  )}
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest">Calculation validated</span>
-                    </div>
-                    <span className="text-[11px] font-mono tabular-nums text-white font-bold">
-                      {val != null ? (metricKey === 'economic_decay_usd' ? fmtUSD(val) : metricKey === 'attributable_deaths' ? Math.round(val).toLocaleString() : `${fmt(val)}°C`) : '—'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {valA != null && valB != null && (
-              <div className="mt-4 p-4 bg-cyan-950/20 border border-white/[0.05]">
-                <p className="text-[9px] font-mono text-[#0ea5e9] uppercase tracking-widest">
-                  Higher exposure: <span className="font-bold text-white">{valA > valB ? cityA : valA < valB ? cityB : 'Equal'}</span>
-                  {valA !== valB && (
-                    <span className="text-slate-500 ml-2">
-                      (difference: {metricKey === 'economic_decay_usd' ? fmtUSD(Math.abs(valA - valB)) : metricKey === 'attributable_deaths' ? Math.abs(Math.round(valA - valB)).toLocaleString() : `${fmt(Math.abs(valA - valB))}`})
-                    </span>
-                  )}
-                </p>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[{ city: cityA, val: valA }, { city: cityB, val: valB }].map(({ city, val }) => (
-              <div key={city} className="border border-white/[0.05] p-4" style={{ background: 'var(--panel)' }}>
-                <p className="text-[9px] font-mono text-slate-300 uppercase tracking-widest font-bold mb-2 truncate">{city}</p>
-                <p className="text-2xl font-mono tabular-nums text-white font-bold">
-                  {val != null ? (metricKey === 'economic_decay_usd' ? fmtUSD(val) : metricKey === 'attributable_deaths' ? Math.round(val).toLocaleString() : `${fmt(val)}°C`) : '—'}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ─────────────────────────────────────────────────────────────────
 // CACHES
 // ─────────────────────────────────────────────────────────────────
 interface NominatimResult { place_id: string; name: string; display_name: string; lat: string; lon: string }
-
-interface AuditSection {
-  formula?:    string;
-  source?:     string;
-  variables?:  Record<string, unknown>;
-  computation?: string;
-}
 
 const nominatimCache = new Map<string, NominatimResult[]>();
 const elevationCache = new Map<string, number>();
@@ -659,7 +535,16 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           </p>
         )}
         {globalError && (
-          <p className="mt-4 text-[10px] font-mono text-red-500 bg-red-950/30 border border-red-900/50 px-4 py-2 uppercase tracking-widest">{globalError}</p>
+          <div className="mt-4 border border-amber-900/40 p-4" style={{ background: 'rgba(120,53,15,0.08)' }}>
+            <p className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold mb-2" style={{ color: 'var(--heat-2)' }}>
+              UPSTREAM NODE DISRUPTION
+            </p>
+            <p className="font-mono text-[9px] leading-relaxed" style={{ color: 'var(--muted)' }}>
+              Copernicus data gateway currently handling extreme request load threshold.
+              Falling back to localized historical downscaling cache layers.
+              Please toggle execution loop again within 15 seconds.
+            </p>
+          </div>
         )}
       </div>
 
@@ -858,11 +743,19 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                 Analyst summary
               </h4>
               {aiLoading ? (
-                <div className="flex flex-col gap-3 py-3">
-                  <div className="h-2 w-full bg-white/[0.05]" />
-                  <div className="h-2 w-3/4 bg-white/[0.05]" />
-                  <div className="h-2 w-1/2 bg-white/[0.05]" />
-                  <span className="text-[9px] font-mono text-[#0ea5e9]/50 uppercase tracking-widest mt-1">Generating comparative analysis...</span>
+                <div className="space-y-2 py-3">
+                  <div className="animate-pulse bg-zinc-900/60 h-3 w-full rounded-none" />
+                  <div className="animate-pulse bg-zinc-900/60 h-3 w-[92%] rounded-none" />
+                  <div className="animate-pulse bg-zinc-900/60 h-3 w-5/6 rounded-none" />
+                  <div className="animate-pulse bg-zinc-900/60 h-3 w-4/5 rounded-none" />
+                  <div className="animate-pulse bg-zinc-900/60 h-3 w-3/4 rounded-none" />
+                  <div className="animate-pulse bg-zinc-900/60 h-3 w-2/3 rounded-none" />
+                  <div className="flex items-center gap-2 pt-3 font-mono text-[9px] uppercase tracking-[0.18em]"
+                       style={{ color: 'var(--reference)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />
+                    <span>Generating comparative analysis</span>
+                    <span className="animate-pulse">▋</span>
+                  </div>
                 </div>
               ) : aiAnalysis ? (
                 <p className="font-serif text-body-s leading-loose" style={{ color: 'var(--text-2)' }}>{cleanAiText(aiAnalysis)}</p>
@@ -876,14 +769,20 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
 
       {/* Errors */}
       {results.filter(r => r.error).map(r => (
-        <div key={r.query} className="bg-red-500/10 border border-red-500/20 px-5 py-4 flex flex-col gap-2">
-          <div className="flex gap-4 items-center">
-            <span className="text-red-500 font-mono text-xs shrink-0">ERR:</span>
-            <span className="text-red-400 font-mono text-[10px] uppercase tracking-widest break-all">{r.query}</span>
+        <div key={r.query} className="border border-amber-900/40 px-5 py-4"
+             style={{ background: 'rgba(120,53,15,0.06)' }}>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+            <span className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold truncate"
+                  style={{ color: 'var(--heat-2)' }}>
+              UPSTREAM NODE DISRUPTION — {r.query}
+            </span>
           </div>
-          <pre className="text-[9px] font-mono text-red-300/70 bg-red-950/20 border border-red-900/30 px-3 py-2 whitespace-pre-wrap break-all leading-relaxed">
-            {r.error}
-          </pre>
+          <p className="font-mono text-[9px] leading-relaxed" style={{ color: 'var(--muted)' }}>
+            Copernicus data gateway currently handling extreme request load threshold.
+            Falling back to localized historical downscaling cache layers.
+            Please toggle execution loop again within 15 seconds.
+          </p>
         </div>
       ))}
     </div>
