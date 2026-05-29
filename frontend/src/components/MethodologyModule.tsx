@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import katex from 'katex';
 import { ExcelExportFullButton, type ExcelExportData } from "@/components/ExcelExport";
 import { useClimateData } from "@/context/ClimateDataContext";
@@ -99,7 +99,34 @@ const DEMO_EXCEL: ExcelExportData = {
 
 export default function MethodologyModule() {
   const { primaryData } = useClimateData();
-  const [excelData] = useState<ExcelExportData>(DEMO_EXCEL);
+
+  const proj = primaryData?.projections?.find(p => p.year === 2050)
+    ?? primaryData?.projections?.[primaryData.projections.length - 1]
+    ?? null;
+
+  const excelData: ExcelExportData = (proj && primaryData) ? {
+    city_name:           primaryData.city_name,
+    lat:                 primaryData.lat,
+    lng:                 primaryData.lng,
+    ssp:                 primaryData.ssp,
+    target_year:         proj.year,
+    era5_baseline_c:     primaryData.baseline?.baseline_mean_c ?? 0,
+    era5_p95_c:          primaryData.threshold_c,
+    era5_humidity_p95:   primaryData.era5_humidity_p95 ?? 70,
+    peak_tx5d_c:         proj.peak_tx5d_c,
+    heatwave_days:       proj.heatwave_days,
+    mean_temp_c:         proj.peak_tx5d_c - 8,
+    population:          primaryData.population ?? 0,
+    gdp_usd:             primaryData.gdp_usd ?? 0,
+    death_rate:          7.7,
+    vulnerability:       (proj.audit_trail as any)?.mortality?.variables?.V ?? 1.0,
+    canopy_pct:          primaryData.canopy_offset_pct,
+    albedo_pct:          primaryData.albedo_offset_pct,
+    attributable_deaths: proj.attributable_deaths,
+    economic_decay_usd:  proj.economic_decay_usd,
+    wbt_c:               proj.wbt_max_c ?? 0,
+    cmip6_source:        proj.source,
+  } : DEMO_EXCEL;
 
   return (
     <article className="w-full max-w-none px-6 sm:px-12 md:px-16 lg:px-20 xl:px-24 pt-2 pb-6 md:pt-4 text-left block">

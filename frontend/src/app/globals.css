@@ -169,6 +169,21 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.06) 70%, transparent);
 }
 
+/* ── Hardware acceleration utilities ──
+   Apply to elements with heavy reactive transitions (60 FPS on low-spec hardware) */
+.gpu-layer {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.transition-gpu {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
 /* ── Portrait-wide viewport fix (mobile "Request Desktop Site" mode) ──
    Targets CSS width ≥1024px but aspect-ratio <4/5 (portrait).
    Real landscape desktops are always ≥1.6 ratio, so this never fires there. */
