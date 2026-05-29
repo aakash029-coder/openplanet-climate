@@ -14,6 +14,8 @@ from __future__ import annotations
 import logging
 import math
 import re
+import os
+import json
 import asyncio
 import traceback
 import time
@@ -47,6 +49,7 @@ from climate_engine.services.cmip6_service import (
 from climate_engine.services.socioeconomic_service import (
     fetch_live_socioeconomics,
     geocode_city,
+    GeocodingResult,
 )
 import httpx
 from climate_engine.services.historical_service import fetch_historical_eras
@@ -83,6 +86,41 @@ from .physics import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# City Coordinate Vault — local geocoding intercept (zero HTTP, zero 429 risk)
+# ─────────────────────────────────────────────────────────────────────────────
+
+try:
+    _CITY_COORDS_PATH = os.path.join(
+        os.path.dirname(__file__), "../data/city_coords.json"
+    )
+    with open(_CITY_COORDS_PATH, "r") as _f:
+        _CITY_COORDS: dict = json.load(_f)
+    logger.info("City Coords Vault loaded: %d entries", len(_CITY_COORDS))
+except Exception as _e:
+    logger.error("Failed to load city_coords.json: %s", _e)
+    _CITY_COORDS = {}
+
+
+def _coords_vault_key(city: str) -> Optional[str]:
+    """Slug-match a raw city query string against the coordinate vault."""
+    parts = [p.strip() for p in city.split(",")]
+    def _slug(s: str) -> str:
+        import unicodedata
+        s = unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode()
+        s = re.sub(r"[^a-z0-9 ]", "", s.lower())
+        return re.sub(r"\s+", "_", s.strip())
+    if len(parts) >= 2:
+        slug = _slug(f"{parts[0]} {parts[-1]}")
+        if slug in _CITY_COORDS:
+            return slug
+    city_slug = _slug(parts[0])
+    for key in _CITY_COORDS:
+        if key.startswith(city_slug):
+            return key
+    return None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -190,7 +228,7 @@ async def _generate_hex_grid_data(
     p95_rh: float = 65.0,
     ann_mean: float = 15.0,
     resolution: int = 9,
-) -> list[dict]:
+) -> tuple[list[dict], str]:
     """
     Generate H3 hex grid with Köppen-calibrated UHI distance-decay modelling.
     1. Filters out water using global_land_mask.
@@ -233,15 +271,16 @@ async def _generate_hex_grid_data(
             })
 
         logger.info(
-            "[hex_grid] Generated %d modelled hexagons for '%s'",
+            "[hex_grid] Generated %d modelled hexagons for '%s' (coverage=%s)",
             len(hex_grid_data),
             city_name,
+            hex_coverage.coverage_method,
         )
-        return hex_grid_data
+        return hex_grid_data, hex_coverage.coverage_method
 
     except Exception as exc:
         logger.warning("[hex_grid] Failed for '%s': %s", city_name, exc)
-        return []
+        return [], "unavailable"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -427,23 +466,39 @@ def create_app() -> FastAPI:
             total_cooling,
         )
 
-        try:
-            async with httpx.AsyncClient(timeout=30.0, trust_env=False) as geo_client:
-                geo = await geocode_city(location_hint, geo_client)
-        except Exception as exc:
-            raise _data_unavailable(
-                f"Could not geocode '{location_hint}': {exc}"
+        # ── Vault-first coordinate resolution — eliminates Nominatim 429 cascade.
+        # PredictionRequest already carries validated lat/lng from the frontend,
+        # so we only need the external geocoder to infer country_code for cities
+        # not in our vault. Vault hits short-circuit ALL external HTTP.
+        _vault_key = _coords_vault_key(location_hint)
+        if _vault_key:
+            _cv = _CITY_COORDS[_vault_key]
+            geo = GeocodingResult(
+                city_population=0,
+                country_code=_cv["country_code"],
+                latitude=req.lat,   # trust client-validated coordinates
+                longitude=req.lng,
+                source="city_coords_vault",
+            )
+            logger.info(
+                "[predict] vault hit '%s' (key=%s) country_code=%s",
+                location_hint, _vault_key, _cv["country_code"],
+            )
+        else:
+            try:
+                async with httpx.AsyncClient(timeout=30.0, trust_env=False) as geo_client:
+                    geo = await geocode_city(location_hint, geo_client)
+            except Exception as exc:
+                raise _data_unavailable(
+                    f"Could not geocode '{location_hint}': {exc}"
+                )
+            logger.info(
+                "[predict] geocoded '%s' -> (%.4f, %.4f) via %s",
+                location_hint, geo.latitude, geo.longitude, geo.source,
             )
 
         lat = geo.latitude
         lng = geo.longitude
-        logger.info(
-            "[predict] geocoded '%s' -> (%.4f, %.4f) via %s",
-            location_hint,
-            lat,
-            lng,
-            geo.source,
-        )
 
         # ── 1. Historical baseline ────────────────────────────────────────
         try:
@@ -623,7 +678,7 @@ def create_app() -> FastAPI:
         )
 
         # ── 8. H3 hex grid ────────────────────────────────────────────────
-        hex_grid_data = await _generate_hex_grid_data(
+        hex_grid_data, hex_coverage_method = await _generate_hex_grid_data(
             city_name=location_hint,
             city_wbt=wbt_proj,
             city_temp=tx5d,
@@ -687,6 +742,7 @@ def create_app() -> FastAPI:
             },
             "metadata": {
                 "data_lineage": "statistical_fallback" if any_fallback else "empirical_api",
+                "coverage_method": hex_coverage_method,
             },
         }
 
@@ -889,7 +945,7 @@ def create_app() -> FastAPI:
             location_query,
         )
 
-        hex_grid_data = await _generate_hex_grid_data(
+        hex_grid_data, hex_coverage_method = await _generate_hex_grid_data(
             city_name=location_query,
             city_wbt=wbt,
             city_temp=tx5d,
@@ -915,6 +971,7 @@ def create_app() -> FastAPI:
             "hexGrid": hex_grid_data,
             "metadata": {
                 "data_lineage": "statistical_fallback" if any_fallback else "empirical_api",
+                "coverage_method": hex_coverage_method,
             },
         }
 
