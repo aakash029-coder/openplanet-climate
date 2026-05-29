@@ -127,7 +127,10 @@ function DashboardPageInner() {
       {/* Dashboard tab nav */}
       <nav className="w-full glass-nav border-b pt-16 sticky top-0 z-[40]"
            style={{ borderBottomColor: 'var(--hairline)' }}>
-        <div className="w-full overflow-x-auto scrollbar-none">
+        <div className="w-full overflow-x-auto scrollbar-none relative">
+          {/* Right-edge fade hints at more tabs on narrow viewports */}
+          <div className="absolute right-0 top-0 bottom-0 w-10 pointer-events-none lg:hidden z-10"
+               style={{ background: 'linear-gradient(to right, transparent, var(--canvas))' }} />
           <div className="flex items-center justify-between px-4 md:px-10 lg:px-16 min-w-max md:min-w-0 w-full">
             <div className="flex items-center">
               {TABS.map((tab) => {

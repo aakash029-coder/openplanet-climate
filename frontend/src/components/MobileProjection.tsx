@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Map, { type MapRef, useControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MapboxOverlay, type MapboxOverlayProps } from '@deck.gl/mapbox';
@@ -61,9 +62,12 @@ function riskToRGBA(risk: number): [number, number, number, number] {
   ];
 }
 
+const NAV_TABS = ['DASHBOARD', 'DEEP DIVE', 'COMPARE', 'METHODOLOGY'] as const;
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export default function MobileProjection() {
+  const router = useRouter();
   const { fetchPrimaryCity, primaryData } = useClimateData();
 
   const [isLoading,     setIsLoading]     = useState(false);
@@ -83,7 +87,6 @@ export default function MobileProjection() {
   const canGenerate  = selectedCity !== null;
   const isSimulating = canopy > 0 || coolRoof > 0;
 
-  // Current projection from context
   const currentProjection = useMemo(() => {
     if (!primaryData?.projections?.length) return null;
     const y = Number(year);
@@ -95,7 +98,6 @@ export default function MobileProjection() {
     );
   }, [primaryData, year]);
 
-  // Autocomplete
   useEffect(() => {
     const t = setTimeout(async () => {
       if (searchQuery.length > 2 && !selectedCity) {
@@ -124,7 +126,6 @@ export default function MobileProjection() {
     return () => clearTimeout(t);
   }, [searchQuery, selectedCity]);
 
-  // Fit bounds when hex data arrives
   useEffect(() => {
     if (!hexData.length) return;
     let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
@@ -191,7 +192,6 @@ export default function MobileProjection() {
     }
   }, [selectedCity, ssp, year, fetchPrimaryCity]);
 
-  // H3 data with mitigation applied
   const h3Data = useMemo(() => {
     if (!hexData.length) return [];
     const cooling       = (canopy / 100) * 1.2 + (coolRoof / 100) * 0.8;
@@ -214,13 +214,11 @@ export default function MobileProjection() {
     }),
   ], [h3Data, viewState.zoom]);
 
-  // Display values
   const deaths   = currentProjection ? Math.round(currentProjection.attributable_deaths).toLocaleString() : '--';
   const loss     = currentProjection ? fmtLoss(currentProjection.economic_decay_usd) : '--';
   const heatwave = currentProjection ? Math.round(currentProjection.heatwave_days).toString() : '--';
   const temp     = currentProjection ? currentProjection.peak_tx5d_c.toFixed(1) : '--';
 
-  // Mitigation deltas
   const cooling   = (canopy / 100) * 1.2 + (coolRoof / 100) * 0.8;
   const mitTemp   = currentProjection ? Math.max(0, currentProjection.peak_tx5d_c - cooling).toFixed(1) : '--';
   const mitHW     = currentProjection ? Math.max(0, Math.round(currentProjection.heatwave_days - cooling * 3)).toString() : '--';
@@ -248,6 +246,33 @@ export default function MobileProjection() {
         <span className="font-mono text-[8px]" style={{ color: 'var(--muted)', opacity: 0.4 }}>
           CMIP6 · ERA5
         </span>
+      </div>
+
+      {/* ── SUB-NAV ── */}
+      <div className="flex overflow-x-auto scrollbar-none w-full"
+           style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.3)' }}>
+        {NAV_TABS.map((tab) => {
+          const isActive = tab === 'DASHBOARD';
+          return (
+            <button
+              key={tab}
+              onClick={() => !isActive && router.push('/dashboard')}
+              className="relative px-4 py-2.5 shrink-0 whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.12em] transition-colors"
+              style={{
+                color: isActive ? 'var(--text)' : 'rgba(255,255,255,0.28)',
+                cursor: isActive ? 'default' : 'pointer',
+              }}
+            >
+              {tab}
+              {isActive && (
+                <span
+                  className="absolute bottom-0 left-0 right-0 h-[2px]"
+                  style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)' }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── CONTROLS ── */}
@@ -366,7 +391,6 @@ export default function MobileProjection() {
           minHeight: '200px',
         }}
       >
-        {/* Idle overlay */}
         {!isInitialized && !isLoading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
             <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-center px-8"
@@ -376,7 +400,6 @@ export default function MobileProjection() {
           </div>
         )}
 
-        {/* Loading overlay */}
         {isLoading && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-[#08080A]/75">
             <div className="w-5 h-5 border border-white/20 border-t-white/50 rounded-full animate-spin" />
@@ -418,7 +441,7 @@ export default function MobileProjection() {
                   aria-label="Zoom out">−</button>
         </div>
 
-        {/* Legend — text-[9px], minimal footprint */}
+        {/* Legend */}
         {isInitialized && (
           <div className="absolute bottom-2 left-2 z-50 px-1.5 py-1"
                style={{ background: 'rgba(8,8,10,0.95)', border: '1px solid var(--hairline)' }}>
@@ -443,7 +466,6 @@ export default function MobileProjection() {
           </div>
         )}
 
-        {/* Error */}
         {apiError && (
           <div className="absolute top-2 left-2 right-12 z-50 px-3 py-1.5"
                style={{ background: 'rgba(8,8,10,0.95)', border: '1px solid var(--heat-4)' }}>
@@ -457,24 +479,24 @@ export default function MobileProjection() {
         <div className="grid grid-cols-2"
              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           {([
-            { label: 'Heat Deaths / yr',  value: isSimulating ? mitDeaths : deaths,        baseline: isSimulating ? deaths        : null, color: isSimulating ? 'var(--positive)' : 'var(--heat-4)', sub: '±15% CI · Gasparrini' },
-            { label: 'Economic Loss / yr', value: isSimulating ? mitLoss   : loss,          baseline: isSimulating ? loss          : null, color: isSimulating ? 'var(--positive)' : 'var(--heat-2)', sub: '±8% CI · Burke 2018' },
-            { label: 'Heatwave Days',      value: isSimulating ? `${mitHW}d` : `${heatwave}d`, baseline: isSimulating ? `${heatwave}d` : null, color: isSimulating ? 'var(--positive)' : 'var(--heat-3)', sub: 'Above P95 · CMIP6' },
-            { label: 'Peak Tx5d',          value: isSimulating ? `${mitTemp}°C` : `${temp}°C`, baseline: isSimulating ? `${temp}°C`    : null, color: isSimulating ? 'var(--positive)' : 'var(--copper)', sub: 'ERA5 decadal mean' },
+            { label: 'Heat Deaths / yr',  value: isSimulating ? mitDeaths    : deaths,          baseline: isSimulating ? deaths        : null, color: isSimulating ? 'var(--positive)' : 'var(--heat-4)', sub: '±15% CI · Gasparrini' },
+            { label: 'Economic Loss / yr', value: isSimulating ? mitLoss      : loss,            baseline: isSimulating ? loss          : null, color: isSimulating ? 'var(--positive)' : 'var(--heat-2)', sub: '±8% CI · Burke 2018'  },
+            { label: 'Heatwave Days',      value: isSimulating ? `${mitHW}d`  : `${heatwave}d`, baseline: isSimulating ? `${heatwave}d` : null, color: isSimulating ? 'var(--positive)' : 'var(--heat-3)', sub: 'Above P95 · CMIP6'     },
+            { label: 'Peak Tx5d',          value: isSimulating ? `${mitTemp}°C` : `${temp}°C`,  baseline: isSimulating ? `${temp}°C`   : null, color: isSimulating ? 'var(--positive)' : 'var(--copper)', sub: 'ERA5 decadal mean'    },
           ] as const).map((m, i) => (
             <div key={m.label} className="p-3 flex flex-col gap-0.5"
                  style={{
                    borderRight: i % 2 === 0 ? '1px solid rgba(255,255,255,0.05)' : 'none',
                    borderTop:   i >= 2       ? '1px solid rgba(255,255,255,0.05)' : 'none',
                  }}>
-              <p className="font-mono text-[8px] uppercase tracking-[0.12em]" style={{ color: 'var(--muted)' }}>{m.label}</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.12em]" style={{ color: 'var(--muted)' }}>{m.label}</p>
               {m.baseline !== null && (
-                <p className="font-mono text-[8px] tabular-nums" style={{ color: 'var(--muted)', opacity: 0.4 }}>
+                <p className="font-mono text-[9px] tabular-nums" style={{ color: 'var(--muted)', opacity: 0.4 }}>
                   ↓ from {m.baseline}
                 </p>
               )}
               <p className="font-mono text-[20px] font-bold leading-tight tabular-nums" style={{ color: m.color }}>{m.value}</p>
-              <p className="font-mono text-[7px]" style={{ color: 'var(--muted)', opacity: 0.4 }}>{m.sub}</p>
+              <p className="font-mono text-[9px]" style={{ color: 'var(--muted)', opacity: 0.4 }}>{m.sub}</p>
             </div>
           ))}
         </div>
@@ -486,17 +508,17 @@ export default function MobileProjection() {
              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="flex items-center gap-1.5">
             <span className="inline-block w-1 h-1 rounded-full" style={{ background: 'var(--reference)' }} />
-            <span className="font-mono text-[8px] uppercase tracking-[0.16em]" style={{ color: 'var(--reference)' }}>
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: 'var(--reference)' }}>
               Adaptation Scenario
             </span>
-            <span className="font-mono text-[7px] italic" style={{ color: 'var(--muted)' }}>— directional only</span>
+            <span className="font-mono text-[9px] italic" style={{ color: 'var(--muted)' }}>— directional only</span>
           </div>
 
           {/* Canopy */}
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <label className="font-mono text-[8px] uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Canopy Cover</label>
-              <span className="font-mono text-[9px] font-bold tabular-nums" style={{ color: 'var(--positive)' }}>+{canopy}%</span>
+              <label className="font-mono text-[10px] uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Canopy Cover</label>
+              <span className="font-mono text-[10px] font-bold tabular-nums" style={{ color: 'var(--positive)' }}>+{canopy}%</span>
             </div>
             <div className="relative">
               <input type="range" min="0" max="50" value={canopy}
@@ -511,8 +533,8 @@ export default function MobileProjection() {
           {/* Albedo */}
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <label className="font-mono text-[8px] uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Albedo Roofs</label>
-              <span className="font-mono text-[9px] font-bold tabular-nums" style={{ color: 'var(--reference)' }}>+{coolRoof}%</span>
+              <label className="font-mono text-[10px] uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Albedo Roofs</label>
+              <span className="font-mono text-[10px] font-bold tabular-nums" style={{ color: 'var(--reference)' }}>+{coolRoof}%</span>
             </div>
             <div className="relative">
               <input type="range" min="0" max="100" value={coolRoof}
@@ -523,6 +545,25 @@ export default function MobileProjection() {
                    style={{ width: `${(coolRoof / 100) * 100}%`, background: 'var(--reference)' }} />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── FULL DASHBOARD LINK ── */}
+      {isInitialized && (
+        <div className="px-4 pt-2 pb-3">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="w-full font-mono text-[10px] uppercase tracking-[0.15em] flex items-center justify-center gap-2 transition-colors hover:text-white"
+            style={{
+              border: '1px solid var(--hairline)',
+              color: 'var(--text-2)',
+              minHeight: '44px',
+              background: 'var(--raised)',
+              touchAction: 'manipulation',
+            }}
+          >
+            Open Full Dashboard →
+          </button>
         </div>
       )}
 
