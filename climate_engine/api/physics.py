@@ -242,7 +242,7 @@ async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
         f"https://archive-api.open-meteo.com/v1/archive"
         f"?latitude={lat}&longitude={lng}"
         f"&start_date=1995-01-01&end_date=2015-12-31"
-        f"&daily=relative_humidity_2m_max"
+        f"&daily=relative_humidity_2m_mean"
         f"&timezone=auto"
     )
 
@@ -265,7 +265,7 @@ async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
                     resp.raise_for_status()
                     daily = resp.json().get("daily", {})
                     times = daily.get("time", [])
-                    rh_vals = daily.get("relative_humidity_2m_max", [])
+                    rh_vals = daily.get("relative_humidity_2m_mean", [])
 
             target_years = {1995, 2000, 2005, 2010, 2015}
             summer_rh: list[float] = []
@@ -625,7 +625,10 @@ def _adaptive_polyfill(
             start_resolution, area_km2, chosen_res,
         )
 
-    hex_set = h3.polyfill(geo_dict, chosen_res, geo_json_conformant=True)
+    # h3 4.x: LatLngPoly expects (lat, lng) tuples; coords are [lng, lat] GeoJSON
+    outer_latlng = [(c[1], c[0]) for c in coords]
+    poly = h3.LatLngPoly(outer_latlng)
+    hex_set = set(h3.h3shape_to_cells(poly, chosen_res))
     return hex_set, chosen_res
 
 
@@ -729,7 +732,7 @@ async def get_city_hexagons(
                     )
 
                 # Degenerate polyfill edge case — single centre hex
-                center_hex = h3.geo_to_h3(clat, clng, resolution)
+                center_hex = h3.latlng_to_cell(clat, clng, resolution)
                 return H3CoverageResult(
                     hexagons=(center_hex,),
                     coverage_method="open_meteo_point_fallback",
@@ -819,7 +822,7 @@ async def get_city_hexagons(
         )
 
     logger.info("No boundary data for '%s' — using exact pinpoint only", city_name)
-    center_hex = h3.geo_to_h3(center_lat, center_lng, resolution)
+    center_hex = h3.latlng_to_cell(center_lat, center_lng, resolution)
     return H3CoverageResult(
         hexagons=(center_hex,),
         coverage_method="exact_point_only",
