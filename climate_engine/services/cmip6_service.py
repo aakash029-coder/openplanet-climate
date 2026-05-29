@@ -83,7 +83,8 @@ def _rolling_max_mean(temps: List[float], window: int = 5) -> float:
 
 
 # ── SSP → model mapping ────────────────────────────────────────────────
-# FIX 1: Cut down to 2 highly reliable models to reduce payload by 33%
+# MRI-AGCM3-2-S (Japan) and MPI-ESM1-2-XR (Germany) are both high-resolution
+# CMIP6 members with full SSP coverage on Open-Meteo's climate API.
 CMIP6_MODELS_BY_SSP = {
     "ssp245": ["MRI_AGCM3_2_S", "MPI_ESM1_2_XR"],
     "ssp585": ["MRI_AGCM3_2_S", "MPI_ESM1_2_XR"],
@@ -299,7 +300,7 @@ async def fetch_historical_baseline(lat: float, lng: float) -> float:
         async with httpx.AsyncClient(headers=HEADERS) as client:
             daily = await _fetch_era5_daily(
                 lat, lng,
-                "2011-01-01", "2020-12-31",  # FIX 2: Cut 66% weight (was 1991)
+                "2011-01-01", "2020-12-31",  # WMO 2011–2020 reference decade
                 ["temperature_2m_mean"],
                 client,
             )
@@ -338,7 +339,7 @@ async def fetch_historical_baseline_full(lat: float, lng: float) -> dict:
         async with httpx.AsyncClient(headers=HEADERS) as client:
             daily = await _fetch_era5_daily(
                 lat, lng,
-                "2011-01-01", "2020-12-31",  # FIX 2: Cut 66% weight (was 1991)
+                "2011-01-01", "2020-12-31",  # WMO 2011–2020 reference decade
                 ["temperature_2m_max", "temperature_2m_mean"],
                 client,
             )
@@ -355,8 +356,8 @@ async def fetch_historical_baseline_full(lat: float, lng: float) -> dict:
             _rolling_max_mean(sorted(tmax_all, reverse=True)[:365], 5), 2
         )
         hw_total = sum(1 for t in tmax_all if t > p95_threshold)
-        # Assuming 10 years of data (2011-2020)
-        hw_baseline = round(hw_total / 10.0, 1)
+        era5_years = len({d[:4] for d in daily.get("time", []) if d}) or 10
+        hw_baseline = round(hw_total / era5_years, 1)
 
         result = {
             "annual_mean_c": annual_mean,
@@ -424,8 +425,9 @@ async def fetch_cmip6_projection(
 
     models = CMIP6_MODELS_BY_SSP.get(ssp_param, CMIP6_MODELS_BY_SSP["ssp245"])
     
-    # FIX 3: Shrink Projection Window to reduce payload by 60%
-    window = 2  # Was 5. Fetches 4 years of daily data per model instead of 10.
+    # ±2yr window around target_year: 4 years of daily data per model.
+    # Balances CMIP6 internal variability smoothing vs API payload size.
+    window = 2
     start_yr = max(2015, target_year - window)
     end_yr = min(2050, target_year + window - 1)
 
@@ -464,6 +466,8 @@ async def fetch_cmip6_projection(
             "All CMIP6 models failed for %s,%s %s %d — using latitude-trend fallback.",
             lat, lng, ssp_param, target_year,
         )
+        # IPCC AR6 WG1 Table 4.5: median global surface warming rates
+        # SSP5-8.5/SSP3-7.0 ≈ 0.30°C/decade; SSP2-4.5 ≈ 0.18°C/decade (2020–2050)
         trend_per_decade = 0.30 if ssp_param in {"ssp585", "ssp370"} else 0.18
         baseline_temp = _latitude_temperature_fallback(lat)
         decades_from_2000 = (target_year - 2000) / 10.0

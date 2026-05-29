@@ -379,6 +379,10 @@ def _clean_city_keyword(raw_city: str) -> str:
     core_city = parts[0]
 
     # Pattern stripping (order matters: most specific to least specific)
+    # Prefix-only stripping — removes administrative wrappers that precede the
+    # actual place name. Suffix patterns are intentionally absent: stripping
+    # trailing words (e.g. "city", "metropolitan area") from the end of a name
+    # risks silently corrupting legitimate toponyms such as "Ho Chi Minh City".
     noise_patterns = [
         r"^special\s+capital\s+region\s+of\s+",
         r"^national\s+capital\s+region\s+of\s+",
@@ -392,8 +396,6 @@ def _clean_city_keyword(raw_city: str) -> str:
         r"^metropolitan\s+area\s+of\s+",
         r"^metropolitan\s+",
         r"^urban\s+area\s+of\s+",
-        r"\s+metropolitan\s+area$",
-        r"\s+metro\s+area$",
     ]
     for pattern in noise_patterns:
         core_city = re.sub(pattern, "", core_city, flags=re.IGNORECASE).strip()
