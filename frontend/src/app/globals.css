@@ -168,3 +168,20 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.06) 70%, transparent);
 }
+
+/* ── Portrait-wide viewport fix (mobile "Request Desktop Site" mode) ──
+   Targets CSS width ≥1024px but aspect-ratio <4/5 (portrait).
+   Real landscape desktops are always ≥1.6 ratio, so this never fires there. */
+@media (min-width: 1024px) and (max-aspect-ratio: 4/5) {
+  .hero-desktop-section {
+    height: auto !important;
+    justify-content: flex-start !important;
+    gap: 1.5rem !important;
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
+  .map-canvas-container {
+    height: clamp(260px, 40vw, 420px) !important;
+    max-height: 420px !important;
+  }
+}
