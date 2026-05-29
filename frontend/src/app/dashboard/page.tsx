@@ -189,7 +189,7 @@ function DashboardPageInner() {
           <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
         </div>
 
-        <div className={activeTab !== "Dashboard" ? "max-w-[1400px] w-full mx-auto px-5 md:px-10 py-14 md:py-16" : "hidden"}>
+        <div className={(activeTab === "Deep Dive" || activeTab === "Compare") ? "max-w-[1400px] w-full mx-auto px-5 md:px-10 py-14 md:py-16" : "hidden"}>
           {visitedTabs.has('Deep Dive') && targetCity && (
             <div className={activeTab === "Deep Dive" ? "block" : "hidden"}>
               <ResearchModule baseTarget={targetCity} />
@@ -200,12 +200,13 @@ function DashboardPageInner() {
               <CompareModule baseTarget={targetCity} />
             </div>
           )}
-          {visitedTabs.has('Methodology') && (
-            <div className={activeTab === "Methodology" ? "block" : "hidden"}>
-              <MethodologyModule />
-            </div>
-          )}
         </div>
+
+        {visitedTabs.has('Methodology') && (
+          <div className={activeTab === "Methodology" ? "block w-full" : "hidden"}>
+            <MethodologyModule />
+          </div>
+        )}
 
         {targetCity && (
           <div className="max-w-md w-full mx-auto px-5 pb-16 mt-auto">

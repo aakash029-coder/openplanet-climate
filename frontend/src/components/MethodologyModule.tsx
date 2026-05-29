@@ -25,7 +25,7 @@ function SectionHead({ n, title }: { n: string; title: string }) {
   const raw = n.replace('§', '');
   const label = /^\d+$/.test(raw) ? raw.padStart(2, '0') + ' //' : raw + ' //';
   return (
-    <div className="flex items-baseline gap-4 mt-16 mb-6 pb-3"
+    <div className="flex items-baseline gap-4 mt-8 mb-4 pb-3"
          style={{ borderBottom: '1px solid var(--hairline)' }}>
       <span className="font-mono text-xs tracking-widest" style={{ color: '#71717A' }}>{label}</span>
       <h2 className="font-sans text-h2 font-semibold tracking-tight" style={{ color: 'var(--text)' }}>{title}</h2>
@@ -102,10 +102,10 @@ export default function MethodologyModule() {
   const [excelData] = useState<ExcelExportData>(DEMO_EXCEL);
 
   return (
-    <article className="w-full max-w-none px-6 sm:px-12 md:px-16 lg:px-24 xl:px-32 py-10 text-left">
+    <article className="w-full max-w-none px-6 sm:px-12 md:px-16 lg:px-20 xl:px-24 pt-2 pb-6 md:pt-4 text-left block">
 
       {/* ── Title block ── */}
-      <header className="mb-16 pb-8" style={{ borderBottom: '1px solid var(--hairline)' }}>
+      <header className="mb-6 pb-4" style={{ borderBottom: '1px solid var(--hairline)' }}>
         <p className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-3"
            style={{ color: 'var(--muted)' }}>
           Working Paper · OpenPlanet Climate Risk Engine
