@@ -11,6 +11,29 @@ import {
   Projection, RiskResult, fmt, fmtUSD, getWBTStatus, cleanResearchText,
   CalcModal, AdaptationROI, MortalityDecomposition, SourceLine, CalcBtn
 } from "./ResearchComponents";
+import { useProgressiveText } from "@/hooks/useProgressiveText";
+
+// ─────────────────────────────────────────────────────────────────
+// MOBILE COLLAPSIBLE SECTION
+// ─────────────────────────────────────────────────────────────────
+function MobileSection({ title, defaultOpen = true, children }: {
+  title: string; defaultOpen?: boolean; children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="md:hidden w-full flex items-center justify-between px-4 py-3 mb-1 border border-white/[0.05]"
+        style={{ background: 'var(--raised)' }}
+      >
+        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">{title}</span>
+        <span className="font-mono text-slate-500 text-base leading-none">{open ? '−' : '+'}</span>
+      </button>
+      <div className={open ? 'block' : 'hidden md:block'}>{children}</div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
@@ -175,6 +198,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
   const hasMitigation  = canopy > 0 || albedo > 0;
   const mortalityAudit = selectedProj?.audit_trail?.mortality ?? null;
   const economicsAudit = selectedProj?.audit_trail?.economics ?? null;
+  const cleanedAi      = aiAnalysis ? cleanResearchText(aiAnalysis) : null;
+  const progressiveAi  = useProgressiveText(cleanedAi);
 
   const excelData: ExcelExportData | null = (result && selectedProj)
     ? {
@@ -297,27 +322,32 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             )}
           </div>
         </div>
+        <div className="font-mono text-[9px] text-zinc-500 uppercase tracking-wider border border-white/[0.05] bg-zinc-950/40 px-3 py-2 mt-3">
+          CMIP6 CORE · MRI-AGCM3-2-S · MPI-ESM1-2-XR · δT &lt; 1.4°C INTER-MODEL SPREAD
+        </div>
       </div>
 
       {/* ── YEAR SELECTOR ── */}
       {result && result.projections.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
-          {result.projections.map(p => (
-            <button
-              key={p.year}
-              onClick={() => setSelectedYear(p.year)}
-              className={`px-3.5 py-2 text-[10px] font-mono uppercase tracking-widest border transition-colors ${
-                selectedYear === p.year
-                  ? "border-cyan-500/50 bg-cyan-950/30 text-[#0ea5e9]"
-                  : "border-white/[0.05] text-slate-500 hover:text-slate-300 hover:border-white/[0.09]"
-              }`}
-            >
-              {p.year}
-              <span className="ml-2 text-[8px] text-slate-600">
-                {p.source.includes("cmip6") ? "CMIP6" : "AR6"}
-              </span>
-            </button>
-          ))}
+        <div className="sticky top-[48px] z-20 -mx-5 px-5 py-2" style={{ background: 'var(--canvas)' }}>
+          <div className="flex gap-2 flex-wrap">
+            {result.projections.map(p => (
+              <button
+                key={p.year}
+                onClick={() => setSelectedYear(p.year)}
+                className={`px-3.5 py-2 text-[10px] font-mono uppercase tracking-widest border transition-colors ${
+                  selectedYear === p.year
+                    ? "border-cyan-500/50 bg-cyan-950/30 text-[#0ea5e9]"
+                    : "border-white/[0.05] text-slate-500 hover:text-slate-300 hover:border-white/[0.09]"
+                }`}
+              >
+                {p.year}
+                <span className="ml-2 text-[8px] text-slate-600">
+                  {p.source.includes("cmip6") ? "CMIP6" : "AR6"}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -388,6 +418,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           )}
 
           {/* ── WBT + UHI + INFRASTRUCTURE ── */}
+          <MobileSection title="Physiological &amp; Infrastructure">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* WBT */}
             <div className="border border-white/[0.05] p-5 flex flex-col" style={{ background: 'var(--raised)' }}>
@@ -468,8 +499,10 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               <SourceLine source="CMIP6 Ensemble · ERA5 P95" />
             </div>
           </div>
+          </MobileSection>
 
           {/* ── ECONOMIC CARD ── */}
+          <MobileSection title="Economic Value At Risk">
           <div className="bg-indigo-600/5 border border-indigo-500/20 p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>
@@ -536,6 +569,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               </div>
             </div>
           </div>
+          </MobileSection>
 
           {/* ── ADAPTATION ROI + MORTALITY ── */}
           <AdaptationROI
@@ -552,6 +586,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           />
 
           {/* ── AI REASONING ── */}
+          <MobileSection title="Analyst Summary">
           <div className="border border-indigo-500/30 p-6 relative overflow-hidden" style={{ background: 'var(--raised)' }}>
             <div className="absolute -top-12 -left-12 w-32 h-32 bg-indigo-500/10 blur-[50px] pointer-events-none" />
             <h4 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--muted)' }}>
@@ -573,14 +608,18 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
                   <span className="animate-pulse">▋</span>
                 </div>
               </div>
-            ) : aiAnalysis ? (
-              <p className="font-serif text-body-s leading-loose" style={{ color: 'var(--text-2)' }}>{cleanResearchText(aiAnalysis)}</p>
+            ) : cleanedAi ? (
+              <p className="font-serif text-body-s leading-loose" style={{ color: 'var(--text-2)' }}>
+                {progressiveAi}
+                {progressiveAi !== cleanedAi && <span className="animate-pulse font-mono">▋</span>}
+              </p>
             ) : (
               <p className="text-[10px] font-mono text-slate-600 italic">
                 AI analysis unavailable. Refer to the metrics above.
               </p>
             )}
           </div>
+          </MobileSection>
         </>
       )}
     </div>
