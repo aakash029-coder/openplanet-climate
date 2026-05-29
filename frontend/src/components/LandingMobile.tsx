@@ -57,10 +57,10 @@ export default function LandingMobile() {
     <div className="flex flex-col items-center w-full min-h-screen pt-6"
          style={{ overscrollBehavior: 'none' }}>
 
-      {/* ── 1. HERO — viewport-locked ── */}
+      {/* ── 1. HERO ── */}
       <section
-        className="w-full flex flex-col justify-between items-center px-5 py-5 overflow-hidden relative z-10 text-center"
-        style={{ minHeight: 'calc(100dvh - 64px)' }}
+        className="w-full flex flex-col justify-center items-center px-4 py-4 gap-6 overflow-hidden relative z-10 text-center"
+        style={{ minHeight: 'min(calc(100dvh - 64px), 760px)' }}
       >
         {/* Eyebrow */}
         <span className="font-mono text-[9px] uppercase tracking-[0.2em] block"
@@ -69,7 +69,7 @@ export default function LandingMobile() {
         </span>
 
         {/* Headline */}
-        <div className="w-full max-w-sm mx-auto text-center mt-2">
+        <div className="w-full max-w-sm mx-auto text-center">
           <h1 className="font-serif text-[1.9rem] font-medium tracking-tight leading-[1.15]"
               style={{ color: '#E4E4E7' }}>
             By {city.year},{' '}
@@ -102,9 +102,8 @@ export default function LandingMobile() {
           investor, or researcher can act on.
         </p>
 
-        {/* Ledger strip — 3 rows on mobile instead of 3 columns */}
-        <div className="w-full max-w-sm mx-auto"
-             style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        {/* Ledger strip */}
+        <div className="w-full max-w-sm mx-auto border-t border-b border-white/5">
           {[
             {
               label:  'Peak Temperature',
@@ -154,7 +153,7 @@ export default function LandingMobile() {
         </p>
 
         {/* CTA + scroll hint */}
-        <div className="w-full max-w-sm mx-auto flex flex-col items-center gap-3">
+        <div className="w-full max-w-xs mx-auto flex flex-col items-center gap-3">
           <button
             onClick={handleCTA}
             style={{ touchAction: 'manipulation' }}
