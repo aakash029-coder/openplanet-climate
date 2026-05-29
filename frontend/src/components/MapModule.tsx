@@ -339,7 +339,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full">
           <div
             ref={mapContainerRef}
-            className="overflow-hidden relative h-[40vh] md:h-[clamp(44vh,calc(100vh_-_112px),100vh)] min-h-[320px]"
+            className={`overflow-hidden relative transition-all duration-500 ease-in-out md:h-[clamp(44vh,calc(100vh_-_112px),100vh)] min-h-[220px] ${isInitialized ? 'h-[46vh]' : 'h-[28vh]'}`}
             style={{ background: 'var(--canvas)', border: '1px solid var(--hairline)' }}
           >
             {/* Loading / idle placeholder — prevents DeckGL from initialising into a 0×0 canvas */}

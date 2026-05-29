@@ -5,18 +5,11 @@ import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 const CITIES = [
-  { name: 'Delhi',    country: 'India',     temp: 49.2, deaths: 14200, loss: '$31B', hw: 68  },
-  { name: 'Lagos',    country: 'Nigeria',   temp: 43.7, deaths: 9800,  loss: '$18B', hw: 112 },
-  { name: 'Jakarta',  country: 'Indonesia', temp: 38.9, deaths: 6100,  loss: '$22B', hw: 89  },
-  { name: 'Phoenix',  country: 'USA',       temp: 46.1, deaths: 3400,  loss: '$14B', hw: 145 },
-  { name: 'Karachi',  country: 'Pakistan',  temp: 51.3, deaths: 18700, loss: '$8B',  hw: 134 },
-];
-
-const FEATURES = [
-  { title: 'City Risk Map',      desc: 'Hex-grid heatmap at neighbourhood scale', accent: 'var(--reference)' },
-  { title: 'Deep Dive Analysis', desc: 'Survivability timeline · Adaptation ROI',  accent: 'var(--heat-2)'  },
-  { title: 'Compare Cities',     desc: 'Side-by-side metrics, same formula',       accent: 'var(--copper)'  },
-  { title: 'Excel Export',       desc: 'Every number traceable to its source',     accent: 'var(--positive)' },
+  { name: 'Delhi',    country: 'India',     year: 2050, temp: 49.2, deaths: 14200, loss: '$31B', hw: 68  },
+  { name: 'Lagos',    country: 'Nigeria',   year: 2050, temp: 43.7, deaths: 9800,  loss: '$18B', hw: 112 },
+  { name: 'Jakarta',  country: 'Indonesia', year: 2050, temp: 38.9, deaths: 6100,  loss: '$22B', hw: 89  },
+  { name: 'Phoenix',  country: 'USA',       year: 2050, temp: 46.1, deaths: 3400,  loss: '$14B', hw: 145 },
+  { name: 'Karachi',  country: 'Pakistan',  year: 2050, temp: 51.3, deaths: 18700, loss: '$8B',  hw: 134 },
 ];
 
 const STATS = [
@@ -48,165 +41,349 @@ export default function LandingMobile() {
 
   const city = CITIES[activeCityIdx];
 
-  const handleCTA = () => {
+  const handleCTA = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (session) router.push('/dashboard');
     else setShowAuthModal(true);
   };
 
+  const handleGuestClick = () => {
+    setShowAuthModal(false);
+    router.push('/dashboard');
+  };
+
   return (
-    <div className="w-full flex flex-col pb-10"
-         style={{ background: 'var(--canvas)', color: 'var(--text)', minHeight: '100dvh' }}>
+    // pt-6 (24px) + main's pt-10 (40px) = 64px total → clears the fixed navbar exactly
+    <div className="flex flex-col items-center w-full min-h-screen pt-6"
+         style={{ overscrollBehavior: 'none' }}>
 
-      {/* ── BRAND BAR ── */}
-      <div className="flex items-center justify-between px-5 py-3"
-           style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div className="flex items-center gap-2">
-          <span className="w-1 h-1 rounded-full" style={{ background: 'var(--muted)' }} />
-          <span className="font-mono text-[9px] uppercase tracking-[0.22em] font-semibold"
-                style={{ color: 'var(--muted)' }}>
-            OpenPlanet · Climate Risk
-          </span>
-        </div>
-        <span className="font-mono text-[8px]" style={{ color: 'var(--muted)', opacity: 0.4 }}>
-          CMIP6 · ERA5
-        </span>
-      </div>
-
-      {/* ── HERO ── */}
-      <div className="px-5 pt-6 pb-5 flex flex-col gap-4">
-
-        <span className="font-mono text-[9px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>
+      {/* ── 1. HERO — viewport-locked ── */}
+      <section
+        className="w-full flex flex-col justify-between items-center px-5 py-5 overflow-hidden relative z-10 text-center"
+        style={{ minHeight: 'calc(100dvh - 64px)' }}
+      >
+        {/* Eyebrow */}
+        <span className="font-mono text-[9px] uppercase tracking-[0.2em] block"
+              style={{ color: 'var(--muted)' }}>
           ● Live · CMIP6 · ERA5 · Peer-Reviewed
         </span>
 
-        {/* Cycling headline */}
-        <h1 className="font-serif text-[1.85rem] font-medium tracking-tight leading-[1.2]"
-            style={{ color: '#E4E4E7' }}>
-          By 2050,{' '}
-          <span className="gradient-text-copper transition-opacity duration-300"
-                style={{ opacity: cityVisible ? 1 : 0 }}>
-            {city.name}
-          </span>
-          <br />
-          could lose{' '}
-          <span className="gradient-text-copper transition-opacity duration-300"
-                style={{ opacity: cityVisible ? 1 : 0 }}>
-            {city.loss}
-          </span>
-          <br />
-          <span className="font-serif font-light"
-                style={{ color: 'var(--muted)', fontSize: '1.1rem' }}>
-            to extreme heat every year.
-          </span>
-        </h1>
+        {/* Headline */}
+        <div className="w-full max-w-sm mx-auto text-center mt-2">
+          <h1 className="font-serif text-[1.9rem] font-medium tracking-tight leading-[1.15]"
+              style={{ color: '#E4E4E7' }}>
+            By {city.year},{' '}
+            <span
+              className="gradient-text-copper transition-opacity duration-300"
+              style={{ opacity: cityVisible ? 1 : 0 }}
+            >
+              {city.name}
+            </span>
+            <br />
+            could lose up to{' '}
+            <span
+              className="gradient-text-copper transition-opacity duration-300"
+              style={{ opacity: cityVisible ? 1 : 0 }}
+            >
+              {city.loss}
+            </span>
+            <br />
+            <span className="font-serif font-light"
+                  style={{ color: 'var(--muted)', fontSize: '1.05rem' }}>
+              to extreme heat every year.
+            </span>
+          </h1>
+        </div>
 
-        {/* Metric ledger */}
-        <div style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+        {/* Sub-headline */}
+        <p className="font-serif text-[0.875rem] leading-relaxed max-w-xs mx-auto"
+           style={{ color: 'var(--text-2)' }}>
+          OpenPlanet translates climate science into numbers any city planner,
+          investor, or researcher can act on.
+        </p>
+
+        {/* Ledger strip — 3 rows on mobile instead of 3 columns */}
+        <div className="w-full max-w-sm mx-auto"
+             style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           {[
-            { label: 'Peak Temperature',   value: `${city.temp}°C`,                  color: 'var(--copper)', source: 'TX5d decadal mean · ERA5'    },
-            { label: 'Est. Heat Deaths',   value: `~${city.deaths.toLocaleString()}`, color: 'var(--heat-4)', source: 'Gasparrini 2017 · ±15% CI'   },
-            { label: 'Heatwave Days / yr', value: `${city.hw}d`,                     color: 'var(--heat-3)', source: 'Days above P95 · CMIP6'       },
-          ].map((m, i) => (
-            <div key={m.label}
-                 className="flex items-center justify-between px-4 py-3"
-                 style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-              <div>
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em]"
-                   style={{ color: 'var(--muted)' }}>{m.label}</p>
-                <p className="font-mono text-[8px] mt-0.5"
-                   style={{ color: 'var(--muted)', opacity: 0.4 }}>{m.source}</p>
+            {
+              label:  'Peak Temperature',
+              source: 'TX5d decadal mean · ERA5',
+              value:  `${city.temp}°C`,
+              glow:   'glow-amber',
+              color:  'var(--copper)',
+            },
+            {
+              label:  'Est. Heat Deaths',
+              source: 'Gasparrini 2017 · ±15% CI',
+              value:  `~${city.deaths.toLocaleString()}`,
+              glow:   'glow-red',
+              color:  'var(--heat-4)',
+            },
+            {
+              label:  'Heatwave Days / yr',
+              source: 'Above P95 · CMIP6',
+              value:  `${city.hw}d`,
+              glow:   'glow-red',
+              color:  'var(--heat-3)',
+            },
+          ].map((s, i) => (
+            <div
+              key={s.label}
+              className="flex items-center justify-between px-3 py-3"
+              style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
+            >
+              <div className="text-left">
+                <p className="font-sans text-[10px] tracking-[0.12em] uppercase" style={{ color: 'var(--text-2)' }}>{s.label}</p>
+                <p className="font-mono text-[8px] tracking-[0.06em] mt-0.5" style={{ color: 'var(--muted)' }}>{s.source}</p>
               </div>
-              <p className="font-mono text-[1.5rem] font-bold tabular-nums transition-opacity duration-300"
-                 style={{ color: m.color, opacity: cityVisible ? 1 : 0 }}>
-                {m.value}
+              <p
+                className={`font-mono text-[1.5rem] font-medium tracking-tighter tabular-nums ${s.glow} transition-opacity duration-300`}
+                style={{ color: s.color, opacity: cityVisible ? 1 : 0 }}
+              >
+                {s.value}
               </p>
             </div>
           ))}
         </div>
 
-        {/* Provenance */}
-        <p className="font-mono text-[8px] tracking-[0.07em] text-center"
-           style={{ color: 'var(--muted)', opacity: 0.45 }}>
-          Copernicus C3S ERA5 · CMIP6 · Gasparrini 2017 · Burke 2018
+        {/* Credibility strip */}
+        <p className="font-mono text-[8px] text-center max-w-xs mx-auto"
+           style={{ color: 'var(--muted)' }}>
+          Copernicus C3S ERA5 · CMIP6 · Gasparrini 2017 · Burke 2018 · UNDRR
         </p>
 
-        {/* Primary CTA */}
-        <button
-          onClick={handleCTA}
-          className="w-full font-sans font-semibold text-[12px] uppercase tracking-wider transition-all duration-150 hover:bg-zinc-100 btn-primary"
-          style={{ background: 'var(--text)', color: 'var(--canvas)', minHeight: '56px', touchAction: 'manipulation' }}
-        >
-          Analyse Your City →
-        </button>
-
-        <p className="font-mono text-[8px] text-center uppercase tracking-[0.18em]"
-           style={{ color: 'var(--muted)', opacity: 0.4 }}>
-          Free · No account required
-        </p>
-      </div>
-
-      {/* ── WHAT YOU GET ── */}
-      <div className="px-5 pb-6" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <p className="font-mono text-[9px] uppercase tracking-[0.2em] py-4" style={{ color: 'var(--muted)' }}>
-          What you get
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {FEATURES.map(f => (
-            <div key={f.title}
-                 className="p-3 flex flex-col gap-1.5"
-                 style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
-              <div className="w-1.5 h-1.5 rounded-full" style={{ background: f.accent }} />
-              <p className="font-sans font-semibold text-[11px] leading-tight" style={{ color: 'var(--text)' }}>
-                {f.title}
-              </p>
-              <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--muted)' }}>
-                {f.desc}
-              </p>
-            </div>
-          ))}
+        {/* CTA + scroll hint */}
+        <div className="w-full max-w-sm mx-auto flex flex-col items-center gap-3">
+          <button
+            onClick={handleCTA}
+            style={{ touchAction: 'manipulation' }}
+            className="w-full btn-primary bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-all duration-150 hover:bg-zinc-100 min-h-[52px]"
+          >
+            Analyse Your City →
+          </button>
+          <div className="flex flex-col items-center gap-0.5 animate-bounce" style={{ opacity: 0.2 }}>
+            <span className="font-mono text-[8px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>scroll</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                 style={{ color: 'var(--muted)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* ── STATS STRIP ── */}
-      <div className="mx-5 mb-6 p-4 grid grid-cols-2 gap-4 relative overflow-hidden"
-           style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
-        <div className="absolute top-0 left-0 right-0 h-px"
-             style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
-        {STATS.map(s => (
-          <div key={s.label} className="text-center">
-            <p className="font-mono text-[1.35rem] font-bold glow-copper" style={{ color: 'var(--copper)' }}>
-              {s.value}
+      {/* ── 2. WHAT IT DOES ── */}
+      <section className="w-full px-5 py-12 flex flex-col gap-8 max-w-lg mx-auto">
+        <div>
+          <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-3" style={{ color: 'var(--muted)' }}>
+            How it works
+          </p>
+          <h2 className="text-2xl font-sans font-bold tracking-tight leading-tight mb-4" style={{ color: 'var(--text)' }}>
+            Type any city.<br />
+            <span className="font-light" style={{ color: 'var(--muted)' }}>Get the real numbers.</span>
+          </h2>
+          <div className="space-y-3 font-sans leading-relaxed" style={{ color: 'var(--text-2)' }}>
+            <p className="text-sm">
+              Enter a city — Delhi, Phoenix, Lagos, anywhere — and within seconds you see
+              projected heatwave days, peak temperatures, economic losses, and estimated
+              mortality for 2030 and 2050.
             </p>
-            <p className="font-mono text-[8px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--muted)' }}>
-              {s.label}
+            <p className="text-sm">
+              Pull two cities side by side, adjust tree cover or cool roofs to see what
+              intervention saves, or export the full calculation to Excel.
+            </p>
+            <p className="text-[10px] font-mono leading-loose" style={{ color: 'var(--muted)' }}>
+              ERA5 reanalysis · CMIP6 ensemble · World Bank GDP · Gasparrini (2017) · Burke (2018)
             </p>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* ── FOOTER ── */}
-      <div className="mt-auto px-5 py-5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <p className="font-mono text-[7px] uppercase tracking-[0.13em] text-center leading-relaxed"
-           style={{ color: 'var(--muted)', opacity: 0.3 }}>
-          OpenPlanet is a computational estimation engine based on global meta-analyses.<br />
-          Designed for directional risk visualization · Not operational advice.
+        <div className="grid grid-cols-2 gap-2.5">
+          {[
+            { title: 'City Risk Map',        desc: 'Interactive hex-grid heatmap at neighbourhood scale.',        accent: 'var(--reference)' },
+            { title: 'Deep Dive Analysis',   desc: 'Survivability timeline, climate debt, adaptation ROI.',      accent: 'var(--heat-2)'  },
+            { title: 'City vs City Compare', desc: 'Side-by-side metrics for any two cities. Transparent math.', accent: 'var(--copper)'  },
+            { title: 'Excel Audit Export',   desc: '4-sheet model with live formulas, every number sourced.',     accent: 'var(--positive)' },
+          ].map(f => (
+            <div key={f.title}
+                 className="glass relative p-4 flex flex-col gap-1.5 overflow-hidden group"
+                 style={{ border: '1px solid var(--hairline)' }}>
+              <div className="absolute top-0 left-0 right-0 h-px"
+                   style={{ background: `linear-gradient(90deg, transparent, ${f.accent}50, transparent)` }} />
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: f.accent }} />
+              <h3 className="font-sans font-semibold text-[11px] leading-tight" style={{ color: 'var(--text)' }}>{f.title}</h3>
+              <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--muted)' }}>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 3. AUDIENCE ── */}
+      <section className="w-full px-5 pb-12 max-w-lg mx-auto">
+        <div className="text-center mb-8">
+          <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-2" style={{ color: 'var(--muted)' }}>Who uses OpenPlanet</p>
+          <h2 className="text-xl font-sans font-bold tracking-tight" style={{ color: 'var(--text)' }}>
+            Built for people who make decisions about places.
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {[
+            {
+              audience: 'City Planners & Policy',
+              accent: '#6E8CA8',
+              lines: ['Which neighbourhoods cross 35°C wet-bulb first?', 'How many cooling centres do we need by 2040?', 'What does +20% tree cover actually buy us?'],
+            },
+            {
+              audience: 'Climate Researchers',
+              accent: '#5E8C6A',
+              lines: ['Full audit trail — every formula, every source.', 'Exportable Excel model for peer review.', 'Gasparrini (2017) + Burke (2018) + Stull (2011).'],
+            },
+            {
+              audience: 'Investors & Risk Teams',
+              accent: '#B08D57',
+              lines: ['GDP-at-risk by city and scenario year.', 'NPV climate debt 2030–2050.', 'SSP2-4.5 and SSP5-8.5 side by side.'],
+            },
+          ].map(card => (
+            <div key={card.audience}
+                 className="glass relative p-5 flex flex-col gap-4 overflow-hidden"
+                 style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+              <div className="absolute top-0 left-0 right-0 h-px"
+                   style={{ background: `linear-gradient(90deg, transparent, ${card.accent}60, transparent)` }} />
+              <div className="flex items-center gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: card.accent }} />
+                <h3 className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: card.accent }}>{card.audience}</h3>
+              </div>
+              <ul className="space-y-2">
+                {card.lines.map(line => (
+                  <li key={line} className="flex items-start gap-2">
+                    <span className="text-[10px] mt-0.5 shrink-0" style={{ color: card.accent }}>—</span>
+                    <span className="text-[12px] leading-relaxed font-sans" style={{ color: 'var(--text-2)' }}>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 4. STATS ── */}
+      <section className="w-full px-5 pb-12 max-w-lg mx-auto">
+        <div className="relative overflow-hidden p-6"
+             style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+          <div className="absolute top-0 left-0 right-0 h-px"
+               style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)' }} />
+          <div className="grid grid-cols-2 gap-5 mb-6">
+            {STATS.map(s => (
+              <div key={s.label} className="text-center">
+                <p className="text-[1.75rem] font-mono font-bold mb-1 tracking-tight glow-copper"
+                   style={{ color: 'var(--copper)' }}>{s.value}</p>
+                <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: 'var(--muted)' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="divider-gradient mb-4" />
+          <p className="text-[9px] font-mono text-center leading-loose" style={{ color: 'var(--muted)' }}>
+            All projections are research-grade estimates for analytical purposes only.
+            Not investment advice. Mortality ±15% CI · Economic ±8% CI.
+          </p>
+        </div>
+      </section>
+
+      {/* ── 5. METHODOLOGY ── */}
+      <section className="w-full px-5 pb-12 max-w-lg mx-auto flex flex-col gap-6">
+        <div>
+          <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-3" style={{ color: 'var(--muted)' }}>
+            Transparent science
+          </p>
+          <h2 className="text-xl font-sans font-bold tracking-tight leading-tight mb-4" style={{ color: 'var(--text)' }}>
+            Every number has a source.<br />
+            <span className="font-light" style={{ color: 'var(--muted)' }}>No black boxes.</span>
+          </h2>
+          <p className="text-sm leading-relaxed font-sans" style={{ color: 'var(--text-2)' }}>
+            When you see a "$31 Billion economic loss" estimate, you can click into the calculation
+            and see exactly which formula produced it, which peer-reviewed paper each constant came from.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          {[
+            { model: 'Mortality',    source: 'Gasparrini et al. (2017)', journal: 'Lancet Planetary Health',    detail: 'β = 0.0801 · dose-response · GBD meta-analysis', accent: 'var(--heat-4)' },
+            { model: 'Economics',    source: 'Burke et al. (2018)',       journal: 'Nature',                    detail: 'T_optimal = 13°C · GDP penalty function',         accent: 'var(--heat-2)' },
+            { model: 'Labor loss',   source: 'ILO (2019)',                journal: 'Working on a Warmer Planet', detail: '40% workforce · 20% productivity per heatwave day', accent: 'var(--copper)' },
+            { model: 'Wet-bulb',     source: 'Stull (2011)',              journal: 'J. Applied Meteorology',    detail: 'Capped 35°C — Sherwood & Huber (2010) PNAS',       accent: 'var(--reference)' },
+            { model: 'Climate data', source: 'Open-Meteo CMIP6',          journal: 'ERA5 + MRI/MPI ensemble',  detail: '2015–2050 validated CMIP6 · horizon capped 2050',   accent: 'var(--positive)' },
+          ].map(m => (
+            <div key={m.model}
+                 className="glass relative p-3.5 flex gap-3 items-start overflow-hidden group"
+                 style={{ border: '1px solid var(--hairline)' }}>
+              <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                   style={{ background: `linear-gradient(90deg, transparent, ${m.accent}50, transparent)` }} />
+              <div className="w-1 h-1 rounded-full shrink-0 mt-1.5" style={{ background: m.accent }} />
+              <div className="min-w-0">
+                <div className="flex items-baseline gap-1.5 mb-0.5 flex-wrap">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest" style={{ color: 'var(--text)' }}>{m.model}</span>
+                  <span className="text-[9px] font-mono" style={{ color: m.accent }}>{m.source}</span>
+                </div>
+                <p className="text-[9px] font-mono italic truncate" style={{ color: 'var(--muted)' }}>{m.journal}</p>
+                <p className="text-[9px] font-mono mt-0.5" style={{ color: 'var(--muted)' }}>{m.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 6. FINAL CTA ── */}
+      <section className="w-full px-5 pb-16 max-w-lg mx-auto">
+        <div className="relative flex flex-col items-center text-center py-12 px-5 overflow-hidden"
+             style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+          <div className="absolute top-0 left-0 right-0 h-px"
+               style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)' }} />
+          <div className="absolute inset-0 pointer-events-none"
+               style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(176,141,87,0.05) 0%, transparent 70%)' }} />
+          <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-4 relative z-10" style={{ color: 'var(--muted)' }}>
+            Free · No account required
+          </p>
+          <h3 className="text-2xl font-sans font-bold mb-3 leading-tight tracking-tight relative z-10"
+              style={{ color: 'var(--text)' }}>
+            What is the heat risk<br />
+            <span className="font-light" style={{ color: 'var(--muted)' }}>in your city?</span>
+          </h3>
+          <p className="font-serif text-sm mb-8 max-w-xs mx-auto relative z-10" style={{ color: 'var(--text-2)' }}>
+            Research-grade analysis in seconds. Free to explore, no account required.
+          </p>
+          <button
+            onClick={handleCTA}
+            style={{ touchAction: 'manipulation' }}
+            className="w-full btn-primary relative z-10 bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-all duration-150 hover:bg-zinc-50 min-h-[52px]"
+          >
+            Analyse a City →
+          </button>
+        </div>
+      </section>
+
+      {/* ── DISCLAIMER ── */}
+      <div className="w-full flex flex-col items-center text-center gap-2 pt-6 pb-10 px-5"
+           style={{ borderTop: '1px solid var(--hairline)' }}>
+        <p className="text-[9px] font-mono uppercase tracking-[0.25em] font-bold" style={{ color: 'var(--muted)' }}>
+          Disclaimer
+        </p>
+        <p className="text-[10px] leading-relaxed font-serif max-w-sm" style={{ color: 'var(--muted)' }}>
+          OpenPlanet is a computational estimation engine based on global meta-analyses (Gasparrini 2017, Burke 2018).
+          Designed for directional risk visualization and strategic planning, not localized actuarial or medical forecasting.
         </p>
       </div>
 
-      {/* ── AUTH MODAL (bottom sheet) ── */}
+      {/* ── AUTH MODAL — bottom sheet ── */}
       {showAuthModal && (
         <div
-          className="fixed inset-0 z-[999] flex items-end justify-center bg-black/80"
+          className="fixed inset-0 z-[999] flex items-end justify-center bg-black/85"
           style={{ backdropFilter: 'blur(14px)' }}
           onClick={() => setShowAuthModal(false)}
         >
           <div
             className="relative w-full max-w-md overflow-hidden animate-fadeSlideUp"
-            style={{
-              background: 'var(--panel)',
-              border: '1px solid var(--hairline)',
-              borderBottom: 'none',
-            }}
+            style={{ background: 'var(--panel)', border: '1px solid var(--hairline)', borderBottom: 'none' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="h-px w-full"
@@ -223,12 +400,8 @@ export default function LandingMobile() {
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
-
-              <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-1"
-                 style={{ color: 'var(--muted)' }}>Access</p>
-              <h2 className="text-lg font-sans font-semibold mb-8 tracking-tight"
-                  style={{ color: 'var(--text)' }}>OpenPlanet</h2>
-
+              <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-1" style={{ color: 'var(--muted)' }}>Access</p>
+              <h2 className="text-lg font-sans font-semibold mb-8 tracking-tight" style={{ color: 'var(--text)' }}>OpenPlanet</h2>
               <div className="space-y-3">
                 <button
                   onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
@@ -243,23 +416,15 @@ export default function LandingMobile() {
                   </svg>
                   Continue with Google
                 </button>
-
                 <div className="flex items-center gap-3">
                   <div className="flex-1 divider-gradient" />
-                  <span className="text-[10px] font-mono uppercase tracking-widest"
-                        style={{ color: 'var(--muted)' }}>or</span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: 'var(--muted)' }}>or</span>
                   <div className="flex-1 divider-gradient" />
                 </div>
-
                 <button
-                  onClick={() => { setShowAuthModal(false); router.push('/dashboard'); }}
+                  onClick={handleGuestClick}
                   className="w-full px-6 py-3.5 font-mono text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-150 hover:text-white min-h-[52px] btn-primary"
-                  style={{
-                    border: '1px solid var(--hairline)',
-                    color: 'var(--text-2)',
-                    background: 'var(--raised)',
-                    touchAction: 'manipulation',
-                  }}
+                  style={{ border: '1px solid var(--hairline)', color: 'var(--text-2)', background: 'var(--raised)', touchAction: 'manipulation' }}
                 >
                   Continue as Guest →
                 </button>
