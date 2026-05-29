@@ -19,7 +19,7 @@ function DeckOverlay(props: MapboxOverlayProps) {
 }
 
 export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: string) => void }) {
-  const { fetchPrimaryCity, primaryData } = useClimateData();
+  const { fetchPrimaryCity, primaryData, canopy, setCanopy, coolRoof, setCoolRoof } = useClimateData();
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,12 +32,10 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const savedState = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('op_sync_state') || '{}') : {};
   const [ssp, setSsp] = useState(savedState.ssp || 'SSP2-4.5');
   const [year, setYear] = useState(savedState.year || '2050');
-  const [canopy, setCanopy] = useState(savedState.canopy !== undefined ? savedState.canopy : 0);
-  const [coolRoof, setCoolRoof] = useState(savedState.albedo !== undefined ? savedState.albedo : 0);
 
   useEffect(() => {
-    localStorage.setItem('op_sync_state', JSON.stringify({ ssp, year, canopy, albedo: coolRoof }));
-  }, [ssp, year, canopy, coolRoof]);
+    localStorage.setItem('op_sync_state', JSON.stringify({ ssp, year }));
+  }, [ssp, year]);
 
   const [hexData, setHexData] = useState<Array<{ hex_id: string; position: [number, number]; risk_weight?: number }>>([]);
   const [auditTrail, setAuditTrail] = useState<Record<string, unknown> | null>(null);

@@ -158,6 +158,12 @@ interface ClimateDataContextType {
   dashboardLoading: boolean;
   dashboardError:   string | null;
 
+  // Adaptation slider state — single source of truth shared across all tabs
+  canopy:      number;
+  setCanopy:   React.Dispatch<React.SetStateAction<number>>;
+  coolRoof:    number;
+  setCoolRoof: React.Dispatch<React.SetStateAction<number>>;
+
   // Actions
   fetchPrimaryCity: (params: FetchParams) => Promise<void>;
   fetchCompareCity: (slot: "A" | "B", params: FetchParams) => Promise<void>;
@@ -208,6 +214,9 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
   const [dashboardData,    setDashboardData]    = useState<DashboardData | null>(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [dashboardError,   setDashboardError]   = useState<string | null>(null);
+
+  const [canopy, setCanopy] = useState(0);
+  const [coolRoof, setCoolRoof] = useState(0);
 
   // In-flight request guards — prevent duplicate concurrent fetches
   const inFlight = useRef(new Set<string>());
@@ -364,6 +373,7 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
       compareA,       compareALoading, compareAError,
       compareB,       compareBLoading, compareBError,
       dashboardData,  dashboardLoading, dashboardError,
+      canopy, setCanopy, coolRoof, setCoolRoof,
       fetchPrimaryCity,
       fetchCompareCity,
       fetchDashboard,

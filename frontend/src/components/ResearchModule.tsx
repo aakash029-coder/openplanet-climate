@@ -16,15 +16,13 @@ import {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────
 export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
-  const { primaryData, primaryLoading, primaryError, fetchPrimaryCity } = useClimateData();
+  const { primaryData, primaryLoading, primaryError, fetchPrimaryCity, canopy, setCanopy, coolRoof: albedo, setCoolRoof: setAlbedo } = useClimateData();
 
   // SSP / mitigation state — initialize from primaryData if already loaded, else localStorage
   const savedState = typeof window !== 'undefined'
     ? JSON.parse(localStorage.getItem('op_sync_state') || '{}')
     : {};
-  const [ssp,    setSsp]    = useState(() => primaryData?.ssp    || savedState.ssp    || "SSP2-4.5");
-  const [canopy, setCanopy] = useState(() => primaryData?.canopy_offset_pct ?? (savedState.canopy ?? 0));
-  const [albedo, setAlbedo] = useState(() => primaryData?.albedo_offset_pct ?? (savedState.albedo ?? 0));
+  const [ssp, setSsp] = useState(() => primaryData?.ssp || savedState.ssp || "SSP2-4.5");
   const [selectedYear, setSelectedYear] = useState<number | null>(
     savedState.year ? Number(savedState.year) : null
   );
@@ -48,10 +46,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
     localStorage.setItem('op_sync_state', JSON.stringify({
       ssp,
       year: selectedYear?.toString() || '2050',
-      canopy,
-      albedo,
     }));
-  }, [ssp, selectedYear, canopy, albedo]);
+  }, [ssp, selectedYear]);
 
   // Set initial year from projections once data arrives
   useEffect(() => {
