@@ -2,74 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design token layer ──────────────────────────────────────────────────── */
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 2, 6, 23;
-  --background-end-rgb: 5, 8, 20;
+  --canvas:          #08080A;
+  --panel:           #0C0C0E;
+  --raised:          #111113;
+  --hairline:        rgba(255, 255, 255, 0.06);
+  --hairline-strong: rgba(255, 255, 255, 0.10);
+  --text:            #ECECEE;
+  --text-2:          #A1A1AA;
+  --muted:           #52525B;
+  --heat-1:          #2F6F8F;
+  --heat-2:          #B79237;
+  --heat-3:          #BE6A2E;
+  --heat-4:          #A23A30;
+  --heat-5:          #6E2020;
+  --positive:        #5E8C6A;
+  --reference:       #6E8CA8;
+  --copper:          #B08D57;
 }
 
-/* ── ROOT FIX: iOS Safari + Android rubber band — header/footer kabhi nahi hilega ── */
-html,
-body {
+html, body {
   overscroll-behavior: none;
   overscroll-behavior-y: none;
-  /* ✅ iOS Safari ke liye — momentum scroll off, bounce band */
   -webkit-overflow-scrolling: auto;
-}
-
-/* ── BASE ── */
-body {
-  color: rgb(var(--foreground-rgb));
-  background: #020617;
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-
-  /* ✅ Font size freeze — rotate karne par text size nahi badlega */
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-
-  /* ✅ Mobile tap flash band — click par blue/grey highlight nahi */
-  -webkit-tap-highlight-color: transparent;
-
-  /* ✅ Mobile touch — sirf vertical scroll, side bounce nahi */
-  touch-action: pan-y;
-}
-
-/* ✅ Smooth scroll globally — links ke liye */
-html {
   scroll-behavior: smooth;
 }
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #020617;
-}
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 10px;
-}
-
-/* ── CUSTOM SCROLLBAR (dropdown lists ke liye) ── */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #020617;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 10px;
+body {
+  color: var(--text);
+  background: var(--canvas);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
 }
 
-/* ✅ animate-spin-reverse — dashboard loading spinner ke liye */
+::-webkit-scrollbar        { width: 5px; }
+::-webkit-scrollbar-track  { background: var(--canvas); }
+::-webkit-scrollbar-thumb  { background: #1c1c1e; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: #2c2c2e; }
+
+.custom-scrollbar::-webkit-scrollbar       { width: 3px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: var(--canvas); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #1c1c1e; border-radius: 0; }
+
 @keyframes spin-reverse {
   from { transform: rotate(360deg); }
   to   { transform: rotate(0deg); }
 }
-.animate-spin-reverse {
-  animation: spin-reverse 1s linear infinite;
-}
+.animate-spin-reverse { animation: spin-reverse 1s linear infinite; }
+
+.font-mono { font-variant-numeric: tabular-nums; }
+
+.katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.5rem 0; }

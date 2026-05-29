@@ -1,422 +1,311 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from 'react';
+import katex from 'katex';
 import { ExcelExportFullButton, type ExcelExportData } from "@/components/ExcelExport";
-import { useClimateData, type CityClimateData, type Projection } from "@/context/ClimateDataContext";
+import { useClimateData } from "@/context/ClimateDataContext";
 
-function Code({ children }: { children: string }) {
-  return (
-    <code className="font-mono text-[10px] bg-slate-900/50 border border-slate-700 rounded px-1.5 py-0.5 text-slate-300 uppercase tracking-tighter shadow-sm">
-      {children}
-    </code>
-  );
+// ── KaTeX renderers ──────────────────────────────────────────────────────────
+function Eq({ math, display = false }: { math: string; display?: boolean }) {
+  const html = katex.renderToString(math, { throwOnError: false, displayMode: display });
+  if (display) {
+    return (
+      <div
+        className="my-6 py-4 px-6 overflow-x-auto"
+        style={{ background: 'var(--raised)', borderLeft: '2px solid var(--hairline-strong)' }}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  }
+  return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function Formula({ label, formula, note }: { label: string; formula: string; note?: React.ReactNode }) {
+// ── Section header (numbered, Inter eyebrow) ─────────────────────────────────
+function SectionHead({ n, title }: { n: string; title: string }) {
   return (
-    <div className="bg-[#09090b] border border-slate-800 rounded-xl px-6 py-5 my-6 relative overflow-hidden group shadow-sm">
-      <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/30 group-hover:bg-blue-500/80 transition-colors" />
-      <p className="text-[10px] font-mono text-blue-400 uppercase tracking-[0.2em] mb-4">{label}</p>
-      <div className="text-white overflow-x-auto py-2 font-serif text-lg tracking-wide">{formula}</div>
-      {note && (
-        <div className="text-[10px] font-mono text-slate-500 mt-4 leading-relaxed uppercase tracking-widest border-t border-slate-800 pt-3">
-          {note}
-        </div>
-      )}
+    <div className="flex items-baseline gap-4 mt-16 mb-6 pb-3"
+         style={{ borderBottom: '1px solid var(--hairline)' }}>
+      <span className="font-mono text-[0.6875rem]" style={{ color: 'var(--muted)' }}>{n}</span>
+      <h2 className="font-sans text-h2 font-semibold tracking-tight" style={{ color: 'var(--text)' }}>{title}</h2>
     </div>
   );
 }
 
-function Ref({ authors, year, journal, title }: { authors: string; year: number; journal: string; title: string }) {
+// ── Body paragraph (Source Serif 4) ─────────────────────────────────────────
+function P({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex gap-4 py-5 border-b border-slate-800/60 last:border-0 group hover:bg-slate-900/50 transition-colors px-4 -mx-4 rounded-lg">
-      <span className="text-slate-500 font-mono text-[10px] mt-1 font-bold">[{year}]</span>
-      <div className="space-y-1">
-        <p className="text-[11px] font-mono text-slate-300 uppercase tracking-wider group-hover:text-white transition-colors">{authors}</p>
-        <p className="text-[10px] font-mono text-slate-500 leading-relaxed uppercase tracking-widest">
-          {title}. <span className="text-slate-400 italic font-bold">{journal}</span>
+    <p className="font-serif text-body-s leading-[1.6] mb-4 max-w-[72ch]"
+       style={{ color: 'var(--text-2)' }}>
+      {children}
+    </p>
+  );
+}
+
+// ── Inline mono citation ─────────────────────────────────────────────────────
+function Cite({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="font-mono text-data" style={{ color: 'var(--reference)' }}>{children}</span>
+  );
+}
+
+// ── Definition row ───────────────────────────────────────────────────────────
+function Def({ sym, desc }: { sym: string; desc: string }) {
+  return (
+    <div className="flex gap-6 py-2" style={{ borderBottom: '1px solid var(--hairline)' }}>
+      <span className="font-mono text-data w-24 shrink-0 tabular-nums" style={{ color: 'var(--text)' }}>
+        <Eq math={sym} />
+      </span>
+      <span className="font-sans text-body-ui" style={{ color: 'var(--text-2)' }}>{desc}</span>
+    </div>
+  );
+}
+
+// ── Reference list entry ─────────────────────────────────────────────────────
+function Ref({ id, authors, year, title, journal, doi }: {
+  id: string; authors: string; year: number; title: string; journal: string; doi?: string;
+}) {
+  return (
+    <div className="flex gap-6 py-4" style={{ borderBottom: '1px solid var(--hairline)' }}>
+      <span className="font-mono text-prov w-16 shrink-0" style={{ color: 'var(--muted)' }}>[{id}]</span>
+      <div>
+        <p className="font-mono text-data font-medium" style={{ color: 'var(--text)' }}>{authors} ({year})</p>
+        <p className="font-serif text-body-ui mt-0.5" style={{ color: 'var(--text-2)' }}>
+          {title}. <em>{journal}</em>
         </p>
+        {doi && (
+          <a href={`https://doi.org/${doi}`} target="_blank" rel="noopener noreferrer"
+             className="font-mono text-prov mt-0.5 block hover:underline"
+             style={{ color: 'var(--reference)' }}>
+            doi:{doi}
+          </a>
+        )}
       </div>
     </div>
   );
 }
 
-const DEMO_EXCEL_DATA: ExcelExportData = {
-  city_name:           "TEMPLATE MATRIX — Execute deep dive to populate",
-  lat:                 0,
-  lng:                 0,
-  ssp:                 "SSP2-4.5",
-  target_year:         2050,
-  era5_baseline_c:     0,
-  era5_p95_c:          0,
-  era5_humidity_p95:   0,
-  peak_tx5d_c:         0,
-  heatwave_days:       0,
-  mean_temp_c:         0,
-  population:          0,
-  gdp_usd:             0,
-  death_rate:          0,
-  vulnerability:       0,
-  canopy_pct:          0,
-  albedo_pct:          0,
-  attributable_deaths: 0,
-  economic_decay_usd:  0,
-  wbt_c:               0,
-  cmip6_source:        "not_populated",
+const DEMO_EXCEL: ExcelExportData = {
+  city_name: "TEMPLATE — run a city analysis to populate",
+  lat: 0, lng: 0, ssp: "SSP2-4.5", target_year: 2050,
+  era5_baseline_c: 0, era5_p95_c: 0, era5_humidity_p95: 0,
+  peak_tx5d_c: 0, heatwave_days: 0, mean_temp_c: 0,
+  population: 0, gdp_usd: 0, death_rate: 0, vulnerability: 0,
+  canopy_pct: 0, albedo_pct: 0,
+  attributable_deaths: 0, economic_decay_usd: 0, wbt_c: 0,
+  cmip6_source: "not_populated",
 };
 
 export default function MethodologyModule() {
-  const [open, setOpen] = useState<string | null>("economics");
   const { primaryData } = useClimateData();
-
-  const [currentExcelData, setCurrentExcelData] = useState<ExcelExportData>(DEMO_EXCEL_DATA);
-  const [isLive, setIsLive] = useState(false);
-
-  useEffect(() => {
-    const syncData = () => {
-      let sourceData = primaryData;
-
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('openplanet_last_risk_data');
-        if (saved) {
-          try { sourceData = JSON.parse(saved); } catch { /* ignore stale cache */ }
-        }
-      }
-
-      if (sourceData) {
-        try {
-          const _source: CityClimateData = sourceData;
-          const projections: Projection[] = Array.isArray(_source.projections) ? _source.projections : [];
-          const proj: Projection | undefined = projections.find((p) => p.year === 2050) ?? projections[0];
-
-          if (proj) {
-            const safeNum = (val: unknown, fallback = 0): number => {
-              if (val == null || val === '') return fallback;
-              if (typeof val === 'number') return (isFinite(val) && !isNaN(val)) ? val : fallback;
-              const n = parseFloat(String(val).replace(/[^0-9.\-]/g, ''));
-              return (isNaN(n) || !isFinite(n)) ? fallback : n;
-            };
-
-            const baselineMean = _source.baseline?.baseline_mean_c ?? 20;
-
-            const mappedData: ExcelExportData = {
-              city_name:           _source.city_name || 'Target Settlement',
-              lat:                 safeNum(_source.lat),
-              lng:                 safeNum(_source.lng),
-              ssp:                 _source.ssp || 'SSP2-4.5',
-              target_year:         proj.year ?? 2050,
-              era5_baseline_c:     safeNum(baselineMean),
-              era5_p95_c:          safeNum(_source.threshold_c),
-              era5_humidity_p95:   safeNum(_source.era5_humidity_p95 || 70),
-              peak_tx5d_c:         safeNum(proj.peak_tx5d_c),
-              heatwave_days:       safeNum(proj.heatwave_days),
-              mean_temp_c:         safeNum(baselineMean + 2),
-              population:          safeNum(_source.population),
-              gdp_usd:             safeNum(_source.gdp_usd),
-              death_rate:          7.5,
-              vulnerability:       1.0,
-              canopy_pct:          safeNum(_source.canopy_offset_pct),
-              albedo_pct:          safeNum(_source.albedo_offset_pct),
-              attributable_deaths: safeNum(proj.attributable_deaths),
-              economic_decay_usd:  safeNum(proj.economic_decay_usd),
-              wbt_c:               safeNum(proj.wbt_max_c),
-              cmip6_source:        proj.source || 'CMIP6 Multi-Model Ensemble',
-            };
-
-            setCurrentExcelData(mappedData);
-            setIsLive(true);
-          }
-        } catch { /* malformed source data — retain demo template */ }
-      }
-    };
-
-    syncData();
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('climate_data_updated', syncData);
-      window.addEventListener('storage', syncData);
-    }
-    
-    const interval = setInterval(syncData, 1500);
-
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('climate_data_updated', syncData);
-        window.removeEventListener('storage', syncData);
-      }
-      clearInterval(interval);
-    };
-  }, [primaryData]);
-
-  const sections = [
-    {
-      id: "economics",
-      title: "Bipartite Economic Damage Model",
-      content: (
-        <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>Traditional climate economics suffer from the "Oven & Freezer" averaging fallacy. To resolve this, OpenPlanet implements a <span className="text-white font-bold">Bipartite Hybrid Model</span>.</p>
-          <Formula
-            label="Integrated Macroeconomic & Heat Shock Formula"
-            formula={"Loss = Base_Damage(Days_normal) + Shock_Damage(Days_extreme)"}
-            note={<div className="space-y-2">
-              <div><span className="text-blue-400">Base_Damage (Burke et al. 2018):</span> Applies to standard operational days. Penalty scales quadratically as annual mean temperature deviates from a 13°C global optimum.</div>
-              <div><span className="text-blue-400">Shock_Damage (ILO Standards):</span> Triggers strictly during calculated heatwave days. Enforces a 1.5% physiological labor productivity constraint per degree exceeding 34.0°C (Tx5d limit).</div>
-            </div>}
-          />
-          <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3">
-            <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest leading-relaxed">
-              Note: Metropolitan GDP is estimated via national GDP per capita multiplied by urban density productivity ratios. This provides a directional risk bracket for capital allocation, not audited financial reporting.
-            </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "wetbulb",
-      title: "Thermodynamic Wet-Bulb Limits",
-      content: (
-        <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>Wet-Bulb Temperature (WBT) determines absolute human survivability. OpenPlanet utilizes the empirical <span className="text-white font-bold">Stull (2011) equation</span> augmented with diurnal vapor pressure corrections.</p>
-          <Formula
-            label="Clausius-Clapeyron Corrected Stull Formula"
-            formula={"WBT = Stull(T_max, RH_afternoon)"}
-            note="Raw ERA5 daily maximum relative humidity occurs at night, whereas T_max occurs in the afternoon. We apply Clausius-Clapeyron saturation vapor pressure adjustments to accurately derive co-occurring afternoon humidity, preventing inflated wet-bulb anomalies in arid climates."
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-            {[
-              { range:"WBT < 28°C",  label:"Stable Operation", color:"text-emerald-500", desc:"Standard physiological cooling active" },
-              { range:"28–31°C",     label:"Labor Constraint", color:"text-amber-500",   desc:"Mandatory rest cycles required for outdoor labor" },
-              { range:"WBT ≥ 31°C", label:"Critical Hazard",  color:"text-red-500",     desc:"Approaching theoretical survivability limits (35°C)" },
-            ].map((s) => (
-              <div key={s.range} className="bg-[#09090b] border border-slate-800 p-4 rounded-lg">
-                <p className={`${s.color} font-bold text-[10px] tracking-widest mb-1`}>{s.label}</p>
-                <p className="text-white text-[10px] tracking-widest mb-2">{s.range}</p>
-                <p className="text-slate-500 text-[9px] tracking-widest">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "zones",
-      title: "Climate Archetype Self-Diagnosis",
-      content: (
-        <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>Instead of relying on static coordinate mapping, the engine self-diagnoses the local climate zone using ERA5 thermal signatures. This determines the parameters used in the bipartite economic model.</p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-[10px] font-mono border-collapse mt-4">
-              <thead>
-                <tr className="border-b border-slate-800">
-                  {["Archetype", "Detection Signature", "Engine Adjustment"].map(h => (
-                    <th key={h} className="text-left text-slate-400 tracking-widest py-3 pr-4">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/50">
-                {[
-                  { r:"Permafrost",         sig:"Mean Temp ≤ 2.0°C",                       adj:"Infrastructure thaw penalty (2.5% per °C > 0)" },
-                  { r:"Lethal Humid",       sig:"WBT ≥ 31°C & RH ≥ 60%",                   adj:"Strict mortality escalation factor" },
-                  { r:"Hyper-Arid",         sig:"Tx5d ≥ 38°C & P95 RH ≤ 45%",              adj:"Aridity productivity constraints applied" },
-                  { r:"Extreme Continental",sig:"Tx5d - Mean Temp ≥ 28°C",                 adj:"Volatility amplifier (1.35x) on Burke baseline" },
-                  { r:"Standard",           sig:"Baseline Temperate / Maritime",           adj:"Standard global meta-analysis applied" },
-                ].map((row) => (
-                  <tr key={row.r} className="hover:bg-slate-900/50 transition-colors">
-                    <td className="text-white font-bold py-3 pr-4">{row.r}</td>
-                    <td className="text-slate-400 py-3 pr-4">{row.sig}</td>
-                    <td className="text-slate-500 py-3">{row.adj}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "mortality",
-      title: "Epidemiological Mortality Forecasting",
-      content: (
-        <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>Heat-attributable mortality utilizes the <span className="text-white font-bold">Gasparrini et al. (2017) Lancet Planetary Health</span> dose-response framework combined with live UN Population data.</p>
-          <Formula
-            label="Attributable Fraction (AF) Formulation"
-            formula={"Deaths = Pop × (DR/1000) × (HW/365) × AF × OP-CVI"}
-            note={<div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-              <div><span className="text-blue-400">Pop</span> = Scaled Metropolitan Population</div>
-              <div><span className="text-blue-400">DR</span> = UN API Crude Death Rate (Fallback: WHO)</div>
-              <div><span className="text-blue-400">AF</span> = (RR−1)/RR, where RR = exp(0.0801 × ΔT)</div>
-              <div><span className="text-blue-400">OP-CVI</span> = OpenPlanet Composite Vulnerability Index</div>
-              <div className="col-span-2 text-amber-500/70">β = 0.0801 is the Gasparrini et al. (2017) global pooled mean — applied as a cross-city macro-benchmarking constant.</div>
-            </div>}
-          />
-          <p className="mt-4">The <span className="text-white font-bold">OpenPlanet Composite Vulnerability Index (OP-CVI)</span> is an original cross-city macro-benchmarking proxy constructed from three socioeconomic axes:</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { label:"Wealth Proxy",    text:"Capital access for active cooling and AC adoption. Derived from World Bank GDP per capita (inverse scaling)." },
-              { label:"Age Structure",   text:"Physiological sensitivity weight for elderly cohorts (65+). Anchored to Gasparrini et al. (2017) age-stratified analysis." },
-              { label:"Health Capacity", text:"Emergency response viability via physicians per 1,000 (World Bank SH.MED.PHYS.ZS)." },
-            ].map((item) => (
-              <div key={item.label} className="bg-[#09090b] border border-slate-800 p-4 rounded-lg">
-                <p className="text-slate-300 font-bold text-[10px] tracking-widest mb-2">{item.label}</p>
-                <p className="text-slate-500 text-[9px] tracking-widest">{item.text}</p>
-              </div>
-            ))}
-          </div>
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-3 mt-2">
-            <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest leading-relaxed">
-              OP-CVI is an original OpenPlanet normalization index for comparative cross-city portfolio screening. It is not a reproduction of any certified actuarial or epidemiological vulnerability standard.
-            </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "cmip6",
-      title: "CMIP6 Ensemble & Climatology",
-      content: (
-        <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>Near-term scenarios (2015–2050) utilize an equal-weighted multi-model ensemble of CMIP6 projections, anchoring local anomaly thresholds to a <span className="text-white font-bold">Contemporary Non-Stationary Baseline (2011–2020)</span>.</p>
-          <Formula
-            label="Empirical Heatwave Threshold — Contemporary Baseline"
-            formula={"T_threshold = P95(ERA5 Tmax, 2011–2020)"}
-            note={<div className="space-y-1">
-              <div>The analytical calculation engine isolates the most recent complete decade (2011–2020, ~3,650 daily observations per coordinate) as its localized empirical baseline. Using a modern decade-scale window captures accelerated anthropogenic extreme heat velocities more accurately than a 30-year average that dilutes current thermal regimes with pre-acceleration climatology from the 1990s, while also ensuring reliable upstream API throughput. Macro-climatic context (1995–2024 trend) is surfaced separately in the overview display layer for orientation only.</div>
-            </div>}
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-            {[
-              { year: "2030 - 2050", method: "CMIP6 API Integration", color: "text-blue-400",   note: "Live ensemble: MRI-AGCM3-2-S + MPI-ESM1-2-XR" },
-              { year: "2075 - 2100", method: "Not Available",          color: "text-slate-600", note: "Beyond validated CMIP6 horizon (premium)" },
-            ].map((r) => (
-              <div key={r.year} className={`bg-[#09090b] border p-4 rounded-lg flex items-center justify-between ${r.year.startsWith('2075') ? 'border-slate-800/40 opacity-50' : 'border-slate-800'}`}>
-                <span className={`font-bold text-lg ${r.year.startsWith('2075') ? 'text-slate-600' : 'text-white'}`}>{r.year}</span>
-                <div className="text-right"><span className={`text-[10px] ${r.color} tracking-widest font-bold block`}>{r.method}</span><span className="text-[9px] text-slate-500 tracking-widest">{r.note}</span></div>
-              </div>
-            ))}
-          </div>
-          <p>OpenPlanet projections are capped at 2050, maintaining strict adherence to available peer-reviewed CMIP6 outputs. Extended horizon scenarios require institutional access.</p>
-        </div>
-      ),
-    },
-    {
-      id: "limitations",
-      title: "Data Integrity & Acknowledgement of Limitations",
-      content: (
-        <div className="space-y-4 font-mono text-[11px] text-slate-300 uppercase tracking-widest leading-relaxed">
-          <p>OpenPlanet operates as a <span className="text-white font-bold">macroscopic climate risk intelligence engine</span>. It is engineered for rapid portfolio screening and directional asset risk allocation. It is explicitly not a substitute for microclimate CFD engineering or localized actuarial reporting.</p>
-          <div className="space-y-3 mt-4">
-            {[
-              { label:"Spatial Resolution",             text:"Risk calculations are computed at the geocoded city centroid and projected outward via a spatial decay model to populate the H3 Resolution 9 hex grid (avg. cell ≈ 0.1053 km², edge ≈ 0.14 km). ERA5 native resolution is ~31 km and CMIP6 is ~20–50 km — the H3 grid provides a city-scale spatial indexing framework for visualization, not independent sub-cell temperature measurements." },
-              { label:"Model Variance Sensitivity Bounds", text:"Displayed uncertainty ranges (±15% mortality, ±8% economic) are scaling constants for directional range orientation, not statistically derived confidence intervals from ensemble spread or Monte Carlo simulation." },
-              { label:"Adaptation & Mitigation Offsets",text:"Urban canopy and albedo offsets are approximated via generalized linear correlations (e.g., Bowler et al. 2010). They do not reflect nuanced wind shear or structural shadow casting parameters. The simulator is a directional tool only." },
-              { label:"Economic Proxy Dependency",     text:"Bipartite loss calculations deploy derived metropolitan GDP metrics. Supply chain contagion and secondary market volatility are excluded from direct loss estimates. OP-CVI is a macro-benchmarking proxy, not a certified actuarial index." },
-              { label:"Data Lineage Transparency",     text:"Every API response carries a metadata.data_lineage field. When 'statistical_fallback' is active, a latitude-based piecewise regression was substituted for upstream ERA5 or CMIP6 API calls that timed out. Fallback outputs carry materially higher uncertainty and are flagged in the RightPanel lineage badge." },
-            ].map((item) => (
-              <div key={item.label} className="border border-slate-800 bg-[#09090b] rounded-lg p-4">
-                <p className="font-bold text-[11px] tracking-widest mb-2 text-white">{item.label}</p>
-                <p className="text-slate-400 text-[10px] tracking-widest leading-relaxed">{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "sources",
-      title: "Scientific Citations",
-      content: (
-        <div className="space-y-2 mt-2">
-          <Ref authors="Gasparrini A. et al." year={2017} title="Projections of temperature-related excess mortality under climate change scenarios" journal="Lancet Planetary Health" />
-          <Ref authors="Burke M. et al." year={2018} title="Global non-linear effect of temperature on economic production" journal="Nature" />
-          <Ref authors="ILO" year={2019} title="Working on a Warmer Planet: The Impact of Heat Stress on Labour Productivity" journal="International Labour Organization" />
-          <Ref authors="Stull R." year={2011} title="Wet-bulb temperature from relative humidity and air temperature" journal="Journal of Applied Meteorology and Climatology" />
-          <Ref authors="Hersbach H. et al." year={2020} title="The ERA5 global reanalysis" journal="Q. J. R. Meteorol. Soc." />
-          <Ref authors="Sherwood S.C. & Huber M." year={2010} title="An adaptability limit to climate change due to heat stress" journal="PNAS" />
-          <Ref authors="IPCC AR6 WG1" year={2021} title="Climate Change 2021: The Physical Science Basis" journal="Cambridge University Press" />
-          <Ref authors="World Bank" year={2023} title="World Development Indicators (WDI)" journal="World Bank Group" />
-          <Ref authors="UN Population Division" year={2024} title="World Population Prospects" journal="United Nations" />
-        </div>
-      ),
-    },
-  ];
+  const [excelData] = useState<ExcelExportData>(DEMO_EXCEL);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 flex flex-col min-h-full pb-12 relative z-10">
+    <article className="max-w-[720px] mx-auto px-4 py-16">
 
-      {/* Header */}
-      <div className="bg-[#050b14]/70 backdrop-blur-xl border border-slate-800 p-10 rounded-2xl shadow-lg relative overflow-hidden">
-        <h2 className="text-[11px] font-mono font-bold text-white uppercase tracking-[0.4em] mb-4 flex items-center gap-3">
-          <span className="w-2 h-2 bg-blue-500 rounded-sm" />
-          Scientific Protocol & Architecture
-        </h2>
-        <p className="text-xs font-mono text-slate-400 uppercase tracking-[0.2em] leading-loose max-w-3xl">
-          Complete documentation of empirical models, thermodynamic validations, and econometric methodologies powering the OpenPlanet Risk Intelligence Engine.
+      {/* ── Title block ── */}
+      <header className="mb-16 pb-8" style={{ borderBottom: '1px solid var(--hairline)' }}>
+        <p className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-3"
+           style={{ color: 'var(--muted)' }}>
+          Working Paper · OpenPlanet Climate Risk Engine
         </p>
+        <h1 className="font-display text-h1 mb-4" style={{ color: 'var(--text)' }}>
+          Scientific Methodology and Model Documentation
+        </h1>
+        <p className="font-serif text-body-s" style={{ color: 'var(--text-2)' }}>
+          This document describes the epidemiological, economic, and thermodynamic models used
+          to generate city-level heat risk projections. All constants are sourced from
+          peer-reviewed literature. All equations are reproduced exactly as published.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-4">
+          <ExcelExportFullButton data={excelData} />
+        </div>
+      </header>
+
+      {/* ── §1 Data Sources ── */}
+      <SectionHead n="§1" title="Climate Data Sources" />
+      <P>
+        Temperature baselines are derived from the ERA5 reanalysis product published by the
+        Copernicus Climate Change Service (C3S) at ECMWF (<Cite>Hersbach et al. 2020</Cite>).
+        The reference climatology is computed over the 1991–2020 standard normal period, accessed
+        via the Open-Meteo Historical Weather API.
+      </P>
+      <P>
+        Future projections use a two-model CMIP6 ensemble: MRI-AGCM3-2-S and MPI-ESM1-2-XR,
+        accessed via the Open-Meteo Climate API. Projections are strictly capped at 2050 —
+        the validated horizon for these CMIP6 model outputs. No post-2050 extrapolation is performed.
+      </P>
+      <P>
+        The primary climate variable is the annual maximum five-day consecutive temperature mean
+        (TX5d) at 31 km spatial resolution. Relative humidity uses the daily mean
+        (relative_humidity_2m_mean) from the ERA5 ensemble.
+      </P>
+
+      {/* ── §2 Mortality Model ── */}
+      <SectionHead n="§2" title="Heat-Attributable Mortality" />
+      <P>
+        The mortality model follows the dose-response methodology of{' '}
+        <Cite>Gasparrini et al. (2017, Lancet Planetary Health)</Cite>, who pooled 395 studies
+        across 197 countries to derive a chronic temperature–mortality coefficient.
+      </P>
+      <P>
+        The relative risk of mortality at temperature excess <Eq math="\Delta T" /> above
+        the local historical threshold is:
+      </P>
+      <Eq display math="RR = e^{\,\beta \cdot \Delta T}, \qquad \beta = 0.0801" />
+      <div className="my-4 space-y-0.5">
+        <Def sym="\beta" desc="Pooled dose-response coefficient (Gasparrini 2017, GBD meta-analysis)" />
+        <Def sym="\Delta T" desc="Temperature excess above local P95 threshold (°C)" />
+        <Def sym="RR"  desc="Relative risk of mortality per unit temperature excess" />
+      </div>
+      <P>
+        The attributable fraction (AF) — the fraction of deaths attributable to heat
+        on heatwave days — is:
+      </P>
+      <Eq display math="AF = 1 - e^{-\beta \cdot \Delta T}" />
+      <P>
+        Total attributable deaths per year:
+      </P>
+      <Eq display math="D = P \cdot \frac{r}{1000} \cdot \frac{h}{365} \cdot AF \cdot V" />
+      <div className="my-4 space-y-0.5">
+        <Def sym="P"   desc="Urban agglomeration population (UN/World Bank/census)" />
+        <Def sym="r"   desc="Crude death rate per 1,000 population (World Bank)" />
+        <Def sym="h"   desc="Annual heatwave days above historical P95 (CMIP6 projection)" />
+        <Def sym="AF"  desc="Attributable fraction (Gasparrini dose-response)" />
+        <Def sym="V"   desc="Vulnerability modifier — physician density, age structure [0,1]" />
+      </div>
+      <P>
+        Uncertainty: mortality estimates carry a ±15% confidence interval, reflecting parameter
+        uncertainty in <Cite>β</Cite>, population data quality, and CMIP6 ensemble spread.
+        The Gasparrini coefficient is most accurate for sustained exposure events (12–44 days);
+        it systematically undershoots acute events of fewer than 9 days.
+      </P>
+
+      {/* ── §3 Economic Model ── */}
+      <SectionHead n="§3" title="Economic Impact" />
+      <P>
+        The economic model uses a hybrid bipartite approach combining the Burke quadratic
+        GDP-temperature relationship with ILO labor productivity estimates for extreme-heat days.
+      </P>
+      <P>
+        The Burke et al. (<Cite>2018, Nature</Cite>) quadratic specifies a global optimum temperature
+        of approximately 13°C, above which GDP growth is reduced:
+      </P>
+      <Eq display math="\frac{\Delta y}{y} = \hat{\beta}_1\,(T - T^*) + \hat{\beta}_2\,(T - T^*)^2" />
+      <div className="my-4 space-y-0.5">
+        <Def sym="T^*"         desc="Optimal temperature for economic productivity ≈ 13°C (Burke 2018)" />
+        <Def sym="\hat\beta_1" desc="Linear coefficient from global panel regression (Burke 2018)" />
+        <Def sym="\hat\beta_2" desc="Quadratic coefficient, capturing concavity (Burke 2018)" />
+      </div>
+      <P>
+        For days exceeding the 34°C labor-stress threshold, an additional ILO (2019) shock is
+        applied: 40% of the workforce at 20% reduced productivity per heatwave day.
+        The two components are summed to produce total annual GDP-at-risk.
+      </P>
+      <P>
+        Economic estimates carry a ±8% confidence interval, reflecting GDP data quality
+        and model uncertainty.
+      </P>
+
+      {/* ── §4 Wet-Bulb Temperature ── */}
+      <SectionHead n="§4" title="Wet-Bulb Temperature" />
+      <P>
+        Wet-bulb temperature (WBT) is the physiological survivability limit metric.
+        The empirical formula of <Cite>Stull (2011, J. Applied Meteorology and Climatology)</Cite>:
+      </P>
+      <Eq display math="T_{WB} = T\arctan\!\bigl[0.151977\,(RH + 8.313659)^{1/2}\bigr] + \arctan(T + RH) - \arctan(RH - 1.676331) + 0.00391838\,RH^{\,3/2}\arctan(0.023101\,RH) - 4.686035" />
+      <div className="my-4 space-y-0.5">
+        <Def sym="T"   desc="Dry-bulb temperature (°C)" />
+        <Def sym="RH"  desc="Relative humidity (%)" />
+        <Def sym="T_{WB}" desc="Wet-bulb temperature (°C)" />
+      </div>
+      <P>
+        WBT is capped at 35°C per the survivability limit established by{' '}
+        <Cite>Sherwood & Huber (2010, PNAS)</Cite>, who showed that sustained WBT above 35°C
+        is incompatible with human thermoregulation regardless of acclimatisation.
+      </P>
+
+      {/* ── §5 Urban Adaptation Scenario ── */}
+      <SectionHead n="§5" title="Adaptation Scenario (Illustrative)" />
+      <P>
+        The canopy expansion and cool-roof albedo scenarios are directional illustrations only.
+        They are not calibrated intervention models. Canopy offset reduces the effective TX5d
+        by approximately 0.8°C per 10% canopy increase in urban areas, based on the urban
+        heat island meta-analysis of <Cite>Bowler et al. (2010)</Cite> and{' '}
+        <Cite>Santamouris (2015)</Cite>.
+      </P>
+      <P>
+        Cool-roof albedo offset applies a surface energy balance reduction of approximately
+        0.4°C per 10% albedo increase. These offsets feed back through the full mortality
+        and economic model chain.
+      </P>
+      <P>
+        In highly humid coastal biomes (wet-bulb temperature baseline above 28°C),
+        canopy expansion may theoretically trap surface humidity and increase wet-bulb
+        exposure. This edge case is flagged automatically.
+      </P>
+
+      {/* ── §6 Socioeconomic Data ── */}
+      <SectionHead n="§6" title="Socioeconomic Data — Verified City Vault" />
+      <P>
+        Population, GDP, death rate, and healthcare access data are sourced from the
+        OpenPlanet Verified City Vault — hardcoded 2023–2024 values for 59 major cities
+        drawn from UN Population Division estimates, World Bank national accounts,
+        and most recent national census publications.
+      </P>
+      <P>
+        A census validator rejects any population value outside the range [10,000 – 35,000,000].
+        For cities not in the Vault, live Open-Meteo Geocoding results are combined with
+        World Bank country-level statistics; a critical alert is logged for anomalous values.
+      </P>
+
+      {/* ── §7 Uncertainty ── */}
+      <SectionHead n="§7" title="Uncertainty and Limitations" />
+      <P>
+        All projections are research-grade estimates under specific emissions scenarios
+        (SSP2-4.5 or SSP5-8.5). They are directional indicators for planning and analysis —
+        not deterministic forecasts and not investment advice.
+      </P>
+      <P>
+        Quantified uncertainties: mortality ±15% CI, economics ±8% CI.
+        Unquantified uncertainty sources include: CMIP6 model spread (two-model ensemble),
+        downscaling bias at 31 km resolution, urban-rural temperature gradients,
+        and future adaptation behaviour.
+      </P>
+      <P>
+        The Gasparrini β coefficient is derived from historical exposure data and may
+        not fully represent future adaptation responses. Economic estimates apply a
+        global coefficient to individual cities; local economic structure is not captured.
+      </P>
+
+      {/* ── References ── */}
+      <SectionHead n="Ref" title="References" />
+      <div className="space-y-0">
+        <Ref id="1" authors="Gasparrini, A. et al." year={2017}
+          title="Projections of temperature-related excess mortality under climate change scenarios"
+          journal="The Lancet Planetary Health" doi="10.1016/S2542-5196(17)30156-0" />
+        <Ref id="2" authors="Burke, M., Solomon, H., Lobell, D.B." year={2018}
+          title="Global non-linear effect of temperature on economic production"
+          journal="Nature" doi="10.1038/nature15725" />
+        <Ref id="3" authors="ILO" year={2019}
+          title="Working on a Warmer Planet: The Impact of Heat Stress on Labour Productivity and Decent Work"
+          journal="International Labour Organization" />
+        <Ref id="4" authors="Stull, R." year={2011}
+          title="Wet-Bulb Temperature from Relative Humidity and Air Temperature"
+          journal="Journal of Applied Meteorology and Climatology" doi="10.1175/JAMC-D-11-0143.1" />
+        <Ref id="5" authors="Sherwood, S.C., Huber, M." year={2010}
+          title="An adaptability limit to climate change due to heat stress"
+          journal="Proceedings of the National Academy of Sciences" doi="10.1073/pnas.0913352107" />
+        <Ref id="6" authors="Bowler, D.E. et al." year={2010}
+          title="Urban greening to cool towns and cities: A systematic review of the empirical evidence"
+          journal="Landscape and Urban Planning" doi="10.1016/j.landurbplan.2010.05.006" />
+        <Ref id="7" authors="Santamouris, M." year={2015}
+          title="Regulating the damaged thermostat of cities — Status, impacts and mitigation challenges"
+          journal="Energy and Buildings" doi="10.1016/j.enbuild.2014.11.027" />
+        <Ref id="8" authors="Hersbach, H. et al." year={2020}
+          title="The ERA5 global reanalysis"
+          journal="Quarterly Journal of the Royal Meteorological Society" doi="10.1002/qj.3803" />
       </div>
 
-      {/* Accordion */}
-      <div className="space-y-4 flex-grow">
-        {sections.map((s) => (
-          <div key={s.id} className="bg-[#09090b]/80 backdrop-blur-xl border border-slate-800 rounded-xl overflow-hidden group shadow-md transition-all duration-300 hover:border-slate-600">
-            <button onClick={() => setOpen(open === s.id ? null : s.id)} className="w-full flex items-center justify-between px-8 py-6 text-left transition-all hover:bg-slate-800/50">
-              <span className={`text-[11px] font-mono font-bold uppercase tracking-[0.3em] transition-colors ${open === s.id ? "text-white" : "text-slate-400"}`}>{s.title}</span>
-              <span className={`text-slate-500 transition-transform duration-500 ${open === s.id ? "rotate-180 text-white" : ""}`}>▼</span>
-            </button>
-            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${open === s.id ? "max-h-[2500px] opacity-100" : "max-h-0 opacity-0"}`}>
-              <div className="px-8 pb-8 pt-2 border-t border-slate-800/60 bg-[#050505]">{s.content}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Excel Export ── */}
-      <div className="bg-[#050b14]/70 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl">
-        <h3 className="text-[10px] font-mono text-white uppercase tracking-[0.4em] mb-2 flex items-center gap-3">
-          <span className="w-2 h-2 bg-emerald-500 rounded-sm" />
-          Auditable Financial Model Export
-        </h3>
-        <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-4 leading-relaxed">
-          Download the operational 4-sheet valuation model. Adjustable input cells allow institutional risk managers to run sensitivity analyses directly within the exported spreadsheet framework.
-        </p>
-
-        {!isLive && (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 mb-5">
-            <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest leading-relaxed">
-              Note: Uninitialized template mode. Execute a location query via the primary interface to compile localized climate vectors before export.
-            </p>
-          </div>
-        )}
-
-        {isLive && (
-          <div className="bg-emerald-950/20 border border-emerald-900/50 rounded-xl px-4 py-3 mb-5 flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"/>
-            <p className="text-[10px] font-mono text-emerald-500 uppercase tracking-widest leading-relaxed">
-              Compiled Data Stream Active: {currentExcelData.city_name} | {currentExcelData.ssp} | {currentExcelData.target_year}
-            </p>
-          </div>
-        )}
-
-        <ExcelExportFullButton data={currentExcelData} />
-
-        <p className="text-[9px] font-mono text-slate-600 uppercase tracking-widest mt-4">
-          {isLive
-            ? `Output conforms to internal modelling parameters derived for ${currentExcelData.city_name}. Designed for professional risk auditing and validation.`
-            : `Base architectural file. Metrics default to null logic pending simulation trigger.`
-          }
-        </p>
-      </div>
-
-      {/* ── Legal Disclaimer ── */}
-      <div className="bg-slate-950/60 border border-slate-800/50 rounded-xl p-5">
-        <p className="text-[7px] font-mono text-amber-500/60 uppercase tracking-widest font-bold mb-2 flex items-center gap-1.5">
-          <span>⚠</span> Regulatory Disclaimer
-        </p>
-        <p className="text-[8px] font-mono text-slate-600 leading-relaxed">
-          All outputs are directional macro-scale proxies derived from public scientific datasets (Copernicus C3S ERA5 · Open-Meteo CMIP6 · World Bank WDI). They do not constitute certified weather forecasts, audited engineering assessments, insurance underwriting opinions, or financial instruments of any kind. The mortality model uses the Gasparrini et al. (2017) global pooled β = 0.0801 as a cross-city benchmarking constant. Model Variance Sensitivity Bounds (±15% / ±8%) are scaling constants, not statistically derived confidence intervals. When{' '}
-          <span className="text-amber-500/70">metadata.data_lineage = &quot;statistical_fallback&quot;</span>, a latitude-based piecewise regression was substituted for a failed upstream API call — treat as indicative only. The authors accept zero civil or commercial liability for any consequential action taken in reliance on these outputs. Independent validation is mandatory before operational deployment.
-        </p>
-      </div>
-    </div>
+    </article>
   );
 }

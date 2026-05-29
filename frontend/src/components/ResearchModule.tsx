@@ -225,9 +225,9 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
       />
 
       {/* ── HEADER ── */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end border-b border-slate-800 pb-5 gap-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end border-b border-white/[0.05] pb-5 gap-4">
         <div>
-          <h2 className="text-[10px] font-mono font-bold text-indigo-400 uppercase tracking-[0.5em] mb-2">Deep Dive Research Protocol</h2>
+          <h2 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-2" style={{ color: 'var(--muted)' }}>Deep Dive Research Protocol</h2>
           <h1 className="text-2xl sm:text-3xl font-mono font-bold text-white uppercase tracking-tighter truncate max-w-2xl">
             {baseTarget.split(",")[0]}
           </h1>
@@ -245,7 +245,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
       </div>
 
       {/* ── CONTROLS ── */}
-      <div className="bg-[#050814] border border-slate-800 p-5 rounded-xl">
+      <div className="border border-white/[0.05] p-5" style={{ background: 'var(--raised)' }}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-4">
           <div>
             <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-2">SSP Scenario</label>
@@ -253,7 +253,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               value={ssp}
               onChange={e => setSsp(e.target.value)}
               disabled={primaryLoading}
-              className="w-full bg-[#0a0f1d] border border-slate-700 p-2.5 text-[11px] font-mono text-slate-200 outline-none rounded-lg focus:border-indigo-500 transition-colors disabled:opacity-50"
+              className="w-full bg-white/[0.03] border border-white/[0.05] p-2.5 text-[11px] font-mono text-slate-200 outline-none focus:border-indigo-500 transition-colors disabled:opacity-50"
+              style={{ border: '1px solid var(--hairline)' }}
             >
               <option value="SSP2-4.5">SSP2-4.5 (Moderate)</option>
               <option value="SSP5-8.5">SSP5-8.5 (High Risk)</option>
@@ -261,7 +262,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <label className="text-[10px] font-mono text-slate-400 uppercase">🌳 Canopy</label>
+              <label className="text-[10px] font-mono text-slate-400 uppercase">Canopy</label>
               <span className="text-[10px] font-mono text-emerald-400">+{canopy}%</span>
             </div>
             <input
@@ -273,7 +274,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <label className="text-[10px] font-mono text-slate-400 uppercase">🏠 Albedo</label>
+              <label className="text-[10px] font-mono text-slate-400 uppercase">Albedo</label>
               <span className="text-[10px] font-mono text-indigo-400">+{albedo}%</span>
             </div>
             <input
@@ -285,17 +286,17 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           </div>
           <div className="flex flex-col justify-end">
             {primaryLoading ? (
-              <div className="w-full bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] rounded-lg flex items-center justify-center gap-2">
+              <div className="w-full bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                 <div className="w-2 h-2 border border-indigo-400/40 border-t-indigo-400 rounded-full animate-spin" />
                 FETCHING...
               </div>
             ) : primaryError ? (
-              <div className="w-full bg-red-600/10 border border-red-500/30 text-red-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] rounded-lg flex items-center justify-center gap-2">
+              <div className="w-full bg-red-600/10 border border-red-500/30 text-red-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                 ENGINE ERROR
               </div>
             ) : (
-              <div className="w-full bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] rounded-lg flex items-center justify-center gap-2">
-                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />ENGINE SYNCED
+              <div className="w-full bg-emerald-600/10 border border-emerald-500/30 text-emerald-400 py-2.5 text-[10px] font-mono uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full" />ENGINE SYNCED
               </div>
             )}
           </div>
@@ -309,10 +310,10 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             <button
               key={p.year}
               onClick={() => setSelectedYear(p.year)}
-              className={`px-3.5 py-2 text-[10px] font-mono uppercase tracking-widest border rounded-lg transition-colors ${
+              className={`px-3.5 py-2 text-[10px] font-mono uppercase tracking-widest border transition-colors ${
                 selectedYear === p.year
-                  ? "border-cyan-500/50 bg-cyan-950/30 text-cyan-300"
-                  : "border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700"
+                  ? "border-cyan-500/50 bg-cyan-950/30 text-[#0ea5e9]"
+                  : "border-white/[0.05] text-slate-500 hover:text-slate-300 hover:border-white/[0.09]"
               }`}
             >
               {p.year}
@@ -326,9 +327,9 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
 
       {/* Loading state */}
       {primaryLoading && !result && (
-        <div className="w-full h-64 flex flex-col items-center justify-center bg-[#050814] border border-slate-800 rounded-xl">
+        <div className="w-full h-64 flex flex-col items-center justify-center border border-white/[0.05]" style={{ background: 'var(--raised)' }}>
           <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4" />
-          <span className="font-mono text-[10px] text-indigo-400 tracking-[0.3em] uppercase animate-pulse">
+          <span className="font-mono text-[10px] text-indigo-400 tracking-[0.3em] uppercase">
             Running Physics Engine...
           </span>
         </div>
@@ -336,9 +337,9 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
 
       {/* Error state */}
       {primaryError && (
-        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl space-y-2">
+        <div className="bg-red-500/10 border border-red-500/20 p-4 space-y-2">
           <p className="text-red-400 font-mono text-xs font-bold uppercase tracking-widest">ERR: Analysis Failed</p>
-          <pre className="text-[9px] font-mono text-red-300/70 bg-red-950/20 border border-red-900/30 rounded-lg px-3 py-2 whitespace-pre-wrap break-all leading-relaxed">
+          <pre className="text-[9px] font-mono text-red-300/70 bg-red-950/20 border border-red-900/30 px-3 py-2 whitespace-pre-wrap break-all leading-relaxed">
             {primaryError}
           </pre>
         </div>
@@ -348,10 +349,10 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
         <>
           {/* ── BASELINE vs MITIGATION ── */}
           {hasMitigation && (
-            <div className="bg-[#06101f] border border-emerald-800/30 rounded-2xl p-5">
+            <div className="border border-emerald-800/30 p-5" style={{ background: 'var(--raised)' }}>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-[9px] font-mono text-emerald-400 uppercase tracking-[0.25em] font-bold">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <p className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>
                   Baseline vs Mitigation · {selectedYear} · +{canopy}% canopy · +{albedo}% albedo
                 </p>
               </div>
@@ -372,7 +373,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
                       <span className="text-[8px] font-mono text-slate-600">With</span>
                       <span className="text-[13px] font-mono font-bold tabular-nums text-slate-300">{item.mitigated}</span>
                     </div>
-                    <div className="flex items-center justify-between bg-emerald-950/25 rounded-lg px-2.5 py-1.5 border border-emerald-800/20">
+                    <div className="flex items-center justify-between bg-emerald-950/25 px-2.5 py-1.5 border border-emerald-800/20">
                       <span className="text-[8px] font-mono text-slate-600">Saved</span>
                       <span className="text-[11px] font-mono text-emerald-400 font-bold">{item.saved}</span>
                     </div>
@@ -385,12 +386,12 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           {/* ── WBT + UHI + INFRASTRUCTURE ── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* WBT */}
-            <div className="bg-[#050814] border border-slate-800 p-5 rounded-xl flex flex-col">
-              <h3 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-4">Physiological Limit Monitor</h3>
-              <div className={`flex flex-col items-center justify-center py-8 border-y border-slate-800/50 my-4 flex-grow rounded-lg ${wbtStatus.bg}`}>
-                <span className={`text-4xl font-mono font-bold ${wbtStatus.color}`}>{formatWBT(dynamicData.wbt)}</span>
+            <div className="border border-white/[0.05] p-5 flex flex-col" style={{ background: 'var(--raised)' }}>
+              <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: 'var(--muted)' }}>Physiological Limit Monitor</h3>
+              <div className={`flex flex-col items-center justify-center py-8 border-y border-white/[0.05] my-4 flex-grow ${wbtStatus.bg}`}>
+                <span className={`text-4xl font-mono font-bold tabular-nums ${wbtStatus.color}`}>{formatWBT(dynamicData.wbt)}</span>
                 <span className="text-[10px] font-mono text-slate-500 mt-2 tracking-widest">WET-BULB TEMPERATURE</span>
-                <div className={`mt-3 px-4 py-1 rounded-full border ${wbtStatus.border} ${wbtStatus.color} ${wbtStatus.bg} text-[9px] font-mono font-bold`}>
+                <div className={`mt-3 px-4 py-1 border ${wbtStatus.border} ${wbtStatus.color} ${wbtStatus.bg} text-[9px] font-mono font-bold`}>
                   {wbtStatus.label}
                 </div>
                 {hasMitigation && (
@@ -411,8 +412,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             </div>
 
             {/* UHI */}
-            <div className="bg-[#050814] border border-slate-800 p-5 rounded-xl flex flex-col">
-              <h3 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-4">Heat Attribution (UHI)</h3>
+            <div className="border border-white/[0.05] p-5 flex flex-col" style={{ background: 'var(--raised)' }}>
+              <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: 'var(--muted)' }}>Heat Attribution (UHI)</h3>
               <div className="space-y-5 flex-grow">
                 {[
                   { label: "ERA5 Historical Mean",  val: `${fmt(result.baseline?.baseline_mean_c)}°C`,                         color: "text-slate-300",  bar: "bg-indigo-500",  w: "60%",                                                              source: "ERA5 1991-2020"                    },
@@ -422,9 +423,9 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
                   <div key={i}>
                     <div className="flex justify-between text-[10px] font-mono mb-1.5">
                       <span className="text-slate-500 uppercase">{item.label}</span>
-                      <span className={item.color}>{item.val}</span>
+                      <span className={`tabular-nums ${item.color}`}>{item.val}</span>
                     </div>
-                    <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-white/[0.01] h-1.5 overflow-hidden">
                       <div className={`${item.bar} h-full transition-all duration-500`} style={{ width: item.w }} />
                     </div>
                     <SourceLine source={item.source} />
@@ -434,15 +435,15 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             </div>
 
             {/* Infrastructure */}
-            <div className="bg-[#050814] border border-slate-800 p-5 rounded-xl flex flex-col">
-              <h3 className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-4">Infrastructure Fragility</h3>
+            <div className="border border-white/[0.05] p-5 flex flex-col" style={{ background: 'var(--raised)' }}>
+              <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: 'var(--muted)' }}>Infrastructure Fragility</h3>
               <div className="grid grid-cols-2 gap-3 flex-grow content-start">
-                <div className="p-4 bg-white/5 border border-white/5 rounded-lg flex flex-col justify-center">
+                <div className="p-4 bg-white/5 border border-white/5 flex flex-col justify-center">
                   <span className="text-[9px] font-mono text-slate-500 block mb-2 uppercase">Grid Stress</span>
-                  <span className="text-xl font-mono text-indigo-400 font-bold">+{fmt(dynamicData.cdd, 0)}</span>
+                  <span className="text-xl font-mono text-indigo-400 font-bold tabular-nums">+{fmt(dynamicData.cdd, 0)}</span>
                   <span className="text-[8px] font-mono text-slate-600 block mt-1 uppercase">CDD Load</span>
                 </div>
-                <div className="p-4 bg-white/5 border border-white/5 rounded-lg flex flex-col justify-center">
+                <div className="p-4 bg-white/5 border border-white/5 flex flex-col justify-center">
                   <span className="text-[9px] font-mono text-slate-500 block mb-2 uppercase">Road Melt Risk</span>
                   <span className={`text-xl font-mono font-bold ${dynamicData.peakTemp > 38 ? "text-amber-400" : "text-emerald-400"}`}>
                     {dynamicData.peakTemp > 38 ? "HIGH" : "LOW"}
@@ -452,11 +453,11 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               </div>
               <div className="mt-5 space-y-2.5">
                 <div className="flex items-center gap-3 text-[10px] font-mono text-slate-400 uppercase">
-                  <div className={`w-1.5 h-1.5 rounded-full ${dynamicData.cdd > 500 ? "bg-red-500 animate-pulse" : "bg-emerald-500"}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${dynamicData.cdd > 500 ? "bg-red-500" : "bg-emerald-500"}`} />
                   <span>Thermal Overload: {dynamicData.cdd > 500 ? "Exceeded" : "Stable"}</span>
                 </div>
                 <div className="flex items-center gap-3 text-[10px] font-mono text-slate-400 uppercase">
-                  <div className={`w-1.5 h-1.5 rounded-full ${selectedProj.wbt_max_c && selectedProj.wbt_max_c >= 31 ? "bg-red-500 animate-pulse" : "bg-emerald-500"}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${selectedProj.wbt_max_c && selectedProj.wbt_max_c >= 31 ? "bg-red-500" : "bg-emerald-500"}`} />
                   <span>Survivability: {selectedProj.wbt_max_c && selectedProj.wbt_max_c >= 31 ? "Critical" : "Stable"}</span>
                 </div>
               </div>
@@ -465,9 +466,9 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           </div>
 
           {/* ── ECONOMIC CARD ── */}
-          <div className="bg-indigo-600/5 border border-indigo-500/20 p-5 rounded-xl">
+          <div className="bg-indigo-600/5 border border-indigo-500/20 p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[10px] font-mono text-indigo-400 uppercase tracking-widest font-bold">
+              <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>
                 Economic Value At Risk ({selectedYear})
               </h3>
               <div className="flex items-center gap-2">
@@ -478,27 +479,27 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-1">Baseline (no mitigation)</p>
-                <p className="text-3xl font-mono text-white font-bold">{fmtUSD(selectedProj.economic_decay_usd)}</p>
+                <p className="text-3xl font-mono text-white font-bold tabular-nums">{fmtUSD(selectedProj.economic_decay_usd)}</p>
                 <p className="text-[9px] font-mono text-slate-500 mt-1">Range · {formatEconomicRange(selectedProj.economic_decay_usd)}</p>
                 {hasMitigation && (
-                  <div className="pt-3 mt-3 border-t border-slate-700/50">
+                  <div className="pt-3 mt-3 border-t border-white/[0.05]">
                     <p className="text-[8px] font-mono text-emerald-500/70 uppercase tracking-widest mb-1">
                       With +{canopy}% canopy · +{albedo}% albedo
                     </p>
                     <div className="flex items-end justify-between">
-                      <p className="text-2xl font-mono text-emerald-400 font-bold">↓ {fmtUSD(dynamicData.loss)}</p>
-                      <p className="text-[13px] font-mono text-emerald-300 font-bold">−{fmtUSD(dynamicData.savedLoss)}</p>
+                      <p className="text-2xl font-mono text-emerald-400 font-bold tabular-nums">↓ {fmtUSD(dynamicData.loss)}</p>
+                      <p className="text-[13px] font-mono text-emerald-300 font-bold tabular-nums">−{fmtUSD(dynamicData.savedLoss)}</p>
                     </div>
                   </div>
                 )}
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div>
                     <span className="text-[9px] font-mono text-slate-500 uppercase block">City GDP</span>
-                    <span className="text-base font-mono font-bold text-slate-400">{fmtUSD(result.gdp_usd)}</span>
+                    <span className="text-base font-mono font-bold tabular-nums text-slate-400">{fmtUSD(result.gdp_usd)}</span>
                   </div>
                   <div>
                     <span className="text-[9px] font-mono text-slate-500 uppercase block">Population</span>
-                    <span className="text-base font-mono font-bold text-slate-400">
+                    <span className="text-base font-mono font-bold tabular-nums text-slate-400">
                       {result.population ? (result.population / 1e6).toFixed(1) + "M" : "—"}
                     </span>
                   </div>
@@ -507,18 +508,18 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               </div>
               <div>
                 <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest mb-3">Projected Loss Trajectory</p>
-                <div className="h-24 flex items-end gap-1 w-full border-b border-slate-700 pb-1">
+                <div className="h-24 flex items-end gap-1 w-full border-b border-white/[0.05] pb-1">
                   {result.projections.map((p, idx) => {
                     const loss    = p.economic_decay_usd * (hasMitigation ? dynamicData.combinedRatio : 1);
                     const maxLoss = result.projections[result.projections.length - 1].economic_decay_usd || 1;
                     return (
                       <div
                         key={p.year}
-                        className="bg-red-500 w-full cursor-pointer hover:bg-red-400 rounded-t-sm transition-all duration-500 relative group"
+                        className="bg-red-500 w-full cursor-pointer hover:bg-red-400 transition-all duration-500 relative group"
                         style={{ height: `${Math.min(100, (loss / maxLoss) * 100)}%`, opacity: 0.4 + idx * 0.2 }}
                         onClick={() => setSelectedYear(p.year)}
                       >
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-800 text-white text-[7px] font-mono px-1.5 py-0.5 rounded whitespace-nowrap z-10">
+                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block bg-white/[0.05] text-white text-[7px] font-mono px-1.5 py-0.5 whitespace-nowrap z-10">
                           {p.year}: {fmtUSD(loss)}
                         </div>
                       </div>
@@ -547,11 +548,11 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           />
 
           {/* ── AI REASONING ── */}
-          <div className="border border-indigo-500/30 bg-[#050814]/80 p-6 rounded-xl relative overflow-hidden">
+          <div className="border border-indigo-500/30 p-6 relative overflow-hidden" style={{ background: 'var(--raised)' }}>
             <div className="absolute -top-12 -left-12 w-32 h-32 bg-indigo-500/10 blur-[50px] pointer-events-none" />
-            <h4 className="text-[10px] font-mono text-indigo-400 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse" />
-              Expert AI Reasoning — Geological &amp; Thermal Context
+            <h4 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--muted)' }}>
+              <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
+              Analyst summary — Geological &amp; Thermal Context
             </h4>
             {aiLoading ? (
               <div className="flex items-center gap-3 py-2">
@@ -561,7 +562,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
                 </span>
               </div>
             ) : aiAnalysis ? (
-              <p className="text-xs font-mono text-slate-300 leading-loose">{cleanResearchText(aiAnalysis)}</p>
+              <p className="font-serif text-body-s leading-loose" style={{ color: 'var(--text-2)' }}>{cleanResearchText(aiAnalysis)}</p>
             ) : (
               <p className="text-[10px] font-mono text-slate-600 italic">
                 AI analysis unavailable. Refer to the metrics above.
