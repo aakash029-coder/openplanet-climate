@@ -57,5 +57,6 @@
   "chicago_usa":               {"lat_min": 41.64, "lat_max": 42.02, "lng_min": -87.94, "lng_max": -87.52},
   "houston_usa":               {"lat_min": 29.52, "lat_max": 30.10, "lng_min": -95.79, "lng_max": -95.01},
   "phoenix_usa":               {"lat_min": 33.20, "lat_max": 33.73, "lng_min": -112.33, "lng_max": -111.65},
-  "miami_usa":                 {"lat_min": 25.55, "lat_max": 25.91, "lng_min": -80.44, "lng_max": -80.10}
+  "miami_usa":                 {"lat_min": 25.55, "lat_max": 25.91, "lng_min": -80.44, "lng_max": -80.10},
+  "zurich_switzerland":        {"lat_min": 47.30, "lat_max": 47.45, "lng_min":   8.44, "lng_max":   8.66}
 }

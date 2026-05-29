@@ -128,8 +128,9 @@ class CompareAnalysisRequest(BaseModel):
         return self
 
 class ResponseMetadata(BaseModel):
-    """Data lineage marker for compliance and audit tracing."""
-    data_lineage: Literal["empirical_api", "statistical_fallback"]
+    """Data lineage and geospatial coverage marker for compliance and audit tracing."""
+    data_lineage:    Literal["empirical_api", "statistical_fallback"]
+    coverage_method: Optional[str] = None
 
 
 class SimulationResponse(BaseModel):

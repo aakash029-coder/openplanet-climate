@@ -521,7 +521,16 @@
         "country_code": "US",
         "source": "US Census Bureau 2023 ACS; BEA Phoenix MSA 2023"
     },
-    "miami_usa": {
+    "zurich_switzerland": {
+    "population": 434335,
+    "metro_population": 1431870,
+    "gdp_pc": 87000,
+    "physicians": 4.5,
+    "death_rate": 8.2,
+    "country_code": "CH",
+    "source": "Swiss Federal Statistical Office 2022; OECD Regional Outlook 2023"
+  },
+  "miami_usa": {
         "population": 442241,
         "metro_population": 6166488,
         "gdp_pc": 68000,

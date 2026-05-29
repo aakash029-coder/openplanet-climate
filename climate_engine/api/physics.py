@@ -694,10 +694,11 @@ async def get_city_hexagons(
     """
     Generate H3 hexagons covering a city boundary.
 
-    Three-tier fallback:
+    Four-tier resolution cascade:
+      0. city_bounds_vault  — local bbox lookup; zero network I/O for 60 known cities
       1. Nominatim polygon/multipolygon → polyfill
       2. Nominatim bounding box → synthetic polygon polyfill
-      3. Single center hexagon (exact pinpoint only)
+      3. Open-Meteo geocoder + metro bbox (or 30 km circle for unknowns)
 
     Args:
         city_name: City name string.
@@ -706,6 +707,33 @@ async def get_city_hexagons(
     Returns:
         H3CoverageResult with hexagons and coverage metadata.
     """
+    # ── Tier 0: local metro-bounds vault (no HTTP, no 429 risk) ──────────────
+    bounds_key = _city_bounds_key(city_name)
+    if bounds_key:
+        b = _CITY_BOUNDS[bounds_key]
+        clat = (b["lat_min"] + b["lat_max"]) / 2
+        clng = (b["lng_min"] + b["lng_max"]) / 2
+        geo_dict = _bbox_to_geojson_polygon(
+            b["lat_min"], b["lat_max"], b["lng_min"], b["lng_max"]
+        )
+        ring = geo_dict["coordinates"][0]
+        hex_set, res_used = _adaptive_polyfill(geo_dict, ring, resolution)
+        if hex_set:
+            hexagons = _cap_hexagons(list(hex_set))
+            logger.info(
+                "[hex_grid] Tier-0 vault hit for '%s' (key=%s) → %d hexagons",
+                city_name, bounds_key, len(hexagons),
+            )
+            return H3CoverageResult(
+                hexagons=tuple(hexagons),
+                coverage_method="city_bounds_vault_match",
+                center_lat=clat,
+                center_lng=clng,
+                boundary_source="city_bounds_vault",
+                resolution_used=res_used,
+            )
+        logger.warning("[hex_grid] Tier-0 vault bbox polyfill empty for '%s' — falling through", city_name)
+
     url = (
         f"https://nominatim.openstreetmap.org/search"
         f"?q={city_name}&format=json&polygon_geojson=1&limit=5"
