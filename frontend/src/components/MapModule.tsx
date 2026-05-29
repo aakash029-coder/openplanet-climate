@@ -343,16 +343,38 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         />
 
         {/* MAP CONTAINER */}
-        <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+        <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0">
           <div
             ref={mapContainerRef}
             className="flex-1 rounded-2xl border border-slate-800/60 overflow-hidden relative shadow-[0_8px_48px_rgba(0,0,0,0.8)] bg-[#060f1e]"
+            style={{ minHeight: '600px' }}
           >
+            {/* Loading / idle placeholder — prevents DeckGL from initialising into a 0×0 canvas */}
+            {!isInitialized && !isLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 pointer-events-none">
+                <div className="w-16 h-16 rounded-full border border-cyan-900/40 bg-cyan-950/20 flex items-center justify-center">
+                  <svg className="w-7 h-7 text-cyan-700/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20.246l3-3m0 0l3 3m-3-3v-8.5M12 3C8.134 3 5 6.134 5 10c0 2.786 1.518 5.21 3.75 6.5" />
+                  </svg>
+                </div>
+                <p className="text-[10px] font-mono text-slate-600 uppercase tracking-[0.2em]">Search a city to generate risk mesh</p>
+              </div>
+            )}
+
+            {/* Loading spinner overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#060f1e]/60 backdrop-blur-sm">
+                <div className="w-8 h-8 border-2 border-cyan-700/40 border-t-cyan-500 rounded-full animate-spin" />
+                <p className="text-[10px] font-mono text-cyan-600/80 uppercase tracking-[0.2em]">Generating Risk Mesh…</p>
+              </div>
+            )}
+
             <DeckGL
               viewState={viewState}
               onViewStateChange={({ viewState: vs }) => setViewState(vs as ViewState)}
               controller={{ scrollZoom: false, doubleClickZoom: true, dragRotate: false, dragPan: true }}
               layers={layers}
+              style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%' }}
             >
               <Map mapStyle={cartoDarkStyle} attributionControl={false} reuseMaps />
             </DeckGL>
