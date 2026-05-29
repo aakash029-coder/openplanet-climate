@@ -1,36 +1,22 @@
 'use client';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useClimateData } from '@/context/ClimateDataContext';
-
-type SelectedCity = PanelSelectedCity;
-
-type ViewState = { longitude: number; latitude: number; zoom: number; pitch: number; bearing: number; transitionDuration?: number; transitionInterpolator?: FlyToInterpolator };
-
-function flyToCoordinates(
-  setViewState: React.Dispatch<React.SetStateAction<ViewState>>,
-  lat: number,
-  lng: number,
-  zoom = 10,
-) {
-  setViewState(prev => ({
-    ...prev,
-    latitude: lat,
-    longitude: lng,
-    zoom,
-    pitch: 0,
-    bearing: 0,
-    transitionDuration: 1500,
-    transitionInterpolator: new FlyToInterpolator(),
-  }));
-}
-import Map from 'react-map-gl/maplibre';
+import Map, { type MapRef, useControl } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import DeckGL from '@deck.gl/react';
+import { MapboxOverlay, type MapboxOverlayProps } from '@deck.gl/mapbox';
 import { H3HexagonLayer } from '@deck.gl/geo-layers';
-import { FlyToInterpolator, WebMercatorViewport } from '@deck.gl/core';
 import { cartoDarkStyle, parseLoss, fmtLoss, fetchElevationSafe } from './MapHelpers';
 import { LeftPanel, RightPanel, type SuggestionCity, type PanelSelectedCity, type MitigatedData } from './MapPanels';
 import { AnalyticsSection } from './MapCharts';
+
+type SelectedCity = PanelSelectedCity;
+type ViewState = { longitude: number; latitude: number; zoom: number; pitch: number; bearing: number };
+
+function DeckOverlay(props: MapboxOverlayProps) {
+  const overlay = useControl<MapboxOverlay>(() => new MapboxOverlay(props));
+  overlay.setProps(props);
+  return null;
+}
 
 export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: string) => void }) {
   const { fetchPrimaryCity, primaryData } = useClimateData();
@@ -64,6 +50,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const isSimulating = canopy > 0 || coolRoof > 0;
   const openAudit = (k: 'mortality' | 'economics' | 'wetbulb') => { setAuditKey(k); setAuditOpen(true); };
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<MapRef | null>(null);
 
   // Button only enabled after explicit dropdown selection — disabled while freely typing
   const canGenerate = selectedCity !== null;
@@ -164,22 +151,16 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   }, [searchQuery, selectedCity]);
 
   useEffect(() => {
-    if (hexData && hexData.length > 0 && mapContainerRef.current) {
+    if (hexData && hexData.length > 0) {
       let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
       for (let i = 0; i < hexData.length; i++) {
         const lng = hexData[i].position[0], lat = hexData[i].position[1];
         if (lng < minLng) minLng = lng; if (lng > maxLng) maxLng = lng;
         if (lat < minLat) minLat = lat; if (lat > maxLat) maxLat = lat;
       }
-      const { width, height } = mapContainerRef.current.getBoundingClientRect();
-      if (width > 0 && height > 0) {
-        try {
-          const viewport = new WebMercatorViewport({ width, height });
-          const { longitude, latitude, zoom } = viewport.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 40 });
-          const clampedZoom = Math.min(zoom, 11.5);
-          setViewState({ longitude, latitude, zoom: clampedZoom, pitch: 0, bearing: 0, transitionDuration: 2000, transitionInterpolator: new FlyToInterpolator() });
-        } catch { /* fitBounds failed — retain current viewState */ }
-      }
+      try {
+        mapRef.current?.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 40, maxZoom: 11.5, duration: 2000 });
+      } catch { /* fitBounds failed — retain current view */ }
     }
   }, [hexData]);
 
@@ -248,7 +229,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
       setSearchQuery(cleanName);
 
       if (resolvedLat !== 0 && resolvedLng !== 0) {
-        flyToCoordinates(setViewState, resolvedLat, resolvedLng, 10);
+        mapRef.current?.flyTo({ center: [resolvedLng, resolvedLat], zoom: 10, duration: 1500 });
       }
 
       setHexData(data.hexGrid || []);
@@ -318,6 +299,8 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
       extruded: false,
       coverage: 1.0,
       stroked: false,
+      // @ts-expect-error -- beforeId is read by @deck.gl/mapbox interleaved resolver at runtime; not in LayerProps types
+      beforeId: 'settlement-label',
       updateTriggers: { getFillColor: h3Data },
     }),
   ], [h3Data]);
@@ -381,20 +364,29 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
               </div>
             )}
 
-            <DeckGL
-              viewState={viewState}
-              onViewStateChange={({ viewState: vs }) => setViewState(vs as ViewState)}
-              controller={{ scrollZoom: false, doubleClickZoom: true, dragRotate: false, dragPan: true }}
-              layers={layers}
+            <Map
+              ref={mapRef}
+              mapStyle={cartoDarkStyle}
+              attributionControl={false}
+              reuseMaps
+              longitude={viewState.longitude}
+              latitude={viewState.latitude}
+              zoom={viewState.zoom}
+              pitch={viewState.pitch}
+              bearing={viewState.bearing}
+              onMove={({ viewState: vs }) => setViewState(vs as ViewState)}
+              scrollZoom={false}
+              doubleClickZoom={true}
+              dragRotate={false}
               style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%' }}
             >
-              <Map mapStyle={cartoDarkStyle} attributionControl={false} reuseMaps />
-            </DeckGL>
+              <DeckOverlay layers={layers} interleaved />
+            </Map>
 
             {/* Zoom controls — 44px touch targets */}
             <div className="absolute top-3 right-3 z-50 flex flex-col glass-nav" style={{ border: '1px solid var(--hairline)' }}>
               <button
-                onClick={() => setViewState(p => ({ ...p, zoom: p.zoom + 1 }))}
+                onClick={() => mapRef.current?.zoomIn()}
                 className="w-11 h-11 flex items-center justify-center text-base font-mono transition-colors duration-150"
                 style={{ borderBottom: '1px solid var(--hairline)', color: 'var(--muted)', touchAction: 'manipulation' }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
@@ -402,7 +394,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
                 aria-label="Zoom in"
               >+</button>
               <button
-                onClick={() => setViewState(p => ({ ...p, zoom: p.zoom - 1 }))}
+                onClick={() => mapRef.current?.zoomOut()}
                 className="w-11 h-11 flex items-center justify-center text-base font-mono transition-colors duration-150"
                 style={{ color: 'var(--muted)', touchAction: 'manipulation' }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
