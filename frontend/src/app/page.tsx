@@ -4,10 +4,10 @@ import LandingMobile from '@/components/LandingMobile';
 export default function HomePage() {
   return (
     <>
-      <div className="hidden md:block w-full">
+      <div className="hidden lg:block w-full">
         <LandingDesktop />
       </div>
-      <div className="block md:hidden w-full">
+      <div className="block lg:hidden w-full">
         <LandingMobile />
       </div>
     </>

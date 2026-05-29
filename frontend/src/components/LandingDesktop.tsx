@@ -28,10 +28,8 @@ export default function LandingDesktop() {
 
   useEffect(() => {
     document.documentElement.style.overscrollBehavior = 'none';
-    document.body.style.overscrollBehavior = 'none';
     return () => {
       document.documentElement.style.overscrollBehavior = '';
-      document.body.style.overscrollBehavior = '';
     };
   }, []);
 
@@ -143,14 +141,23 @@ export default function LandingDesktop() {
             Copernicus C3S ERA5 · CMIP6 · Gasparrini 2017 · Burke 2018 · UNDRR · Climatebase
           </p>
 
-          {/* Primary CTA */}
-          <button
-            onClick={handleStartSimulation}
-            style={{ touchAction: 'manipulation' }}
-            className="btn-primary relative bg-white text-black font-sans font-semibold text-xs px-10 py-3.5 uppercase tracking-wider transition-all duration-150 hover:bg-zinc-100 min-h-[48px] overflow-hidden"
-          >
-            Analyse Your City →
-          </button>
+          {/* Primary CTA + scroll hint */}
+          <div className="flex flex-col items-center gap-4">
+            <button
+              onClick={handleStartSimulation}
+              style={{ touchAction: 'manipulation' }}
+              className="btn-primary relative bg-white text-black font-sans font-semibold text-xs px-10 py-3.5 uppercase tracking-wider transition-all duration-150 hover:bg-zinc-100 min-h-[48px] overflow-hidden"
+            >
+              Analyse Your City →
+            </button>
+            <div className="flex flex-col items-center gap-0.5 animate-bounce" style={{ opacity: 0.2 }}>
+              <span className="font-mono text-[8px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>scroll</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                   style={{ color: 'var(--muted)' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </section>
 
         {/* ── 2. WHAT IT DOES ── */}

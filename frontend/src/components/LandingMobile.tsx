@@ -11,13 +11,27 @@ const MobileProjection = dynamic(
     ssr: false,
     loading: () => (
       <div className="w-full flex flex-col" style={{ minHeight: '100dvh', background: 'var(--canvas)' }}>
-        {/* Skeleton header so the layout doesn't jump */}
+        {/* Skeleton header */}
         <div className="flex items-center justify-between px-4 py-2.5"
              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <span className="font-mono text-[9px] uppercase tracking-[0.22em] font-semibold"
                 style={{ color: 'var(--muted)' }}>
             OpenPlanet · Climate Risk
           </span>
+        </div>
+        {/* Skeleton sub-nav matches MobileProjection structure to prevent layout jump */}
+        <div className="flex w-full"
+             style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.3)' }}>
+          {['DASHBOARD', 'DEEP DIVE', 'COMPARE', 'METHODOLOGY'].map((tab, i) => (
+            <div key={tab} className="relative px-4 py-2.5 shrink-0 font-mono text-[10px] uppercase tracking-[0.12em]"
+                 style={{ color: i === 0 ? 'var(--text)' : 'rgba(255,255,255,0.28)' }}>
+              {tab}
+              {i === 0 && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px]"
+                      style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)' }} />
+              )}
+            </div>
+          ))}
         </div>
         {/* Centred spinner */}
         <div className="flex-1 flex items-center justify-center">
