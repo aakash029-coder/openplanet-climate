@@ -62,13 +62,13 @@ export default function SupportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white p-6 md:p-12 lg:p-16 font-mono selection:bg-cyan-500/30">
+    <div className="min-h-screen bg-black text-white p-6 md:p-12 lg:p-16 font-mono selection:bg-white/10">
       <div className="max-w-7xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
         
         {/* ── HEADER ── */}
         <div className="border-b border-white/10 pb-8 mt-12">
           <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-[0.2em] text-white">
-            FAQ & <span className="text-cyan-400">Support</span>
+            FAQ & <span className="text-white">Support</span>
           </h1>
         </div>
 
@@ -77,24 +77,24 @@ export default function SupportPage() {
           {/* ── LEFT COLUMN: KNOWLEDGE BASE (FAQ) ── */}
           <div className="lg:col-span-7 space-y-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
-              <h2 className="text-[11px] text-cyan-400 uppercase tracking-[0.3em] font-bold">Frequently Asked Questions</h2>
+              <div className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full"></div>
+              <h2 className="text-[11px] text-[#0ea5e9] uppercase tracking-[0.3em] font-bold">Frequently Asked Questions</h2>
             </div>
 
             <div className="space-y-4">
               {FAQS.map((faq, idx) => (
                 <div 
                   key={idx} 
-                  className={`border rounded-lg transition-all duration-300 overflow-hidden ${openFaq === idx ? 'border-cyan-500/50 bg-cyan-950/10 shadow-[0_0_20px_rgba(34,211,238,0.05)]' : 'border-white/5 bg-black/40 hover:border-white/20'}`}
+                  className={`border rounded-lg transition-all duration-300 overflow-hidden ${openFaq === idx ? 'border-white/10 bg-white/[0.02]' : 'border-white/5 bg-black/40 hover:border-white/20'}`}
                 >
                   <button
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                     className="w-full text-left px-6 py-5 flex justify-between items-center focus:outline-none"
                   >
-                    <span className={`text-xs uppercase tracking-widest pr-4 leading-relaxed ${openFaq === idx ? 'text-cyan-300 font-bold' : 'text-slate-200'}`}>
+                    <span className={`text-xs uppercase tracking-widest pr-4 leading-relaxed ${openFaq === idx ? 'text-white font-bold' : 'text-slate-200'}`}>
                       {faq.q}
                     </span>
-                    <span className={`text-xl text-cyan-500 font-light transition-transform duration-300 ${openFaq === idx ? 'rotate-45 text-cyan-300' : ''}`}>
+                    <span className={`text-xl text-zinc-400 font-light transition-transform duration-300 ${openFaq === idx ? 'rotate-45 text-white' : ''}`}>
                       +
                     </span>
                   </button>
@@ -115,16 +115,15 @@ export default function SupportPage() {
           <div className="lg:col-span-5">
             <div className="sticky top-24">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <h2 className="text-[11px] text-emerald-400 uppercase tracking-[0.3em] font-bold">Contact Us</h2>
+                <div className="w-1.5 h-1.5 bg-[#10b981] rounded-full"></div>
+                <h2 className="text-[11px] text-[#10b981] uppercase tracking-[0.3em] font-bold">Contact Us</h2>
               </div>
 
-              <div className="bg-[#050b14]/80 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-2xl relative overflow-hidden">
-                <div className="absolute -top-32 -right-32 w-64 h-64 bg-cyan-500/10 blur-[100px] pointer-events-none"></div>
+              <div className="bg-[#08080a] border border-white/[0.06] p-8 rounded-2xl shadow-2xl relative overflow-hidden">
 
                 {status === "success" ? (
                   <div className="text-center py-16 animate-in zoom-in duration-500">
-                    <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 flex items-center justify-center rounded-full mx-auto mb-6 border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                    <div className="w-16 h-16 bg-white/[0.03] border border-white/[0.06] flex items-center justify-center rounded-full mx-auto mb-6 text-emerald-500">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
                     <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-white mb-3">Message Sent!</h3>
@@ -143,22 +142,22 @@ export default function SupportPage() {
                     
                     <div className="space-y-2">
                       <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Name *</label>
-                      <input type="text" name="name" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest" placeholder="John Doe" />
+                      <input type="text" name="name" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-white/20 transition-colors uppercase tracking-widest" placeholder="John Doe" />
                     </div>
 
                     <div className="space-y-2">
                       <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Email *</label>
-                      <input type="email" name="email" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest" placeholder="john@example.com" />
+                      <input type="email" name="email" required className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-white/20 transition-colors uppercase tracking-widest" placeholder="john@example.com" />
                     </div>
 
                     <div className="space-y-2">
                       <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Organization (Optional)</label>
-                      <input type="text" name="organization" className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest" placeholder="University or Company" />
+                      <input type="text" name="organization" className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-white/20 transition-colors uppercase tracking-widest" placeholder="University or Company" />
                     </div>
 
                     <div className="space-y-2">
                       <label className="block text-[10px] text-slate-400 uppercase tracking-widest">Category *</label>
-                      <select name="category" required defaultValue="" className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest appearance-none cursor-pointer">
+                      <select name="category" required defaultValue="" className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white outline-none rounded-lg focus:border-white/20 transition-colors uppercase tracking-widest appearance-none cursor-pointer">
                         <option value="" disabled>Select an option...</option>
                         <option value="Feedback / Suggestion">Feedback / Suggestion</option>
                         <option value="Bug Report">Bug Report</option>
@@ -174,7 +173,7 @@ export default function SupportPage() {
                         name="message"
                         required
                         rows={4}
-                        className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest custom-scrollbar resize-none leading-relaxed"
+                        className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3.5 text-xs text-white placeholder-slate-600 outline-none rounded-lg focus:border-white/20 transition-colors uppercase tracking-widest custom-scrollbar resize-none leading-relaxed"
                         placeholder="How can we help you today?"
                       ></textarea>
                     </div>
@@ -191,7 +190,7 @@ export default function SupportPage() {
                       disabled={status === "submitting"}
                       className="w-full pt-2"
                     >
-                      <div className="w-full px-6 py-4 bg-cyan-900/80 border border-cyan-500/50 text-cyan-100 text-[10px] font-bold uppercase tracking-[0.3em] rounded-lg hover:bg-cyan-800 hover:text-white disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(34,211,238,0.1)] text-center">
+                      <div className="w-full px-6 py-4 bg-white border-transparent text-black text-[10px] font-bold uppercase tracking-[0.3em] rounded-lg hover:bg-zinc-100 disabled:opacity-50 transition-all text-center">
                         {status === "submitting" ? "SENDING MESSAGE..." : "SEND MESSAGE"}
                       </div>
                     </button>

@@ -297,22 +297,30 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
       getHexagon: (d) => d.hex,
       getFillColor: (d) => {
         const risk = Math.max(0, Math.min(1, d.risk || 0));
-        const green: [number,number,number] = [34, 197, 94];
-        const yellow: [number,number,number] = [234, 179, 8];
-        const orange: [number,number,number] = [249, 115, 22];
-        const red: [number,number,number] = [239, 68, 68];
+        // heat-1 steel, heat-2 ochre, heat-3 amber, heat-4 oxide red, heat-5 deep oxide
+        const h1: [number,number,number] = [47,  111, 143];  // #2F6F8F
+        const h2: [number,number,number] = [183, 146, 55 ];  // #B79237
+        const h3: [number,number,number] = [190, 106, 46 ];  // #BE6A2E
+        const h4: [number,number,number] = [162, 58,  48 ];  // #A23A30
+        const h5: [number,number,number] = [110, 32,  32 ];  // #6E2020
         let c1: [number,number,number], c2: [number,number,number], t: number;
-        if (risk < 0.4) { c1 = green; c2 = yellow; t = risk / 0.4; }
-        else if (risk < 0.7) { c1 = yellow; c2 = orange; t = (risk - 0.4) / 0.3; }
-        else { c1 = orange; c2 = red; t = (risk - 0.7) / 0.3; }
-        return [Math.round(c1[0] + (c2[0] - c1[0]) * t), Math.round(c1[1] + (c2[1] - c1[1]) * t), Math.round(c1[2] + (c2[2] - c1[2]) * t), 110];
+        if      (risk < 0.25) { c1 = h1; c2 = h2; t = risk / 0.25; }
+        else if (risk < 0.50) { c1 = h2; c2 = h3; t = (risk - 0.25) / 0.25; }
+        else if (risk < 0.75) { c1 = h3; c2 = h4; t = (risk - 0.50) / 0.25; }
+        else                  { c1 = h4; c2 = h5; t = (risk - 0.75) / 0.25; }
+        return [
+          Math.round(c1[0] + (c2[0] - c1[0]) * t),
+          Math.round(c1[1] + (c2[1] - c1[1]) * t),
+          Math.round(c1[2] + (c2[2] - c1[2]) * t),
+          Math.round(140 + risk * 80),  // opacity 140-220, varies with intensity
+        ];
       },
       extruded: false,
-      coverage: viewState.zoom > 12.5 ? 1.0 : 0.85,
+      coverage: 0.9,
       stroked: false,
       updateTriggers: { getFillColor: h3Data },
     }),
-  ], [h3Data, viewState.zoom]);
+  ], [h3Data]);
 
   const SustainedHeatLabel = () => (
     <div className="flex items-center gap-1.5 mb-1 relative group w-max">
@@ -325,10 +333,10 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   );
 
   return (
-    <div className="w-full flex flex-col items-center py-6 px-4 bg-[#020617] min-h-screen gap-6">
+    <div className="w-full flex flex-col items-center py-6 px-4 bg-[var(--canvas)] min-h-screen gap-0">
 
       {/* ── MAP AREA ── */}
-      <div className="w-full max-w-[1440px] flex flex-col md:flex-row gap-3 relative z-10"
+      <div className="w-full max-w-[1440px] flex flex-col md:flex-row gap-0 relative z-10 border border-[--hairline]"
         style={{ height: 'calc(100vh - 100px)', minHeight: '760px' }}>
 
         <LeftPanel
@@ -346,26 +354,28 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full">
           <div
             ref={mapContainerRef}
-            className="flex-1 rounded-2xl border border-slate-800/60 overflow-hidden relative shadow-[0_8px_48px_rgba(0,0,0,0.8)] bg-[#060f1e] ring-1 ring-red-500/20"
+            className="flex-1 border overflow-hidden relative bg-[#08080A]"
             style={{ minHeight: '600px' }}
           >
             {/* Loading / idle placeholder — prevents DeckGL from initialising into a 0×0 canvas */}
             {!isInitialized && !isLoading && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 pointer-events-none">
-                <div className="w-16 h-16 rounded-full border border-cyan-900/40 bg-cyan-950/20 flex items-center justify-center">
-                  <svg className="w-7 h-7 text-cyan-700/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20.246l3-3m0 0l3 3m-3-3v-8.5M12 3C8.134 3 5 6.134 5 10c0 2.786 1.518 5.21 3.75 6.5" />
-                  </svg>
-                </div>
-                <p className="text-[10px] font-mono text-slate-600 uppercase tracking-[0.2em]">Search a city to generate risk mesh</p>
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 pointer-events-none">
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>
+                  Search a location to generate the risk exposure grid
+                </p>
+                <p className="font-mono text-[9px]" style={{ color: 'var(--muted)', opacity: 0.5 }}>
+                  H3 hexagonal grid · CMIP6 ensemble · ERA5 baseline
+                </p>
               </div>
             )}
 
             {/* Loading spinner overlay */}
             {isLoading && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[#060f1e]/60 backdrop-blur-sm">
-                <div className="w-8 h-8 border-2 border-cyan-700/40 border-t-cyan-500 rounded-full animate-spin" />
-                <p className="text-[10px] font-mono text-cyan-600/80 uppercase tracking-[0.2em]">Generating Risk Mesh…</p>
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-[#08080A]/70">
+                <div className="w-7 h-7 border border-white/20 border-t-white/50 rounded-full animate-spin" />
+                <p className="font-mono text-[10px] uppercase tracking-[0.25em]" style={{ color: 'var(--muted)' }}>
+                  Computing risk exposure grid…
+                </p>
               </div>
             )}
 
@@ -380,32 +390,60 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
             </DeckGL>
 
             {/* Zoom controls */}
-            <div className="absolute top-3 right-3 z-50 flex flex-col bg-[#060f1e]/95 border border-slate-800/80 rounded-xl overflow-hidden backdrop-blur-xl shadow-lg">
+            <div className="absolute top-3 right-3 z-50 flex flex-col bg-[#08080A]/95" style={{ border: '1px solid var(--hairline)' }}>
               <button
                 onClick={() => setViewState(p => ({ ...p, zoom: p.zoom + 1 }))}
-                className="w-8 h-8 flex items-center justify-center border-b border-slate-800/60 text-slate-500 hover:text-white hover:bg-slate-800/50 transition-all text-sm font-mono"
+                className="w-8 h-8 flex items-center justify-center text-sm font-mono transition-colors duration-150"
+                style={{ borderBottom: '1px solid var(--hairline)', color: 'var(--muted)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
               >+</button>
               <button
                 onClick={() => setViewState(p => ({ ...p, zoom: p.zoom - 1 }))}
-                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-800/50 transition-all text-sm font-mono"
+                className="w-8 h-8 flex items-center justify-center text-sm font-mono transition-colors duration-150"
+                style={{ color: 'var(--muted)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
               >−</button>
             </div>
 
             {/* Risk legend */}
             {isInitialized && (
-              <div className="absolute top-3 left-3 z-50 bg-[#060f1e]/95 border border-slate-800/70 px-4 py-3 rounded-xl backdrop-blur-xl shadow-lg">
-                <p className="text-[8px] font-mono text-slate-500 uppercase tracking-widest mb-2 font-bold">Thermal Risk</p>
-                <div className="w-32 h-1.5 rounded-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500" />
-                <div className="flex justify-between mt-2">
-                  <span className="text-[8px] font-mono text-slate-600 font-bold">Low</span>
-                  <span className="text-[8px] font-mono text-red-500/80 font-bold">Critical</span>
+              <div className="absolute bottom-4 left-3 z-50 bg-[#08080A]/95 px-3 py-2.5"
+                   style={{ border: '1px solid var(--hairline)' }}>
+                {/* Eyebrow */}
+                <p className="font-mono uppercase tracking-[0.14em] mb-2"
+                   style={{ fontSize: '0.6875rem', color: 'var(--muted)' }}>
+                  Heat exposure (°C) · {year} · {ssp}
+                </p>
+                {/* Quantitative ramp with 5 stops */}
+                <div className="flex items-center gap-0">
+                  {[
+                    { color: '#2F6F8F', label: '34' },
+                    { color: '#B79237', label: '37' },
+                    { color: '#BE6A2E', label: '40' },
+                    { color: '#A23A30', label: '43' },
+                    { color: '#6E2020', label: '46+' },
+                  ].map(({ color, label }) => (
+                    <div key={label} className="flex flex-col items-center">
+                      <div className="w-8 h-2" style={{ background: color }} />
+                      <span className="font-mono mt-1" style={{ fontSize: '0.6rem', color: 'var(--muted)' }}>{label}</span>
+                    </div>
+                  ))}
                 </div>
+                {/* Instrument chrome */}
+                {selectedCity && (
+                  <p className="font-mono mt-2 pt-2" style={{ fontSize: '0.6rem', color: 'var(--muted)', borderTop: '1px solid var(--hairline)' }}>
+                    H3 r9 · WGS84 ·{' '}
+                    {selectedCity.lat !== undefined ? `${selectedCity.lat.toFixed(2)}°N ${selectedCity.lng !== undefined ? Math.abs(selectedCity.lng).toFixed(2) : ''}°${(selectedCity.lng ?? 0) >= 0 ? 'E' : 'W'}` : ''}
+                  </p>
+                )}
               </div>
             )}
 
             {/* API error */}
             {apiError && (
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 bg-red-950/90 border border-red-900/80 rounded-xl px-5 py-3 backdrop-blur-xl">
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 bg-[#08080A]/95 px-5 py-3" style={{ border: '1px solid var(--heat-4)' }}>
                 <p className="text-[10px] font-mono text-red-400 flex items-center gap-2 font-bold uppercase tracking-widest">
                   <span className="text-red-500">⚠</span> {apiError}
                 </p>
@@ -414,8 +452,9 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
           </div>
 
           {isInitialized && selectedCity && (
-            <p className="text-[11px] italic text-slate-400/70 text-center font-serif tracking-wide pt-1">
-              {selectedCity.name || selectedCity.locationQuery} · {year} Projection · H3 Spatial Risk Model
+            <p className="font-mono text-center pt-2 pb-1"
+               style={{ fontSize: '0.6875rem', color: 'var(--muted)' }}>
+              {selectedCity.name || selectedCity.locationQuery} · {year} · {ssp} · CMIP6 ensemble projection
             </p>
           )}
         </div>
@@ -431,7 +470,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
       {/* ── HISTORICAL DATA ── */}
       {isInitialized && historicalEras && (
-        <div className="w-full max-w-[1440px] bg-[#030b18] border border-slate-800/50 rounded-2xl p-6 mt-2 relative overflow-hidden">
+        <div className="w-full max-w-[1440px] bg-[var(--panel)] p-6 mt-2 relative overflow-hidden" style={{ borderColor: 'var(--hairline)', border: '1px solid var(--hairline)' }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             <div className="flex flex-col bg-cyan-900/10 border border-cyan-900/40 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm">

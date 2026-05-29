@@ -1,6 +1,5 @@
 import React from 'react';
-import { Database } from 'lucide-react';
-import { getScientificRange, fmtLoss } from './MapHelpers';
+import { fmtLoss } from './MapHelpers';
 import { formatCoordinates, useClimateData } from '@/context/ClimateDataContext';
 
 export interface SuggestionCity {
@@ -87,18 +86,20 @@ const MetricRow = ({
 );
 
 const SavedBadge = ({ value }: { value: string }) => (
-  <div className="inline-flex items-center gap-1.5 bg-emerald-950/30 border border-emerald-900/30 rounded-lg px-2.5 py-1.5">
-    <div className="w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.7)]" />
-    <span className="text-[8px] font-mono text-emerald-400 font-bold uppercase tracking-wider">Saved {value}</span>
+  <div className="inline-flex items-center gap-1.5 bg-[var(--raised)] px-2.5 py-1.5" style={{ border: '1px solid var(--hairline)' }}>
+    <div className="w-1 h-1 rounded-full" style={{ background: 'var(--positive)' }} />
+    <span className="text-[8px] font-mono font-bold uppercase tracking-wider" style={{ color: 'var(--positive)' }}>Saved {value}</span>
   </div>
 );
 
 const AuditButton = ({ label, onClick }: { label: string; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="w-full mt-3 flex items-center justify-center gap-1.5 py-2 bg-slate-900/60 border border-slate-800 rounded-xl text-[8px] font-mono text-slate-600 hover:text-cyan-400 hover:border-cyan-900/50 hover:bg-cyan-950/20 transition-all duration-200 uppercase tracking-wider group"
+    className="w-full mt-2 flex items-center gap-1.5 py-1.5 font-mono transition-colors duration-150 uppercase"
+    style={{ color: 'var(--muted)', fontSize: '0.6875rem' }}
+    onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+    onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
   >
-    <Database size={9} className="group-hover:text-cyan-400 transition-colors" />
     {label}
   </button>
 );
@@ -110,14 +111,10 @@ export const LeftPanel = ({
   canopy, coolRoof, handleMitigationChange, isSimulating,
 }: LeftPanelProps) => {
   return (
-    <div className="bg-[#060f1e]/98 backdrop-blur-2xl border border-slate-800/60 rounded-2xl p-4 w-full md:w-[272px] md:min-w-[272px] flex flex-col shadow-[0_8px_40px_rgba(0,0,0,0.6)] h-full pointer-events-auto overflow-y-auto custom-scrollbar">
+    <div className="bg-[var(--panel)] p-4 w-full md:w-[272px] md:min-w-[272px] flex flex-col h-full pointer-events-auto overflow-y-auto custom-scrollbar" style={{ border: '1px solid var(--hairline)' }}>
       {/* Panel header */}
-      <div className="flex items-center gap-2 mb-5 pb-4 border-b border-slate-800/60">
-        <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_6px_rgba(6,182,212,0.6)]" />
-        <span className="text-[9px] font-mono text-slate-400 uppercase tracking-[0.25em] font-bold">Climate Engine</span>
-        <div className="ml-auto">
-          <span className="text-[7px] font-mono text-slate-700 uppercase tracking-widest">CMIP6</span>
-        </div>
+      <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/[0.05]">
+        <span className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>Projection controls</span>
       </div>
       <div className="flex flex-col gap-5 flex-1">
         
@@ -137,10 +134,10 @@ export const LeftPanel = ({
               placeholder="Search city..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); if (selectedCity) setSelectedCity(null); }}
-              className="w-full bg-[#0a1828] border border-slate-800 focus:border-cyan-700/60 rounded-xl pl-8 pr-3 py-2.5 text-[11px] text-slate-200 outline-none transition-colors duration-200 placeholder:text-slate-700"
+              className="w-full bg-white/[0.03] border border-white/[0.05] focus:border-white/20 rounded-none pl-8 pr-3 py-2.5 text-[11px] text-slate-200 outline-none transition-colors duration-200 placeholder:text-slate-700"
             />
             {suggestions.length > 0 && !selectedCity && (
-              <div className="absolute top-full left-0 w-full mt-1.5 bg-[#0a1828] border border-slate-700/50 rounded-xl overflow-hidden z-[9999] shadow-[0_16px_48px_rgba(0,0,0,0.6)]">
+              <div className="absolute top-full left-0 w-full mt-1.5 bg-black border border-white/[0.05] overflow-hidden z-[9999] shadow-2xl">
                 {suggestions.map((city, idx) => {
                   const label = [city.name, city.country].filter(Boolean).join(', ');
                   return (
@@ -157,7 +154,7 @@ export const LeftPanel = ({
                         setSearchQuery(label);
                         setSuggestions([]);
                       }}
-                      className="flex items-center gap-2.5 px-3 py-2.5 text-[11px] text-slate-300 hover:bg-cyan-950/30 hover:text-white cursor-pointer border-b border-slate-800/40 last:border-0 transition-colors duration-150"
+                      className="flex items-center gap-2.5 px-3 py-2.5 text-[11px] text-slate-300 hover:bg-white/[0.05] hover:text-white cursor-pointer border-b border-white/[0.04] last:border-0 transition-colors duration-150"
                     >
                       <div className="w-1 h-1 rounded-full bg-slate-600 shrink-0" />
                       <span className="truncate">{label}</span>
@@ -184,7 +181,7 @@ export const LeftPanel = ({
             <select
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              className="w-full bg-[#0a1828] border border-slate-800 focus:border-cyan-700/60 rounded-xl px-3 py-2.5 text-[11px] text-slate-300 cursor-pointer outline-none transition-colors duration-200 appearance-none"
+              className="w-full bg-white/[0.03] border border-white/[0.05] focus:border-white/20 rounded-none px-3 py-2.5 text-[11px] text-slate-300 cursor-pointer outline-none transition-colors duration-200 appearance-none"
               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
             >
               <option value="2030">2030 – Near-term</option>
@@ -200,7 +197,7 @@ export const LeftPanel = ({
             <select
               value={ssp}
               onChange={(e) => setSsp(e.target.value)}
-              className="w-full bg-[#0a1828] border border-slate-800 focus:border-cyan-700/60 rounded-xl px-3 py-2.5 text-[11px] text-slate-300 cursor-pointer outline-none transition-colors duration-200 appearance-none"
+              className="w-full bg-white/[0.03] border border-white/[0.05] focus:border-white/20 rounded-none px-3 py-2.5 text-[11px] text-slate-300 cursor-pointer outline-none transition-colors duration-200 appearance-none"
               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
             >
               <option value="SSP2-4.5">SSP2-4.5 – Moderate</option>
@@ -213,31 +210,31 @@ export const LeftPanel = ({
         <button
           onClick={handleInitialize}
           disabled={!canGenerate || isLoading}
-          className="relative w-full py-3 rounded-xl text-[10px] font-mono text-white font-bold uppercase tracking-[0.2em] shadow-lg transition-all duration-200 disabled:opacity-25 disabled:cursor-not-allowed overflow-hidden group"
-          style={{ background: 'linear-gradient(135deg, #0891b2, #059669)' }}
+          className="relative w-full py-2.5 text-[11px] font-sans font-semibold uppercase tracking-wider transition-colors duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{ background: 'var(--text)', color: 'var(--canvas)' }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#ffffff')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'var(--text)')}
         >
-          <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors duration-200" />
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
-              <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-3 h-3 border border-current/30 border-t-current rounded-full animate-spin" />
               Analyzing...
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">
-              Generate Projection
-              <span className="text-white/60">→</span>
+              Run projection
+              <span className="opacity-60">→</span>
             </span>
           )}
         </button>
 
         {/* SIMULATOR */}
         {isInitialized && (
-          <div className="pt-4 border-t border-slate-800/60 flex flex-col gap-4">
+          <div className="pt-4 border-t border-white/[0.05] flex flex-col gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-                <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-[0.15em] flex items-center">
-                  Theoretical Simulator
+                <span className="text-[9px] font-bold text-[#0ea5e9] uppercase tracking-[0.15em] flex items-center">
+                  Adaptation scenario
                 </span>
               </div>
               <p className="text-[8px] text-slate-600 leading-relaxed italic pl-3.5">
@@ -245,7 +242,7 @@ export const LeftPanel = ({
               </p>
             </div>
             
-            <div className="space-y-4 bg-[#0a1828]/60 p-4 rounded-xl border border-slate-800/40">
+            <div className="space-y-4 bg-white/[0.02] p-4 border border-white/[0.04]">
               {/* Canopy */}
               <div className="space-y-2.5">
                 <div className="flex justify-between items-center">
@@ -258,7 +255,7 @@ export const LeftPanel = ({
                   <input
                     type="range" min="0" max="50" value={canopy}
                     onChange={(e) => handleMitigationChange('canopy', Number(e.target.value))}
-                    className="w-full h-1.5 bg-slate-800 rounded-full appearance-none cursor-pointer accent-emerald-500"
+                    className="w-full h-1.5 bg-white/[0.05] rounded-full appearance-none cursor-pointer accent-emerald-500"
                   />
                   <div
                     className="absolute top-0 left-0 h-1.5 bg-gradient-to-r from-emerald-700 to-emerald-500 rounded-full pointer-events-none"
@@ -278,7 +275,7 @@ export const LeftPanel = ({
                   <input
                     type="range" min="0" max="100" value={coolRoof}
                     onChange={(e) => handleMitigationChange('coolRoof', Number(e.target.value))}
-                    className="w-full h-1.5 bg-slate-800 rounded-full appearance-none cursor-pointer accent-cyan-500"
+                    className="w-full h-1.5 bg-white/[0.05] rounded-full appearance-none cursor-pointer accent-cyan-500"
                   />
                   <div
                     className="absolute top-0 left-0 h-1.5 bg-gradient-to-r from-cyan-700 to-cyan-400 rounded-full pointer-events-none"
@@ -289,9 +286,9 @@ export const LeftPanel = ({
             </div>
 
             {/* Legal note */}
-            <div className="p-3 bg-amber-950/15 border border-amber-900/25 rounded-xl">
-              <p className="text-[7px] text-amber-500/70 leading-tight uppercase font-bold mb-1 flex items-center gap-1">
-                <span>⚠</span> Scientific Note
+            <div className="p-3" style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+              <p className="text-[7px] leading-tight uppercase font-bold mb-1" style={{ color: 'var(--muted)' }}>
+                Scientific note
               </p>
               <p className="text-[8px] text-slate-500 leading-relaxed italic">
                 In highly humid coastal biomes (e.g., Mumbai, Chennai), excessive canopy expansion may theoretically trap surface-level humidity, potentially exacerbating lethal Wet-Bulb temperatures.
@@ -309,11 +306,11 @@ const LineageBadge = ({ metadata }: { metadata: { data_lineage: 'empirical_api' 
   if (!metadata) return null;
   const isEmpirical = metadata.data_lineage === 'empirical_api';
   return (
-    <div className={`mx-4 mb-4 p-3 rounded-xl border ${isEmpirical ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-amber-950/20 border-amber-900/35'}`}>
+    <div className={`mx-4 mb-4 p-3 border ${isEmpirical ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-amber-950/20 border-amber-900/35'}`}>
       <div className="flex items-center gap-2 mb-1.5">
-        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isEmpirical ? 'bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.7)]' : 'bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.7)]'}`} />
+        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isEmpirical ? 'bg-emerald-400' : 'bg-amber-400'}`} />
         <span className={`text-[7px] font-mono font-bold uppercase tracking-widest ${isEmpirical ? 'text-emerald-400' : 'text-amber-400'}`}>
-          {isEmpirical ? '✓ Verified Empirical API Data Stream' : '⚠ Statistical Estimation Layer Active'}
+          {isEmpirical ? 'Empirical API · verified' : 'Statistical fallback active'}
         </span>
       </div>
       {!isEmpirical && (
@@ -349,35 +346,34 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
   const isReady = isInitialized && !primaryLoading && projection != null;
 
   return (
-    <div className="bg-[#060f1e]/98 backdrop-blur-2xl border border-slate-800/60 rounded-2xl w-full md:w-[272px] md:min-w-[272px] flex flex-col shadow-[0_8px_40px_rgba(0,0,0,0.6)] h-full pointer-events-auto overflow-hidden">
+    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col h-full pointer-events-auto overflow-hidden" style={{ border: '1px solid var(--hairline)', background: 'var(--panel)' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-800/60 bg-slate-900/20 shrink-0">
+      <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.05] bg-white/[0.01] shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-          <span className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.25em] font-bold">Risk Metrics</span>
+          <span className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.25em] font-bold">Projected indicators</span>
         </div>
         {isReady && (
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_5px_rgba(52,211,153,0.6)]" />
-            <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-wider">Live</span>
-          </div>
+          <span className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
+            computed {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </span>
         )}
         {primaryLoading && isInitialized && (
-          <div className="w-3 h-3 border border-cyan-500/40 border-t-cyan-400 rounded-full animate-spin" />
+          <div className="w-3 h-3 border border-white/20 border-t-white/40 rounded-full animate-spin" />
         )}
       </div>
 
       {!isInitialized ? (
         <div className="flex-grow flex flex-col items-center justify-center gap-3 px-6">
-          <div className="w-8 h-8 rounded-full border border-slate-800 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border border-white/[0.05] flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e293b" strokeWidth="1.5">
               <circle cx="12" cy="12" r="10" /><path d="M12 8v4m0 4h.01" />
             </svg>
           </div>
-          <p className="text-[9px] font-mono text-slate-700 uppercase tracking-widest text-center">Select Location<br />to Generate</p>
+          <p className="text-[9px] font-mono text-slate-700 uppercase tracking-widest text-center">Select a location to begin</p>
         </div>
       ) : (
-        <div className="flex flex-col flex-grow overflow-y-auto custom-scrollbar divide-y divide-slate-800/40">
+        <div className="flex flex-col flex-grow overflow-y-auto custom-scrollbar divide-y divide-white/[0.04]">
 
           {/* ── DEATHS ── */}
           <div className="p-4 space-y-3">
@@ -395,10 +391,10 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               )}
             </div>
             <p className="text-[8px] font-mono text-slate-600 leading-relaxed">
-              Sensitivity Bounds ±15% · {getScientificRange(projection?.attributable_deaths ?? 0, 'num')}
+              95% CI ±15% · Gasparrini et al. 2017 · Lancet Planetary Health
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedDeaths || '0'} />}
-            <AuditButton label="Calculation Log · IPCC AR6" onClick={() => openAudit('mortality')} />
+            <AuditButton label="↳ show derivation" onClick={() => openAudit('mortality')} />
           </div>
 
           {/* ── ECONOMIC ── */}
@@ -417,10 +413,10 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               )}
             </div>
             <p className="text-[8px] font-mono text-slate-600">
-              Range · {getScientificRange(loss, 'num')}
+              95% CI ±8% · Burke et al. 2018 · Nature
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedLoss || '0'} />}
-            <AuditButton label="Calculation Log · Burke 2018" onClick={() => openAudit('economics')} />
+            <AuditButton label="↳ show derivation" onClick={() => openAudit('economics')} />
           </div>
 
           {/* ── HEATWAVE + TEMP ── */}
@@ -437,10 +433,10 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               ) : (
                 <p className="text-[24px] font-mono font-bold leading-none text-red-400 tabular-nums">{heatwave}d</p>
               )}
-              <p className="text-[8px] font-mono text-slate-600">Range · {getScientificRange(projection?.heatwave_days ?? 0, 'days')}</p>
+              <p className="text-[8px] font-mono text-slate-600">days above historical P95 · CMIP6 ensemble</p>
             </div>
 
-            <div className="space-y-2 pt-4 border-t border-slate-800/40">
+            <div className="space-y-2 pt-4 border-t border-white/[0.04]">
               <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
                 Peak Tx5d
               </span>
@@ -452,14 +448,14 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               ) : (
                 <p className="text-[24px] font-mono font-bold leading-none text-red-400 tabular-nums">{temp}°C</p>
               )}
-              <p className="text-[8px] font-mono text-slate-600">Range · {getScientificRange(projection?.peak_tx5d_c ?? 0, 'temp')}</p>
+              <p className="text-[8px] font-mono text-slate-600">TX5d decadal mean · ERA5 baseline · ERA5 reanalysis</p>
             </div>
           </div>
         </div>
       )}
 
       {isInitialized && !primaryLoading && (
-        <div className="shrink-0 border-t border-slate-800/40 pt-3">
+        <div className="shrink-0 border-t border-white/[0.04] pt-3">
           <LineageBadge metadata={primaryData?.metadata} />
         </div>
       )}

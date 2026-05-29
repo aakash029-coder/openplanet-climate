@@ -89,38 +89,38 @@ const SideBySideMathModal = ({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="relative w-full max-w-3xl max-h-[85vh] overflow-y-auto bg-[#050814] border border-cyan-500/30 rounded-2xl p-6 shadow-[0_0_40px_rgba(34,211,238,0.1)]" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-4 right-4 w-7 h-7 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-500 hover:text-white flex items-center justify-center transition-all">✕</button>
+      <div className="relative w-full max-w-3xl max-h-[85vh] overflow-y-auto border border-white/[0.05] p-6" style={{ background: 'var(--raised)' }} onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-4 right-4 w-7 h-7 bg-white/[0.05] border border-white/[0.09] text-slate-500 hover:text-white flex items-center justify-center transition-all">✕</button>
 
         <div className="flex items-center gap-3 mb-1">
-          <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_#22d3ee]" />
-          <h3 className="text-[10px] font-mono text-cyan-300 uppercase tracking-[0.3em] font-bold">Side-by-Side Calculation Audit</h3>
+          <div className="w-2 h-2 bg-cyan-400 rounded-full" />
+          <h3 className="text-[10px] font-mono text-[#0ea5e9] uppercase tracking-[0.3em] font-bold">Side-by-Side Calculation Audit</h3>
         </div>
         <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-5">{metricLabel} — same formula, both cities</p>
 
         {secA && secB ? (
           <>
-            <div className="bg-[#020617] border border-cyan-500/20 rounded-xl p-4 mb-5">
+            <div className="border border-white/[0.05] p-4 mb-5" style={{ background: 'var(--panel)' }}>
               <p className="text-[9px] font-mono text-cyan-200 uppercase tracking-[0.2em] mb-2">Formula (identical for both)</p>
               <p className="text-white font-mono text-sm">{secA.formula}</p>
               {secA.source && <SourceLine source={secA.source} />}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[{ city: cityA, sec: secA, val: valA }, { city: cityB, sec: secB, val: valB }].map(({ city, sec, val }) => (
-                <div key={city} className="bg-[#020617] border border-slate-800 rounded-xl p-4">
+                <div key={city} className="border border-white/[0.05] p-4" style={{ background: 'var(--panel)' }}>
                   <p className="text-[9px] font-mono text-slate-300 uppercase tracking-widest font-bold mb-3 truncate">{city}</p>
                   {sec.variables && (
                     <div className="space-y-1 mb-3">
                       {Object.entries(sec.variables).map(([k, v]) => (
                         <div key={k} className="flex justify-between">
-                          <span className="text-[9px] font-mono text-cyan-400">{k}</span>
-                          <span className="text-[9px] font-mono text-slate-300">{String(v)}</span>
+                          <span className="text-[9px] font-mono text-[#0ea5e9]">{k}</span>
+                          <span className="text-[9px] font-mono tabular-nums text-slate-300">{String(v)}</span>
                         </div>
                       ))}
                     </div>
                   )}
                   {sec.computation && (
-                    <div className="bg-black/40 rounded-lg p-2.5 mt-2 border border-slate-800/60">
+                    <div className="bg-black/40 p-2.5 mt-2 border border-white/[0.05]">
                       <p className="text-[9px] font-mono text-white leading-relaxed break-all">{sec.computation}</p>
                     </div>
                   )}
@@ -129,7 +129,7 @@ const SideBySideMathModal = ({
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                       <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest">Calculation validated</span>
                     </div>
-                    <span className="text-[11px] font-mono text-white font-bold">
+                    <span className="text-[11px] font-mono tabular-nums text-white font-bold">
                       {val != null ? (metricKey === 'economic_decay_usd' ? fmtUSD(val) : metricKey === 'attributable_deaths' ? Math.round(val).toLocaleString() : `${fmt(val)}°C`) : '—'}
                     </span>
                   </div>
@@ -137,8 +137,8 @@ const SideBySideMathModal = ({
               ))}
             </div>
             {valA != null && valB != null && (
-              <div className="mt-4 p-4 bg-cyan-950/20 border border-cyan-500/20 rounded-xl">
-                <p className="text-[9px] font-mono text-cyan-300 uppercase tracking-widest">
+              <div className="mt-4 p-4 bg-cyan-950/20 border border-white/[0.05]">
+                <p className="text-[9px] font-mono text-[#0ea5e9] uppercase tracking-widest">
                   Higher exposure: <span className="font-bold text-white">{valA > valB ? cityA : valA < valB ? cityB : 'Equal'}</span>
                   {valA !== valB && (
                     <span className="text-slate-500 ml-2">
@@ -152,9 +152,9 @@ const SideBySideMathModal = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[{ city: cityA, val: valA }, { city: cityB, val: valB }].map(({ city, val }) => (
-              <div key={city} className="bg-[#020617] border border-slate-800 rounded-xl p-4">
+              <div key={city} className="border border-white/[0.05] p-4" style={{ background: 'var(--panel)' }}>
                 <p className="text-[9px] font-mono text-slate-300 uppercase tracking-widest font-bold mb-2 truncate">{city}</p>
-                <p className="text-2xl font-mono text-white font-bold">
+                <p className="text-2xl font-mono tabular-nums text-white font-bold">
                   {val != null ? (metricKey === 'economic_decay_usd' ? fmtUSD(val) : metricKey === 'attributable_deaths' ? Math.round(val).toLocaleString() : `${fmt(val)}°C`) : '—'}
                 </p>
               </div>
@@ -280,10 +280,10 @@ async function geocodeAndFetch(
         lat,
         lng,
         elevation,
-        ssp,                         
+        ssp,
         canopy_offset_pct: 0,
         albedo_offset_pct: 0,
-        location_hint: locationHint, 
+        location_hint: locationHint,
       },
       controller.signal
     );
@@ -538,18 +538,18 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       />
 
       {/* ── HEADER ── */}
-      <div className="bg-[#050b14]/70 backdrop-blur-xl border border-cyan-500/20 p-5 md:p-8 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.05)] relative overflow-hidden">
+      <div className="border border-white/[0.05] p-5 md:p-8 relative overflow-hidden" style={{ background: 'var(--raised)' }}>
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/10 blur-[100px] pointer-events-none" />
-        <h2 className="text-xs font-mono font-bold text-cyan-300 uppercase tracking-[0.4em] mb-6">Dual-Sector Comparative Analysis</h2>
+        <h2 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-6" style={{ color: 'var(--muted)' }}>City comparison</h2>
 
         {/* City cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
           {/* City A — locked to primaryData */}
-          <div className="relative rounded-xl border border-cyan-500/50 overflow-hidden min-h-[120px] flex flex-col justify-center p-5 bg-[#020617] shadow-[0_0_20px_rgba(34,211,238,0.1)]">
+          <div className="relative border border-white/[0.09] overflow-hidden min-h-[120px] flex flex-col justify-center p-5 bg-black">
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(34,211,238,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,0.3) 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#020617] via-[#020617]/80 to-transparent z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
             <div className="relative z-20">
-              <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block mb-1 font-bold">City A — Locked</span>
+              <span className="text-[10px] font-mono text-[#0ea5e9] uppercase tracking-widest block mb-1 font-bold">City A — Locked</span>
               <h3 className="text-lg md:text-xl font-mono text-white tracking-wider uppercase truncate" title={primaryData?.city_name ?? baseTarget}>
                 {primaryData?.city_name ?? baseTarget}
               </h3>
@@ -559,7 +559,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                 </span>
               )}
               {primaryLoading && (
-                <span className="text-[9px] font-mono text-cyan-500/60 tracking-widest block mt-1 animate-pulse">
+                <span className="text-[9px] font-mono text-[#0ea5e9]/60 tracking-widest block mt-1">
                   Loading...
                 </span>
               )}
@@ -567,9 +567,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           </div>
 
           {/* City 2 input */}
-          <div className={`relative rounded-xl border overflow-visible min-h-[120px] flex flex-col justify-center p-5 bg-[#020617] transition-colors shadow-lg ${city2Geo ? 'border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.1)]' : 'border-white/10'}`}>
-            <div className="absolute inset-0 opacity-10 pointer-events-none rounded-xl" style={{ backgroundImage: 'linear-gradient(rgba(16,185,129,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,0.3) 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#020617] via-[#020617]/80 to-transparent z-10 rounded-xl" />
+          <div className={`relative border overflow-visible min-h-[120px] flex flex-col justify-center p-5 bg-black transition-colors ${city2Geo ? 'border-emerald-500/50' : 'border-white/[0.05]'}`}>
+            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(16,185,129,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,0.3) 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
             <div className="relative z-20 w-full overflow-visible">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block mb-3 font-bold">City B — Target</span>
               <div className="relative w-full overflow-visible">
@@ -578,10 +578,11 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                   value={searchQuery2}
                   onChange={(e) => { setSearchQuery2(e.target.value); if (city2Geo) setCity2Geo(null); }}
                   placeholder="Search city to compare..."
-                  className="w-full bg-[#0a0f1d]/90 border border-slate-700 p-3 text-[11px] font-mono text-white placeholder-slate-500 outline-none rounded-lg focus:border-cyan-500 transition-colors uppercase tracking-widest"
+                  className="w-full bg-white/[0.03] p-3 text-[11px] font-mono text-white placeholder-slate-500 outline-none focus:border-white/20 transition-colors uppercase tracking-widest"
+                  style={{ border: '1px solid var(--hairline)' }}
                 />
                 {suggestions2.length > 0 && !city2Geo && (
-                  <div className="absolute top-full left-0 w-full mt-2 bg-[#050814] border border-cyan-500/30 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-[9999] max-h-48 overflow-y-auto">
+                  <div className="absolute top-full left-0 w-full mt-2 border border-white/[0.05] z-[9999] max-h-48 overflow-y-auto" style={{ background: 'var(--panel)' }}>
                     {suggestions2.map((city, idx) => (
                       <div
                         key={`${city.id}-${idx}`}
@@ -591,7 +592,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                           setCity2Geo({ display_name: n, lat: city.latitude, lng: city.longitude });
                           setSuggestions2([]);
                         }}
-                        className="px-4 py-3 text-[10px] font-mono text-slate-300 hover:bg-cyan-900 hover:text-white cursor-pointer transition-colors border-b border-slate-800 last:border-0 uppercase tracking-widest"
+                        className="px-4 py-3 text-[10px] font-mono text-slate-300 hover:bg-white/[0.05] hover:text-white cursor-pointer transition-colors border-b border-white/[0.05] last:border-0 uppercase tracking-widest"
                       >
                         {city.name}, <span className="opacity-50">{city.country}</span>
                       </div>
@@ -605,38 +606,40 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
         </div>
 
         {/* Config */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-cyan-950/10 border border-cyan-500/10 rounded-xl mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-cyan-950/10 border border-cyan-500/10 mb-6">
           <div>
-            <label className="block text-[10px] font-mono text-cyan-200 uppercase tracking-widest mb-2">Scenario</label>
+            <label className="block text-[10px] font-mono text-slate-300 uppercase tracking-widest mb-2">Scenario</label>
             <select
               value={ssp}
               onChange={(e) => setSsp(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-cyan-400 outline-none focus:border-cyan-500"
+              className="w-full bg-black/40 px-3 py-2 text-xs font-mono text-[#0ea5e9] outline-none focus:border-white/20"
+              style={{ border: '1px solid var(--hairline)' }}
             >
               <option value="SSP2-4.5">SSP2-4.5 (MODERATE)</option>
               <option value="SSP5-8.5">SSP5-8.5 (HIGH RISK)</option>
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-mono text-cyan-200 uppercase tracking-widest mb-2">Year</label>
+            <label className="block text-[10px] font-mono text-slate-300 uppercase tracking-widest mb-2">Year</label>
             <select
               value={compareYear}
               onChange={(e) => setCompareYear(Number(e.target.value))}
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none focus:border-cyan-500"
+              className="w-full bg-black/40 px-3 py-2 text-xs font-mono text-white outline-none focus:border-white/20"
+              style={{ border: '1px solid var(--hairline)' }}
             >
               {COMPARE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <label className="text-[10px] font-mono text-cyan-200 uppercase">🌳 Canopy</label>
+              <label className="text-[10px] font-mono text-slate-300 uppercase">Canopy</label>
               <span className="text-[10px] font-mono text-emerald-400">+{canopy}%</span>
             </div>
             <input type="range" min={0} max={50} value={canopy} onChange={(e) => setCanopy(Number(e.target.value))} className="w-full accent-emerald-500 cursor-pointer" style={{ touchAction: 'manipulation' }} />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <label className="text-[10px] font-mono text-cyan-200 uppercase">🏠 Albedo</label>
+              <label className="text-[10px] font-mono text-slate-300 uppercase">Albedo</label>
               <span className="text-[10px] font-mono text-sky-400">+{albedo}%</span>
             </div>
             <input type="range" min={0} max={100} value={albedo} onChange={(e) => setAlbedo(Number(e.target.value))} className="w-full accent-cyan-500 cursor-pointer" style={{ touchAction: 'manipulation' }} />
@@ -646,19 +649,19 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
         <button
           onClick={handleCompare}
           disabled={running || !city2Geo || !primaryData || primaryLoading}
-          className="w-full md:w-auto px-10 py-3 bg-cyan-900 border border-cyan-500/50 text-white font-mono text-xs font-bold uppercase tracking-[0.2em] rounded-xl hover:bg-cyan-800 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(34,211,238,0.2)]"
+          className="w-full md:w-auto px-10 py-3 bg-cyan-900 border border-cyan-500/50 text-white font-mono text-xs font-bold uppercase tracking-[0.2em] hover:bg-cyan-800 disabled:opacity-50 transition-all"
           style={{ touchAction: 'manipulation' }}
         >
           {running ? "PROCESSING..." : primaryLoading ? "LOADING CITY A..." : "RUN COMPARISON"}
         </button>
 
         {retryStatus && (
-          <p className="mt-4 text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-widest animate-pulse">
-            <span className="inline-block w-2 h-2 bg-cyan-400 rounded-full mr-2" />{retryStatus}
+          <p className="mt-4 text-[10px] font-mono text-[#0ea5e9] font-bold uppercase tracking-widest">
+            <span className="inline-block w-2 h-2 bg-[#0ea5e9] rounded-full mr-2" />{retryStatus}
           </p>
         )}
         {globalError && (
-          <p className="mt-4 text-[10px] font-mono text-red-500 bg-red-950/30 border border-red-900/50 rounded-lg px-4 py-2 uppercase tracking-widest">{globalError}</p>
+          <p className="mt-4 text-[10px] font-mono text-red-500 bg-red-950/30 border border-red-900/50 px-4 py-2 uppercase tracking-widest">{globalError}</p>
         )}
       </div>
 
@@ -666,10 +669,10 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       {results.some(r => r.loading) && (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
           {results.map((r, i) => (
-            <div key={i} className="bg-[#050b14]/70 border border-cyan-500/20 rounded-xl p-6 h-28 flex items-center justify-center">
+            <div key={i} className="border border-white/[0.05] p-6 h-28 flex items-center justify-center" style={{ background: 'var(--raised)' }}>
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping" />
-                <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-widest">
+                <div className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full animate-ping" />
+                <span className="text-[9px] font-mono text-[#0ea5e9] uppercase tracking-widest">
                   {r.loading ? 'Loading telemetry...' : 'Processing...'}
                 </span>
               </div>
@@ -682,10 +685,10 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       {okResults.length === 2 && !running && (
         <>
           {hasMitigation && (
-            <div className="bg-[#06101f] border border-emerald-800/30 rounded-2xl p-5">
+            <div className="border border-emerald-800/30 p-5" style={{ background: 'var(--raised)' }}>
               <div className="flex flex-wrap items-center gap-2 mb-4">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-[9px] font-mono text-emerald-400 uppercase tracking-[0.2em] font-bold">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <p className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>
                   Mitigation Applied · +{canopy}% canopy · +{albedo}% albedo · {compareYear}
                 </p>
               </div>
@@ -699,7 +702,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                   const mitHW     = getMitigatedValue(proj.heatwave_days,        'heatwave_days',       proj.heatwave_days);
                   return (
                     <div key={r.query}>
-                      <p className="text-[9px] font-mono text-slate-400 uppercase tracking-widest font-bold mb-3 truncate">{r.query}</p>
+                      <p className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-3 truncate" style={{ color: 'var(--muted)' }}>{r.query}</p>
                       <div className="grid grid-cols-2 gap-3">
                         {[
                           { label: 'Deaths',    base: proj.attributable_deaths.toLocaleString(), mit: mitDeaths ? Math.round(mitDeaths).toLocaleString() : '—', saved: mitDeaths ? `−${(proj.attributable_deaths - Math.round(mitDeaths)).toLocaleString()}` : '—', bc: 'text-red-400'   },
@@ -707,19 +710,19 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                           { label: 'Peak Temp', base: `${fmt(proj.peak_tx5d_c)}°C`,               mit: `${fmt(mitTemp ?? 0)}°C`,                                saved: `−${fmt((proj.peak_tx5d_c) - (mitTemp ?? proj.peak_tx5d_c))}°C`,                     bc: 'text-orange-400'},
                           { label: 'HW Days',   base: `${proj.heatwave_days}d`,                   mit: `${Math.round(mitHW ?? proj.heatwave_days)}d`,             saved: `−${proj.heatwave_days - Math.round(mitHW ?? proj.heatwave_days)}d`,                bc: 'text-yellow-400'},
                         ].map((item) => (
-                          <div key={item.label} className="bg-slate-900/30 rounded-lg p-3 border border-slate-800/40">
+                          <div key={item.label} className="border border-white/[0.04] p-3" style={{ background: 'var(--panel)' }}>
                             <p className="text-[8px] font-mono text-slate-600 uppercase mb-1.5">{item.label}</p>
                             <div className="flex justify-between items-baseline mb-1">
                               <span className="text-[8px] font-mono text-slate-600">W/o</span>
-                              <span className={`text-[11px] font-mono font-bold ${item.bc}`}>{item.base}</span>
+                              <span className={`text-[11px] font-mono font-bold tabular-nums text-right ${item.bc}`}>{item.base}</span>
                             </div>
                             <div className="flex justify-between items-baseline mb-1">
                               <span className="text-[8px] font-mono text-slate-600">With</span>
-                              <span className="text-[11px] font-mono font-bold text-slate-300">{item.mit}</span>
+                              <span className="text-[11px] font-mono font-bold tabular-nums text-right text-slate-300">{item.mit}</span>
                             </div>
-                            <div className="flex justify-between items-baseline bg-emerald-950/30 rounded px-1.5 py-1 border border-emerald-800/20">
+                            <div className="flex justify-between items-baseline bg-emerald-950/30 px-1.5 py-1 border border-emerald-800/20">
                               <span className="text-[7px] font-mono text-slate-600 uppercase">Saved</span>
-                              <span className="text-[10px] font-mono text-emerald-400 font-bold">{item.saved}</span>
+                              <span className="text-[10px] font-mono tabular-nums text-right text-emerald-400 font-bold">{item.saved}</span>
                             </div>
                           </div>
                         ))}
@@ -732,23 +735,25 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           )}
 
           {/* Main comparison table */}
-          <div className="w-full bg-[#050b14]/70 backdrop-blur-xl border border-cyan-500/20 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.05)] overflow-hidden">
-            <div className="bg-cyan-950/40 border-b border-cyan-500/30 px-5 md:px-8 py-5">
-              <h3 className="text-[11px] font-mono text-cyan-300 tracking-[0.4em] uppercase">
-                Side-by-Side Telemetry
-                <span className="text-slate-500 ml-2">| {compareYear} | {ssp.toUpperCase()}</span>
-                {hasMitigation && <span className="text-emerald-400 ml-2">| +{canopy}% canopy · +{albedo}% albedo</span>}
+          <div className="w-full border border-white/[0.05] overflow-hidden" style={{ background: 'var(--raised)' }}>
+            <div className="border-b border-white/[0.05] px-5 md:px-8 py-5" style={{ background: 'var(--panel)' }}>
+              <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>
+                City comparison
               </h3>
+              <p className="font-mono text-[8px] mt-1 tabular-nums" style={{ color: 'var(--muted)' }}>
+                Dataset: {okResults[0]?.query ?? '—'} vs {okResults[1]?.query ?? '—'} · {ssp.toUpperCase()} · {compareYear}
+                {hasMitigation && ` · +${canopy}% canopy · +${albedo}% albedo`}
+              </p>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white/[0.01] border-b border-cyan-500/20">
-                    <th className="px-5 md:px-8 py-5 text-[10px] font-mono text-cyan-200 uppercase tracking-widest w-[30%]">
+                  <tr className="border-b border-white/[0.05]" style={{ background: 'var(--panel)' }}>
+                    <th className="px-5 md:px-8 py-5 text-[10px] font-mono text-slate-200 uppercase tracking-widest w-[30%]">
                       Parameter
                       <p className="text-[8px] text-slate-500 mt-1 normal-case tracking-normal font-normal">
-                        Rows with <span className="text-cyan-400 font-bold border border-cyan-500/30 bg-cyan-900/30 px-1 rounded text-[7px]">CALC</span> badge are auditable
+                        Rows with <span className="text-[#0ea5e9] font-bold border border-white/[0.09] bg-cyan-900/30 px-1 text-[7px]">CALC</span> badge are auditable
                       </p>
                     </th>
                     {okResults.map(r => (
@@ -764,7 +769,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                     const baseVals = okResults.map(r => {
                       const p = r.projections?.find(pr => pr.year === compareYear);
                       if (!p) return null;
-                      
+
                       let val: number | null | undefined = (p as unknown as Record<string, number | null | undefined>)[m.key];
 
                       // UHI is optional on Projection; derive from baseline if absent
@@ -787,7 +792,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                     return (
                       <tr
                         key={m.key}
-                        className={`hover:bg-cyan-900/10 transition-colors group ${m.hasCalc ? 'cursor-pointer' : ''}`}
+                        className={`hover:bg-white/[0.02] transition-colors group ${m.hasCalc ? 'cursor-pointer' : ''}`}
                         onClick={() => {
                           if (!m.hasCalc || !projA || !projB) return;
                           setMathModal({ open: true, metricLabel: m.label, metricKey: m.key, valA: displayVals[0], valB: displayVals[1] });
@@ -797,7 +802,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                           <div className="flex items-center gap-2">
                             <span className="text-[11px] font-mono text-slate-300 uppercase tracking-wider group-hover:text-white transition-colors">{m.label}</span>
                             {m.hasCalc && (
-                              <span className="opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-0.5 bg-cyan-900/40 border border-cyan-500/40 text-cyan-300 text-[7px] font-bold rounded shadow-[0_0_10px_rgba(34,211,238,0.2)] uppercase">
+                              <span className="opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-0.5 bg-cyan-900/40 border border-white/[0.09] text-[#0ea5e9] text-[7px] font-bold uppercase">
                                 CALC ↗
                               </span>
                             )}
@@ -811,32 +816,32 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                           const dispV = displayVals[i];
                           const isMax = dispV != null && dispV === maxVal && maxVal > 0;
                           return (
-                            <td key={r.query} className="px-5 md:px-8 py-5 text-center">
+                            <td key={r.query} className="px-5 md:px-8 py-5 text-right">
                               {/* Baseline value */}
                               {hasMitigation && baseV != null && (
-                                <div className="text-[9px] font-mono text-slate-600 mb-1">
+                                <div className="text-[9px] font-mono tabular-nums text-slate-600 mb-1">
                                   <span className="text-[7px] uppercase tracking-widest text-slate-700 mr-1">Base:</span>
                                   {m.fmt(baseV)}
                                 </div>
                               )}
                               {/* Display value (mitigated if sliders active) */}
-                              <span className={`font-mono text-sm ${isMax ? "text-cyan-300 font-bold drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : hasMitigation ? "text-emerald-300 font-bold" : "text-white"}`}>
+                              <span className={`font-mono tabular-nums text-sm ${isMax ? "text-[#0ea5e9] font-bold" : hasMitigation ? "text-[#10b981] font-bold" : "text-white"}`}>
                                 {dispV != null ? m.fmt(dispV) : "—"}
                               </span>
-                              {isMax && <span className="block mt-1 text-[8px] text-cyan-500/70 uppercase font-mono tracking-widest">Max. Exposure</span>}
+                              {isMax && <span className="block mt-1 text-[8px] text-[#0ea5e9]/70 uppercase font-mono tracking-widest">Max. Exposure</span>}
                               {/* Saved delta */}
                               {hasMitigation && baseV != null && mitV != null && (
-                                <div className="text-[8px] font-mono text-emerald-500 mt-1">
+                                <div className="text-[8px] font-mono tabular-nums text-emerald-500 mt-1">
                                   {m.key === 'economic_decay_usd'  ? `−${fmtUSD(baseV - mitV)}`
                                   : m.key === 'attributable_deaths' ? `−${Math.round(baseV - mitV).toLocaleString()}`
                                   : `−${fmt(baseV - mitV)}`}
                                 </div>
                               )}
                               {dispV != null && m.key === 'attributable_deaths' && (
-                                <div className="text-[7px] font-mono text-slate-600 mt-1">CI: {formatDeathsRange(dispV)}</div>
+                                <div className="text-[7px] font-mono tabular-nums text-slate-600 mt-1">CI: {formatDeathsRange(dispV)}</div>
                               )}
                               {dispV != null && m.key === 'economic_decay_usd' && (
-                                <div className="text-[7px] font-mono text-slate-600 mt-1">{formatEconomicRange(dispV)}</div>
+                                <div className="text-[7px] font-mono tabular-nums text-slate-600 mt-1">{formatEconomicRange(dispV)}</div>
                               )}
                             </td>
                           );
@@ -849,20 +854,20 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
             </div>
 
             {/* AI Analysis */}
-            <div className="bg-[#02050a]/60 border-t border-cyan-500/20 px-5 md:px-8 py-7">
-              <h4 className="flex items-center gap-3 text-[10px] font-mono text-cyan-400 tracking-[0.3em] uppercase mb-4">
-                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_#22d3ee]" />
-                Scientific Audit &amp; Strategic Comparison
+            <div className="border-t border-white/[0.05] px-5 md:px-8 py-7">
+              <h4 className="flex items-center gap-3 font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: 'var(--muted)' }}>
+                <span className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full" />
+                Analyst summary
               </h4>
               {aiLoading ? (
                 <div className="flex flex-col gap-3 py-3">
-                  <div className="h-2 w-full bg-slate-800 rounded animate-pulse" />
-                  <div className="h-2 w-3/4 bg-slate-800 rounded animate-pulse" />
-                  <div className="h-2 w-1/2 bg-slate-800 rounded animate-pulse" />
-                  <span className="text-[9px] font-mono text-cyan-500/50 uppercase tracking-widest mt-1">Generating comparative analysis...</span>
+                  <div className="h-2 w-full bg-white/[0.05]" />
+                  <div className="h-2 w-3/4 bg-white/[0.05]" />
+                  <div className="h-2 w-1/2 bg-white/[0.05]" />
+                  <span className="text-[9px] font-mono text-[#0ea5e9]/50 uppercase tracking-widest mt-1">Generating comparative analysis...</span>
                 </div>
               ) : aiAnalysis ? (
-                <p className="text-xs font-mono text-slate-300 leading-loose tracking-wide">{cleanAiText(aiAnalysis)}</p>
+                <p className="font-serif text-body-s leading-loose" style={{ color: 'var(--text-2)' }}>{cleanAiText(aiAnalysis)}</p>
               ) : (
                 <p className="text-[10px] font-mono text-slate-600 italic">Comparative analysis unavailable. Please interpret the metrics above.</p>
               )}
@@ -873,12 +878,12 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
 
       {/* Errors */}
       {results.filter(r => r.error).map(r => (
-        <div key={r.query} className="bg-red-500/10 border border-red-500/20 rounded-xl px-5 py-4 flex flex-col gap-2">
+        <div key={r.query} className="bg-red-500/10 border border-red-500/20 px-5 py-4 flex flex-col gap-2">
           <div className="flex gap-4 items-center">
             <span className="text-red-500 font-mono text-xs shrink-0">ERR:</span>
             <span className="text-red-400 font-mono text-[10px] uppercase tracking-widest break-all">{r.query}</span>
           </div>
-          <pre className="text-[9px] font-mono text-red-300/70 bg-red-950/20 border border-red-900/30 rounded-lg px-3 py-2 whitespace-pre-wrap break-all leading-relaxed">
+          <pre className="text-[9px] font-mono text-red-300/70 bg-red-950/20 border border-red-900/30 px-3 py-2 whitespace-pre-wrap break-all leading-relaxed">
             {r.error}
           </pre>
         </div>
