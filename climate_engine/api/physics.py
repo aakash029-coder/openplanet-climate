@@ -84,47 +84,6 @@ except Exception as e:
     logger.error("Failed to load offline vault in physics.py: %s", e)
     _OFFLINE_VAULT = {}
 
-try:
-    _CITY_BOUNDS_PATH = os.path.join(os.path.dirname(__file__), '../data/city_bounds.json')
-    with open(_CITY_BOUNDS_PATH, 'r') as _f:
-        _CITY_BOUNDS: dict = json.load(_f)
-    logger.info("City Bounds loaded: %d metro bounding boxes", len(_CITY_BOUNDS))
-except Exception as e:
-    logger.error("Failed to load city bounds in physics.py: %s", e)
-    _CITY_BOUNDS = {}
-
-
-def _city_bounds_key(city_name: str) -> Optional[str]:
-    """Slug-match a city query string against the city_bounds dictionary."""
-    def _slug(s: str) -> str:
-        s = unicodedata.normalize('NFD', s).encode('ascii', 'ignore').decode()
-        s = re.sub(r'[^a-z0-9 ]', '', s.lower())
-        return re.sub(r'\s+', '_', s.strip())
-
-    parts = [p.strip() for p in city_name.split(',')]
-    if len(parts) >= 2:
-        slug = _slug(f"{parts[0]} {parts[-1]}")
-        if slug in _CITY_BOUNDS:
-            return slug
-    city_slug = _slug(parts[0])
-    for key in _CITY_BOUNDS:
-        if key.startswith(city_slug):
-            return key
-    return None
-
-
-def _bbox_to_geojson_polygon(lat_min: float, lat_max: float, lng_min: float, lng_max: float) -> dict:
-    """Convert a bounding box to a closed GeoJSON Polygon."""
-    ring = [
-        [lng_min, lat_min],
-        [lng_max, lat_min],
-        [lng_max, lat_max],
-        [lng_min, lat_max],
-        [lng_min, lat_min],
-    ]
-    return {"type": "Polygon", "coordinates": [ring]}
-
-
 _FALLBACK_DEATH_RATE = 7.5  # WHO Global Median
 
 # ---------------------------------------------------------------------------
@@ -694,46 +653,20 @@ async def get_city_hexagons(
     """
     Generate H3 hexagons covering a city boundary.
 
-    Four-tier resolution cascade:
-      0. city_bounds_vault  — local bbox lookup; zero network I/O for 60 known cities
-      1. Nominatim polygon/multipolygon → polyfill
-      2. Nominatim bounding box → synthetic polygon polyfill
-      3. Open-Meteo geocoder + metro bbox (or 30 km circle for unknowns)
+    Three-tier live resolution cascade — zero static file dependencies:
+      1. Nominatim OSM polygon / bounding-box → _adaptive_polyfill
+      2. Nominatim 429 / no result → Open-Meteo coordinate → h3.grid_disk
+         (radius_steps=35 at res 9 ≈ 10.5 km urban radius; _cap_hexagons enforces
+          the 8 000-cell hard cap so the JSON payload stays within budget)
+      3. All geocoders fail → ValueError propagated to caller
 
     Args:
-        city_name: City name string.
+        city_name: City name string (any global location).
         resolution: H3 resolution (default 9).
 
     Returns:
-        H3CoverageResult with hexagons and coverage metadata.
+        H3CoverageResult with hexagons and live coverage metadata.
     """
-    # ── Tier 0: local metro-bounds vault (no HTTP, no 429 risk) ──────────────
-    bounds_key = _city_bounds_key(city_name)
-    if bounds_key:
-        b = _CITY_BOUNDS[bounds_key]
-        clat = (b["lat_min"] + b["lat_max"]) / 2
-        clng = (b["lng_min"] + b["lng_max"]) / 2
-        geo_dict = _bbox_to_geojson_polygon(
-            b["lat_min"], b["lat_max"], b["lng_min"], b["lng_max"]
-        )
-        ring = geo_dict["coordinates"][0]
-        hex_set, res_used = _adaptive_polyfill(geo_dict, ring, resolution)
-        if hex_set:
-            hexagons = _cap_hexagons(list(hex_set))
-            logger.info(
-                "[hex_grid] Tier-0 vault hit for '%s' (key=%s) → %d hexagons",
-                city_name, bounds_key, len(hexagons),
-            )
-            return H3CoverageResult(
-                hexagons=tuple(hexagons),
-                coverage_method="city_bounds_vault_match",
-                center_lat=clat,
-                center_lng=clng,
-                boundary_source="city_bounds_vault",
-                resolution_used=res_used,
-            )
-        logger.warning("[hex_grid] Tier-0 vault bbox polyfill empty for '%s' — falling through", city_name)
-
     url = (
         f"https://nominatim.openstreetmap.org/search"
         f"?q={city_name}&format=json&polygon_geojson=1&limit=5"
@@ -763,76 +696,59 @@ async def get_city_hexagons(
                 logger.error("Nominatim completely failed for '%s': %s", city_name, exc)
 
     if not results:
-        logger.warning("Nominatim returned no results for '%s' — utilizing fallback geocoder", city_name)
+        logger.warning(
+            "Nominatim returned no results for '%s' — shifting to Open-Meteo dynamic mesh router",
+            city_name,
+        )
         try:
             async with httpx.AsyncClient(timeout=10.0, trust_env=False) as client:
                 resp = await client.get(
                     "https://geocoding-api.open-meteo.com/v1/search",
-                    params={"name": city_name, "count": 1, "format": "json"},
+                    params={
+                        "name": city_name.split(",")[0].strip(),
+                        "count": 1,
+                        "format": "json",
+                    },
                 )
                 resp.raise_for_status()
                 geo_results = resp.json().get("results", [])
-            if geo_results:
-                clat = float(geo_results[0]["latitude"])
-                clng = float(geo_results[0]["longitude"])
 
-                # Prefer metro bounding-box polygon over synthetic circle
-                bounds_key = _city_bounds_key(city_name)
-                if bounds_key:
-                    b = _CITY_BOUNDS[bounds_key]
-                    geo_dict = _bbox_to_geojson_polygon(
-                        b["lat_min"], b["lat_max"], b["lng_min"], b["lng_max"]
-                    )
-                    ring = geo_dict["coordinates"][0]
-                    logger.info("Using metro bbox for '%s' (key=%s)", city_name, bounds_key)
-                else:
-                    # Fallback: 30 km radius circle (wider than legacy 10 km)
-                    RADIUS_KM = 30.0
-                    N_POINTS  = 36
-                    dlat = RADIUS_KM / 111.0
-                    cos_lat = math.cos(math.radians(clat))
-                    dlng = RADIUS_KM / (111.0 * cos_lat) if cos_lat > 1e-6 else dlat
-                    ring = [
-                        [clng + dlng * math.sin(2 * math.pi * i / N_POINTS),
-                         clat + dlat * math.cos(2 * math.pi * i / N_POINTS)]
-                        for i in range(N_POINTS)
-                    ]
-                    ring.append(ring[0])
-                    geo_dict = {"type": "Polygon", "coordinates": [ring]}
-                    logger.warning("No metro bbox for '%s' — using 30 km circle", city_name)
+            if not geo_results:
+                raise ValueError(f"Open-Meteo: no geographic coordinate mesh for '{city_name}'")
 
-                hex_set, res_used = _adaptive_polyfill(geo_dict, ring, resolution)
+            center_lat = float(geo_results[0]["latitude"])
+            center_lng = float(geo_results[0]["longitude"])
 
-                if hex_set:
-                    hexagons = _cap_hexagons(list(hex_set))
-                    return H3CoverageResult(
-                        hexagons=tuple(hexagons),
-                        coverage_method="metro_bbox_polyfill" if bounds_key else "synthetic_circle_fallback",
-                        center_lat=clat,
-                        center_lng=clng,
-                        boundary_source="city_bounds_vault" if bounds_key else "open_meteo_geocoder",
-                        resolution_used=res_used,
-                    )
+            # Dynamic H3 grid_disk — universally applicable for any global location.
+            # radius_steps=35 at res 9: each step ≈ 0.174 km edge × √3 ≈ 0.301 km,
+            # yielding ~10.5 km urban radius and 1+3×35×36 = 3 781 raw hexagons
+            # before water-masking and _cap_hexagons(8 000) enforcement.
+            center_cell = h3.latlng_to_cell(center_lat, center_lng, resolution)
+            radius_steps = 35
+            hex_collection = _cap_hexagons(list(h3.grid_disk(center_cell, radius_steps)))
 
-                # Degenerate polyfill edge case — single centre hex
-                center_hex = h3.latlng_to_cell(clat, clng, resolution)
-                return H3CoverageResult(
-                    hexagons=(center_hex,),
-                    coverage_method="open_meteo_point_fallback",
-                    center_lat=clat,
-                    center_lng=clng,
-                    boundary_source="open_meteo_geocoder",
-                    resolution_used=resolution,
-                )
+            logger.info(
+                "[hex_grid] Dynamic mesh for '%s': %d hexagons (k=%d, res=%d) "
+                "centred at (%.4f, %.4f)",
+                city_name, len(hex_collection), radius_steps, resolution,
+                center_lat, center_lng,
+            )
+            return H3CoverageResult(
+                hexagons=tuple(hex_collection),
+                coverage_method="dynamic_hex_mesh_generation",
+                center_lat=center_lat,
+                center_lng=center_lng,
+                boundary_source="open_meteo_geocoder",
+                resolution_used=resolution,
+            )
+
         except Exception as geo_exc:
-            logger.error("Fallback geocoder failed for '%s': %s", city_name, geo_exc)
+            logger.error("Open-Meteo dynamic mesh failed for '%s': %s", city_name, geo_exc)
 
-        error_msg = (
-            f"All geocoders failed for '{city_name}'. "
-            "Please verify spelling or input a major surrounding municipality."
+        raise ValueError(
+            f"Geographic coordinate mesh could not resolve for '{city_name}'. "
+            "Please verify spelling or supply a major surrounding municipality."
         )
-        logger.error("[get_city_hexagons] %s", error_msg)
-        raise ValueError(error_msg)
 
     best_result = None
     for res in results:
