@@ -343,10 +343,10 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         />
 
         {/* MAP CONTAINER */}
-        <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0">
+        <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full">
           <div
             ref={mapContainerRef}
-            className="flex-1 rounded-2xl border border-slate-800/60 overflow-hidden relative shadow-[0_8px_48px_rgba(0,0,0,0.8)] bg-[#060f1e]"
+            className="flex-1 rounded-2xl border border-slate-800/60 overflow-hidden relative shadow-[0_8px_48px_rgba(0,0,0,0.8)] bg-[#060f1e] ring-1 ring-red-500/20"
             style={{ minHeight: '600px' }}
           >
             {/* Loading / idle placeholder — prevents DeckGL from initialising into a 0×0 canvas */}

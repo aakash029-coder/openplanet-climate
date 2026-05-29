@@ -211,7 +211,7 @@ export const AnalyticsSection = ({
 
       {/* ── CHARTS AREA ── */}
       {(chartData?.heatwave?.length > 0 || chartData?.economic?.length > 0) && (
-        <section className="px-4 md:px-8 lg:px-10 py-10 w-full border-b border-slate-800/30">
+        <section className="px-4 md:px-8 lg:px-10 py-10 w-full border-b border-slate-800/30 ring-1 ring-red-500/20">
           {/* Section header */}
           <div className="flex items-center gap-3 mb-6">
             <div className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export const AnalyticsSection = ({
 
             {/* HEATWAVE LINE CHART */}
             {chartData.heatwave.length > 0 && (
-              <div className="bg-[#060f1e] border border-slate-800/50 rounded-2xl p-5 flex flex-col shadow-xl hover:border-blue-900/40 transition-colors duration-300">
+              <div className="bg-[#060f1e] border border-slate-800/50 rounded-2xl p-5 flex flex-col shadow-xl hover:border-blue-900/40 transition-colors duration-300 ring-1 ring-red-500/20">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.6)]" />
                   <p className="text-[10px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold">
@@ -233,7 +233,12 @@ export const AnalyticsSection = ({
                   </p>
                 </div>
                 <p className="text-[8px] font-mono text-slate-600 mb-4 ml-4">Annual days above historical P95</p>
-                <div className="h-[180px] w-full">
+                <div className="h-[180px] w-full" style={{ height: 180 }}>
+                  {chartData.heatwave.length === 0 ? (
+                    <div className="h-full w-full flex items-center justify-center text-slate-500 text-xs font-mono">
+                      Awaiting data matrix...
+                    </div>
+                  ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData.heatwave} margin={{ top: 10, right: 16, bottom: 5, left: -8 }}>
                       <defs>
@@ -253,13 +258,14 @@ export const AnalyticsSection = ({
                       />
                     </LineChart>
                   </ResponsiveContainer>
+                  )}
                 </div>
               </div>
             )}
 
             {/* ECONOMIC BAR CHART */}
             {chartData.economic.length > 0 && (
-              <div className="bg-[#060f1e] border border-slate-800/50 rounded-2xl p-5 flex flex-col shadow-xl hover:border-red-900/30 transition-colors duration-300">
+              <div className="bg-[#060f1e] border border-slate-800/50 rounded-2xl p-5 flex flex-col shadow-xl hover:border-red-900/30 transition-colors duration-300 ring-1 ring-red-500/20">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
                   <p className="text-[10px] font-mono text-slate-300 uppercase tracking-[0.2em] font-bold">
@@ -267,7 +273,12 @@ export const AnalyticsSection = ({
                   </p>
                 </div>
                 <p className="text-[8px] font-mono text-slate-600 mb-4 ml-4">Baseline GDP/productivity loss projection</p>
-                <div className="h-[180px] w-full">
+                <div className="h-[180px] w-full" style={{ height: 180 }}>
+                  {chartData.economic.length === 0 ? (
+                    <div className="h-full w-full flex items-center justify-center text-slate-500 text-xs font-mono">
+                      Awaiting data matrix...
+                    </div>
+                  ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={chartData.economic.map((d: any) => ({ ...d, adapt: d.adapt ?? null }))}
@@ -289,6 +300,7 @@ export const AnalyticsSection = ({
                       <Bar dataKey="noAction" name="Baseline (No Action)" fill="url(#barGrad)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
+                  )}
                 </div>
               </div>
             )}
