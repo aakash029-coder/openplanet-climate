@@ -58,7 +58,10 @@ export default function LandingDesktop() {
       <main className="w-full max-w-7xl px-5 md:px-8 flex flex-col items-center pb-24 gap-24 md:gap-36 pt-16">
 
         {/* ── 1. HERO ── */}
-        <section className="h-[calc(100vh-4rem)] w-full flex flex-col justify-between items-center py-6 md:py-10 overflow-hidden relative z-10 text-center">
+        <section
+          className="w-full flex flex-col justify-between items-center py-6 md:py-10 overflow-hidden relative z-10 text-center"
+          style={{ height: 'min(calc(100vh - 4rem), 860px)' }}
+        >
 
           {/* Eyebrow */}
           <span className="font-mono text-[9px] uppercase tracking-[0.2em] block" style={{ color: 'var(--muted)' }}>
