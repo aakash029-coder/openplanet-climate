@@ -316,7 +316,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         ];
       },
       extruded: false,
-      coverage: 0.9,
+      coverage: 1.0,
       stroked: false,
       updateTriggers: { getFillColor: h3Data },
     }),
