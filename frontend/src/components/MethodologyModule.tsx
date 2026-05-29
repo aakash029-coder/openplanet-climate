@@ -168,6 +168,11 @@ export default function MethodologyModule() {
         (TX5d) at 31 km spatial resolution. Relative humidity uses the daily mean
         (relative_humidity_2m_mean) from the ERA5 ensemble.
       </P>
+      <div className="font-mono text-[10px] text-zinc-500 uppercase tracking-wider border border-white/5 bg-zinc-950/40 p-3 mt-4">
+        TECHNICAL ATTRIBUTION FRAMEWORK // Version 1.0 implements a targeted two-model CMIP6
+        ensemble core optimized for real-time edge-downscaling calculation latencies. Full
+        multi-model CMIP7 expansion matrices are slated for advanced high-performance storage runs.
+      </div>
 
       {/* ── §2 Mortality Model ── */}
       <SectionHead n="§2" title="Heat-Attributable Mortality" />

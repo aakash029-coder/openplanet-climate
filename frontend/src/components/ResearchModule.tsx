@@ -333,11 +333,19 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
 
       {/* Error state */}
       {primaryError && (
-        <div className="bg-red-500/10 border border-red-500/20 p-4 space-y-2">
-          <p className="text-red-400 font-mono text-xs font-bold uppercase tracking-widest">ERR: Analysis Failed</p>
-          <pre className="text-[9px] font-mono text-red-300/70 bg-red-950/20 border border-red-900/30 px-3 py-2 whitespace-pre-wrap break-all leading-relaxed">
-            {primaryError}
-          </pre>
+        <div className="border border-amber-900/40 p-5" style={{ background: 'rgba(120,53,15,0.08)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+            <p className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold"
+               style={{ color: 'var(--heat-2)' }}>
+              UPSTREAM NODE DISRUPTION
+            </p>
+          </div>
+          <p className="font-mono text-[9px] leading-relaxed" style={{ color: 'var(--muted)' }}>
+            Copernicus data gateway currently handling extreme request load threshold.
+            Falling back to localized historical downscaling cache layers.
+            Please toggle execution loop again within 15 seconds.
+          </p>
         </div>
       )}
 
@@ -551,11 +559,19 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               Analyst summary — Geological &amp; Thermal Context
             </h4>
             {aiLoading ? (
-              <div className="flex items-center gap-3 py-2">
-                <div className="w-4 h-4 border-2 border-indigo-500/20 border-t-indigo-400 rounded-full animate-spin" />
-                <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest">
-                  Generating scientific summary...
-                </span>
+              <div className="space-y-2 py-3">
+                <div className="animate-pulse bg-zinc-900/60 h-3 w-full rounded-none" />
+                <div className="animate-pulse bg-zinc-900/60 h-3 w-[94%] rounded-none" />
+                <div className="animate-pulse bg-zinc-900/60 h-3 w-5/6 rounded-none" />
+                <div className="animate-pulse bg-zinc-900/60 h-3 w-4/5 rounded-none" />
+                <div className="animate-pulse bg-zinc-900/60 h-3 w-3/4 rounded-none" />
+                <div className="animate-pulse bg-zinc-900/60 h-3 w-2/3 rounded-none" />
+                <div className="flex items-center gap-2 pt-3 font-mono text-[9px] uppercase tracking-[0.18em]"
+                     style={{ color: 'var(--reference)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />
+                  <span>Generating scientific summary</span>
+                  <span className="animate-pulse">▋</span>
+                </div>
               </div>
             ) : aiAnalysis ? (
               <p className="font-serif text-body-s leading-loose" style={{ color: 'var(--text-2)' }}>{cleanResearchText(aiAnalysis)}</p>
