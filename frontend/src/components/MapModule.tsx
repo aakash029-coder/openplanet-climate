@@ -336,9 +336,11 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     <div className="w-full flex flex-col items-center py-4 md:py-6 px-3 md:px-4 bg-[var(--canvas)] min-h-screen gap-0">
 
       {/* ── MAP AREA ── */}
+      {/* On mobile: column-reversed so map is on top, controls sheet below.
+          On md+: side-by-side row with fixed viewport height. */}
       <div className="w-full max-w-[1440px] flex flex-col md:flex-row gap-0 relative z-10"
-        style={{ border: '1px solid var(--hairline)', height: 'calc(100vh - 100px)', minHeight: 'clamp(480px, calc(100vh - 100px), 860px)' }}>
-
+        style={{ border: '1px solid var(--hairline)', height: 'auto' }}
+      >
         <LeftPanel
           selectedCity={selectedCity} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
           suggestions={suggestions} setSuggestions={setSuggestions} setSelectedCity={setSelectedCity}
@@ -351,11 +353,11 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         />
 
         {/* MAP CONTAINER */}
-        <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full">
+        <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full order-first md:order-none">
           <div
             ref={mapContainerRef}
             className="flex-1 overflow-hidden relative"
-            style={{ minHeight: 'clamp(300px, 50vh, 600px)', background: 'var(--canvas)', border: '1px solid var(--hairline)' }}
+            style={{ height: 'clamp(44vh, calc(100vh - 112px), 100vh)', minHeight: '320px', background: 'var(--canvas)', border: '1px solid var(--hairline)' }}
           >
             {/* Loading / idle placeholder — prevents DeckGL from initialising into a 0×0 canvas */}
             {!isInitialized && !isLoading && (

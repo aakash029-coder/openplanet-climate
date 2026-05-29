@@ -65,15 +65,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans min-h-screen overflow-x-hidden selection:bg-white/[0.08]"
             style={{ color: 'var(--text)', background: 'var(--canvas)' }}>
 
-        {/* Faint graticule basemap — structural, not decorative */}
+        {/* Graticule basemap — emerges as trustable watermark, non-distracting */}
         <img
           src="/satellite-map.jpeg"
           alt=""
           aria-hidden="true"
           className="fixed inset-0 w-full h-full object-cover pointer-events-none z-0"
           style={{
-            opacity: 0.05,
-            filter: 'saturate(0) contrast(1.05)',
+            opacity: 0.15,
+            filter: 'saturate(0.14) contrast(1.08)',
             mixBlendMode: 'luminosity',
             transform: 'translate3d(0,0,0)',
           }}
