@@ -303,15 +303,34 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     }),
   ], [h3Data, viewState.zoom]);
 
-  const SustainedHeatLabel = () => (
-    <div className="flex items-center gap-1.5 mb-1 relative z-30 group w-max">
-      <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">Sustained Heat Average</p>
-      <span className="flex items-center justify-center w-3 h-3 rounded-full border border-slate-600 text-[7px] text-slate-400 cursor-help">i</span>
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2 bg-[#060f1e] border border-slate-700 text-slate-400 text-[8px] leading-relaxed rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[9999]">
-        Note: This represents the decadal average of the hottest consecutive 5-day periods (Tx5d) across a 31km spatial grid. It smooths out 1-day anomalous spikes to provide stable actuarial baselines for economic models.
+  const SustainedHeatLabel = () => {
+    const [tipPos, setTipPos] = React.useState<{ top: number; left: number } | null>(null);
+    const btnRef = React.useRef<HTMLSpanElement>(null);
+    const showTip = () => {
+      if (!btnRef.current) return;
+      const r = btnRef.current.getBoundingClientRect();
+      setTipPos({ top: r.top - 8, left: r.left + r.width / 2 });
+    };
+    return (
+      <div className="flex items-center gap-1.5 mb-1">
+        <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">Sustained Heat Average</p>
+        <span
+          ref={btnRef}
+          className="flex items-center justify-center w-3 h-3 rounded-full border border-slate-600 text-[7px] text-slate-400 cursor-help"
+          onMouseEnter={showTip}
+          onMouseLeave={() => setTipPos(null)}
+        >i</span>
+        {tipPos && (
+          <div
+            className="fixed w-72 p-2.5 bg-[#060f1e] border border-slate-700 text-slate-400 text-[8px] leading-relaxed rounded shadow-xl z-[9999] -translate-x-1/2 -translate-y-full pointer-events-none"
+            style={{ top: tipPos.top, left: tipPos.left }}
+          >
+            Note: This represents the decadal average of the hottest consecutive 5-day periods (Tx5d) across a 31km spatial grid. It smooths out 1-day anomalous spikes to provide stable actuarial baselines for economic models.
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="w-full flex flex-col items-center py-4 md:py-6 px-3 md:px-4 bg-[var(--canvas)] min-h-screen gap-0">
