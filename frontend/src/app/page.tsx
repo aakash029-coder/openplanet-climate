@@ -63,7 +63,7 @@ export default function HomePage() {
         <section className="w-full min-h-[90vh] flex flex-col items-center justify-center text-center relative z-10 pt-24 pb-16 md:pt-32">
 
           {/* Eyebrow */}
-          <div className="flex items-center gap-2 mb-6 px-3 py-1.5"
+          <div className="flex items-center gap-2 mb-8 px-3 py-1.5"
                style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--positive)' }} />
             <span className="text-[9px] font-mono uppercase tracking-[0.3em]" style={{ color: 'var(--muted)' }}>
@@ -71,60 +71,96 @@ export default function HomePage() {
             </span>
           </div>
 
-          <h1 className="font-display text-display mb-5 md:mb-7 max-w-5xl mx-auto leading-[0.95]">
-            <span className="gradient-text">By {city.year}, </span>
-            <span className="gradient-text-copper">{city.name}</span>
-            <br />
-            <span className="gradient-text">could lose up to </span>
-            <span className="gradient-text-copper">{city.loss}</span>
-            <br />
-            <span className="font-serif" style={{ color: 'var(--muted)', fontSize: 'clamp(1.4rem,2.8vw,2rem)' }}>
-              to extreme heat every year.
-            </span>
-          </h1>
+          {/* ── HEADLINE — expansive reading-editorial register ── */}
+          <div className="w-full max-w-5xl mx-auto text-center px-4 sm:px-6 lg:px-8 mt-12 md:mt-20 mb-5 md:mb-7">
+            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-medium tracking-tight leading-[1.1]"
+                style={{ color: '#E4E4E7' }}>
+              By {city.year},{' '}
+              <span className="gradient-text-copper">{city.name}</span>
+              <br />
+              could lose up to{' '}
+              <span className="gradient-text-copper">{city.loss}</span>
+              <br />
+              <span className="font-serif font-light"
+                    style={{ color: 'var(--muted)', fontSize: 'clamp(1.25rem,2.5vw,1.875rem)', letterSpacing: '-0.01em' }}>
+                to extreme heat every year.
+              </span>
+            </h1>
+          </div>
 
-          <p className="font-serif text-body-s mb-4 max-w-xl mx-auto leading-relaxed px-2" style={{ color: 'var(--text-2)' }}>
+          <p className="font-serif text-body-s mb-0 max-w-xl mx-auto leading-relaxed px-4" style={{ color: 'var(--text-2)' }}>
             OpenPlanet translates climate science into numbers any city planner,
             investor, or researcher can act on.
           </p>
 
-          {/* City stats — glass cards */}
-          <div className="w-full max-w-2xl grid grid-cols-3 gap-2 mb-10 md:mb-14">
+          {/* ── HORIZONTAL INK-LINE LEDGER STRIP ── */}
+          <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-0 my-12 md:my-16"
+               style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             {[
-              { label: 'Peak Temperature',  value: `${city.temp}°C`,                  glow: 'glow-amber',  valueColor: 'var(--copper)'  },
-              { label: 'Est. Heat Deaths',  value: `~${city.deaths.toLocaleString()}`, glow: 'glow-red',    valueColor: 'var(--heat-4)'  },
-              { label: 'Heatwave Days/yr',  value: `${city.hw}d`,                     glow: 'glow-red',    valueColor: 'var(--heat-3)'  },
-            ].map(s => (
+              {
+                label:  'Peak Temperature',
+                source: 'TX5d decadal mean · ERA5',
+                value:  `${city.temp}°C`,
+                glow:   'glow-amber',
+                color:  'var(--copper)',
+                cls:    'border-b border-r-0 md:border-b-0 md:border-r',
+              },
+              {
+                label:  'Est. Heat Deaths',
+                source: 'Gasparrini 2017 · 95% CI ±15%',
+                value:  `~${city.deaths.toLocaleString()}`,
+                glow:   'glow-red',
+                color:  'var(--heat-4)',
+                cls:    'border-b border-r-0 md:border-b-0 md:border-r',
+              },
+              {
+                label:  'Heatwave Days / yr',
+                source: 'Days above historical P95 · CMIP6',
+                value:  `${city.hw}d`,
+                glow:   'glow-red',
+                color:  'var(--heat-3)',
+                cls:    '',
+              },
+            ].map((s) => (
               <div key={s.label}
-                   className="glass relative p-3 md:p-5 text-center overflow-hidden transition-all duration-200"
-                   style={{ border: '1px solid var(--hairline)' }}>
-                <div className="absolute top-0 left-0 right-0 h-px"
-                     style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
-                <p className={`text-xl md:text-2xl font-mono font-bold tracking-tight tabular-nums ${s.glow}`}
-                   style={{ color: s.valueColor }}>
+                   className={`px-6 md:px-10 py-6 md:py-8 text-center flex flex-col items-center justify-center ${s.cls}`}
+                   style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+              >
+                {/* Big mono value */}
+                <p className={`font-mono text-3xl md:text-4xl lg:text-5xl font-medium tracking-tighter tabular-nums ${s.glow}`}
+                   style={{ color: s.color }}>
                   {s.value}
                 </p>
-                <p className="text-[8px] md:text-[9px] font-mono uppercase tracking-widest mt-1.5" style={{ color: 'var(--muted)' }}>
+
+                {/* Label */}
+                <p className="font-sans text-[10px] tracking-[0.14em] uppercase mt-2"
+                   style={{ color: 'var(--text-2)' }}>
                   {s.label}
+                </p>
+
+                {/* Source descriptor */}
+                <p className="font-mono text-[9px] tracking-[0.08em] mt-1"
+                   style={{ color: 'var(--muted)' }}>
+                  {s.source}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* City selector */}
-          <div className="flex flex-wrap gap-2 mb-10 justify-center">
+          {/* City selector — aligned to ledger width */}
+          <div className="w-full max-w-6xl mx-auto flex flex-wrap gap-2 mb-8 justify-center px-4">
             {CITIES.map((c, i) => (
               <button
                 key={c.name}
                 onClick={() => setActiveCityIdx(i)}
                 style={{
                   touchAction: 'manipulation',
-                  minHeight: '44px',
+                  minHeight: '40px',
                   ...(i === activeCityIdx
                     ? { border: '1px solid var(--hairline-strong)', color: 'var(--text)', background: 'var(--raised)' }
                     : { border: '1px solid var(--hairline)', color: 'var(--muted)', background: 'transparent' }),
                 }}
-                className="font-mono text-[10px] uppercase tracking-[0.14em] px-4 transition-all duration-200 hover:border-white/10 hover:text-zinc-300"
+                className="font-mono text-[10px] uppercase tracking-[0.14em] px-5 transition-all duration-200 hover:border-white/10 hover:text-zinc-300"
               >
                 {c.name}
               </button>
@@ -132,7 +168,7 @@ export default function HomePage() {
           </div>
 
           {/* Credibility strip */}
-          <p className="font-mono text-prov text-center mb-8 max-w-lg mx-auto px-4" style={{ color: 'var(--muted)' }}>
+          <p className="font-mono text-prov text-center mb-8 max-w-2xl mx-auto px-4" style={{ color: 'var(--muted)' }}>
             Copernicus C3S ERA5 · CMIP6 · Gasparrini 2017 · Burke 2018 · UNDRR · Climatebase
           </p>
 
@@ -140,7 +176,7 @@ export default function HomePage() {
           <button
             onClick={handleStartSimulation}
             style={{ touchAction: 'manipulation' }}
-            className="btn-primary relative bg-white text-black font-sans font-semibold text-xs px-8 py-3.5 uppercase tracking-wider transition-all duration-150 hover:bg-zinc-100 min-h-[48px] overflow-hidden"
+            className="btn-primary relative bg-white text-black font-sans font-semibold text-xs px-10 py-3.5 uppercase tracking-wider transition-all duration-150 hover:bg-zinc-100 min-h-[48px] overflow-hidden"
           >
             Analyse Your City →
           </button>
