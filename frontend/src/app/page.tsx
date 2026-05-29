@@ -65,7 +65,7 @@ export default function HomePage() {
           {/* Eyebrow */}
           <div className="flex items-center gap-2 mb-6 px-3 py-1.5"
                style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--positive)' }} />
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--positive)' }} />
             <span className="text-[9px] font-mono uppercase tracking-[0.3em]" style={{ color: 'var(--muted)' }}>
               Live · CMIP6 · ERA5 · Peer-Reviewed
             </span>
@@ -201,7 +201,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               {
                 audience: 'City Planners & Policy',

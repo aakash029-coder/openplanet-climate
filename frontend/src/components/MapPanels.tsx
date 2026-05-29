@@ -111,16 +111,20 @@ export const LeftPanel = ({
   canopy, coolRoof, handleMitigationChange, isSimulating,
 }: LeftPanelProps) => {
   return (
-    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col h-full pointer-events-auto overflow-y-auto custom-scrollbar"
+    /* Mobile: order-last so map renders above; bounded to 75vh so sliders are visible
+       without scrolling the page. Desktop: fixed-width sidebar, full panel height. */
+    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col order-last md:order-none
+                    max-h-[75vh] md:max-h-none md:h-full
+                    overflow-y-auto custom-scrollbar pointer-events-auto"
          style={{ background: 'var(--panel)', border: '1px solid var(--hairline)' }}>
       {/* Panel header */}
-      <div className="flex items-center gap-2 px-5 py-4 border-b" style={{ borderColor: 'var(--hairline)' }}>
+      <div className="flex items-center gap-2 px-4 md:px-5 py-3 md:py-4 shrink-0 border-b" style={{ borderColor: 'var(--hairline)' }}>
         <div className="w-1 h-1 rounded-full" style={{ background: 'var(--muted)' }} />
         <span className="font-mono text-[9px] uppercase tracking-[0.25em] font-semibold" style={{ color: 'var(--muted)' }}>
           Projection Controls
         </span>
       </div>
-      <div className="flex flex-col gap-5 flex-1 p-5">
+      <div className="flex flex-col gap-3 md:gap-5 flex-1 p-4 pb-6 md:p-5 md:pb-5">
 
         {/* LOCATION SEARCH */}
         <div className="space-y-2">
@@ -143,7 +147,7 @@ export const LeftPanel = ({
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid var(--hairline)',
                 color: 'var(--text)',
-                minHeight: '44px',
+                height: '40px',
                 padding: '0 12px 0 36px',
               }}
             />
@@ -197,7 +201,7 @@ export const LeftPanel = ({
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid var(--hairline)',
                 color: 'var(--text)',
-                minHeight: '44px',
+                height: '40px',
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2352525B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'right 12px center',
@@ -221,7 +225,7 @@ export const LeftPanel = ({
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid var(--hairline)',
                 color: 'var(--text)',
-                minHeight: '44px',
+                height: '40px',
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2352525B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'right 12px center',
@@ -238,7 +242,7 @@ export const LeftPanel = ({
           onClick={handleInitialize}
           disabled={!canGenerate || isLoading}
           className="btn-primary relative w-full text-[11px] font-sans font-semibold uppercase tracking-wider transition-all duration-150 disabled:opacity-25 disabled:cursor-not-allowed overflow-hidden"
-          style={{ background: 'var(--text)', color: 'var(--canvas)', minHeight: '48px', touchAction: 'manipulation' }}
+          style={{ background: 'var(--text)', color: 'var(--canvas)', minHeight: '40px', touchAction: 'manipulation' }}
           onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.background = '#ffffff'; }}
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--text)')}
         >
@@ -257,56 +261,58 @@ export const LeftPanel = ({
 
         {/* SIMULATOR */}
         {isInitialized && (
-          <div className="pt-4 border-t border-white/[0.05] flex flex-col gap-4">
+          <div className="pt-3 border-t border-white/[0.05] flex flex-col gap-3">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[9px] font-bold text-[#0ea5e9] uppercase tracking-[0.15em] flex items-center">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-[0.15em]" style={{ color: 'var(--reference)' }}>
                   Adaptation scenario
                 </span>
               </div>
-              <p className="text-[8px] text-slate-600 leading-relaxed italic pl-3.5">
-                Visualization tool for directional guidance only.
+              <p className="text-[8px] leading-relaxed italic" style={{ color: 'var(--muted)' }}>
+                Directional visualization only.
               </p>
             </div>
-            
-            <div className="space-y-4 bg-white/[0.02] p-4 border border-white/[0.04]">
+
+            <div className="flex flex-col gap-3 p-3 border" style={{ background: 'rgba(255,255,255,0.015)', borderColor: 'var(--hairline)' }}>
               {/* Canopy */}
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-[8px] text-slate-500 uppercase tracking-wider font-mono font-bold">
-                    Canopy Expansion
+                  <label className="text-[8px] font-mono uppercase tracking-wider font-bold" style={{ color: 'var(--muted)' }}>
+                    Canopy
                   </label>
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold tabular-nums">+{canopy}%</span>
+                  <span className="text-[10px] font-mono font-bold tabular-nums" style={{ color: 'var(--positive)' }}>+{canopy}%</span>
                 </div>
                 <div className="relative">
                   <input
                     type="range" min="0" max="50" value={canopy}
                     onChange={(e) => handleMitigationChange('canopy', Number(e.target.value))}
-                    className="w-full h-1.5 bg-white/[0.05] rounded-full appearance-none cursor-pointer accent-emerald-500"
+                    className="w-full h-1 bg-white/[0.05] rounded-none appearance-none cursor-pointer accent-emerald-500"
+                    style={{ touchAction: 'none' }}
                   />
                   <div
-                    className="absolute top-0 left-0 h-1.5 bg-gradient-to-r from-emerald-700 to-emerald-500 rounded-full pointer-events-none"
-                    style={{ width: `${(canopy / 50) * 100}%` }}
+                    className="absolute top-0 left-0 h-1 pointer-events-none"
+                    style={{ width: `${(canopy / 50) * 100}%`, background: 'var(--positive)' }}
                   />
                 </div>
               </div>
               {/* Albedo */}
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <label className="text-[8px] text-slate-500 uppercase tracking-wider font-mono font-bold">
+                  <label className="text-[8px] font-mono uppercase tracking-wider font-bold" style={{ color: 'var(--muted)' }}>
                     Albedo Roofs
                   </label>
-                  <span className="text-[10px] font-mono text-cyan-400 font-bold tabular-nums">+{coolRoof}%</span>
+                  <span className="text-[10px] font-mono font-bold tabular-nums" style={{ color: 'var(--reference)' }}>+{coolRoof}%</span>
                 </div>
                 <div className="relative">
                   <input
                     type="range" min="0" max="100" value={coolRoof}
                     onChange={(e) => handleMitigationChange('coolRoof', Number(e.target.value))}
-                    className="w-full h-1.5 bg-white/[0.05] rounded-full appearance-none cursor-pointer accent-cyan-500"
+                    className="w-full h-1 bg-white/[0.05] rounded-none appearance-none cursor-pointer accent-cyan-500"
+                    style={{ touchAction: 'none' }}
                   />
                   <div
-                    className="absolute top-0 left-0 h-1.5 bg-gradient-to-r from-cyan-700 to-cyan-400 rounded-full pointer-events-none"
-                    style={{ width: `${(coolRoof / 100) * 100}%` }}
+                    className="absolute top-0 left-0 h-1 pointer-events-none"
+                    style={{ width: `${(coolRoof / 100) * 100}%`, background: 'var(--reference)' }}
                   />
                 </div>
               </div>

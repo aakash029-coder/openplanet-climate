@@ -35,7 +35,7 @@ export default function Navbar() {
         </Link>
 
         {/* Center nav — desktop */}
-        <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+        <div className="hidden md:flex items-center gap-12 absolute left-1/2 -translate-x-1/2">
           {[
             { href: '/',         label: 'Home'     },
             { href: '/discover', label: 'Discover' },
@@ -44,8 +44,8 @@ export default function Navbar() {
             <Link
               key={href}
               href={href}
-              className="relative text-[10px] font-mono font-bold uppercase tracking-[0.25em] transition-colors duration-150 group"
-              style={{ color: isActive(href) ? 'var(--text)' : 'var(--muted)' }}
+              className="relative text-[11px] font-sans font-medium uppercase tracking-[0.18em] transition-colors duration-200 hover:text-white group"
+              style={{ color: isActive(href) ? 'var(--text)' : 'var(--text-2)' }}
             >
               {label}
               <span
