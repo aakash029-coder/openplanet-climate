@@ -310,16 +310,14 @@ const METRICS = [
 // MAIN
 // ─────────────────────────────────────────────────────────────────
 export default function CompareModule({ baseTarget }: { baseTarget: string }) {
-  const { primaryData, primaryLoading, fetchPrimaryCity } = useClimateData();
+  const { primaryData, primaryLoading, fetchPrimaryCity, canopy, setCanopy, coolRoof: albedo, setCoolRoof: setAlbedo } = useClimateData();
 
   const [searchQuery2, setSearchQuery2] = useState("");
   const [suggestions2, setSuggestions2] = useState<any[]>([]);
   const [city2Geo, setCity2Geo]         = useState<{ lat: number; lng: number; display_name: string } | null>(null);
 
   const savedState = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('op_sync_state') || '{}') : {};
-  const [ssp, setSsp]                 = useState(() => primaryData?.ssp    || savedState.ssp    || "SSP2-4.5");
-  const [canopy, setCanopy]           = useState(() => primaryData?.canopy_offset_pct ?? (savedState.canopy ?? 0));
-  const [albedo, setAlbedo]           = useState(() => primaryData?.albedo_offset_pct ?? (savedState.albedo ?? 0));
+  const [ssp, setSsp]                 = useState(() => primaryData?.ssp || savedState.ssp || "SSP2-4.5");
   const [compareYear, setCompareYear] = useState(savedState.year ? Number(savedState.year) : 2050);
 
   const [results, setResults]         = useState<CityResult[]>([]);
@@ -340,9 +338,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   // Sync to localStorage
   useEffect(() => {
     localStorage.setItem('op_sync_state', JSON.stringify({
-      ssp, year: compareYear.toString(), canopy, albedo,
+      ssp, year: compareYear.toString(),
     }));
-  }, [ssp, compareYear, canopy, albedo]);
+  }, [ssp, compareYear]);
 
   // When SSP / mitigation changes, re-fetch City A via context (cache prevents duplicates)
   const lastFetchParamsRef = useRef({ ssp: '', canopy: -1, albedo: -1 });
