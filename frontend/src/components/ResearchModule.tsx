@@ -431,7 +431,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
                 </div>
                 {hasMitigation && (
                   <p className="text-[9px] font-mono text-slate-600 mt-3 italic">
-                    Baseline: {formatWBT(selectedProj.wbt_max_c ?? 0)}
+                    Baseline: {selectedProj.wbt_max_c != null ? formatWBT(selectedProj.wbt_max_c) : '—'}
                   </p>
                 )}
               </div>
@@ -618,6 +618,9 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
                 AI analysis unavailable. Refer to the metrics above.
               </p>
             )}
+            <div className="font-mono text-[8px] text-zinc-500 uppercase tracking-widest block mt-4 pt-3 border-t border-white/5 text-center leading-relaxed">
+              SYSTEM DISCLOSURE // The quantitative baseline metrics layer is securely served via direct API telemetry validation grids. The comparative text analysis block utilizes dynamic LHO optimization processing models which may introduce text hallucinations. Cross-verify raw mathematical constants against inline peer-reviewed data registries shown above.
+            </div>
           </div>
           </MobileSection>
         </>

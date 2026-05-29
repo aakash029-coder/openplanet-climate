@@ -29,6 +29,8 @@ import math
 import time
 import json
 import os
+import re
+import unicodedata
 from enum import Enum
 from typing import Optional, NamedTuple
 from dataclasses import dataclass
@@ -81,6 +83,47 @@ try:
 except Exception as e:
     logger.error("Failed to load offline vault in physics.py: %s", e)
     _OFFLINE_VAULT = {}
+
+try:
+    _CITY_BOUNDS_PATH = os.path.join(os.path.dirname(__file__), '../data/city_bounds.json')
+    with open(_CITY_BOUNDS_PATH, 'r') as _f:
+        _CITY_BOUNDS: dict = json.load(_f)
+    logger.info("City Bounds loaded: %d metro bounding boxes", len(_CITY_BOUNDS))
+except Exception as e:
+    logger.error("Failed to load city bounds in physics.py: %s", e)
+    _CITY_BOUNDS = {}
+
+
+def _city_bounds_key(city_name: str) -> Optional[str]:
+    """Slug-match a city query string against the city_bounds dictionary."""
+    def _slug(s: str) -> str:
+        s = unicodedata.normalize('NFD', s).encode('ascii', 'ignore').decode()
+        s = re.sub(r'[^a-z0-9 ]', '', s.lower())
+        return re.sub(r'\s+', '_', s.strip())
+
+    parts = [p.strip() for p in city_name.split(',')]
+    if len(parts) >= 2:
+        slug = _slug(f"{parts[0]} {parts[-1]}")
+        if slug in _CITY_BOUNDS:
+            return slug
+    city_slug = _slug(parts[0])
+    for key in _CITY_BOUNDS:
+        if key.startswith(city_slug):
+            return key
+    return None
+
+
+def _bbox_to_geojson_polygon(lat_min: float, lat_max: float, lng_min: float, lng_max: float) -> dict:
+    """Convert a bounding box to a closed GeoJSON Polygon."""
+    ring = [
+        [lng_min, lat_min],
+        [lng_max, lat_min],
+        [lng_max, lat_max],
+        [lng_min, lat_max],
+        [lng_min, lat_min],
+    ]
+    return {"type": "Polygon", "coordinates": [ring]}
+
 
 _FALLBACK_DEATH_RATE = 7.5  # WHO Global Median
 
@@ -705,29 +748,41 @@ async def get_city_hexagons(
                 clat = float(geo_results[0]["latitude"])
                 clng = float(geo_results[0]["longitude"])
 
-                # Synthetic circular boundary ~10 km radius → polyfill for a full metro mesh
-                RADIUS_KM = 10.0
-                N_POINTS  = 32
-                dlat = RADIUS_KM / 111.0
-                cos_lat = math.cos(math.radians(clat))
-                dlng = RADIUS_KM / (111.0 * cos_lat) if cos_lat > 1e-6 else dlat
-                circle = [
-                    [clng + dlng * math.sin(2 * math.pi * i / N_POINTS),
-                     clat + dlat * math.cos(2 * math.pi * i / N_POINTS)]
-                    for i in range(N_POINTS)
-                ]
-                circle.append(circle[0])  # close the ring
-                geo_dict = {"type": "Polygon", "coordinates": [circle]}
-                hex_set, res_used = _adaptive_polyfill(geo_dict, circle, resolution)
+                # Prefer metro bounding-box polygon over synthetic circle
+                bounds_key = _city_bounds_key(city_name)
+                if bounds_key:
+                    b = _CITY_BOUNDS[bounds_key]
+                    geo_dict = _bbox_to_geojson_polygon(
+                        b["lat_min"], b["lat_max"], b["lng_min"], b["lng_max"]
+                    )
+                    ring = geo_dict["coordinates"][0]
+                    logger.info("Using metro bbox for '%s' (key=%s)", city_name, bounds_key)
+                else:
+                    # Fallback: 30 km radius circle (wider than legacy 10 km)
+                    RADIUS_KM = 30.0
+                    N_POINTS  = 36
+                    dlat = RADIUS_KM / 111.0
+                    cos_lat = math.cos(math.radians(clat))
+                    dlng = RADIUS_KM / (111.0 * cos_lat) if cos_lat > 1e-6 else dlat
+                    ring = [
+                        [clng + dlng * math.sin(2 * math.pi * i / N_POINTS),
+                         clat + dlat * math.cos(2 * math.pi * i / N_POINTS)]
+                        for i in range(N_POINTS)
+                    ]
+                    ring.append(ring[0])
+                    geo_dict = {"type": "Polygon", "coordinates": [ring]}
+                    logger.warning("No metro bbox for '%s' — using 30 km circle", city_name)
+
+                hex_set, res_used = _adaptive_polyfill(geo_dict, ring, resolution)
 
                 if hex_set:
                     hexagons = _cap_hexagons(list(hex_set))
                     return H3CoverageResult(
                         hexagons=tuple(hexagons),
-                        coverage_method="synthetic_circle_fallback",
+                        coverage_method="metro_bbox_polyfill" if bounds_key else "synthetic_circle_fallback",
                         center_lat=clat,
                         center_lng=clng,
-                        boundary_source="open_meteo_geocoder",
+                        boundary_source="city_bounds_vault" if bounds_key else "open_meteo_geocoder",
                         resolution_used=res_used,
                     )
 

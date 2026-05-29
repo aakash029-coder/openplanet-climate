@@ -394,7 +394,6 @@ def _clean_city_keyword(raw_city: str) -> str:
         r"^urban\s+area\s+of\s+",
         r"\s+metropolitan\s+area$",
         r"\s+metro\s+area$",
-        r"\s+city$",
     ]
     for pattern in noise_patterns:
         core_city = re.sub(pattern, "", core_city, flags=re.IGNORECASE).strip()

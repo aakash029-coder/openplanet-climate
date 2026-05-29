@@ -137,7 +137,7 @@ export function CompareTable({
                     {([
                       { label: 'Deaths',    base: proj.attributable_deaths.toLocaleString(), mit: mitDeaths ? Math.round(mitDeaths).toLocaleString() : '—', saved: mitDeaths ? `−${(proj.attributable_deaths - Math.round(mitDeaths)).toLocaleString()}` : '—', bc: 'text-red-400'    },
                       { label: 'Econ Loss', base: fmtUSD(proj.economic_decay_usd),            mit: fmtUSD(mitLoss),                                          saved: mitLoss ? `−${fmtUSD(proj.economic_decay_usd - mitLoss)}` : '—',                         bc: 'text-amber-400'  },
-                      { label: 'Peak Temp', base: `${fmt(proj.peak_tx5d_c)}°C`,               mit: `${fmt(mitTemp ?? 0)}°C`,                                 saved: `−${fmt(proj.peak_tx5d_c - (mitTemp ?? proj.peak_tx5d_c))}°C`,                        bc: 'text-orange-400' },
+                      { label: 'Peak Temp', base: `${fmt(proj.peak_tx5d_c)}°C`,               mit: `${fmt(mitTemp)}°C`,                                 saved: `−${fmt(proj.peak_tx5d_c - (mitTemp ?? proj.peak_tx5d_c))}°C`,                        bc: 'text-orange-400' },
                       { label: 'HW Days',   base: `${proj.heatwave_days}d`,                   mit: `${Math.round(mitHW ?? proj.heatwave_days)}d`,              saved: `−${proj.heatwave_days - Math.round(mitHW ?? proj.heatwave_days)}d`,                 bc: 'text-yellow-400' },
                     ] as const).map((item) => (
                       <div key={item.label} className="border border-white/[0.04] p-3" style={{ background: 'var(--panel)' }}>
@@ -305,6 +305,9 @@ export function CompareTable({
           ) : (
             <p className="text-[10px] font-mono text-slate-600 italic">Comparative analysis unavailable. Please interpret the metrics above.</p>
           )}
+          <div className="font-mono text-[8px] text-zinc-500 uppercase tracking-widest block mt-4 pt-3 border-t border-white/5 text-center leading-relaxed">
+            SYSTEM DISCLOSURE // The quantitative baseline metrics layer is securely served via direct API telemetry validation grids. The comparative text analysis block utilizes dynamic LHO optimization processing models which may introduce text hallucinations. Cross-verify raw mathematical constants against inline peer-reviewed data registries shown above.
+          </div>
         </div>
       </div>
     </>
