@@ -336,11 +336,11 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         />
 
         {/* MAP CONTAINER */}
-        <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full order-first md:order-none">
+        <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full">
           <div
             ref={mapContainerRef}
-            className="flex-1 overflow-hidden relative"
-            style={{ height: 'clamp(44vh, calc(100vh - 112px), 100vh)', minHeight: '320px', background: 'var(--canvas)', border: '1px solid var(--hairline)' }}
+            className="overflow-hidden relative h-[40vh] md:h-[clamp(44vh,calc(100vh_-_112px),100vh)] min-h-[320px]"
+            style={{ background: 'var(--canvas)', border: '1px solid var(--hairline)' }}
           >
             {/* Loading / idle placeholder — prevents DeckGL from initialising into a 0×0 canvas */}
             {!isInitialized && !isLoading && (
@@ -405,11 +405,11 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
             {/* Risk legend */}
             {isInitialized && (
-              <div className="absolute bottom-4 left-3 z-50 bg-[#08080A]/95 px-3 py-2.5"
+              <div className="absolute bottom-4 left-3 z-50 bg-[#08080A]/95 px-2 py-1.5 md:px-3 md:py-2.5 origin-bottom-left scale-90 md:scale-100"
                    style={{ border: '1px solid var(--hairline)' }}>
                 {/* Eyebrow */}
-                <p className="font-mono uppercase tracking-[0.14em] mb-2"
-                   style={{ fontSize: '0.6875rem', color: 'var(--muted)' }}>
+                <p className="font-mono uppercase tracking-[0.14em] mb-1 md:mb-2 text-[9px] md:text-[11px]"
+                   style={{ color: 'var(--muted)' }}>
                   Heat exposure (°C) · {year} · {ssp}
                 </p>
                 {/* Quantitative ramp with 5 stops */}

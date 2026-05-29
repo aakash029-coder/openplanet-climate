@@ -127,8 +127,8 @@ function DashboardPageInner() {
       {/* Dashboard tab nav */}
       <nav className="w-full glass-nav border-b pt-16 sticky top-0 z-[40]"
            style={{ borderBottomColor: 'var(--hairline)' }}>
-        <div className="w-full overflow-x-auto">
-          <div className="flex items-center justify-between px-5 md:px-10 lg:px-16 min-w-max md:min-w-0 w-full">
+        <div className="w-full overflow-x-auto scrollbar-none">
+          <div className="flex items-center justify-between px-4 md:px-10 lg:px-16 min-w-max md:min-w-0 w-full">
             <div className="flex items-center">
               {TABS.map((tab) => {
                 const isLocked = !targetCity && tab !== 'Dashboard';
@@ -138,7 +138,7 @@ function DashboardPageInner() {
                     key={tab}
                     disabled={isLocked}
                     onClick={() => setActiveTab(tab)}
-                    className={`relative whitespace-nowrap transition-all duration-200 px-4 md:px-5 font-sans text-[11px] uppercase tracking-[0.12em] font-medium flex items-center min-h-[52px]
+                    className={`relative whitespace-nowrap transition-all duration-200 px-3 md:px-5 font-sans text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-medium flex items-center min-h-[52px]
                       ${isActive      ? '' : ''}
                       ${isLocked      ? 'cursor-not-allowed' : 'hover:text-white'}
                     `}
