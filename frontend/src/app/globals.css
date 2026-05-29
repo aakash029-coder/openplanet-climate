@@ -4,12 +4,12 @@
 
 /* ── Design token layer ──────────────────────────────────────────────────── */
 :root {
-  --canvas:          #08080A;
-  --panel:           #0C0C0E;
-  --raised:          #111113;
+  --canvas:          #060608;
+  --panel:           #0B0B0D;
+  --raised:          #101012;
   --hairline:        rgba(255, 255, 255, 0.06);
-  --hairline-strong: rgba(255, 255, 255, 0.10);
-  --text:            #ECECEE;
+  --hairline-strong: rgba(255, 255, 255, 0.12);
+  --text:            #EDEDEF;
   --text-2:          #A1A1AA;
   --muted:           #52525B;
   --heat-1:          #2F6F8F;
@@ -45,21 +45,126 @@ body {
   touch-action: pan-y;
 }
 
-::-webkit-scrollbar        { width: 5px; }
-::-webkit-scrollbar-track  { background: var(--canvas); }
-::-webkit-scrollbar-thumb  { background: #1c1c1e; border-radius: 0; }
-::-webkit-scrollbar-thumb:hover { background: #2c2c2e; }
+/* ── Scrollbars ── */
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.06); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.10); }
 
-.custom-scrollbar::-webkit-scrollbar       { width: 3px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: var(--canvas); }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #1c1c1e; border-radius: 0; }
+.custom-scrollbar::-webkit-scrollbar       { width: 2px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 0; }
 
+/* ── Premium Glass Utilities ── */
+.glass {
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.glass-strong {
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.glass-nav {
+  backdrop-filter: blur(32px) saturate(200%) brightness(0.8);
+  -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(0.8);
+  background: rgba(6, 6, 8, 0.92);
+}
+
+/* ── Glow utilities ── */
+.glow-red    { text-shadow: 0 0 24px rgba(162, 58, 48, 0.5), 0 0 8px rgba(162, 58, 48, 0.3); }
+.glow-amber  { text-shadow: 0 0 24px rgba(183, 146, 55, 0.5), 0 0 8px rgba(183, 146, 55, 0.3); }
+.glow-green  { text-shadow: 0 0 24px rgba(94, 140, 106, 0.5), 0 0 8px rgba(94, 140, 106, 0.3); }
+.glow-copper { text-shadow: 0 0 32px rgba(176, 141, 87, 0.6), 0 0 12px rgba(176, 141, 87, 0.3); }
+.glow-blue   { text-shadow: 0 0 24px rgba(47, 111, 143, 0.6), 0 0 10px rgba(47, 111, 143, 0.3); }
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #EDEDEF 0%, #A1A1AA 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-copper {
+  background: linear-gradient(135deg, #C9A96E 0%, #B08D57 50%, #8A6D3F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Animations ── */
 @keyframes spin-reverse {
   from { transform: rotate(360deg); }
   to   { transform: rotate(0deg); }
 }
 .animate-spin-reverse { animation: spin-reverse 1s linear infinite; }
 
-.font-mono { font-variant-numeric: tabular-nums; }
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
 
+.animate-fadeSlideDown { animation: fadeSlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-fadeSlideUp   { animation: fadeSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* ── Premium interactive states ── */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+  background-size: 400px 100%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.btn-primary:hover::after { opacity: 1; }
+.btn-primary:active { transform: scale(0.99); }
+
+/* ── Touch target minimum ── */
+.touch-min { min-height: 44px; min-width: 44px; }
+
+/* ── Card accent line ── */
+.card-accent-top::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+}
+
+/* ── Input focus ring ── */
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+}
+
+/* ── Typography ── */
+.font-mono { font-variant-numeric: tabular-nums; }
 .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.5rem 0; }
+
+/* ── Premium divider ── */
+.divider-gradient {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.06) 70%, transparent);
+}
