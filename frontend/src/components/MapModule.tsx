@@ -304,10 +304,10 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   ], [h3Data, viewState.zoom]);
 
   const SustainedHeatLabel = () => (
-    <div className="flex items-center gap-1.5 mb-1 relative group w-max">
+    <div className="flex items-center gap-1.5 mb-1 relative z-30 group w-max">
       <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">Sustained Heat Average</p>
       <span className="flex items-center justify-center w-3 h-3 rounded-full border border-slate-600 text-[7px] text-slate-400 cursor-help">i</span>
-      <div className="absolute bottom-full left-0 mb-1 w-56 p-2 bg-[#060f1e] border border-slate-700 text-slate-400 text-[8px] leading-relaxed rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2 bg-[#060f1e] border border-slate-700 text-slate-400 text-[8px] leading-relaxed rounded shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[9999]">
         Note: This represents the decadal average of the hottest consecutive 5-day periods (Tx5d) across a 31km spatial grid. It smooths out 1-day anomalous spikes to provide stable actuarial baselines for economic models.
       </div>
     </div>
@@ -464,7 +464,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
       {/* ── HISTORICAL DATA ── */}
       {isInitialized && historicalEras && (
-        <div className="w-full max-w-[1440px] mt-2 relative overflow-hidden"
+        <div className="w-full max-w-[1440px] mt-2 relative overflow-visible"
              style={{ border: '1px solid var(--hairline)', background: 'var(--panel)' }}>
           {/* Header */}
           <div className="flex items-center gap-3 px-5 md:px-8 py-4 border-b" style={{ borderColor: 'var(--hairline)' }}>
@@ -477,7 +477,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
           <div className="grid grid-cols-1 md:grid-cols-3" style={{ borderTop: '1px solid var(--hairline)' }}>
             {/* Era 1 — Baseline */}
-            <div className="relative flex flex-col p-5 md:p-7 overflow-hidden" style={{ borderBottom: '1px solid var(--hairline)' }}>
+            <div className="relative flex flex-col p-5 md:p-7 overflow-visible" style={{ borderBottom: '1px solid var(--hairline)' }}>
               <div className="absolute top-0 left-0 right-0 h-px"
                    style={{ background: 'linear-gradient(90deg, transparent, rgba(47,111,143,0.5), transparent)' }} />
               <div className="flex items-center justify-between mb-5">
@@ -506,7 +506,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
             </div>
 
             {/* Era 2 — Warming Trend */}
-            <div className="relative flex flex-col p-5 md:p-7 overflow-hidden"
+            <div className="relative flex flex-col p-5 md:p-7 overflow-visible"
                  style={{ borderBottom: '1px solid var(--hairline)', borderLeft: '0px', borderRight: '0px' }}>
               <div className="absolute top-0 left-0 right-0 h-px"
                    style={{ background: 'linear-gradient(90deg, transparent, rgba(183,146,55,0.5), transparent)' }} />
@@ -539,7 +539,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
             </div>
 
             {/* Era 3 — Current Climate */}
-            <div className="relative flex flex-col p-5 md:p-7 overflow-hidden">
+            <div className="relative flex flex-col p-5 md:p-7 overflow-visible">
               <div className="absolute top-0 left-0 right-0 h-px"
                    style={{ background: 'linear-gradient(90deg, transparent, rgba(162,58,48,0.5), transparent)' }} />
               <div className="flex items-center justify-between mb-5">

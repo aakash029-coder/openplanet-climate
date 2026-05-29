@@ -69,6 +69,14 @@ function DashboardPageInner() {
     setVisitedTabs(prev => { const s = new Set(prev); s.add(activeTab); return s; });
   }, [activeTab]);
 
+  // Snap viewport to top on every tab transition
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    const container = document.getElementById('dashboard-scroll-container')
+      || document.querySelector('.dashboard-viewport-gate') as HTMLElement | null;
+    if (container) container.scrollTop = 0;
+  }, [activeTab]);
+
   const handleReset = () => {
     setTargetCity(null);
     setActiveTab('Dashboard');
