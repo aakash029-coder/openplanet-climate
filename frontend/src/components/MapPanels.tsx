@@ -113,8 +113,7 @@ export const LeftPanel = ({
   return (
     /* Mobile: order-last so map renders above; bounded to 75vh so sliders are visible
        without scrolling the page. Desktop: fixed-width sidebar, full panel height. */
-    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col order-last md:order-none
-                    max-h-[75vh] md:max-h-none md:h-full
+    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col md:h-full
                     overflow-y-auto custom-scrollbar pointer-events-auto"
          style={{ background: 'var(--panel)', border: '1px solid var(--hairline)' }}>
       {/* Panel header */}
@@ -142,7 +141,7 @@ export const LeftPanel = ({
               placeholder="Search city..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); if (selectedCity) setSelectedCity(null); }}
-              className="w-full pl-9 pr-3 text-[11px] outline-none transition-all duration-200 placeholder:opacity-30"
+              className="w-full pl-9 pr-3 text-[11px] outline-none transition-all duration-200 placeholder:opacity-30 rounded-none"
               style={{
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid var(--hairline)',
@@ -196,7 +195,7 @@ export const LeftPanel = ({
             <select
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              className="w-full px-3 text-[11px] cursor-pointer outline-none transition-all duration-200 appearance-none"
+              className="w-full px-3 text-[11px] cursor-pointer outline-none transition-all duration-200 appearance-none rounded-none"
               style={{
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid var(--hairline)',
@@ -220,7 +219,7 @@ export const LeftPanel = ({
             <select
               value={ssp}
               onChange={(e) => setSsp(e.target.value)}
-              className="w-full px-3 text-[11px] cursor-pointer outline-none transition-all duration-200 appearance-none"
+              className="w-full px-3 text-[11px] cursor-pointer outline-none transition-all duration-200 appearance-none rounded-none"
               style={{
                 background: 'rgba(255,255,255,0.03)',
                 border: '1px solid var(--hairline)',
@@ -379,7 +378,7 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
   const isReady = isInitialized && !primaryLoading && projection != null;
 
   return (
-    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col h-full pointer-events-auto overflow-hidden"
+    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col md:h-full pointer-events-auto overflow-hidden"
          style={{ border: '1px solid var(--hairline)', background: 'var(--panel)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ borderBottom: '1px solid var(--hairline)' }}>
