@@ -483,59 +483,27 @@ def create_app() -> FastAPI:
         except Exception as exc:
             raise _data_unavailable(str(exc))
 
-        # ── 4. CMIP6 projections ──────────────────────────────────────────
-        chart_years = sorted({2030, 2040, 2050, target_year})
-        chart_years = [y for y in chart_years if 2015 <= y <= 2100]
-        fetch_years = [y for y in chart_years if y <= 2050]
+        # ── 4. CMIP6 projections — capped at PROJECTION_HORIZON_YEAR ────────
+        chart_years = sorted(
+            {yr for yr in {2030, 2040, 2050, target_year} if yr <= PROJECTION_HORIZON_YEAR}
+        )
 
         results = await asyncio.gather(
             *[
                 fetch_cmip6_projection(
                     lat, lng, ssp_code, yr, p95, total_cooling
                 )
-                for yr in fetch_years
+                for yr in chart_years
             ],
             return_exceptions=True,
         )
 
         projections: dict = {}
-        proj_2050: Optional[dict] = None
-        for yr, res in zip(fetch_years, results):
+        for yr, res in zip(chart_years, results):
             if isinstance(res, Exception):
                 logger.warning("[predict] CMIP6 year=%d failed: %s", yr, res)
                 continue
             projections[yr] = res
-            if yr == 2050:
-                proj_2050 = res
-
-        # ── 5. Post-2050 IPCC AR6 extrapolation ──────────────────────────
-        for yr in chart_years:
-            if yr <= 2050 or yr in projections:
-                continue
-            if proj_2050 is None:
-                raise _data_unavailable(
-                    f"CMIP6 2050 base projection required to extrapolate "
-                    f"to {yr} but failed to fetch."
-                )
-            decades = (yr - 2050) / 10.0
-            if extreme:
-                t_add = (0.35 * decades) + (0.04 * (decades ** 2))
-                hw_mult = (0.20 * decades) + (0.03 * (decades ** 2))
-            else:
-                t_add = 0.25 * decades * math.log1p(decades / 2.0)
-                hw_mult = 0.15 * decades * math.log1p(decades / 2.0)
-
-            projections[yr] = {
-                "tx5d_c": proj_2050["tx5d_c"] + t_add,
-                "hw_days": min(365.0, proj_2050["hw_days"] * (1 + hw_mult)),
-                "mean_temp_c": proj_2050["mean_temp_c"] + t_add,
-                "hw_days_raw": min(
-                    365.0,
-                    proj_2050.get("hw_days_raw", proj_2050["hw_days"]) * (1 + hw_mult),
-                ),
-                "source": "ipcc_ar6_extrapolation",
-                "n_models": proj_2050.get("n_models", 1),
-            }
 
         # ── 6. Zone-aware chart series ────────────────────────────────────
         heatwave_chart: list = []
@@ -825,32 +793,11 @@ def create_app() -> FastAPI:
         wbt = 20.0
         tx5d = p95
 
-        for year in [2030, 2050, 2075, 2100]:
+        for year in [2030, 2050]:
             try:
-                if year <= 2050:
-                    if year not in base_projs:
-                        raise ValueError(f"CMIP6 data for {year} unavailable.")
-                    proj = base_projs[year]
-                else:
-                    if 2050 not in base_projs:
-                        raise ValueError(
-                            "2050 base projection required for AR6 extrapolation."
-                        )
-                    decades = (year - 2050) / 10.0
-                    if extreme:
-                        t_add = (0.35 * decades) + (0.04 * (decades ** 2))
-                        hw_mult = (0.20 * decades) + (0.03 * (decades ** 2))
-                    else:
-                        t_add = 0.25 * decades * math.log1p(decades / 2.0)
-                        hw_mult = 0.15 * decades * math.log1p(decades / 2.0)
-                    b = base_projs[2050]
-                    proj = {
-                        "tx5d_c": b["tx5d_c"] + t_add,
-                        "hw_days": min(365.0, b["hw_days"] * (1 + hw_mult)),
-                        "mean_temp_c": b["mean_temp_c"] + t_add,
-                        "source": "ipcc_ar6_extrapolation",
-                        "n_models": b.get("n_models", 1),
-                    }
+                if year not in base_projs:
+                    raise ValueError(f"CMIP6 data for {year} unavailable.")
+                proj = base_projs[year]
 
                 tx5d = proj["tx5d_c"]
                 hw_days = proj["hw_days"]

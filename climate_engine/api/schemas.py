@@ -71,7 +71,7 @@ class PredictionRequest(BaseModel):
     lat:      float = Field(..., ge=-90.0,  le=90.0)
     lng:      float = Field(..., ge=-180.0, le=180.0)
     ssp:      str   = Field(..., pattern=r"^SSP[1-5]-[0-9.]+$")
-    year:     str   = Field(..., pattern=r"^(20[0-9]{2}|2100)$")
+    year:     str   = Field(..., pattern=r"^(2030|2040|2050)$")
     canopy:   int   = Field(..., ge=0, le=100)
     coolRoof: int   = Field(..., ge=0, le=100)
 
