@@ -111,21 +111,25 @@ export const LeftPanel = ({
   canopy, coolRoof, handleMitigationChange, isSimulating,
 }: LeftPanelProps) => {
   return (
-    <div className="bg-[var(--panel)] p-4 w-full md:w-[272px] md:min-w-[272px] flex flex-col h-full pointer-events-auto overflow-y-auto custom-scrollbar" style={{ border: '1px solid var(--hairline)' }}>
+    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col h-full pointer-events-auto overflow-y-auto custom-scrollbar"
+         style={{ background: 'var(--panel)', border: '1px solid var(--hairline)' }}>
       {/* Panel header */}
-      <div className="flex items-center gap-2 mb-5 pb-4 border-b border-white/[0.05]">
-        <span className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>Projection controls</span>
+      <div className="flex items-center gap-2 px-5 py-4 border-b" style={{ borderColor: 'var(--hairline)' }}>
+        <div className="w-1 h-1 rounded-full" style={{ background: 'var(--muted)' }} />
+        <span className="font-mono text-[9px] uppercase tracking-[0.25em] font-semibold" style={{ color: 'var(--muted)' }}>
+          Projection Controls
+        </span>
       </div>
-      <div className="flex flex-col gap-5 flex-1">
-        
+      <div className="flex flex-col gap-5 flex-1 p-5">
+
         {/* LOCATION SEARCH */}
         <div className="space-y-2">
-          <label className="text-[8px] font-mono text-slate-500 uppercase tracking-[0.2em] font-bold flex items-center">
+          <label className="text-[8px] font-mono uppercase tracking-[0.2em] font-bold flex items-center" style={{ color: 'var(--muted)' }}>
             Location
           </label>
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--muted)' }}>
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
               </svg>
             </div>
@@ -134,7 +138,14 @@ export const LeftPanel = ({
               placeholder="Search city..."
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); if (selectedCity) setSelectedCity(null); }}
-              className="w-full bg-white/[0.03] border border-white/[0.05] focus:border-white/20 rounded-none pl-8 pr-3 py-2.5 text-[11px] text-slate-200 outline-none transition-colors duration-200 placeholder:text-slate-700"
+              className="w-full pl-9 pr-3 text-[11px] outline-none transition-all duration-200 placeholder:opacity-30"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid var(--hairline)',
+                color: 'var(--text)',
+                minHeight: '44px',
+                padding: '0 12px 0 36px',
+              }}
             />
             {suggestions.length > 0 && !selectedCity && (
               <div className="absolute top-full left-0 w-full mt-1.5 bg-black border border-white/[0.05] overflow-hidden z-[9999] shadow-2xl">
@@ -181,8 +192,16 @@ export const LeftPanel = ({
             <select
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/[0.05] focus:border-white/20 rounded-none px-3 py-2.5 text-[11px] text-slate-300 cursor-pointer outline-none transition-colors duration-200 appearance-none"
-              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+              className="w-full px-3 text-[11px] cursor-pointer outline-none transition-all duration-200 appearance-none"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid var(--hairline)',
+                color: 'var(--text)',
+                minHeight: '44px',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2352525B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+              }}
             >
               <option value="2030">2030 – Near-term</option>
               <option value="2050">2050 – Mid-century</option>
@@ -197,8 +216,16 @@ export const LeftPanel = ({
             <select
               value={ssp}
               onChange={(e) => setSsp(e.target.value)}
-              className="w-full bg-white/[0.03] border border-white/[0.05] focus:border-white/20 rounded-none px-3 py-2.5 text-[11px] text-slate-300 cursor-pointer outline-none transition-colors duration-200 appearance-none"
-              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+              className="w-full px-3 text-[11px] cursor-pointer outline-none transition-all duration-200 appearance-none"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid var(--hairline)',
+                color: 'var(--text)',
+                minHeight: '44px',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2352525B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+              }}
             >
               <option value="SSP2-4.5">SSP2-4.5 – Moderate</option>
               <option value="SSP5-8.5">SSP5-8.5 – High</option>
@@ -210,9 +237,9 @@ export const LeftPanel = ({
         <button
           onClick={handleInitialize}
           disabled={!canGenerate || isLoading}
-          className="relative w-full py-2.5 text-[11px] font-sans font-semibold uppercase tracking-wider transition-colors duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
-          style={{ background: 'var(--text)', color: 'var(--canvas)' }}
-          onMouseEnter={e => (e.currentTarget.style.background = '#ffffff')}
+          className="btn-primary relative w-full text-[11px] font-sans font-semibold uppercase tracking-wider transition-all duration-150 disabled:opacity-25 disabled:cursor-not-allowed overflow-hidden"
+          style={{ background: 'var(--text)', color: 'var(--canvas)', minHeight: '48px', touchAction: 'manipulation' }}
+          onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.background = '#ffffff'; }}
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--text)')}
         >
           {isLoading ? (
@@ -346,12 +373,15 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
   const isReady = isInitialized && !primaryLoading && projection != null;
 
   return (
-    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col h-full pointer-events-auto overflow-hidden" style={{ border: '1px solid var(--hairline)', background: 'var(--panel)' }}>
+    <div className="w-full md:w-[272px] md:min-w-[272px] flex flex-col h-full pointer-events-auto overflow-hidden"
+         style={{ border: '1px solid var(--hairline)', background: 'var(--panel)' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.05] bg-white/[0.01] shrink-0">
+      <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ borderBottom: '1px solid var(--hairline)' }}>
         <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-          <span className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.25em] font-bold">Projected indicators</span>
+          <div className="w-1 h-1 rounded-full" style={{ background: 'var(--muted)' }} />
+          <span className="text-[9px] font-mono uppercase tracking-[0.25em] font-semibold" style={{ color: 'var(--muted)' }}>
+            Projected Indicators
+          </span>
         </div>
         {isReady && (
           <span className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>
@@ -376,43 +406,43 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
         <div className="flex flex-col flex-grow overflow-y-auto custom-scrollbar divide-y divide-white/[0.04]">
 
           {/* ── DEATHS ── */}
-          <div className="p-4 space-y-3">
-            <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
+          <div className="p-5 space-y-3" style={{ borderBottom: '1px solid var(--hairline)' }}>
+            <span className="text-[8px] font-mono uppercase tracking-widest font-bold flex items-center" style={{ color: 'var(--muted)' }}>
               Attributable Deaths
             </span>
             <div>
               {isSimulating ? (
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-mono text-slate-600">{deaths} <span className="text-slate-700 text-[8px]">baseline</span></p>
-                  <p className="text-[26px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.deaths || deaths}</p>
+                  <p className="text-[10px] font-mono tabular-nums" style={{ color: 'var(--muted)' }}>{deaths} <span className="text-[8px]">baseline</span></p>
+                  <p className="text-[28px] font-mono font-bold leading-none tabular-nums" style={{ color: 'var(--positive)' }}>↓ {mitigatedData?.deaths || deaths}</p>
                 </div>
               ) : (
-                <p className="text-[30px] font-mono font-bold leading-none text-red-400 tabular-nums">{deaths}</p>
+                <p className="text-[32px] font-mono font-bold leading-none tabular-nums glow-red" style={{ color: 'var(--heat-4)' }}>{deaths}</p>
               )}
             </div>
-            <p className="text-[8px] font-mono text-slate-600 leading-relaxed">
-              95% CI ±15% · Gasparrini et al. 2017 · Lancet Planetary Health
+            <p className="text-[8px] font-mono leading-relaxed" style={{ color: 'var(--muted)' }}>
+              95% CI ±15% · Gasparrini et al. 2017
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedDeaths || '0'} />}
             <AuditButton label="↳ show derivation" onClick={() => openAudit('mortality')} />
           </div>
 
           {/* ── ECONOMIC ── */}
-          <div className="p-4 space-y-3">
-            <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
+          <div className="p-5 space-y-3" style={{ borderBottom: '1px solid var(--hairline)' }}>
+            <span className="text-[8px] font-mono uppercase tracking-widest font-bold flex items-center" style={{ color: 'var(--muted)' }}>
               Economic Impact
             </span>
             <div>
               {isSimulating ? (
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-mono text-slate-600">{loss} <span className="text-slate-700 text-[8px]">baseline</span></p>
-                  <p className="text-[22px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.loss || loss}</p>
+                  <p className="text-[10px] font-mono tabular-nums" style={{ color: 'var(--muted)' }}>{loss} <span className="text-[8px]">baseline</span></p>
+                  <p className="text-[24px] font-mono font-bold leading-none tabular-nums" style={{ color: 'var(--positive)' }}>↓ {mitigatedData?.loss || loss}</p>
                 </div>
               ) : (
-                <p className="text-[26px] font-mono font-bold leading-none text-amber-400 tabular-nums">{loss}</p>
+                <p className="text-[28px] font-mono font-bold leading-none tabular-nums glow-amber" style={{ color: 'var(--heat-2)' }}>{loss}</p>
               )}
             </div>
-            <p className="text-[8px] font-mono text-slate-600">
+            <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>
               95% CI ±8% · Burke et al. 2018 · Nature
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedLoss || '0'} />}
@@ -420,35 +450,35 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
           </div>
 
           {/* ── HEATWAVE + TEMP ── */}
-          <div className="p-4 space-y-4">
+          <div className="p-5 space-y-5">
             <div className="space-y-2">
-              <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
+              <span className="text-[8px] font-mono uppercase tracking-widest font-bold flex items-center" style={{ color: 'var(--muted)' }}>
                 Heatwave Days
               </span>
               {isSimulating ? (
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-mono text-slate-600">{heatwave}d <span className="text-slate-700 text-[8px]">baseline</span></p>
-                  <p className="text-[22px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.heatwave || heatwave}d</p>
+                  <p className="text-[10px] font-mono tabular-nums" style={{ color: 'var(--muted)' }}>{heatwave}d <span className="text-[8px]">baseline</span></p>
+                  <p className="text-[24px] font-mono font-bold leading-none tabular-nums" style={{ color: 'var(--positive)' }}>↓ {mitigatedData?.heatwave || heatwave}d</p>
                 </div>
               ) : (
-                <p className="text-[24px] font-mono font-bold leading-none text-red-400 tabular-nums">{heatwave}d</p>
+                <p className="text-[26px] font-mono font-bold leading-none tabular-nums glow-red" style={{ color: 'var(--heat-3)' }}>{heatwave}d</p>
               )}
-              <p className="text-[8px] font-mono text-slate-600">days above historical P95 · CMIP6 ensemble</p>
+              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>days above historical P95 · CMIP6</p>
             </div>
 
-            <div className="space-y-2 pt-4 border-t border-white/[0.04]">
-              <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest font-bold flex items-center">
+            <div className="space-y-2 pt-4" style={{ borderTop: '1px solid var(--hairline)' }}>
+              <span className="text-[8px] font-mono uppercase tracking-widest font-bold flex items-center" style={{ color: 'var(--muted)' }}>
                 Peak Tx5d
               </span>
               {isSimulating ? (
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-mono text-slate-600">{temp}°C <span className="text-slate-700 text-[8px]">baseline</span></p>
-                  <p className="text-[22px] font-mono font-bold leading-none text-emerald-400">↓ {mitigatedData?.temp || temp}°C</p>
+                  <p className="text-[10px] font-mono tabular-nums" style={{ color: 'var(--muted)' }}>{temp}°C <span className="text-[8px]">baseline</span></p>
+                  <p className="text-[24px] font-mono font-bold leading-none tabular-nums" style={{ color: 'var(--positive)' }}>↓ {mitigatedData?.temp || temp}°C</p>
                 </div>
               ) : (
-                <p className="text-[24px] font-mono font-bold leading-none text-red-400 tabular-nums">{temp}°C</p>
+                <p className="text-[26px] font-mono font-bold leading-none tabular-nums glow-amber" style={{ color: 'var(--heat-2)' }}>{temp}°C</p>
               )}
-              <p className="text-[8px] font-mono text-slate-600">TX5d decadal mean · ERA5 baseline · ERA5 reanalysis</p>
+              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>TX5d decadal mean · ERA5 reanalysis</p>
             </div>
           </div>
         </div>

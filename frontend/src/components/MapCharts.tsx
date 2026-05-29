@@ -14,7 +14,7 @@ import { fmtLoss } from './MapHelpers';
 import type { Projection } from '@/context/ClimateDataContext';
 
 export const LoadingSpinner = () => (
-  <div className="flex flex-col items-center justify-center w-full py-32 bg-[#020617]">
+  <div className="flex flex-col items-center justify-center w-full py-32" style={{ background: 'var(--canvas)' }}>
     <div className="relative w-16 h-16 mb-8">
       {/* Outer ring */}
       <div className="absolute inset-0 rounded-full border border-cyan-500/10 border-t-cyan-500/60 animate-spin" style={{ animationDuration: '1.2s' }} />
@@ -109,9 +109,11 @@ const HeatwaveTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   const val = payload[0]?.value;
   return (
-    <div className="bg-[#0d1f3c] border border-slate-700/60 px-3.5 py-2.5" style={{ borderRadius: 0 }}>
-      <p className="text-[9px] font-mono text-slate-500 mb-1.5 uppercase tracking-widest">{label}</p>
-      <p className="text-[15px] font-mono text-blue-400 font-bold tabular-nums">{val}<span className="text-[10px] text-slate-500 ml-0.5">d</span></p>
+    <div className="px-3.5 py-2.5" style={{ background: 'var(--panel)', border: '1px solid var(--hairline-strong)', borderRadius: 0 }}>
+      <p className="text-[9px] font-mono uppercase tracking-widest mb-1.5" style={{ color: 'var(--muted)' }}>{label}</p>
+      <p className="text-[15px] font-mono font-bold tabular-nums" style={{ color: 'var(--heat-1)' }}>
+        {val}<span className="text-[10px] ml-0.5" style={{ color: 'var(--muted)' }}>d</span>
+      </p>
     </div>
   );
 };
@@ -168,8 +170,8 @@ const MitigationDonut = ({ reductionPct }: { reductionPct: number }) => {
 };
 
 /* ─── Shared chart axis/grid styles ─── */
-const axisProps = { stroke: '#1e2d45', tick: { fill: '#334155', fontSize: 9, fontFamily: 'ui-monospace, monospace' } };
-const gridProps = { strokeDasharray: '3 3', stroke: '#0f1f33', vertical: false };
+const axisProps = { stroke: 'rgba(255,255,255,0.04)', tick: { fill: '#52525B', fontSize: 9, fontFamily: 'ui-monospace, monospace' } };
+const gridProps = { strokeDasharray: '2 4', stroke: 'rgba(255,255,255,0.04)', vertical: false };
 
 export const AnalyticsSection = ({
   isLoading,
@@ -211,14 +213,14 @@ export const AnalyticsSection = ({
 
       {/* ── CHARTS AREA ── */}
       {(chartData?.heatwave?.length > 0 || chartData?.economic?.length > 0) && (
-        <section className="px-4 md:px-8 lg:px-10 py-10 w-full border-b border-slate-800/30">
+        <section className="px-4 md:px-8 lg:px-10 py-10 w-full" style={{ borderBottom: '1px solid var(--hairline)' }}>
           {/* Section header */}
           <div className="flex items-center gap-3 mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-px h-4 bg-gradient-to-b from-transparent via-cyan-500 to-transparent" />
-              <span className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>Trend Projections</span>
+              <div className="w-px h-4" style={{ background: 'linear-gradient(180deg, transparent, var(--heat-1), transparent)' }} />
+              <span className="font-mono text-[9px] uppercase tracking-[0.25em] font-semibold" style={{ color: 'var(--muted)' }}>Trend Projections</span>
             </div>
-            <div className="flex-1 h-px bg-gradient-to-r from-slate-800 to-transparent" />
+            <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, var(--hairline), transparent)' }} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -233,7 +235,7 @@ export const AnalyticsSection = ({
                   </p>
                 </div>
                 <p className="text-[8px] font-mono text-slate-600 mb-4 ml-4">Annual days above historical P95</p>
-                <div className="h-[240px] w-full relative" style={{ height: 240, borderTop: '1px solid var(--hairline)' }}>
+                <div className="w-full relative" style={{ height: 'clamp(180px, 28vw, 240px)', borderTop: '1px solid var(--hairline)' }}>
                   {chartData.heatwave.length === 0 ? (
                     <div className="h-full w-full flex items-center justify-center font-sans text-[11px]" style={{ color: 'var(--muted)' }}>
                       No data — run a projection to populate this chart
@@ -267,7 +269,7 @@ export const AnalyticsSection = ({
                   </p>
                 </div>
                 <p className="text-[8px] font-mono text-slate-600 mb-4 ml-4">Baseline GDP/productivity loss projection</p>
-                <div className="h-[240px] w-full relative" style={{ height: 240, borderTop: '1px solid var(--hairline)' }}>
+                <div className="w-full relative" style={{ height: 'clamp(180px, 28vw, 240px)', borderTop: '1px solid var(--hairline)' }}>
                   {chartData.economic.length === 0 ? (
                     <div className="h-full w-full flex items-center justify-center font-sans text-[11px]" style={{ color: 'var(--muted)' }}>
                       No data — run a projection to populate this chart
@@ -282,7 +284,7 @@ export const AnalyticsSection = ({
                       <XAxis dataKey="year" {...axisProps} />
                       <YAxis {...axisProps} />
                       <RechartsTooltip
-                        contentStyle={{ background: '#0d1f3c', border: '1px solid #1e3a5f', borderRadius: 0, fontSize: '11px', fontFamily: 'ui-monospace, monospace', padding: '10px 14px' }}
+                        contentStyle={{ background: 'var(--panel)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 0, fontSize: '11px', fontFamily: 'ui-monospace, monospace', padding: '10px 14px', color: 'var(--text)' }}
                         formatter={(v: any, name: any) => [`${Number(v).toFixed(0)}`, name]}
                       />
                       <Bar dataKey="noAction" name="Baseline (No Action)" fill="#A23A30" radius={[0, 0, 0, 0]} />
@@ -307,12 +309,12 @@ export const AnalyticsSection = ({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-7">
             <div className="flex items-center gap-3">
               <div className="relative flex items-center justify-center w-6 h-6">
-                <div className="absolute w-6 h-6 rounded-full bg-amber-400/10 animate-ping" style={{ animationDuration: '2.5s' }} />
-                <div className="w-2 h-2 rounded-full bg-amber-400" />
+                <div className="absolute w-6 h-6 rounded-full animate-ping" style={{ background: 'rgba(183,146,55,0.10)', animationDuration: '2.5s' }} />
+                <div className="w-2 h-2 rounded-full" style={{ background: 'var(--heat-2)' }} />
               </div>
               <div>
-                <p className="text-[11px] font-mono text-slate-200 uppercase tracking-[0.25em] font-bold">
-                  Analyst summary
+                <p className="text-[11px] font-mono uppercase tracking-[0.25em] font-bold" style={{ color: 'var(--text)' }}>
+                  Analyst Summary
                 </p>
                 {selectedCity && (
                   <p className="font-serif text-body-ui mt-0.5" style={{ color: 'var(--text-2)' }}>
@@ -321,9 +323,9 @@ export const AnalyticsSection = ({
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 py-1.5 px-3 bg-slate-900/60 border border-slate-800/60">
-              <div className="w-1.5 h-1.5 rounded-full bg-cyan-500/60" />
-              <p className="text-[8px] font-mono text-slate-600 uppercase tracking-widest">
+            <div className="flex items-center gap-2 py-1.5 px-3" style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+              <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--heat-1)' }} />
+              <p className="text-[8px] font-mono uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
                 CMIP6 ensemble · computed projection
               </p>
             </div>

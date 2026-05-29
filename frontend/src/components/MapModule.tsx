@@ -333,11 +333,11 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   );
 
   return (
-    <div className="w-full flex flex-col items-center py-6 px-4 bg-[var(--canvas)] min-h-screen gap-0">
+    <div className="w-full flex flex-col items-center py-4 md:py-6 px-3 md:px-4 bg-[var(--canvas)] min-h-screen gap-0">
 
       {/* ── MAP AREA ── */}
-      <div className="w-full max-w-[1440px] flex flex-col md:flex-row gap-0 relative z-10 border border-[--hairline]"
-        style={{ height: 'calc(100vh - 100px)', minHeight: '760px' }}>
+      <div className="w-full max-w-[1440px] flex flex-col md:flex-row gap-0 relative z-10"
+        style={{ border: '1px solid var(--hairline)', height: 'calc(100vh - 100px)', minHeight: 'clamp(480px, calc(100vh - 100px), 860px)' }}>
 
         <LeftPanel
           selectedCity={selectedCity} searchQuery={searchQuery} setSearchQuery={setSearchQuery}
@@ -354,8 +354,8 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full">
           <div
             ref={mapContainerRef}
-            className="flex-1 border overflow-hidden relative bg-[#08080A]"
-            style={{ minHeight: '600px' }}
+            className="flex-1 overflow-hidden relative"
+            style={{ minHeight: 'clamp(300px, 50vh, 600px)', background: 'var(--canvas)', border: '1px solid var(--hairline)' }}
           >
             {/* Loading / idle placeholder — prevents DeckGL from initialising into a 0×0 canvas */}
             {!isInitialized && !isLoading && (
@@ -389,21 +389,23 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
               <Map mapStyle={cartoDarkStyle} attributionControl={false} reuseMaps />
             </DeckGL>
 
-            {/* Zoom controls */}
-            <div className="absolute top-3 right-3 z-50 flex flex-col bg-[#08080A]/95" style={{ border: '1px solid var(--hairline)' }}>
+            {/* Zoom controls — 44px touch targets */}
+            <div className="absolute top-3 right-3 z-50 flex flex-col glass-nav" style={{ border: '1px solid var(--hairline)' }}>
               <button
                 onClick={() => setViewState(p => ({ ...p, zoom: p.zoom + 1 }))}
-                className="w-8 h-8 flex items-center justify-center text-sm font-mono transition-colors duration-150"
-                style={{ borderBottom: '1px solid var(--hairline)', color: 'var(--muted)' }}
+                className="w-11 h-11 flex items-center justify-center text-base font-mono transition-colors duration-150"
+                style={{ borderBottom: '1px solid var(--hairline)', color: 'var(--muted)', touchAction: 'manipulation' }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
                 onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+                aria-label="Zoom in"
               >+</button>
               <button
                 onClick={() => setViewState(p => ({ ...p, zoom: p.zoom - 1 }))}
-                className="w-8 h-8 flex items-center justify-center text-sm font-mono transition-colors duration-150"
-                style={{ color: 'var(--muted)' }}
+                className="w-11 h-11 flex items-center justify-center text-base font-mono transition-colors duration-150"
+                style={{ color: 'var(--muted)', touchAction: 'manipulation' }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
                 onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+                aria-label="Zoom out"
               >−</button>
             </div>
 
@@ -470,85 +472,117 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
       {/* ── HISTORICAL DATA ── */}
       {isInitialized && historicalEras && (
-        <div className="w-full max-w-[1440px] bg-[var(--panel)] p-6 mt-2 relative overflow-hidden" style={{ borderColor: 'var(--hairline)', border: '1px solid var(--hairline)' }}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="w-full max-w-[1440px] mt-2 relative overflow-hidden"
+             style={{ border: '1px solid var(--hairline)', background: 'var(--panel)' }}>
+          {/* Header */}
+          <div className="flex items-center gap-3 px-5 md:px-8 py-4 border-b" style={{ borderColor: 'var(--hairline)' }}>
+            <div className="w-px h-4" style={{ background: 'linear-gradient(180deg, transparent, var(--muted), transparent)' }} />
+            <p className="text-[10px] font-mono uppercase tracking-[0.25em] font-semibold" style={{ color: 'var(--muted)' }}>
+              Historical Climate Record
+            </p>
+            <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, var(--hairline), transparent)' }} />
+          </div>
 
-            <div className="flex flex-col bg-cyan-900/10 border border-cyan-900/40 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm">
-              <div className="absolute top-0 left-0 w-full h-[3px] bg-cyan-500 opacity-80" />
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-2 h-2 rounded-full bg-cyan-400" />
-                <p className="text-[10px] font-mono text-slate-300 uppercase tracking-widest font-bold">
-                  Climate Baseline <span className="text-cyan-500/70">({historicalEras.era1?.label})</span>
-                </p>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <SustainedHeatLabel />
-                  <p className="text-3xl font-mono text-cyan-400 font-bold">{historicalEras.era1?.peak_temp}°C</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-1">Mean Temperature</p>
-                  <p className="text-xl font-mono text-slate-300">{historicalEras.era1?.avg_mean_temp}°C</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col bg-orange-900/10 border border-orange-900/40 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm">
-              <div className="absolute top-0 left-0 w-full h-[3px] bg-orange-500 opacity-80" />
-              <div className="flex justify-between items-start mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3" style={{ borderTop: '1px solid var(--hairline)' }}>
+            {/* Era 1 — Baseline */}
+            <div className="relative flex flex-col p-5 md:p-7 overflow-hidden" style={{ borderBottom: '1px solid var(--hairline)' }}>
+              <div className="absolute top-0 left-0 right-0 h-px"
+                   style={{ background: 'linear-gradient(90deg, transparent, rgba(47,111,143,0.5), transparent)' }} />
+              <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">🟧</span>
-                  <p className="text-[10px] font-mono text-slate-300 uppercase tracking-widest font-bold">
-                    Warming Trend <span className="text-orange-500/70">({historicalEras.era2?.label})</span>
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--heat-1)' }} />
+                  <p className="text-[9px] font-mono uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--heat-1)' }}>
+                    Climate Baseline
                   </p>
                 </div>
-                <div className="bg-orange-950/40 border border-orange-900/50 text-orange-400 text-[9px] font-mono px-2 py-0.5 rounded">
-                  ▲ +{(parseFloat(historicalEras.era2?.avg_mean_temp) - parseFloat(historicalEras.era1?.avg_mean_temp)).toFixed(1)}°C from Baseline
-                </div>
+                <span className="text-[9px] font-mono px-2 py-0.5" style={{ color: 'var(--muted)', border: '1px solid var(--hairline)' }}>
+                  {historicalEras.era1?.label}
+                </span>
               </div>
               <div className="space-y-4">
                 <div>
                   <SustainedHeatLabel />
-                  <p className="text-3xl font-mono text-orange-400 font-bold">{historicalEras.era2?.peak_temp}°C</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-1">Mean Temperature</p>
-                  <p className="text-xl font-mono text-slate-300">{historicalEras.era2?.avg_mean_temp}°C</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col bg-red-900/10 border border-red-900/40 rounded-xl p-6 relative overflow-hidden backdrop-blur-sm">
-              <div className="absolute top-0 left-0 w-full h-[3px] bg-red-500 opacity-80" />
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">🟥</span>
-                  <p className="text-[10px] font-mono text-slate-300 uppercase tracking-widest font-bold">
-                    Current Climate <span className="text-red-500/70">({historicalEras.era3?.label})</span>
+                  <p className="text-[36px] md:text-[40px] font-mono font-bold leading-none tabular-nums glow-blue" style={{ color: 'var(--heat-1)' }}>
+                    {historicalEras.era1?.peak_temp}°C
                   </p>
                 </div>
-                <div className="bg-red-950/40 border border-red-900/50 text-red-400 text-[9px] font-mono px-2 py-0.5 rounded">
-                  ▲ +{(parseFloat(historicalEras.era3?.avg_mean_temp) - parseFloat(historicalEras.era1?.avg_mean_temp)).toFixed(1)}°C from Baseline
+                <div>
+                  <p className="text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--muted)' }}>Mean Temperature</p>
+                  <p className="text-xl font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{historicalEras.era1?.avg_mean_temp}°C</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Era 2 — Warming Trend */}
+            <div className="relative flex flex-col p-5 md:p-7 overflow-hidden"
+                 style={{ borderBottom: '1px solid var(--hairline)', borderLeft: '0px', borderRight: '0px' }}>
+              <div className="absolute top-0 left-0 right-0 h-px"
+                   style={{ background: 'linear-gradient(90deg, transparent, rgba(183,146,55,0.5), transparent)' }} />
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--heat-2)' }} />
+                  <p className="text-[9px] font-mono uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--heat-2)' }}>
+                    Warming Trend
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5"
+                     style={{ border: '1px solid rgba(183,146,55,0.3)', background: 'rgba(183,146,55,0.06)' }}>
+                  <span className="text-[9px] font-mono font-bold" style={{ color: 'var(--heat-2)' }}>
+                    ▲ +{(parseFloat(historicalEras.era2?.avg_mean_temp) - parseFloat(historicalEras.era1?.avg_mean_temp)).toFixed(1)}°C
+                  </span>
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
                   <SustainedHeatLabel />
-                  <p className="text-3xl font-mono text-red-400 font-bold">{historicalEras.era3?.peak_temp}°C</p>
+                  <p className="text-[36px] md:text-[40px] font-mono font-bold leading-none tabular-nums glow-amber" style={{ color: 'var(--heat-2)' }}>
+                    {historicalEras.era2?.peak_temp}°C
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest mb-1">Mean Temperature</p>
-                  <p className="text-xl font-mono text-slate-300">{historicalEras.era3?.avg_mean_temp}°C</p>
+                  <p className="text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--muted)' }}>Mean Temperature</p>
+                  <p className="text-xl font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{historicalEras.era2?.avg_mean_temp}°C</p>
                 </div>
               </div>
             </div>
 
+            {/* Era 3 — Current Climate */}
+            <div className="relative flex flex-col p-5 md:p-7 overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-px"
+                   style={{ background: 'linear-gradient(90deg, transparent, rgba(162,58,48,0.5), transparent)' }} />
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--heat-4)' }} />
+                  <p className="text-[9px] font-mono uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--heat-4)' }}>
+                    Current Climate
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5"
+                     style={{ border: '1px solid rgba(162,58,48,0.3)', background: 'rgba(162,58,48,0.06)' }}>
+                  <span className="text-[9px] font-mono font-bold" style={{ color: 'var(--heat-4)' }}>
+                    ▲ +{(parseFloat(historicalEras.era3?.avg_mean_temp) - parseFloat(historicalEras.era1?.avg_mean_temp)).toFixed(1)}°C
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <SustainedHeatLabel />
+                  <p className="text-[36px] md:text-[40px] font-mono font-bold leading-none tabular-nums glow-red" style={{ color: 'var(--heat-4)' }}>
+                    {historicalEras.era3?.peak_temp}°C
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--muted)' }}>Mean Temperature</p>
+                  <p className="text-xl font-mono tabular-nums" style={{ color: 'var(--text-2)' }}>{historicalEras.era3?.avg_mean_temp}°C</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* ── ANALYTICS ── */}
-      <div className="w-full max-w-[1440px] z-0 bg-[#030b18] border border-slate-800/30 rounded-2xl overflow-hidden mt-2">
+      <div className="w-full max-w-[1440px] z-0 mt-2 overflow-hidden" style={{ border: '1px solid var(--hairline)', background: 'var(--panel)' }}>
         <AnalyticsSection
           isLoading={isLoading} isInitialized={isInitialized}
           chartData={chartData} aiAnalysis={aiAnalysis}

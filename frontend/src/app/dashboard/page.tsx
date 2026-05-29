@@ -12,11 +12,16 @@ import { ClimateDataProvider } from "@/context/ClimateDataContext";
 const MapModule = dynamic(() => import("@/components/MapModule"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[820px] flex flex-col items-center justify-center"
+    <div className="w-full flex flex-col items-center justify-center min-h-[480px] md:min-h-[600px]"
          style={{ background: 'var(--canvas)' }}>
-      <div className="w-6 h-6 border border-white/20 border-t-white/50 rounded-full animate-spin" />
-      <span className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em]"
-            style={{ color: 'var(--muted)' }}>Loading map…</span>
+      <div className="relative w-8 h-8">
+        <div className="absolute inset-0 rounded-full border border-white/[0.06] border-t-white/30 animate-spin" />
+        <div className="absolute inset-1.5 rounded-full border border-white/[0.04] border-t-white/20 animate-spin"
+             style={{ animationDirection: 'reverse', animationDuration: '0.7s' }} />
+      </div>
+      <span className="mt-5 font-mono text-[10px] uppercase tracking-[0.25em]" style={{ color: 'var(--muted)' }}>
+        Loading map…
+      </span>
     </div>
   )
 });
@@ -31,7 +36,7 @@ const NEXT_TAB_MAP: Record<Tab, Tab | null> = {
 };
 
 function DashboardPageInner() {
-  const { data: session } = useSession();
+  const { data: session }         = useSession();
   const [activeTab, setActiveTab]     = useState<Tab>('Dashboard');
   const [targetCity, setTargetCity]   = useState<string | null>(null);
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(new Set(['Dashboard']));
@@ -71,73 +76,110 @@ function DashboardPageInner() {
   };
 
   return (
-    <div className="relative font-sans overflow-x-hidden flex flex-col w-full min-h-screen" style={{ background: 'var(--canvas)', color: 'var(--text)' }}>
+    <div className="relative font-sans overflow-x-hidden flex flex-col w-full min-h-screen"
+         style={{ background: 'var(--canvas)', color: 'var(--text)' }}>
 
       {/* Mobile warning modal */}
       {showWarningModal && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-sm bg-[#08080a] border border-white/[0.06] p-8">
-            <button onClick={dismissWarning} className="absolute top-4 right-4 text-zinc-600 hover:text-white transition-colors p-1">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <div className="text-center space-y-4">
-              <div className="w-10 h-10 bg-white/[0.03] border border-white/[0.06] rounded-full flex items-center justify-center mx-auto">
-                <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/90 p-4"
+             style={{ backdropFilter: 'blur(16px)' }}>
+          <div className="relative w-full max-w-sm overflow-hidden animate-fadeSlideUp"
+               style={{ background: 'var(--panel)', border: '1px solid var(--hairline)' }}>
+            <div className="h-px w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)' }} />
+            <div className="p-8">
+              <button onClick={dismissWarning}
+                      className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center transition-colors hover:text-white"
+                      style={{ color: 'var(--muted)' }}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </div>
-              <h3 className="text-sm font-sans font-semibold text-white tracking-tight">Desktop Recommended</h3>
-              <p className="text-[11px] text-zinc-500 leading-relaxed font-sans">
-                OpenPlanet's high-resolution maps and data models are optimised for desktop. The full experience may be limited on mobile.
-              </p>
-              <button
-                onClick={dismissWarning}
-                className="mt-4 w-full py-3 bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-colors hover:bg-zinc-100"
-              >
-                Continue Anyway
               </button>
+              <div className="text-center space-y-5">
+                <div className="w-12 h-12 glass flex items-center justify-center mx-auto"
+                     style={{ border: '1px solid var(--hairline)' }}>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                       style={{ color: 'var(--text-2)' }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-sans font-semibold tracking-tight mb-2" style={{ color: 'var(--text)' }}>
+                    Desktop Recommended
+                  </h3>
+                  <p className="text-[11px] leading-relaxed font-sans" style={{ color: 'var(--muted)' }}>
+                    OpenPlanet's high-resolution maps and data models are optimised for desktop.
+                    The full experience may be limited on mobile.
+                  </p>
+                </div>
+                <button
+                  onClick={dismissWarning}
+                  className="w-full min-h-[48px] bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-colors hover:bg-zinc-100 btn-primary"
+                >
+                  Continue Anyway
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Dashboard tab nav */}
-      <nav className="w-full bg-[var(--canvas)]/95 backdrop-blur-xl border-b pt-20 sticky top-0 z-[40]" style={{ borderBottomColor: 'var(--hairline)' }}>
-        <div className="w-full flex items-center justify-between px-6 md:px-12 lg:px-16 py-3 text-[11px] font-mono uppercase tracking-[0.2em]">
-          <div className="flex items-center gap-1">
-            {TABS.map((tab) => {
-              const isLocked = !targetCity && tab !== 'Dashboard';
-              const isActive = activeTab === tab;
-              return (
-                <button
-                  key={tab}
-                  disabled={isLocked}
-                  onClick={() => setActiveTab(tab)}
-                  className={`relative whitespace-nowrap transition-all duration-150 px-3 py-2 font-sans text-[11px] uppercase tracking-[0.12em] font-medium border-b-2
-                    ${isActive
-                      ? 'border-current'
-                      : isLocked
-                      ? 'border-transparent cursor-not-allowed'
-                      : 'border-transparent hover:border-current/30'
-                    }`}
-                  style={{
-                    color: isActive ? 'var(--text)' : isLocked ? 'var(--muted)' : 'var(--text-2)',
-                  }}
-                >
-                  {tab}
-                </button>
-              );
-            })}
-          </div>
+      <nav className="w-full glass-nav border-b pt-16 sticky top-0 z-[40]"
+           style={{ borderBottomColor: 'var(--hairline)' }}>
+        <div className="w-full overflow-x-auto">
+          <div className="flex items-center justify-between px-5 md:px-10 lg:px-16 min-w-max md:min-w-0 w-full">
+            <div className="flex items-center">
+              {TABS.map((tab) => {
+                const isLocked = !targetCity && tab !== 'Dashboard';
+                const isActive = activeTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    disabled={isLocked}
+                    onClick={() => setActiveTab(tab)}
+                    className={`relative whitespace-nowrap transition-all duration-200 px-4 md:px-5 font-sans text-[11px] uppercase tracking-[0.12em] font-medium flex items-center min-h-[52px]
+                      ${isActive      ? '' : ''}
+                      ${isLocked      ? 'cursor-not-allowed' : 'hover:text-white'}
+                    `}
+                    style={{
+                      color: isActive ? 'var(--text)' : isLocked ? 'var(--muted)' : 'var(--text-2)',
+                    }}
+                  >
+                    {tab}
+                    {/* Active indicator */}
+                    <span
+                      className="absolute bottom-0 left-0 right-0 h-[2px] transition-all duration-200"
+                      style={{
+                        background: isActive
+                          ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)'
+                          : 'transparent',
+                        opacity: isActive ? 1 : 0,
+                      }}
+                    />
+                    {/* Lock indicator */}
+                    {isLocked && (
+                      <svg className="ml-1.5 w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                           style={{ color: 'var(--muted)', opacity: 0.5 }}>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-          {targetCity && (
-            <span className="font-mono text-[10px] px-3 py-1 uppercase tracking-[0.14em]"
-                  style={{ color: 'var(--positive)', border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
-              {targetCity}
-            </span>
-          )}
+            {targetCity && (
+              <div className="ml-4 flex items-center gap-2 px-3 py-1.5 shrink-0"
+                   style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--positive)' }} />
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: 'var(--positive)' }}>
+                  {targetCity}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 
@@ -147,7 +189,7 @@ function DashboardPageInner() {
           <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
         </div>
 
-        <div className={activeTab !== "Dashboard" ? "max-w-[1400px] w-full mx-auto px-6 md:px-12 py-16" : "hidden"}>
+        <div className={activeTab !== "Dashboard" ? "max-w-[1400px] w-full mx-auto px-5 md:px-10 py-14 md:py-16" : "hidden"}>
           {visitedTabs.has('Deep Dive') && targetCity && (
             <div className={activeTab === "Deep Dive" ? "block" : "hidden"}>
               <ResearchModule baseTarget={targetCity} />
@@ -166,20 +208,20 @@ function DashboardPageInner() {
         </div>
 
         {targetCity && (
-          <div className="max-w-md w-full mx-auto px-6 pb-24 mt-auto relative z-10">
+          <div className="max-w-md w-full mx-auto px-5 pb-16 mt-auto">
             {NEXT_TAB_MAP[activeTab] ? (
               <button
                 onClick={() => setActiveTab(NEXT_TAB_MAP[activeTab]!)}
-                className="w-full py-3.5 text-[10px] font-mono font-bold tracking-[0.2em] uppercase transition-all bg-white/[0.01] hover:bg-white/[0.03] hover:text-white flex items-center justify-center gap-3"
-                style={{ border: '1px solid var(--hairline)', color: 'var(--text-2)' }}
+                className="w-full min-h-[52px] text-[10px] font-mono font-bold tracking-[0.2em] uppercase transition-all duration-150 hover:text-white flex items-center justify-center gap-3 btn-primary"
+                style={{ border: '1px solid var(--hairline)', color: 'var(--text-2)', background: 'var(--raised)' }}
               >
                 {NEXT_TAB_MAP[activeTab]} →
               </button>
             ) : (
               <button
                 onClick={handleReset}
-                className="w-full py-3.5 text-[10px] font-mono font-bold tracking-[0.2em] uppercase transition-all bg-white/[0.01] hover:bg-white/[0.03] hover:text-white flex items-center justify-center gap-3"
-                style={{ border: '1px solid var(--hairline)', color: 'var(--text-2)' }}
+                className="w-full min-h-[52px] text-[10px] font-mono font-bold tracking-[0.2em] uppercase transition-all duration-150 hover:text-white flex items-center justify-center gap-3 btn-primary"
+                style={{ border: '1px solid var(--hairline)', color: 'var(--text-2)', background: 'var(--raised)' }}
               >
                 ↺ New analysis
               </button>
@@ -189,10 +231,15 @@ function DashboardPageInner() {
       </div>
 
       {/* Disclaimer */}
-      <div className="flex flex-col items-center justify-center text-center gap-2 mt-16 pt-8 pb-12 border-t border-white/[0.04] relative z-20">
-        <p className="text-[9px] font-mono text-zinc-700 uppercase tracking-[0.2em] font-bold">Disclaimer</p>
+      <div className="flex flex-col items-center justify-center text-center gap-2 mt-16 pt-8 pb-12 relative z-20"
+           style={{ borderTop: '1px solid var(--hairline)' }}>
+        <p className="text-[9px] font-mono uppercase tracking-[0.25em] font-bold" style={{ color: 'var(--muted)' }}>
+          Disclaimer
+        </p>
         <p className="text-[10px] leading-relaxed max-w-4xl px-6 font-serif text-body-ui" style={{ color: 'var(--muted)' }}>
-          OpenPlanet is a computational estimation engine based on global meta-analyses (Gasparrini 2017, Burke 2018). It is designed for directional risk visualization and strategic planning, not localized actuarial or medical forecasting. All outputs are model-driven estimates and do not constitute professional operational advice.
+          OpenPlanet is a computational estimation engine based on global meta-analyses (Gasparrini 2017, Burke 2018).
+          Designed for directional risk visualization and strategic planning, not localized actuarial or medical forecasting.
+          All outputs are model-driven estimates and do not constitute professional operational advice.
         </p>
       </div>
 
