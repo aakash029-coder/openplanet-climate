@@ -5,6 +5,7 @@ import 'katex/dist/katex.min.css';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { Providers } from '@/components/Providers';
+import { CookieBanner } from '@/components/CookieBanner';
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 // ── Four-typeface system — each font has exactly one role ─────────────────
@@ -154,6 +155,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </footer>
           </div>
+          <CookieBanner />
         </Providers>
 
       </body>

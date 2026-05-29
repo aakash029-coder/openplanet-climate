@@ -2,30 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  formatWBT,
-  formatEconomicRange,
-  formatDeathsRange,
   formatCoordinates,
-  getSourceLabel,
   useClimateData,
 } from "@/context/ClimateDataContext";
-import { SideBySideMathModal, type Projection } from './dashboard/SideBySideMathModal';
-
-interface CityResult {
-  query: string;
-  display_name: string;
-  lat: number;
-  lng: number;
-  elevation: number;
-  threshold_c: number;
-  cooling_offset_c: number;
-  gdp_usd: number | null;
-  population: number | null;
-  projections: Projection[];
-  baseline: { baseline_mean_c: number | null };
-  loading: boolean;
-  error: string | null;
-}
+import { SideBySideMathModal } from './dashboard/SideBySideMathModal';
+import { CompareTable, type CityResult } from './dashboard/CompareTable';
 
 function fmt(n: number | null | undefined, d = 1): string {
   if (n == null || isNaN(n)) return "—";
@@ -39,15 +20,6 @@ function fmtUSD(n: number | null | undefined): string {
   if (n >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
   return `$${n.toLocaleString()}`;
 }
-
-function cleanAiText(text: string | null): string {
-  if (!text) return "";
-  return text.replace(/\*/g, '').replace(/([a-z])([.?!])([A-Z])/g, '$1$2 $3');
-}
-
-const SourceLine = ({ source }: { source: string }) => (
-  <p className="mt-1 text-[8px] font-mono text-slate-600 italic">{source}</p>
-);
 
 // ─────────────────────────────────────────────────────────────────
 // CACHES
@@ -141,10 +113,10 @@ async function geocodeAndFetch(
   const geoData = await fetchNominatimSafe(query);
   if (!geoData.length) throw new Error("Location not found.");
 
-  const g         = geoData[0];
-  const lat       = parseFloat(g.lat);
-  const lng       = parseFloat(g.lon);
-  const elevation = await fetchElevationSafe(lat, lng);
+  const g            = geoData[0];
+  const lat          = parseFloat(g.lat);
+  const lng          = parseFloat(g.lon);
+  const elevation    = await fetchElevationSafe(lat, lng);
   const locationHint = (g.display_name ?? query).trim();
 
   const controller = new AbortController();
@@ -152,15 +124,7 @@ async function geocodeAndFetch(
 
   try {
     const riskData = await fetchClimateRisk(
-      {
-        lat,
-        lng,
-        elevation,
-        ssp,
-        canopy_offset_pct: 0,
-        albedo_offset_pct: 0,
-        location_hint: locationHint,
-      },
+      { lat, lng, elevation, ssp, canopy_offset_pct: 0, albedo_offset_pct: 0, location_hint: locationHint },
       controller.signal
     );
     clearTimeout(timer);
@@ -172,15 +136,6 @@ async function geocodeAndFetch(
 }
 
 const COMPARE_YEARS = [2030, 2050];
-
-const METRICS = [
-  { key: "heatwave_days",       label: "Heatwave Days",       unit: "d/yr",   source: "CMIP6 Ensemble · ERA5 P95",         fmt: (v: number) => `${fmt(v, 0)}d`,                             hasCalc: false },
-  { key: "peak_tx5d_c",         label: "Peak Tx5d",           unit: "°C",     source: "Open-Meteo CMIP6",                  fmt: (v: number) => `${fmt(v)}°C`,                               hasCalc: false },
-  { key: "wbt_max_c",           label: "Max Wet-Bulb",        unit: "°C",     source: "Stull (2011) · ERA5 P95 Humidity",  fmt: (v: number) => formatWBT(v),                                hasCalc: false },
-  { key: "uhi_intensity_c",     label: "Surface UHI",       unit: "°C",     source: "",                fmt: (v: number) => `+${fmt(v)}°C`,                              hasCalc: false },
-  { key: "attributable_deaths", label: "Attributable Deaths", unit: "est/yr", source: "Gasparrini (2017), Lancet",         fmt: (v: number) => Math.round(v).toLocaleString(),              hasCalc: true  },
-  { key: "economic_decay_usd",  label: "Economic Decay",      unit: "USD",    source: "Burke (2018) · ILO (2019)",         fmt: (v: number) => fmtUSD(v),                                   hasCalc: true  },
-];
 
 // ─────────────────────────────────────────────────────────────────
 // MAIN
@@ -207,18 +162,15 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     valA: number | null; valB: number | null;
   }>({ open: false, metricLabel: '', metricKey: '', valA: null, valB: null });
 
-  // Keep a ref to avoid stale closure in the SSP/canopy/albedo effect
   const primaryDataRef = useRef(primaryData);
   useEffect(() => { primaryDataRef.current = primaryData; });
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('op_sync_state', JSON.stringify({
-      ssp, year: compareYear.toString(),
-    }));
+    localStorage.setItem('op_sync_state', JSON.stringify({ ssp, year: compareYear.toString() }));
   }, [ssp, compareYear]);
 
-  // When SSP / mitigation changes, re-fetch City A via context (cache prevents duplicates)
+  // When SSP / mitigation changes, re-fetch City A via context
   const lastFetchParamsRef = useRef({ ssp: '', canopy: -1, albedo: -1 });
   useEffect(() => {
     const pd = primaryDataRef.current;
@@ -227,13 +179,8 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     if (p.ssp === ssp && p.canopy === canopy && p.albedo === albedo) return;
     lastFetchParamsRef.current = { ssp, canopy, albedo };
     fetchPrimaryCity({
-      city_name:         pd.city_name,
-      lat:               pd.lat,
-      lng:               pd.lng,
-      ssp,
-      canopy_offset_pct: canopy,
-      albedo_offset_pct: albedo,
-      elevation:         pd.elevation,
+      city_name: pd.city_name, lat: pd.lat, lng: pd.lng,
+      ssp, canopy_offset_pct: canopy, albedo_offset_pct: albedo, elevation: pd.elevation,
     });
   }, [ssp, canopy, albedo]); // intentionally omit primaryData/fetchPrimaryCity
 
@@ -256,7 +203,6 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     if (!primaryData || !city2Geo || running) return;
     setGlobalError(null); setRunning(true); setAiAnalysis(null); setRetryStatus(null);
 
-    // City A comes directly from the global source of truth — no re-fetch
     const cityAResult: CityResult = {
       query:            primaryData.city_name,
       display_name:     primaryData.city_name,
@@ -268,30 +214,21 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       gdp_usd:          primaryData.gdp_usd ?? null,
       population:       primaryData.population ?? null,
       projections:      primaryData.projections.map(p => ({
-        year:                p.year,
-        source:              p.source,
-        heatwave_days:       p.heatwave_days,
-        peak_tx5d_c:         p.peak_tx5d_c,
-        wbt_max_c:           p.wbt_max_c,
-        uhi_intensity_c:     p.uhi_intensity_c,
-        attributable_deaths: p.attributable_deaths,
-        economic_decay_usd:  p.economic_decay_usd,
-        region:              p.region,
-        audit_trail:         p.audit_trail,
+        year: p.year, source: p.source, heatwave_days: p.heatwave_days,
+        peak_tx5d_c: p.peak_tx5d_c, wbt_max_c: p.wbt_max_c, uhi_intensity_c: p.uhi_intensity_c,
+        attributable_deaths: p.attributable_deaths, economic_decay_usd: p.economic_decay_usd,
+        region: p.region, audit_trail: p.audit_trail,
       })),
       baseline: primaryData.baseline,
-      loading:  false,
-      error:    null,
+      loading: false, error: null,
     };
 
-    // Show City A immediately; City B loading placeholder
     setResults([cityAResult, {
       query: city2Geo.display_name, display_name: city2Geo.display_name, lat: 0, lng: 0,
       elevation: 0, threshold_c: 0, cooling_offset_c: 0, gdp_usd: null, population: null,
       projections: [], baseline: { baseline_mean_c: null }, loading: true, error: null,
     }]);
 
-    // Fetch only City B
     const newResults: CityResult[] = [cityAResult];
     let success = false; let retries = 3; let lastError: unknown = null;
     while (!success && retries > 0) {
@@ -309,10 +246,8 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       const errMsg = String(lastError instanceof Error ? lastError.message : lastError).replace('Error: ', '');
       newResults.push({
         query: city2Geo.display_name, display_name: city2Geo.display_name, lat: 0, lng: 0,
-        elevation: 0, threshold_c: 0, cooling_offset_c: 0,
-        gdp_usd: null, population: null, projections: [],
-        baseline: { baseline_mean_c: null },
-        loading: false, error: errMsg,
+        elevation: 0, threshold_c: 0, cooling_offset_c: 0, gdp_usd: null, population: null,
+        projections: [], baseline: { baseline_mean_c: null }, loading: false, error: errMsg,
       });
     }
     setResults(newResults);
@@ -332,7 +267,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           const timer = setTimeout(() => controller.abort(), 30000);
 
           const aiResp = await fetch("/api/engine", {
-            method:  "POST",
+            method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               endpoint: '/api/research-analysis',
@@ -354,9 +289,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
           });
 
           clearTimeout(timer);
-          if (!aiResp.ok) {
-            throw new Error(`AI API ${aiResp.status}`);
-          }
+          if (!aiResp.ok) throw new Error(`AI API ${aiResp.status}`);
           const aiData = await aiResp.json();
           const text   = aiData.comparison || aiData.reasoning || "";
           if (text && text.length > 10) {
@@ -374,28 +307,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
     }
   };
 
-  const getMitigatedValue = (
-    baseValue: number | null | undefined,
-    metricKey: string,
-    baseHW = 0
-  ): number | null => {
-    if (baseValue == null) return null;
-    const cooling = (canopy / 100) * 1.2 + (albedo / 100) * 0.8;
-    if (['peak_tx5d_c', 'uhi_intensity_c'].includes(metricKey)) return Math.max(0, baseValue - cooling);
-    if (metricKey === 'wbt_max_c')          return Math.min(35.0, Math.max(0, baseValue - cooling));
-    if (metricKey === 'heatwave_days')       return Math.max(0, baseValue - (cooling * 3.5));
-    if (['attributable_deaths', 'economic_decay_usd'].includes(metricKey)) {
-      const effHW = Math.max(0, baseHW - (cooling * 3.5));
-      const hwR   = baseHW > 0 ? effHW / baseHW : 1;
-      return baseValue * hwR * Math.max(0, 1 - (cooling * 0.08));
-    }
-    return baseValue;
-  };
-
-  const hasMitigation = canopy > 0 || albedo > 0;
-  const okResults     = results.filter(r => !r.loading && !r.error && r.projections?.length > 0);
-  const projA         = okResults[0]?.projections?.find(p => p.year === compareYear) ?? null;
-  const projB         = okResults[1]?.projections?.find(p => p.year === compareYear) ?? null;
+  const okResults = results.filter(r => !r.loading && !r.error && r.projections?.length > 0);
+  const projA     = okResults[0]?.projections?.find(p => p.year === compareYear) ?? null;
+  const projB     = okResults[1]?.projections?.find(p => p.year === compareYear) ?? null;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 relative z-10">
@@ -433,14 +347,12 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
                 </span>
               )}
               {primaryLoading && (
-                <span className="text-[9px] font-mono text-[#0ea5e9]/60 tracking-widest block mt-1">
-                  Loading...
-                </span>
+                <span className="text-[9px] font-mono text-[#0ea5e9]/60 tracking-widest block mt-1">Loading...</span>
               )}
             </div>
           </div>
 
-          {/* City 2 input */}
+          {/* City B input */}
           <div className={`relative border overflow-visible min-h-[120px] flex flex-col justify-center p-5 bg-black transition-colors ${city2Geo ? 'border-emerald-500/50' : 'border-white/[0.05]'}`}>
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(16,185,129,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,0.3) 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
@@ -566,205 +478,18 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
 
       {/* ── RESULTS ── */}
       {okResults.length === 2 && !running && (
-        <>
-          {hasMitigation && (
-            <div className="border border-emerald-800/30 p-5" style={{ background: 'var(--raised)' }}>
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <p className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>
-                  Mitigation Applied · +{canopy}% canopy · +{albedo}% albedo · {compareYear}
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {okResults.map((r) => {
-                  const proj = r.projections?.find(p => p.year === compareYear);
-                  if (!proj) return null;
-                  const mitDeaths = getMitigatedValue(proj.attributable_deaths, 'attributable_deaths', proj.heatwave_days);
-                  const mitLoss   = getMitigatedValue(proj.economic_decay_usd,  'economic_decay_usd',  proj.heatwave_days);
-                  const mitTemp   = getMitigatedValue(proj.peak_tx5d_c,         'peak_tx5d_c',         proj.heatwave_days);
-                  const mitHW     = getMitigatedValue(proj.heatwave_days,        'heatwave_days',       proj.heatwave_days);
-                  return (
-                    <div key={r.query}>
-                      <p className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-3 truncate" style={{ color: 'var(--muted)' }}>{r.query}</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { label: 'Deaths',    base: proj.attributable_deaths.toLocaleString(), mit: mitDeaths ? Math.round(mitDeaths).toLocaleString() : '—', saved: mitDeaths ? `−${(proj.attributable_deaths - Math.round(mitDeaths)).toLocaleString()}` : '—', bc: 'text-red-400'   },
-                          { label: 'Econ Loss', base: fmtUSD(proj.economic_decay_usd),            mit: fmtUSD(mitLoss),                                         saved: mitLoss ? `−${fmtUSD(proj.economic_decay_usd - mitLoss)}` : '—',                       bc: 'text-amber-400' },
-                          { label: 'Peak Temp', base: `${fmt(proj.peak_tx5d_c)}°C`,               mit: `${fmt(mitTemp ?? 0)}°C`,                                saved: `−${fmt((proj.peak_tx5d_c) - (mitTemp ?? proj.peak_tx5d_c))}°C`,                     bc: 'text-orange-400'},
-                          { label: 'HW Days',   base: `${proj.heatwave_days}d`,                   mit: `${Math.round(mitHW ?? proj.heatwave_days)}d`,             saved: `−${proj.heatwave_days - Math.round(mitHW ?? proj.heatwave_days)}d`,                bc: 'text-yellow-400'},
-                        ].map((item) => (
-                          <div key={item.label} className="border border-white/[0.04] p-3" style={{ background: 'var(--panel)' }}>
-                            <p className="text-[8px] font-mono text-slate-600 uppercase mb-1.5">{item.label}</p>
-                            <div className="flex justify-between items-baseline mb-1">
-                              <span className="text-[8px] font-mono text-slate-600">W/o</span>
-                              <span className={`text-[11px] font-mono font-bold tabular-nums text-right ${item.bc}`}>{item.base}</span>
-                            </div>
-                            <div className="flex justify-between items-baseline mb-1">
-                              <span className="text-[8px] font-mono text-slate-600">With</span>
-                              <span className="text-[11px] font-mono font-bold tabular-nums text-right text-slate-300">{item.mit}</span>
-                            </div>
-                            <div className="flex justify-between items-baseline bg-emerald-950/30 px-1.5 py-1 border border-emerald-800/20">
-                              <span className="text-[7px] font-mono text-slate-600 uppercase">Saved</span>
-                              <span className="text-[10px] font-mono tabular-nums text-right text-emerald-400 font-bold">{item.saved}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Main comparison table */}
-          <div className="w-full border border-white/[0.05] overflow-hidden" style={{ background: 'var(--raised)' }}>
-            <div className="border-b border-white/[0.05] px-5 md:px-8 py-5" style={{ background: 'var(--panel)' }}>
-              <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>
-                City comparison
-              </h3>
-              <p className="font-mono text-[8px] mt-1 tabular-nums" style={{ color: 'var(--muted)' }}>
-                Dataset: {okResults[0]?.query ?? '—'} vs {okResults[1]?.query ?? '—'} · {ssp.toUpperCase()} · {compareYear}
-                {hasMitigation && ` · +${canopy}% canopy · +${albedo}% albedo`}
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/[0.05]" style={{ background: 'var(--panel)' }}>
-                    <th className="px-5 md:px-8 py-5 text-[10px] font-mono text-slate-200 uppercase tracking-widest w-[30%]">
-                      Parameter
-                      <p className="text-[8px] text-slate-500 mt-1 normal-case tracking-normal font-normal">
-                        Rows with <span className="text-[#0ea5e9] font-bold border border-white/[0.09] bg-cyan-900/30 px-1 text-[7px]">CALC</span> badge are auditable
-                      </p>
-                    </th>
-                    {okResults.map(r => (
-                      <th key={r.query} className="px-5 md:px-8 py-5 text-center w-[35%]">
-                        <span className="font-mono text-xs font-bold text-white block uppercase tracking-widest truncate max-w-[160px] mx-auto">{r.query}</span>
-                        <span className="text-[9px] font-mono text-slate-500 block mt-1">{formatCoordinates(r.lat, r.lng)} · {r.elevation.toFixed(0)}m</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {METRICS.map(m => {
-                    const baseVals = okResults.map(r => {
-                      const p = r.projections?.find(pr => pr.year === compareYear);
-                      if (!p) return null;
-
-                      let val: number | null | undefined = (p as unknown as Record<string, number | null | undefined>)[m.key];
-
-                      // UHI is optional on Projection; derive from baseline if absent
-                      if (m.key === 'uhi_intensity_c' && val == null) {
-                        val = r.baseline?.baseline_mean_c != null
-                          ? (p.peak_tx5d_c - r.baseline.baseline_mean_c)
-                          : 2.1;
-                      }
-
-                      return val ?? null;
-                    });
-                    const mitigatedVals = okResults.map((r, i) => {
-                      const p = r.projections?.find(pr => pr.year === compareYear);
-                      if (!p) return null;
-                      return getMitigatedValue(baseVals[i], m.key, p.heatwave_days);
-                    });
-                    const displayVals = hasMitigation ? mitigatedVals : baseVals;
-                    const maxVal      = Math.max(...displayVals.filter((v): v is number => v !== null));
-
-                    return (
-                      <tr
-                        key={m.key}
-                        className={`hover:bg-white/[0.02] transition-colors group ${m.hasCalc ? 'cursor-pointer' : ''}`}
-                        onClick={() => {
-                          if (!m.hasCalc || !projA || !projB) return;
-                          setMathModal({ open: true, metricLabel: m.label, metricKey: m.key, valA: displayVals[0], valB: displayVals[1] });
-                        }}
-                      >
-                        <td className="px-5 md:px-8 py-5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-mono text-slate-300 uppercase tracking-wider group-hover:text-white transition-colors">{m.label}</span>
-                            {m.hasCalc && (
-                              <span className="opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-0.5 bg-cyan-900/40 border border-white/[0.09] text-[#0ea5e9] text-[7px] font-bold uppercase">
-                                CALC ↗
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[8px] font-mono text-slate-700 mt-0.5 uppercase">{m.unit}</div>
-                          <SourceLine source={m.source} />
-                        </td>
-                        {okResults.map((r, i) => {
-                          const baseV = baseVals[i];
-                          const mitV  = mitigatedVals[i];
-                          const dispV = displayVals[i];
-                          const isMax = dispV != null && dispV === maxVal && maxVal > 0;
-                          return (
-                            <td key={r.query} className="px-5 md:px-8 py-5 text-right">
-                              {/* Baseline value */}
-                              {hasMitigation && baseV != null && (
-                                <div className="text-[9px] font-mono tabular-nums text-slate-600 mb-1">
-                                  <span className="text-[7px] uppercase tracking-widest text-slate-700 mr-1">Base:</span>
-                                  {m.fmt(baseV)}
-                                </div>
-                              )}
-                              {/* Display value (mitigated if sliders active) */}
-                              <span className={`font-mono tabular-nums text-sm ${isMax ? "text-[#0ea5e9] font-bold" : hasMitigation ? "text-[#10b981] font-bold" : "text-white"}`}>
-                                {dispV != null ? m.fmt(dispV) : "—"}
-                              </span>
-                              {isMax && <span className="block mt-1 text-[8px] text-[#0ea5e9]/70 uppercase font-mono tracking-widest">Max. Exposure</span>}
-                              {/* Saved delta */}
-                              {hasMitigation && baseV != null && mitV != null && (
-                                <div className="text-[8px] font-mono tabular-nums text-emerald-500 mt-1">
-                                  {m.key === 'economic_decay_usd'  ? `−${fmtUSD(baseV - mitV)}`
-                                  : m.key === 'attributable_deaths' ? `−${Math.round(baseV - mitV).toLocaleString()}`
-                                  : `−${fmt(baseV - mitV)}`}
-                                </div>
-                              )}
-                              {dispV != null && m.key === 'attributable_deaths' && (
-                                <div className="text-[7px] font-mono tabular-nums text-slate-600 mt-1">CI: {formatDeathsRange(dispV)}</div>
-                              )}
-                              {dispV != null && m.key === 'economic_decay_usd' && (
-                                <div className="text-[7px] font-mono tabular-nums text-slate-600 mt-1">{formatEconomicRange(dispV)}</div>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* AI Analysis */}
-            <div className="border-t border-white/[0.05] px-5 md:px-8 py-7">
-              <h4 className="flex items-center gap-3 font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: 'var(--muted)' }}>
-                <span className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full" />
-                Analyst summary
-              </h4>
-              {aiLoading ? (
-                <div className="space-y-2 py-3">
-                  <div className="animate-pulse bg-zinc-900/60 h-3 w-full rounded-none" />
-                  <div className="animate-pulse bg-zinc-900/60 h-3 w-[92%] rounded-none" />
-                  <div className="animate-pulse bg-zinc-900/60 h-3 w-5/6 rounded-none" />
-                  <div className="animate-pulse bg-zinc-900/60 h-3 w-4/5 rounded-none" />
-                  <div className="animate-pulse bg-zinc-900/60 h-3 w-3/4 rounded-none" />
-                  <div className="animate-pulse bg-zinc-900/60 h-3 w-2/3 rounded-none" />
-                  <div className="flex items-center gap-2 pt-3 font-mono text-[9px] uppercase tracking-[0.18em]"
-                       style={{ color: 'var(--reference)' }}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />
-                    <span>Generating comparative analysis</span>
-                    <span className="animate-pulse">▋</span>
-                  </div>
-                </div>
-              ) : aiAnalysis ? (
-                <p className="font-serif text-body-s leading-loose" style={{ color: 'var(--text-2)' }}>{cleanAiText(aiAnalysis)}</p>
-              ) : (
-                <p className="text-[10px] font-mono text-slate-600 italic">Comparative analysis unavailable. Please interpret the metrics above.</p>
-              )}
-            </div>
-          </div>
-        </>
+        <CompareTable
+          okResults={okResults}
+          compareYear={compareYear}
+          canopy={canopy}
+          albedo={albedo}
+          ssp={ssp}
+          projA={projA}
+          projB={projB}
+          aiAnalysis={aiAnalysis}
+          aiLoading={aiLoading}
+          onMathModal={(p) => setMathModal({ ...p, open: true })}
+        />
       )}
 
       {/* Errors */}
