@@ -119,28 +119,32 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
       if (searchQuery.length > 2 && !selectedCity) {
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=5`,
-            {
-              headers: {
-                "Accept-Language": "en",
-                "User-Agent": "OpenPlanetRiskEngine/1.0 (contact@openplanet.earth)"
-              }
-            }
+            `/api/geocode-search?q=${encodeURIComponent(searchQuery)}`,
+            { headers: { 'Accept': 'application/json' } }
           );
           if (!res.ok) return;
-          const data: Array<{ place_id: string; name: string; display_name: string; lat: string; lon: string }> = await res.json();
-          setSuggestions(data.map((c) => {
-            const parts = (c.display_name || '').split(',');
-            return {
-              id:        c.place_id,
-              name:      c.name || parts[0]?.trim() || c.display_name,
-              country:   parts.length > 1 ? parts[parts.length - 1].trim() : '',
-              latitude:  parseFloat(c.lat),
-              longitude: parseFloat(c.lon),
-            };
-          }));
+          const data: {
+            results: Array<{
+              id: string;
+              name: string;
+              display_name: string;
+              country: string;
+              country_code: string;
+              latitude: number;
+              longitude: number;
+              source: string;
+            }>
+          } = await res.json();
+          setSuggestions((data.results ?? []).map((c) => ({
+            id:           c.id,
+            name:         c.name,
+            display_name: c.display_name,
+            country:      c.country,
+            latitude:     c.latitude,
+            longitude:    c.longitude,
+          })));
         } catch {
-          // Nominatim request failed — suggestions stay empty, user can retry
+          // Geocode search failed — suggestions stay empty, user can retry
         }
       } else {
         setSuggestions([]);
