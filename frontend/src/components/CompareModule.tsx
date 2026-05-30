@@ -147,7 +147,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   const [suggestions2, setSuggestions2] = useState<any[]>([]);
   const [city2Geo, setCity2Geo]         = useState<{ lat: number; lng: number; display_name: string } | null>(null);
 
-  const savedState = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('op_sync_state') || '{}') : {};
+  const savedState = typeof window !== 'undefined' ? (() => { try { return JSON.parse(localStorage.getItem('op_sync_state') || '{}'); } catch { return {}; } })() : {};
   const [ssp, setSsp]                 = useState(() => primaryData?.ssp || savedState.ssp || "SSP2-4.5");
   const [compareYear, setCompareYear] = useState(savedState.year ? Number(savedState.year) : 2050);
 
@@ -261,8 +261,9 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
       while (!aiSuccess && aiRetries > 0) {
         try {
           if (aiRetries < 3) setRetryStatus(`Generating AI comparison... (${4 - aiRetries}/3)`);
-          const p1 = okRes[0].projections.find(p => p.year === compareYear) || okRes[0].projections[0];
-          const p2 = okRes[1].projections.find(p => p.year === compareYear) || okRes[1].projections[0];
+          const p1 = (okRes[0].projections.find(p => p.year === compareYear) || okRes[0].projections[0]) ?? null;
+          const p2 = (okRes[1].projections.find(p => p.year === compareYear) || okRes[1].projections[0]) ?? null;
+          if (!p1 || !p2) throw new Error('Projection data unavailable for comparison');
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 30000);
 

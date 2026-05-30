@@ -70,14 +70,17 @@ class PredictionRequest(BaseModel):
     city:     str   = Field(..., min_length=2, max_length=200)
     lat:      float = Field(..., ge=-90.0,  le=90.0)
     lng:      float = Field(..., ge=-180.0, le=180.0)
-    ssp:      str   = Field(..., pattern=r"^SSP[1-5]-[0-9.]+$")
+    ssp:      Literal["SSP1-1.9","SSP1-2.6","SSP2-4.5","SSP3-7.0",
+                      "SSP4-3.4","SSP4-6.0","SSP5-3.4","SSP5-8.5"]
     year:     str   = Field(..., pattern=r"^(2030|2040|2050)$")
     canopy:   int   = Field(..., ge=0, le=100)
     coolRoof: int   = Field(..., ge=0, le=100)
 
     @model_validator(mode="after")
     def city_not_blank(self) -> "PredictionRequest":
-        if not self.city.strip():
+        import re
+        self.city = re.sub(r"[<>\"';\\]", "", self.city).strip()
+        if not self.city:
             raise ValueError("city must not be blank or whitespace only.")
         return self
 
@@ -88,7 +91,8 @@ class ClimateRiskRequest(BaseModel):
     lat:               float = Field(..., ge=-90.0,  le=90.0)
     lng:               float = Field(..., ge=-180.0, le=180.0)
     elevation:         float = Field(default=0.0, ge=-500.0, le=9000.0)
-    ssp:               str   = Field(..., pattern=r"^SSP[1-5]-[0-9.]+$")
+    ssp:               Literal["SSP1-1.9","SSP1-2.6","SSP2-4.5","SSP3-7.0",
+                               "SSP4-3.4","SSP4-6.0","SSP5-3.4","SSP5-8.5"]
     canopy_offset_pct: int   = Field(..., ge=0, le=100)
     albedo_offset_pct: int   = Field(..., ge=0, le=100)
     location_hint:     str   = Field(..., min_length=2, max_length=200,

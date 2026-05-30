@@ -70,10 +70,12 @@ class Settings(BaseSettings):
     API_KEYS: str = ""
     # Rate limit: requests per minute per IP
     RATE_LIMIT_PER_MINUTE: int = 100
-    # CORS: comma-separated allowed origins. "*" = all (dev only)
+    # CORS: comma-separated allowed origins. "*" = dev only.
+    # In production set to: https://www.openplanetrisk.com,https://openplanetrisk.com
     CORS_ORIGINS: str = "*"
     # Secret for signing internal tokens (min 32 chars in production)
-    SECRET_KEY: SecretStr = SecretStr("aakash_mega_power_secret_key_1234567890_secured")
+    # IMPORTANT: override via SECRET_KEY env var before production deployment
+    SECRET_KEY: SecretStr = SecretStr("dev-secret-change-in-production-min32chars")
     # ── Runtime ───────────────────────────────────────────────────────────
     ENV_MODE: EnvMode = EnvMode.development
     LOG_LEVEL: LogLevel = LogLevel.INFO
@@ -122,17 +124,22 @@ class Settings(BaseSettings):
         if self.ENV_MODE == EnvMode.production:
             if self.LOG_LEVEL == LogLevel.DEBUG:
                 raise ValueError(
-                    "LOG_LEVEL=DEBUG is not permitted in production. "
-                    "Set LOG_LEVEL to INFO, WARNING, or ERROR."
+                    "LOG_LEVEL=DEBUG is not permitted in production."
                 )
             secret = self.SECRET_KEY.get_secret_value()
-            if secret == "dev-secret-change-in-production-min32chars":
+            if secret in ("dev-secret-change-in-production-min32chars",
+                          "aakash_mega_power_secret_key_1234567890_secured"):
                 raise ValueError(
-                    "SECRET_KEY must be changed from the default in production."
+                    "SECRET_KEY must be changed from the default value in production."
                 )
             if len(secret) < 32:
                 raise ValueError(
                     "SECRET_KEY must be at least 32 characters in production."
+                )
+            if self.CORS_ORIGINS == "*":
+                raise ValueError(
+                    "CORS_ORIGINS must be set to explicit domain(s) in production. "
+                    "Example: https://www.openplanetrisk.com"
                 )
         return self
 

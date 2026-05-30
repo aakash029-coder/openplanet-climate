@@ -29,7 +29,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const [selectedCity, setSelectedCity] = useState<SelectedCity | null>(null);
   const [viewState, setViewState] = useState<ViewState>({ longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0 });
 
-  const savedState = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('op_sync_state') || '{}') : {};
+  const savedState = typeof window !== 'undefined' ? (() => { try { return JSON.parse(localStorage.getItem('op_sync_state') || '{}'); } catch { return {}; } })() : {};
   const [ssp, setSsp] = useState(savedState.ssp || 'SSP2-4.5');
   const [year, setYear] = useState(savedState.year || '2050');
 
