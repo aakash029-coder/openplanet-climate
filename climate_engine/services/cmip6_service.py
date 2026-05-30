@@ -84,15 +84,11 @@ PROJECTION_HORIZON_YEAR = 2050  # Hard scientific cap — Open-Meteo CMIP6 ends 
 
 
 def _cache_get(key: str):
-    if key in _CACHE:
-        data, ts = _CACHE[key]
-        if time.time() - ts < _CACHE_TTL:
-            return data
-    return None
+    return _CACHE.get(key)
 
 
 def _cache_set(key: str, data):
-    _CACHE[key] = (data, time.time())
+    _CACHE.set(key, data)
 
 
 def _percentile(data: List[float], p: float) -> float:
