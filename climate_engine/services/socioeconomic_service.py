@@ -417,11 +417,38 @@ def _prepare_geocoding_query(raw_city: str) -> str:
 
 
 def _location_country_hint(location: str) -> Optional[str]:
-    """Return trailing segment when user supplies 'City, Country' style hints."""
-    parts = [p.strip() for p in location.split(",") if p.strip()]
-    if len(parts) < 2:
-        return None
-    return parts[-1]
+    """
+    Return the country token from 'City, Country' or 'City Country' queries.
+    Handles both comma-separated ("Oxford, UK") and space-separated ("Oxford UK").
+    Does NOT split multi-word city names like "New York" or "Mexico City".
+    """
+    # Comma-separated: always trust the last segment
+    if "," in location:
+        parts = [p.strip() for p in location.split(",") if p.strip()]
+        return parts[-1] if len(parts) >= 2 else None
+
+    # Space-separated: last word is a country only if it resolves to an ISO code
+    words = location.strip().split()
+    if len(words) >= 2:
+        last = words[-1]
+        if _country_codes_from_hint(last):
+            return last
+    return None
+
+
+def _city_token_for_geocoder(location: str) -> str:
+    """
+    Return the city-only portion of a query, stripping any trailing country token.
+    'Oxford, UK' → 'Oxford',  'Delhi India' → 'Delhi',  'New York' → 'New York'.
+    """
+    hint = _location_country_hint(location)
+    if hint:
+        if "," in location:
+            return location.split(",")[0].strip()
+        # Space-separated: strip the last word (the country hint)
+        words = location.strip().split()
+        return " ".join(words[:-1]).strip() or location
+    return location.split(",")[0].strip()
 
 
 # Informal/colloquial names not in pycountry's ISO database
@@ -639,9 +666,9 @@ async def _search_photon_candidates(
     Open source: github.com/komoot/photon
     """
     url = "https://photon.komoot.io/api/"
-    # Send only the city/first token to Photon; country is applied as a post-filter.
-    # Sending "Oxford, UK" literally matches OSM objects with "UK" in their name.
-    city_token = query.split(",")[0].strip()
+    # Send only the city portion to Photon; country applied as post-filter.
+    # Sending "Oxford, UK" or "Oxford UK" literally matches objects with "UK" in name.
+    city_token = _city_token_for_geocoder(query)
     params = {"q": city_token, "limit": 10, "lang": "en"}
 
     resp = await client.get(url, params=params, headers=HEADERS, timeout=8.0)
@@ -748,7 +775,7 @@ async def _search_openmeteo_candidates(
     query: str, client: httpx.AsyncClient
 ) -> List[GeocodingCandidate]:
     url = "https://geocoding-api.open-meteo.com/v1/search"
-    city_name_only = query.split(",")[0].strip()
+    city_name_only = _city_token_for_geocoder(query)
     params = {"name": city_name_only, "count": 5, "format": "json"}
 
     async with OPEN_METEO_SEMAPHORE:
