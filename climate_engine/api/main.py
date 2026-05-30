@@ -49,6 +49,7 @@ from climate_engine.services.cmip6_service import (
 from climate_engine.services.socioeconomic_service import (
     fetch_live_socioeconomics,
     geocode_city,
+    search_geocode_candidates,
     GeocodingResult,
 )
 import httpx
@@ -377,9 +378,41 @@ def create_app() -> FastAPI:
             "env": settings.ENV_MODE.value,
         }
 
-    # ── Research AI ───────────────────────────────────────────────────────
+    # ── Geocode Search ────────────────────────────────────────────────────
 
     rate_limit = get_rate_limit_string()
+
+    @app.get("/api/geocode-search", tags=["Geocoding"])
+    @limiter.limit(rate_limit)
+    async def geocode_search(request: Request, response: Response, q: str = ""):
+        """
+        Multi-tier location autocomplete.
+        Cascade: Google Maps → OpenCage → Nominatim → Open-Meteo.
+        Returns up to 5 ranked candidates with precise WGS-84 coordinates.
+        """
+        if not q or len(q.strip()) < 2:
+            return {"results": []}
+
+        async with httpx.AsyncClient(timeout=20.0, trust_env=False) as geo_client:
+            candidates = await search_geocode_candidates(q.strip(), geo_client)
+
+        return {
+            "results": [
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "display_name": c.display_name,
+                    "country": c.country,
+                    "country_code": c.country_code,
+                    "latitude": c.latitude,
+                    "longitude": c.longitude,
+                    "source": c.source,
+                }
+                for c in candidates
+            ]
+        }
+
+    # ── Research AI ───────────────────────────────────────────────────────
 
     @app.post("/api/research-analysis", tags=["Analysis"])
     @limiter.limit(rate_limit)
