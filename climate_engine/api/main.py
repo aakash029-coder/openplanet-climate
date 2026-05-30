@@ -915,6 +915,7 @@ def create_app() -> FastAPI:
                     "source": proj["source"],
                     "heatwave_days": int(hw_days),
                     "peak_tx5d_c": round(tx5d, 2),
+                    "mean_temp_c": round(mean_temp, 2),
                     "attributable_deaths": deaths,
                     "economic_decay_usd": round(econ_loss, 2),
                     "wbt_max_c": wbt,

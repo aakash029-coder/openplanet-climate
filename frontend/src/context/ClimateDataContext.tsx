@@ -19,6 +19,7 @@ export interface Projection {
   source: string;
   heatwave_days: number;
   peak_tx5d_c: number;
+  mean_temp_c: number;
   attributable_deaths: number;
   economic_decay_usd: number;
   wbt_max_c: number;

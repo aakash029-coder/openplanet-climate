@@ -173,7 +173,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
     const effHW      = Math.max(0, selectedProj.heatwave_days - cooling * 3.5);
     const hwR        = selectedProj.heatwave_days > 0 ? effHW / selectedProj.heatwave_days : 1;
     const combined   = hwR * Math.max(0, 1 - cooling * 0.08);
-    const rawWBT     = selectedProj.wbt_max_c ?? (selectedProj.peak_tx5d_c * 0.7 + 8);
+    // wbt_max_c is always set by the backend Stull formula — use directly
+    const rawWBT     = selectedProj.wbt_max_c;
     const baseUHI    = selectedProj.uhi_intensity_c ?? (result.baseline?.baseline_mean_c ? (selectedProj.peak_tx5d_c - result.baseline.baseline_mean_c) : 2.1);
     const baseCdd    = selectedProj.grid_stress_factor ?? ((selectedProj.peak_tx5d_c - 18) * selectedProj.heatwave_days);
     const mitDeaths  = Math.round(selectedProj.attributable_deaths * combined);
@@ -213,10 +214,10 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
         era5_humidity_p95:   result.era5_humidity_p95 ?? 70,
         peak_tx5d_c:         selectedProj.peak_tx5d_c,
         heatwave_days:       selectedProj.heatwave_days,
-        mean_temp_c:         selectedProj.peak_tx5d_c - 8,
+        mean_temp_c:         selectedProj.mean_temp_c,
         population:          result.population ?? 0,
         gdp_usd:             result.gdp_usd ?? 0,
-        death_rate:          7.7,
+        death_rate:          selectedProj?.audit_trail?.mortality?.variables?.DR ?? null,
         vulnerability:       selectedProj.audit_trail?.mortality?.variables?.V ?? 1.0,
         canopy_pct:          canopy,
         albedo_pct:          albedo,

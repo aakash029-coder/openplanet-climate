@@ -1,7 +1,14 @@
 """
 climate_engine/services/cmip6_service.py
-100% Real Data — Open-Meteo ERA5 + CMIP6 APIs only.
-Zero fake/demo data. Full retry logic + ZERO-FAIL fallbacks.
+100% Real Data — Open-Meteo ERA5 + CMIP6 APIs + NASA POWER reanalysis.
+
+Baseline pipeline (2-tier):
+  Tier 1: ERA5 daily via archive-api.open-meteo.com (WMO 2011–2020 reference decade)
+  Tier 2: NASA POWER daily reanalysis (power.larc.nasa.gov) — no arithmetic fallbacks.
+
+Projection pipeline:
+  Primary: Open-Meteo CMIP6 multi-model ensemble (MRI-AGCM3-2-S + MPI-ESM1-2-XR)
+  If all models fail, raises ValueError — no invented trend extrapolations.
 """
 
 from __future__ import annotations
@@ -14,10 +21,6 @@ from typing import List, Dict, Optional
 
 import httpx
 
-from climate_engine.api.physics import (
-    _latitude_temperature_fallback,
-    _FALLBACK_DEATH_RATE,
-)
 from climate_engine.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -259,21 +262,85 @@ def _extract_decade_stats(
     if not tmax_window:
         return None
 
+    # Require mean temperature — CMIP6 output always includes temperature_2m_mean;
+    # if absent this model slice is corrupt and must be excluded from the ensemble.
+    if not tmean_window:
+        logger.warning(
+            "CMIP6 decade stats: no mean-temperature data in window [%s, %s] — model excluded.",
+            yr_start, yr_end,
+        )
+        return None
+
     tx5d = _rolling_max_mean(sorted(tmax_window, reverse=True)[:365], window=5)
 
     hw_days_total = sum(1 for t in tmax_window if t > p95_threshold)
-    unique_years = len(unique_years_set)
+    unique_years  = len(unique_years_set)
     hw_days_annual = round(hw_days_total / max(1, unique_years), 1)
 
-    mean_temp = (
-        sum(tmean_window) / len(tmean_window) if tmean_window else tx5d - 8.0
-    )
+    mean_temp = sum(tmean_window) / len(tmean_window)
 
     return {
         "tx5d_c": round(tx5d, 2),
         "hw_days": hw_days_annual,
         "mean_temp_c": round(mean_temp, 2),
         "n_days": len(tmax_window),
+    }
+
+
+async def _fetch_nasa_power_baseline(lat: float, lng: float) -> dict:
+    """
+    Tier 2 baseline fallback — NASA POWER daily reanalysis (2011–2020).
+
+    Provides the same statistics as ERA5 (annual_mean_c, p95_threshold_c,
+    tx5d_baseline_c, hw_days_baseline) from official NASA/GEWEX surface
+    meteorology data. Free, no API key. NASA POWER fill-value (-999) is
+    filtered before any statistical computation.
+    """
+    url = (
+        f"https://power.larc.nasa.gov/api/temporal/daily/point"
+        f"?parameters=T2M,T2M_MAX"
+        f"&community=RE"
+        f"&longitude={lng}"
+        f"&latitude={lat}"
+        f"&start=20110101"
+        f"&end=20201231"
+        f"&format=JSON"
+    )
+    async with httpx.AsyncClient(timeout=45.0, trust_env=False) as client:
+        resp = await client.get(url)
+        resp.raise_for_status()
+        body   = resp.json()
+        params = body.get("properties", {}).get("parameter", {})
+        t2m     = params.get("T2M", {})
+        t2m_max = params.get("T2M_MAX", {})
+
+    if not t2m:
+        raise ValueError(f"NASA POWER returned empty T2M data for ({lat}, {lng})")
+
+    tmean_vals = [v for v in t2m.values()     if v is not None and float(v) != -999.0]
+    tmax_vals  = [v for v in t2m_max.values() if v is not None and float(v) != -999.0]
+
+    if not tmean_vals or not tmax_vals:
+        raise ValueError(f"NASA POWER: insufficient valid data for ({lat}, {lng})")
+
+    annual_mean   = round(sum(tmean_vals) / len(tmean_vals), 2)
+    p95_threshold = round(_percentile(tmax_vals, 95.0), 2)
+    tx5d_baseline = round(_rolling_max_mean(sorted(tmax_vals, reverse=True)[:365], 5), 2)
+    hw_total      = sum(1 for t in tmax_vals if t > p95_threshold)
+    nasa_years    = len({k[:4] for k in t2m.keys()}) or 10
+    hw_baseline   = round(hw_total / nasa_years, 1)
+
+    logger.info(
+        "NASA POWER baseline (%.4f, %.4f): mean=%.2f°C | p95=%.2f°C | tx5d=%.2f°C | hw/yr=%.1f",
+        lat, lng, annual_mean, p95_threshold, tx5d_baseline, hw_baseline,
+    )
+    return {
+        "annual_mean_c":    annual_mean,
+        "p95_threshold_c":  p95_threshold,
+        "tx5d_baseline_c":  tx5d_baseline,
+        "hw_days_baseline": hw_baseline,
+        "_lineage":         "nasa_power_reanalysis",
+        "_compiled_at":     time.time(),
     }
 
 
@@ -287,15 +354,15 @@ def _ensemble_mean(model_results: List[dict], key: str) -> float:
 
 async def fetch_historical_baseline(lat: float, lng: float) -> float:
     """
-    ERA5 annual mean temperature.
-
-    ZERO-FAIL: Falls back to latitude model on ERA5 failure.
+    Annual mean temperature from ERA5 (Tier 1) or NASA POWER (Tier 2).
+    Raises ValueError if both data sources are unavailable.
     """
     cache_key = f"baseline_mean_{round(lat, 2)}_{round(lng, 2)}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
 
+    # Tier 1: ERA5
     try:
         async with httpx.AsyncClient(headers=HEADERS) as client:
             daily = await _fetch_era5_daily(
@@ -304,37 +371,45 @@ async def fetch_historical_baseline(lat: float, lng: float) -> float:
                 ["temperature_2m_mean"],
                 client,
             )
-
         temps = [t for t in daily.get("temperature_2m_mean", []) if t is not None]
         if not temps:
             raise ValueError(f"ERA5: no temperature data for {lat},{lng}")
-
         result = round(sum(temps) / len(temps), 2)
-        logger.info("ERA5 baseline mean %s,%s: %s°C", lat, lng, result)
+        logger.info("ERA5 baseline mean (%.4f, %.4f): %.2f°C", lat, lng, result)
         _cache_set(cache_key, result)
         return result
 
     except Exception as exc:
-        logger.error("ERA5 baseline mean failed for (%s,%s): %s — using latitude fallback", lat, lng, exc)
-        fallback = _latitude_temperature_fallback(lat)
-        _cache_set(cache_key, fallback)
-        return fallback
+        logger.warning("ERA5 baseline mean failed for (%.4f, %.4f): %s — shifting to Tier 2 (NASA POWER)", lat, lng, exc)
+
+    # Tier 2: NASA POWER
+    try:
+        nasa = await _fetch_nasa_power_baseline(lat, lng)
+        result = nasa["annual_mean_c"]
+        _cache_set(cache_key, result)
+        return result
+    except Exception as exc:
+        raise ValueError(
+            f"Upstream climate baseline matrices unreachable for ({lat:.4f}, {lng:.4f}): {exc}"
+        ) from exc
 
 
 async def fetch_historical_baseline_full(lat: float, lng: float) -> dict:
     """
-    Full ERA5 baseline statistics.
+    Full ERA5 baseline statistics (annual_mean_c, p95_threshold_c, tx5d_baseline_c, hw_days_baseline).
 
-    ZERO-FAIL: Falls back to latitude model on ERA5 failure.
+    2-tier pipeline:
+      Tier 1: ERA5 daily via archive-api.open-meteo.com (WMO 2011–2020 reference decade)
+      Tier 2: NASA POWER daily reanalysis (power.larc.nasa.gov), same date window
 
-    Returns:
-        dict with keys: annual_mean_c, p95_threshold_c, tx5d_baseline_c, hw_days_baseline
+    Raises ValueError if both tiers are unavailable — no arithmetic substitutions.
     """
     cache_key = f"baseline_full_{round(lat, 2)}_{round(lng, 2)}"
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
 
+    # ── Tier 1: ERA5 ─────────────────────────────────────────────────────────
     try:
         async with httpx.AsyncClient(headers=HEADERS) as client:
             daily = await _fetch_era5_daily(
@@ -344,57 +419,49 @@ async def fetch_historical_baseline_full(lat: float, lng: float) -> dict:
                 client,
             )
 
-        tmax_all = [t for t in daily.get("temperature_2m_max", []) if t is not None]
+        tmax_all  = [t for t in daily.get("temperature_2m_max",  []) if t is not None]
         tmean_all = [t for t in daily.get("temperature_2m_mean", []) if t is not None]
 
         if not tmax_all:
-            raise ValueError(f"ERA5 baseline: no data for {lat},{lng}")
+            raise ValueError(f"ERA5 baseline: no data for ({lat},{lng})")
 
-        annual_mean = round(sum(tmean_all) / len(tmean_all), 2) if tmean_all else 0.0
+        annual_mean   = round(sum(tmean_all) / len(tmean_all), 2) if tmean_all else 0.0
         p95_threshold = round(_percentile(tmax_all, 95.0), 2)
-        tx5d_baseline = round(
-            _rolling_max_mean(sorted(tmax_all, reverse=True)[:365], 5), 2
-        )
-        hw_total = sum(1 for t in tmax_all if t > p95_threshold)
-        era5_years = len({d[:4] for d in daily.get("time", []) if d}) or 10
-        hw_baseline = round(hw_total / era5_years, 1)
+        tx5d_baseline = round(_rolling_max_mean(sorted(tmax_all, reverse=True)[:365], 5), 2)
+        hw_total      = sum(1 for t in tmax_all if t > p95_threshold)
+        era5_years    = len({d[:4] for d in daily.get("time", []) if d}) or 10
+        hw_baseline   = round(hw_total / era5_years, 1)
 
         result = {
-            "annual_mean_c": annual_mean,
-            "p95_threshold_c": p95_threshold,
-            "tx5d_baseline_c": tx5d_baseline,
+            "annual_mean_c":    annual_mean,
+            "p95_threshold_c":  p95_threshold,
+            "tx5d_baseline_c":  tx5d_baseline,
             "hw_days_baseline": hw_baseline,
-            "_lineage": "empirical_api",
-            "_compiled_at": time.time(),
+            "_lineage":         "empirical_api",
+            "_compiled_at":     time.time(),
         }
-
         logger.info(
-            "ERA5 full baseline %s,%s: mean=%s°C | p95=%s°C | tx5d=%s°C | hw/yr=%s",
+            "ERA5 full baseline (%.4f, %.4f): mean=%.2f°C | p95=%.2f°C | tx5d=%.2f°C | hw/yr=%.1f",
             lat, lng, annual_mean, p95_threshold, tx5d_baseline, hw_baseline,
         )
         _cache_set(cache_key, result)
         return result
 
     except Exception as exc:
-        logger.error(
-            "ERA5 full baseline failed for (%s,%s): %s — using latitude fallback",
+        logger.warning(
+            "ERA5 full baseline failed for (%.4f, %.4f): %s — shifting to Tier 2 (NASA POWER)",
             lat, lng, exc,
         )
-        fallback_temp = _latitude_temperature_fallback(lat)
-        p95_fallback = round(fallback_temp + 8.0, 2)
-        tx5d_fallback = round(fallback_temp + 10.0, 2)
-        hw_fallback = max(0.0, round((fallback_temp - 20.0) * 3.0, 1))
 
-        result = {
-            "annual_mean_c": fallback_temp,
-            "p95_threshold_c": p95_fallback,
-            "tx5d_baseline_c": tx5d_fallback,
-            "hw_days_baseline": hw_fallback,
-            "_lineage": "statistical_fallback",
-            "_compiled_at": time.time(),
-        }
+    # ── Tier 2: NASA POWER ────────────────────────────────────────────────────
+    try:
+        result = await _fetch_nasa_power_baseline(lat, lng)
         _cache_set(cache_key, result)
         return result
+    except Exception as exc:
+        raise ValueError(
+            f"Upstream climate baseline matrices unreachable for ({lat:.4f}, {lng:.4f}): {exc}"
+        ) from exc
 
 
 async def fetch_cmip6_projection(
@@ -460,33 +527,12 @@ async def fetch_cmip6_projection(
                 model, ssp_param, target_year, stats["tx5d_c"],
             )
 
-    # ── Analytical fallback — ≤2050 only, all models failed ─────────────
     if not model_stats:
-        logger.error(
-            "All CMIP6 models failed for %s,%s %s %d — using latitude-trend fallback.",
-            lat, lng, ssp_param, target_year,
+        raise ValueError(
+            f"All CMIP6 ensemble models failed for ({lat:.4f}, {lng:.4f}) "
+            f"scenario={ssp_param} year={target_year}. "
+            "No arithmetic extrapolations are used — upstream CMIP6 data is required."
         )
-        # IPCC AR6 WG1 Table 4.5: median global surface warming rates
-        # SSP5-8.5/SSP3-7.0 ≈ 0.30°C/decade; SSP2-4.5 ≈ 0.18°C/decade (2020–2050)
-        trend_per_decade = 0.30 if ssp_param in {"ssp585", "ssp370"} else 0.18
-        baseline_temp = _latitude_temperature_fallback(lat)
-        decades_from_2000 = (target_year - 2000) / 10.0
-        projected_temp = baseline_temp + (trend_per_decade * decades_from_2000)
-        hw_base  = max(0.0, (baseline_temp - 20.0) * 3.0)
-        hw_trend = hw_base * (1 + 0.15 * decades_from_2000)
-
-        result = {
-            "year": target_year,
-            "tx5d_c": round(projected_temp - total_cooling, 2),
-            "tx5d_raw_c": round(projected_temp, 2),
-            "hw_days": round(max(0.0, hw_trend - (total_cooling * 3.5)), 1),
-            "hw_days_raw": round(hw_trend, 1),
-            "mean_temp_c": round(projected_temp - 4.0, 2),
-            "n_models": 0,
-            "source": "analytical_trend_fallback",
-        }
-        _cache_set(cache_key, result)
-        return result
 
     raw_tx5d = _ensemble_mean(model_stats, "tx5d_c")
     raw_hw_days = _ensemble_mean(model_stats, "hw_days")
