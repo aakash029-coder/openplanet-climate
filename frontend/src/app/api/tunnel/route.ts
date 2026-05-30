@@ -5,6 +5,15 @@ import { NextRequest, NextResponse } from 'next/server';
  * Routes requests through Vercel's server IP to avoid client-side CORS
  * and rate-limit restrictions on the Open-Meteo API.
  */
+const ALLOWED_PREFIXES = [
+  'https://api.open-meteo.com/',
+  'https://archive-api.open-meteo.com/',
+  'https://climate-api.open-meteo.com/',
+  'https://geocoding-api.open-meteo.com/',
+  'https://power.larc.nasa.gov/',
+  'https://photon.komoot.io/',
+];
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as { target_url?: string };
@@ -12,6 +21,11 @@ export async function POST(req: NextRequest) {
 
     if (!target_url) {
       return NextResponse.json({ error: 'No target URL provided' }, { status: 400 });
+    }
+
+    const allowed = ALLOWED_PREFIXES.some(p => target_url.startsWith(p));
+    if (!allowed) {
+      return NextResponse.json({ error: 'Target URL not in allowlist' }, { status: 403 });
     }
 
     const response = await fetch(target_url, {

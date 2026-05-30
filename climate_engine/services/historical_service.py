@@ -19,23 +19,52 @@ import urllib.parse
 from typing import Dict, Any, Optional
 
 import httpx
+from collections import OrderedDict
+import threading
 
 logger = logging.getLogger(__name__)
 
-_HISTORICAL_CACHE: dict = {}
-_CACHE_TTL = 86400 * 7  # 7-day cache
+_CACHE_TTL = 86400 * 7   # 7-day TTL
+_CACHE_MAX  = 10_000     # hard cap: ~10K unique grid cells max in RAM
+
+
+class _BoundedCache:
+    """Thread-safe LRU cache with TTL and hard size cap — no unbounded growth."""
+    def __init__(self, maxsize: int, ttl: int):
+        self._cache: OrderedDict = OrderedDict()
+        self._maxsize = maxsize
+        self._ttl = ttl
+        self._lock = threading.Lock()
+
+    def get(self, key: str):
+        with self._lock:
+            if key not in self._cache:
+                return None
+            data, ts = self._cache[key]
+            if time.time() - ts > self._ttl:
+                del self._cache[key]
+                return None
+            self._cache.move_to_end(key)
+            return data
+
+    def set(self, key: str, data) -> None:
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+            self._cache[key] = (data, time.time())
+            while len(self._cache) > self._maxsize:
+                self._cache.popitem(last=False)
+
+
+_HISTORICAL_CACHE = _BoundedCache(maxsize=_CACHE_MAX, ttl=_CACHE_TTL)
 
 
 def _cache_get(key: str):
-    if key in _HISTORICAL_CACHE:
-        data, ts = _HISTORICAL_CACHE[key]
-        if time.time() - ts < _CACHE_TTL:
-            return data
-    return None
+    return _HISTORICAL_CACHE.get(key)
 
 
 def _cache_set(key: str, data):
-    _HISTORICAL_CACHE[key] = (data, time.time())
+    _HISTORICAL_CACHE.set(key, data)
 
 
 # ── ERA BUCKET PROCESSOR ──────────────────────────────────────────────────────

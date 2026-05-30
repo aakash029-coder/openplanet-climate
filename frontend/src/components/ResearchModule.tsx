@@ -43,7 +43,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
 
   // SSP / mitigation state — initialize from primaryData if already loaded, else localStorage
   const savedState = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem('op_sync_state') || '{}')
+    ? (() => { try { return JSON.parse(localStorage.getItem('op_sync_state') || '{}'); } catch { return {}; } })()
     : {};
   const [ssp, setSsp] = useState(() => primaryData?.ssp || savedState.ssp || "SSP2-4.5");
   const [selectedYear, setSelectedYear] = useState<number | null>(

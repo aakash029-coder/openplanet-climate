@@ -20,13 +20,14 @@ import time
 from typing import List, Dict, Optional
 
 import httpx
+from collections import OrderedDict
+import threading
 
 from climate_engine.settings import settings
 
 logger = logging.getLogger(__name__)
 
 # ── Vercel Tunnel ──────────────────────────────────────────────────────
-# Using env variable from settings.py instead of hardcoded string
 VERCEL_TUNNEL_URL = settings.VERCEL_TUNNEL_URL
 
 HEADERS = {
@@ -34,9 +35,40 @@ HEADERS = {
     "Accept": "application/json",
 }
 
-# ── Cache — 24hr TTL ───────────────────────────────────────────────────
-_CACHE: dict = {}
+# ── Cache — 24hr TTL, hard size cap ───────────────────────────────────
 _CACHE_TTL = 86400
+_CACHE_MAX  = 20_000   # (lat, lng, ssp, year) tuples; 4 SSPs × 3 years × ~1667 locations
+
+
+class _BoundedCache:
+    """Thread-safe LRU cache with TTL and hard size cap — no unbounded growth."""
+    def __init__(self, maxsize: int, ttl: int):
+        self._cache: OrderedDict = OrderedDict()
+        self._maxsize = maxsize
+        self._ttl = ttl
+        self._lock = threading.Lock()
+
+    def get(self, key: str):
+        with self._lock:
+            if key not in self._cache:
+                return None
+            data, ts = self._cache[key]
+            if time.time() - ts > self._ttl:
+                del self._cache[key]
+                return None
+            self._cache.move_to_end(key)
+            return data
+
+    def set(self, key: str, data) -> None:
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+            self._cache[key] = (data, time.time())
+            while len(self._cache) > self._maxsize:
+                self._cache.popitem(last=False)
+
+
+_CACHE = _BoundedCache(maxsize=_CACHE_MAX, ttl=_CACHE_TTL)
 
 
 class HorizonUnavailable(Exception):
