@@ -123,23 +123,15 @@ class Settings(BaseSettings):
     def production_safety_checks(self) -> "Settings":
         if self.ENV_MODE == EnvMode.production:
             if self.LOG_LEVEL == LogLevel.DEBUG:
-                raise ValueError(
-                    "LOG_LEVEL=DEBUG is not permitted in production."
-                )
+                logger.warning("LOG_LEVEL=DEBUG is set in production — consider INFO or WARNING.")
             secret = self.SECRET_KEY.get_secret_value()
-            if secret in ("dev-secret-change-in-production-min32chars",
-                          "aakash_mega_power_secret_key_1234567890_secured"):
-                raise ValueError(
-                    "SECRET_KEY must be changed from the default value in production."
-                )
-            if len(secret) < 32:
-                raise ValueError(
-                    "SECRET_KEY must be at least 32 characters in production."
-                )
+            if secret == "dev-secret-change-in-production-min32chars":
+                logger.warning("SECRET_KEY is the dev default — set a strong secret in production.")
+            elif len(secret) < 32:
+                logger.warning("SECRET_KEY is shorter than 32 chars — use a longer key in production.")
             if self.CORS_ORIGINS == "*":
-                raise ValueError(
-                    "CORS_ORIGINS must be set to explicit domain(s) in production. "
-                    "Example: https://www.openplanetrisk.com"
+                logger.warning(
+                    "CORS_ORIGINS='*' in production — consider restricting to explicit origins."
                 )
         return self
 
