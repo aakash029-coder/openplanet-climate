@@ -12,7 +12,7 @@ pydantic-settings==2.13.1
 # ── Science & Geospatial (Stateless) ──────────────────────────────────────────
 h3==4.4.2
 global-land-mask==1.0.0
-numpy==2.4.2
+numpy==2.2.6
 
 # ── LLM Integration ───────────────────────────────────────────────────────────
 groq==1.0.0
