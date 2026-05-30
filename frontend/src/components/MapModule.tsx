@@ -71,7 +71,8 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     const cooling = (canopy / 100) * 1.2 + (coolRoof / 100) * 0.8;
     const baseT  = currentProjection.peak_tx5d_c;
     const baseH  = currentProjection.heatwave_days;
-    const baseW  = currentProjection.wbt_max_c ?? (currentProjection.peak_tx5d_c * 0.7 + 8);
+    // wbt_max_c is always computed by the backend Stull formula — never approximated
+    const baseW  = currentProjection.wbt_max_c;
     const baseD  = currentProjection.attributable_deaths;
     const baseL  = currentProjection.economic_decay_usd;
 

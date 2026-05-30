@@ -13,7 +13,7 @@ const CITIES = [
 ];
 
 const STATS = [
-  { value: '8,000+', label: 'Cities Modelled'  },
+  { value: 'Any',    label: 'Global Coordinate' },
   { value: '4',      label: 'Climate Scenarios' },
   { value: '2050',   label: 'Validated Horizon' },
   { value: '±15%',   label: 'Mortality CI'      },
@@ -107,21 +107,21 @@ export default function LandingMobile() {
           {[
             {
               label:  'Peak Temperature',
-              source: 'TX5d decadal mean · ERA5',
+              source: 'Illustrative · SSP5-8.5 · CMIP6 · 2050',
               value:  `${city.temp}°C`,
               glow:   'glow-amber',
               color:  'var(--copper)',
             },
             {
               label:  'Est. Heat Deaths',
-              source: 'Gasparrini 2017 · ±15% CI',
+              source: 'Illustrative · Gasparrini 2017 · ±15% CI',
               value:  `~${city.deaths.toLocaleString()}`,
               glow:   'glow-red',
               color:  'var(--heat-4)',
             },
             {
               label:  'Heatwave Days / yr',
-              source: 'Above P95 · CMIP6',
+              source: 'Illustrative · Above P95 · CMIP6',
               value:  `${city.hw}d`,
               glow:   'glow-red',
               color:  'var(--heat-3)',

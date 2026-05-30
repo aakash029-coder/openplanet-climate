@@ -366,7 +366,7 @@ export const MortalityDecomposition = ({
           <div>
             <h3 className="text-[11px] font-mono text-slate-300 uppercase tracking-[0.3em] font-bold">Heat Mortality Age Decomposition</h3>
             <p className="text-[9px] font-mono text-slate-600 mt-1 italic">
-              Vulnerability-weighted attribution by demographic cohort · GBD 2019 multipliers
+              World Bank Demographic Cohort Distribution Matrix · GBD 2019 vulnerability multipliers · Global averages — country-specific splits not yet available
             </p>
           </div>
           <div className="flex bg-slate-900/60 rounded-xl p-1 border border-slate-800/60 shrink-0">

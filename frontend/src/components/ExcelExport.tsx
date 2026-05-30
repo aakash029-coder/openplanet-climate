@@ -29,7 +29,7 @@ export interface ExcelExportData {
   mean_temp_c:         number;
   population:          number;
   gdp_usd:             number;
-  death_rate:          number;
+  death_rate:          number | null;
   vulnerability:       number;
   canopy_pct:          number;
   albedo_pct:          number;
@@ -88,14 +88,20 @@ function derive(d: ExcelExportData) {
   const era5_p95_c      = calibrateMetric(d.era5_p95_c      || 0, 'temp');
   const era5_humidity   = Math.max(0, Math.min(d.era5_humidity_p95 || 70, 100));
   
-  // FIX 3: Sub-Zero Climate Erasure Fixed (Removed > 0 check to allow negative temps)
-  const mean_temp_c     = isFinite(d.mean_temp_c) && d.mean_temp_c !== null 
-                          ? d.mean_temp_c 
-                          : Math.max(0, peak_tx5d_c - 8);
-                          
+  // mean_temp_c comes directly from the backend CMIP6 ensemble — use as-is.
+  // If for any reason it's missing (old cached response), fall back to Tx5d
+  // rather than an invented constant delta.
+  const mean_temp_c     = (d.mean_temp_c != null && isFinite(d.mean_temp_c))
+                          ? d.mean_temp_c
+                          : peak_tx5d_c;
+
   const population      = Math.max(0, d.population      || 0);
   const gdp_usd         = Math.max(0, d.gdp_usd         || 0);
-  const death_rate      = Math.max(0.1, Math.min(d.death_rate || 7.7, 50));
+  // death_rate from audit_trail.mortality.variables.DR (country-specific World Bank value).
+  // If unavailable, null is passed through — formula cells will show N/A rather than a hardcoded rate.
+  const death_rate      = (d.death_rate != null && isFinite(d.death_rate) && d.death_rate > 0)
+                          ? Math.min(d.death_rate, 50)
+                          : null;
   const vulnerability   = Math.max(0.1, Math.min(d.vulnerability || 1.0, 5.0));
   const canopy_pct      = Math.max(0, Math.min(d.canopy_pct  || 0, 100));
   const albedo_pct      = Math.max(0, Math.min(d.albedo_pct  || 0, 100));
@@ -113,10 +119,13 @@ function derive(d: ExcelExportData) {
   const hwR        = heatwave_days > 0 ? effectHW / heatwave_days : 1;
   const sevR       = Math.max(0, 1 - coolingC * 0.08);
 
-  // ✅ Use API values if valid, else calculate from formula
+  // Use API-computed deaths; formula fallback only fires if API value is absent AND
+  // death_rate is available — never fabricate with a hardcoded rate.
   const deaths_raw = (d.attributable_deaths > 0 && isFinite(d.attributable_deaths))
     ? d.attributable_deaths
-    : Math.round(population * (death_rate / 1000) * hwFrac * af * vulnerability);
+    : death_rate != null
+      ? Math.round(population * (death_rate / 1000) * hwFrac * af * vulnerability)
+      : 0;
 
   const loss_raw = (d.economic_decay_usd > 0 && isFinite(d.economic_decay_usd))
     ? d.economic_decay_usd
@@ -258,7 +267,7 @@ function buildControlPanelFinal(d: ExcelExportData, calc: ReturnType<typeof deri
     // Row 14: B14 = GDP ★
     ["💰 City GDP",          N(calc.gdp_usd,        FMT.usd),  "USD/yr",      "World Bank NY.GDP.PCAP.CD × Pop",    "Estimated city-level GDP"],
     // Row 15: B15 = Death Rate ★
-    ["💀 Base Death Rate",   N(calc.death_rate,     FMT.dec2), "per 1,000/yr","World Bank SP.DYN.CDRT.IN",         "Crude death rate"],
+    ["💀 Base Death Rate",   calc.death_rate != null ? N(calc.death_rate, FMT.dec2) : N("N/A"), "per 1,000/yr","World Bank SP.DYN.CDRT.IN — from audit trail",         "Crude death rate (country-specific)"],
     // Row 16: B16 = Vulnerability ★
     ["🛡 Vulnerability (V)", N(calc.vulnerability,  FMT.dec2), "multiplier",  "IEA 2023 + WHO + World Bank",        "0.25 (high AC) to 2.5 (low AC)"],
     // Row 17: B17 = Humidity ★
@@ -422,7 +431,11 @@ function buildCoreEngineClean(d: ExcelExportData, calc: ReturnType<typeof derive
   // Row 16: B16 = AF
   push(["  Attributable Fraction",  F("(B15 - 1) / B15", calc.af,              FMT.dec6), "fraction","=(B15 - 1) / B15",              "Gasparrini (2017)"]);
   // Row 17: B17 = Death Rate
-  push(["  Annual Death Rate",      F("'Control Panel'!B15 / 1000", calc.death_rate/1000, FMT.dec6), "fraction","='Control Panel'!B15 / 1000","World Bank SP.DYN.CDRT.IN"]);
+  push(["  Annual Death Rate",
+    calc.death_rate != null
+      ? F("'Control Panel'!B15 / 1000", calc.death_rate / 1000, FMT.dec6)
+      : N("N/A"),
+    "fraction","='Control Panel'!B15 / 1000","World Bank SP.DYN.CDRT.IN"]);
   // Row 18: B18 = HW Fraction
   push(["  HW Fraction",            F("MIN(B8 / 365, 1)", calc.hwFrac,          FMT.dec6), "fraction","=MIN(B8 / 365, 1)",              "Derived"]);
   // Row 19: B19 = Vulnerability
