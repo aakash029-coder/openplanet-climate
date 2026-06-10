@@ -1086,7 +1086,21 @@ def create_app() -> FastAPI:
         try:
             padded = req.payload + "=" * ((4 - len(req.payload) % 4) % 4)
             payload_data = json.loads(base64.b64decode(padded).decode("utf-8"))
-            city_name = payload_data.get("text", "").strip()
+
+            # Support both AgentChatProtocol v0.3 content array and plain text field
+            content = payload_data.get("content", [])
+            if content and isinstance(content, list):
+                raw_text = content[0].get("text", "").strip()
+            else:
+                raw_text = payload_data.get("text", "").strip()
+
+            # Extract city from natural language ("for Tokyo", "including Tokyo")
+            match = re.search(
+                r'\bfor\s+([A-Z][a-zA-Z\s\-]+?)(?:\s+including|\s*[,\.?]|$)',
+                raw_text,
+            )
+            city_name = match.group(1).strip() if match else raw_text
+            logger.info("[asi/submit] raw_text=%r  city_name=%r", raw_text, city_name)
         except Exception as exc:
             logger.warning("[asi/submit] payload decode failed: %s", exc)
 
