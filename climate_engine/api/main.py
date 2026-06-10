@@ -1092,47 +1092,72 @@ def create_app() -> FastAPI:
 
             logger.info("[asi/submit] sender=%r  session=%r", sender, session)
 
-            # Decode payload — try every known format before giving up
-            raw_text = ""
+            _AGENT_ADDRESS = "agent1qdc29zvkgxqsesp0xp76n8qyxjg4pyvd5f4tlqca9t48jrtwe5ntsj69k6y"
+
+            # Decode the payload envelope
+            payload_data: dict = {}
             if payload_b64:
                 try:
                     padded = payload_b64 + "=" * ((4 - len(payload_b64) % 4) % 4)
                     payload_data = json.loads(base64.b64decode(padded).decode("utf-8"))
                     logger.info("[asi/submit] decoded_payload=%r", payload_data)
-
-                    # Format 1: AgentChatProtocol v0.3 — content array
-                    content = payload_data.get("content", [])
-                    if content and isinstance(content, list):
-                        for item in content:
-                            if isinstance(item, dict) and item.get("type") == "text":
-                                raw_text = item.get("text", "").strip()
-                                break
-                            elif isinstance(item, dict) and "text" in item:
-                                raw_text = item.get("text", "").strip()
-                                break
-
-                    # Format 2: direct text field
-                    if not raw_text:
-                        raw_text = str(payload_data.get("text", "")).strip()
-
-                    # Format 3: message.text nested
-                    if not raw_text:
-                        msg = payload_data.get("message", {})
-                        if isinstance(msg, dict):
-                            raw_text = str(msg.get("text", msg.get("content", ""))).strip()
-                        elif isinstance(msg, str):
-                            raw_text = msg.strip()
-
-                    # Format 4: body.content as plain string
-                    if not raw_text:
-                        body_content = payload_data.get("content", "")
-                        if isinstance(body_content, str):
-                            raw_text = body_content.strip()
-
                 except Exception as exc:
                     logger.warning("[asi/submit] payload decode failed: %s", exc)
 
-            # Fallback: check body-level fields directly (no envelope)
+            # ── ChatAcknowledgement — return ack and stop ─────────────────
+            if "acknowledged_msg_id" in payload_data:
+                logger.info("[asi/submit] ChatAcknowledgement received, ack-ing back")
+                ack = {
+                    "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "acknowledged_msg_id": payload_data.get("acknowledged_msg_id", ""),
+                    "metadata": {},
+                }
+                return {
+                    "version": 1,
+                    "sender": _AGENT_ADDRESS,
+                    "target": sender,
+                    "session": session,
+                    "schema_digest": schema_digest,
+                    "protocol_digest": protocol_digest,
+                    "payload": base64.b64encode(json.dumps(ack).encode("utf-8")).decode("ascii"),
+                    "expires": 0,
+                    "nonce": 0,
+                    "signature": "",
+                }
+
+            # ── ChatMessage — extract city and return climate data ─────────
+            raw_text = ""
+
+            # Format 1: AgentChatProtocol v0.3 content array
+            content = payload_data.get("content", [])
+            if content and isinstance(content, list):
+                for item in content:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        raw_text = item.get("text", "").strip()
+                        break
+                    elif isinstance(item, dict) and "text" in item:
+                        raw_text = item.get("text", "").strip()
+                        break
+
+            # Format 2: direct text field
+            if not raw_text:
+                raw_text = str(payload_data.get("text", "")).strip()
+
+            # Format 3: nested message object
+            if not raw_text:
+                msg = payload_data.get("message", {})
+                if isinstance(msg, dict):
+                    raw_text = str(msg.get("text", msg.get("content", ""))).strip()
+                elif isinstance(msg, str):
+                    raw_text = msg.strip()
+
+            # Format 4: content as plain string
+            if not raw_text:
+                bc = payload_data.get("content", "")
+                if isinstance(bc, str):
+                    raw_text = bc.strip()
+
+            # Fallback: body-level keys (no envelope)
             if not raw_text:
                 for key in ["text", "message", "query", "input", "city", "prompt"]:
                     val = body.get(key, "")
