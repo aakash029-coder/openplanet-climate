@@ -12,6 +12,7 @@ Scientific logic is delegated to the physics and services layers.
 from __future__ import annotations
 
 import base64
+import datetime
 import logging
 import math
 import re
@@ -1172,13 +1173,18 @@ def create_app() -> FastAPI:
                     "Visit openplanetrisk.com for full heat risk intelligence."
                 )
 
+            response_message = {
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "msg_id": str(uuid.uuid4()),
+                "content": [{"type": "text", "text": response_text}],
+            }
             encoded_payload = base64.b64encode(
-                json.dumps({"type": "text", "text": response_text}).encode("utf-8")
+                json.dumps(response_message).encode("utf-8")
             ).decode("ascii")
 
             return {
                 "version": 1,
-                "sender": "openplanet-heat-risk-agent",
+                "sender": "agent1qdc29zvkgxqsesp0xp76n8qyxjg4pyvd5f4tlqca9t48jrtwe5ntsj69k6y",
                 "target": sender,
                 "session": session,
                 "schema_digest": schema_digest,
@@ -1191,15 +1197,20 @@ def create_app() -> FastAPI:
 
         except Exception as exc:
             logger.error("[asi/submit] unhandled error: %s", exc)
-            fallback = base64.b64encode(
-                json.dumps({"type": "text", "text": (
+            fallback_msg = {
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "msg_id": str(uuid.uuid4()),
+                "content": [{"type": "text", "text": (
                     "Heat risk data temporarily unavailable. "
                     "Visit openplanetrisk.com for full analysis."
-                )}).encode("utf-8")
+                )}],
+            }
+            fallback = base64.b64encode(
+                json.dumps(fallback_msg).encode("utf-8")
             ).decode("ascii")
             return {
                 "version": 1,
-                "sender": "openplanet-heat-risk-agent",
+                "sender": "agent1qdc29zvkgxqsesp0xp76n8qyxjg4pyvd5f4tlqca9t48jrtwe5ntsj69k6y",
                 "target": "",
                 "session": str(uuid.uuid4()),
                 "schema_digest": "",
