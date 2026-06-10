@@ -1079,63 +1079,94 @@ def create_app() -> FastAPI:
     # ── ASI Agentverse Chat Protocol ──────────────────────────────────────────
 
     @app.post("/submit", tags=["ASI Agent"])
-    async def agentverse_submit(req: ASIChatPayload):
-        logger.info("[asi/submit] sender=%r  session=%r", req.sender, req.session)
-
-        city_name = ""
+    async def agentverse_submit(request: Request):
+        # Always return 200 — never let Agentverse see a 4xx/5xx
         try:
-            padded = req.payload + "=" * ((4 - len(req.payload) % 4) % 4)
-            payload_data = json.loads(base64.b64decode(padded).decode("utf-8"))
+            body = await request.json()
+            sender = body.get("sender", "")
+            session = body.get("session", str(uuid.uuid4()))
+            schema_digest = body.get("schema_digest", "")
+            protocol_digest = body.get("protocol_digest", "")
+            payload_b64 = body.get("payload", "")
 
-            # Support both AgentChatProtocol v0.3 content array and plain text field
-            content = payload_data.get("content", [])
-            if content and isinstance(content, list):
-                raw_text = content[0].get("text", "").strip()
-            else:
-                raw_text = payload_data.get("text", "").strip()
+            logger.info("[asi/submit] sender=%r  session=%r", sender, session)
 
-            # Extract city from natural language ("for Tokyo", "including Tokyo")
-            match = re.search(
-                r'\bfor\s+([A-Z][a-zA-Z\s\-]+?)(?:\s+including|\s*[,\.?]|$)',
-                raw_text,
-            )
-            city_name = match.group(1).strip() if match else raw_text
-            logger.info("[asi/submit] raw_text=%r  city_name=%r", raw_text, city_name)
-        except Exception as exc:
-            logger.warning("[asi/submit] payload decode failed: %s", exc)
-
-        if city_name:
+            # Decode payload — handle missing or malformed base64 gracefully
+            city_name = ""
             try:
-                response_text = await _get_asi_climate_summary(city_name)
+                padded = payload_b64 + "=" * ((4 - len(payload_b64) % 4) % 4)
+                payload_data = json.loads(base64.b64decode(padded).decode("utf-8"))
+
+                # Support AgentChatProtocol v0.3 content array AND plain text field
+                content = payload_data.get("content", [])
+                if content and isinstance(content, list):
+                    raw_text = content[0].get("text", "").strip()
+                else:
+                    raw_text = payload_data.get("text", "").strip()
+
+                # Extract city from natural language ("for Tokyo", "including Tokyo")
+                match = re.search(
+                    r'\bfor\s+([A-Z][a-zA-Z\s\-]+?)(?:\s+including|\s*[,\.?]|$)',
+                    raw_text,
+                )
+                city_name = match.group(1).strip() if match else raw_text
+                logger.info("[asi/submit] raw_text=%r  city_name=%r", raw_text, city_name)
             except Exception as exc:
-                logger.warning("[asi/submit] climate summary failed for '%s': %s", city_name, exc)
+                logger.warning("[asi/submit] payload decode failed: %s", exc)
+
+            if city_name:
+                try:
+                    response_text = await _get_asi_climate_summary(city_name)
+                except Exception as exc:
+                    logger.warning("[asi/submit] climate summary failed for '%s': %s", city_name, exc)
+                    response_text = (
+                        f"Climate data for '{city_name}' is currently unavailable. "
+                        "Visit openplanetrisk.com for full heat risk intelligence."
+                    )
+            else:
                 response_text = (
-                    f"Climate data for '{city_name}' is currently unavailable. "
+                    "Please provide a city name in your message. "
+                    "Example: 'What is the heat risk for Mumbai?' "
                     "Visit openplanetrisk.com for full heat risk intelligence."
                 )
-        else:
-            response_text = (
-                "Please provide a city name in your message. "
-                "Example: 'What is the heat risk for Mumbai?' "
-                "Visit openplanetrisk.com for full heat risk intelligence."
-            )
 
-        encoded_payload = base64.b64encode(
-            json.dumps({"type": "text", "text": response_text}).encode("utf-8")
-        ).decode("ascii")
+            encoded_payload = base64.b64encode(
+                json.dumps({"type": "text", "text": response_text}).encode("utf-8")
+            ).decode("ascii")
 
-        return {
-            "version": 1,
-            "sender": "openplanet-heat-risk-agent",
-            "target": req.sender,
-            "session": req.session,
-            "schema_digest": req.schema_digest,
-            "protocol_digest": req.protocol_digest,
-            "payload": encoded_payload,
-            "expires": 0,
-            "nonce": 0,
-            "signature": "",
-        }
+            return {
+                "version": 1,
+                "sender": "openplanet-heat-risk-agent",
+                "target": sender,
+                "session": session,
+                "schema_digest": schema_digest,
+                "protocol_digest": protocol_digest,
+                "payload": encoded_payload,
+                "expires": 0,
+                "nonce": 0,
+                "signature": "",
+            }
+
+        except Exception as exc:
+            logger.error("[asi/submit] unhandled error: %s", exc)
+            fallback = base64.b64encode(
+                json.dumps({"type": "text", "text": (
+                    "Heat risk data temporarily unavailable. "
+                    "Visit openplanetrisk.com for full analysis."
+                )}).encode("utf-8")
+            ).decode("ascii")
+            return {
+                "version": 1,
+                "sender": "openplanet-heat-risk-agent",
+                "target": "",
+                "session": str(uuid.uuid4()),
+                "schema_digest": "",
+                "protocol_digest": "",
+                "payload": fallback,
+                "expires": 0,
+                "nonce": 0,
+                "signature": "",
+            }
 
     return app
 
