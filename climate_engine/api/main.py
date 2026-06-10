@@ -1091,28 +1091,70 @@ def create_app() -> FastAPI:
 
             logger.info("[asi/submit] sender=%r  session=%r", sender, session)
 
-            # Decode payload — handle missing or malformed base64 gracefully
+            # Decode payload — try every known format before giving up
+            raw_text = ""
+            if payload_b64:
+                try:
+                    padded = payload_b64 + "=" * ((4 - len(payload_b64) % 4) % 4)
+                    payload_data = json.loads(base64.b64decode(padded).decode("utf-8"))
+                    logger.info("[asi/submit] decoded_payload=%r", payload_data)
+
+                    # Format 1: AgentChatProtocol v0.3 — content array
+                    content = payload_data.get("content", [])
+                    if content and isinstance(content, list):
+                        for item in content:
+                            if isinstance(item, dict) and item.get("type") == "text":
+                                raw_text = item.get("text", "").strip()
+                                break
+                            elif isinstance(item, dict) and "text" in item:
+                                raw_text = item.get("text", "").strip()
+                                break
+
+                    # Format 2: direct text field
+                    if not raw_text:
+                        raw_text = str(payload_data.get("text", "")).strip()
+
+                    # Format 3: message.text nested
+                    if not raw_text:
+                        msg = payload_data.get("message", {})
+                        if isinstance(msg, dict):
+                            raw_text = str(msg.get("text", msg.get("content", ""))).strip()
+                        elif isinstance(msg, str):
+                            raw_text = msg.strip()
+
+                    # Format 4: body.content as plain string
+                    if not raw_text:
+                        body_content = payload_data.get("content", "")
+                        if isinstance(body_content, str):
+                            raw_text = body_content.strip()
+
+                except Exception as exc:
+                    logger.warning("[asi/submit] payload decode failed: %s", exc)
+
+            # Fallback: check body-level fields directly (no envelope)
+            if not raw_text:
+                for key in ["text", "message", "query", "input", "city", "prompt"]:
+                    val = body.get(key, "")
+                    if val and isinstance(val, str):
+                        raw_text = val.strip()
+                        break
+                    elif val and isinstance(val, dict):
+                        raw_text = str(val.get("text", val.get("content", ""))).strip()
+                        if raw_text:
+                            break
+
+            logger.info("[asi/submit] raw_text=%r", raw_text)
+
+            # Extract city name from natural language
             city_name = ""
-            try:
-                padded = payload_b64 + "=" * ((4 - len(payload_b64) % 4) % 4)
-                payload_data = json.loads(base64.b64decode(padded).decode("utf-8"))
-
-                # Support AgentChatProtocol v0.3 content array AND plain text field
-                content = payload_data.get("content", [])
-                if content and isinstance(content, list):
-                    raw_text = content[0].get("text", "").strip()
-                else:
-                    raw_text = payload_data.get("text", "").strip()
-
-                # Extract city from natural language ("for Tokyo", "including Tokyo")
+            if raw_text:
                 match = re.search(
                     r'\bfor\s+([A-Z][a-zA-Z\s\-]+?)(?:\s+including|\s*[,\.?]|$)',
                     raw_text,
                 )
-                city_name = match.group(1).strip() if match else raw_text
-                logger.info("[asi/submit] raw_text=%r  city_name=%r", raw_text, city_name)
-            except Exception as exc:
-                logger.warning("[asi/submit] payload decode failed: %s", exc)
+                city_name = match.group(1).strip() if match else raw_text.strip()
+
+            logger.info("[asi/submit] city_name=%r", city_name)
 
             if city_name:
                 try:
