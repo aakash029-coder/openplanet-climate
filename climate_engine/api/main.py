@@ -313,7 +313,7 @@ async def _get_asi_climate_summary(city_name: str) -> str:
         lat, lng = cv["lat"], cv["lng"]
         logger.info("[asi] vault hit '%s' -> (%.4f, %.4f)", city_name, lat, lng)
     else:
-        async with httpx.AsyncClient(timeout=30.0, trust_env=False) as geo_client:
+        async with httpx.AsyncClient(timeout=10.0, trust_env=False) as geo_client:
             geo = await geocode_city(city_name, geo_client)
         lat, lng = geo.latitude, geo.longitude
         logger.info("[asi] geocoded '%s' -> (%.4f, %.4f)", city_name, lat, lng)
