@@ -11,6 +11,7 @@ Scientific logic is delegated to the physics and services layers.
 
 from __future__ import annotations
 
+import base64
 import logging
 import math
 import re
@@ -23,6 +24,7 @@ import uuid
 from typing import Optional
 
 import pycountry
+from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -285,6 +287,75 @@ async def _generate_hex_grid_data(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# ASI Agentverse Chat Protocol — request schema and climate summary helper
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ASIChatPayload(BaseModel):
+    version: int = 1
+    sender: str = ""
+    target: str = ""
+    session: str = ""
+    schema_digest: str = ""
+    protocol_digest: str = ""
+    payload: str = ""
+    expires: int = 0
+    nonce: int = 0
+    signature: str = ""
+
+
+async def _get_asi_climate_summary(city_name: str) -> str:
+    """Fetch real ERA5 + CMIP6 data for a city and format as agent-readable text."""
+    # Vault-first geocoding to avoid external HTTP for known cities
+    vault_key = _coords_vault_key(city_name)
+    if vault_key:
+        cv = _CITY_COORDS[vault_key]
+        lat, lng = cv["lat"], cv["lng"]
+        logger.info("[asi] vault hit '%s' -> (%.4f, %.4f)", city_name, lat, lng)
+    else:
+        async with httpx.AsyncClient(timeout=30.0, trust_env=False) as geo_client:
+            geo = await geocode_city(city_name, geo_client)
+        lat, lng = geo.latitude, geo.longitude
+        logger.info("[asi] geocoded '%s' -> (%.4f, %.4f)", city_name, lat, lng)
+
+    baseline, rh_p95 = await asyncio.gather(
+        fetch_historical_baseline_full(lat, lng),
+        _fetch_era5_humidity_p95(lat, lng),
+    )
+
+    p95 = baseline["p95_threshold_c"]
+
+    proj_2030, proj_2050 = await asyncio.gather(
+        fetch_cmip6_projection(lat, lng, "ssp245", 2030, p95, 0.0),
+        fetch_cmip6_projection(lat, lng, "ssp245", 2050, p95, 0.0),
+        return_exceptions=True,
+    )
+
+    lines = [f"OpenPlanet Heat Risk Report — {city_name}"]
+
+    for year, proj in [(2030, proj_2030), (2050, proj_2050)]:
+        if isinstance(proj, Exception):
+            logger.warning("[asi] CMIP6 year=%d failed for '%s': %s", year, city_name, proj)
+            continue
+        tx5d = proj["tx5d_c"]
+        hw_days = int(proj["hw_days"])
+        mean_temp = proj["mean_temp_c"]
+        zone_obj = detect_climate_archetype(mean_temp=mean_temp, p95_rh=rh_p95, tx5d=tx5d)
+        wbt_result = _stull_wetbulb(temp_c=tx5d, rh_pct=rh_p95, zone=zone_obj.zone)
+        wbt = wbt_result.wbt_celsius
+        risk_level = "CRITICAL" if wbt >= 31 else ("DANGER" if wbt >= 28 else "STABLE")
+        lines.append(
+            f"{year} (SSP2-4.5): Peak Tx5d {tx5d:.1f}°C | {hw_days} heatwave days | "
+            f"Wet-bulb {wbt:.1f}°C | Risk: {risk_level}"
+        )
+
+    if len(lines) == 1:
+        raise ValueError(f"No CMIP6 projection data available for '{city_name}'")
+
+    lines.append("Full interactive analysis: openplanetrisk.com")
+    return "\n".join(lines)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # App factory
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -372,11 +443,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health", tags=["Health"])
     async def health():
-        return {
-            "status": "ok",
-            "version": "2.0.0",
-            "env": settings.ENV_MODE.value,
-        }
+        return {"status": "running", "agent": "OpenPlanet Heat-Risk Agent"}
 
     # ── Geocode Search ────────────────────────────────────────────────────
 
@@ -1007,6 +1074,53 @@ def create_app() -> FastAPI:
                 "data_lineage": "statistical_fallback" if any_fallback else "empirical_api",
                 "coverage_method": hex_coverage_method,
             },
+        }
+
+    # ── ASI Agentverse Chat Protocol ──────────────────────────────────────────
+
+    @app.post("/submit", tags=["ASI Agent"])
+    async def agentverse_submit(req: ASIChatPayload):
+        logger.info("[asi/submit] sender=%r  session=%r", req.sender, req.session)
+
+        city_name = ""
+        try:
+            padded = req.payload + "=" * ((4 - len(req.payload) % 4) % 4)
+            payload_data = json.loads(base64.b64decode(padded).decode("utf-8"))
+            city_name = payload_data.get("text", "").strip()
+        except Exception as exc:
+            logger.warning("[asi/submit] payload decode failed: %s", exc)
+
+        if city_name:
+            try:
+                response_text = await _get_asi_climate_summary(city_name)
+            except Exception as exc:
+                logger.warning("[asi/submit] climate summary failed for '%s': %s", city_name, exc)
+                response_text = (
+                    f"Climate data for '{city_name}' is currently unavailable. "
+                    "Visit openplanetrisk.com for full heat risk intelligence."
+                )
+        else:
+            response_text = (
+                "Please provide a city name in your message. "
+                "Example: 'What is the heat risk for Mumbai?' "
+                "Visit openplanetrisk.com for full heat risk intelligence."
+            )
+
+        encoded_payload = base64.b64encode(
+            json.dumps({"type": "text", "text": response_text}).encode("utf-8")
+        ).decode("ascii")
+
+        return {
+            "version": 1,
+            "sender": "openplanet-heat-risk-agent",
+            "target": req.sender,
+            "session": req.session,
+            "schema_digest": req.schema_digest,
+            "protocol_digest": req.protocol_digest,
+            "payload": encoded_payload,
+            "expires": 0,
+            "nonce": 0,
+            "signature": "",
         }
 
     return app
