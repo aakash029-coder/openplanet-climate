@@ -49,6 +49,43 @@ except Exception as e:
     logger.error("Failed to load city vault: %s", e)
     _CITY_VAULT = {}
 
+# Offline metropolitan-population vault — Natural Earth `pop_max` (public domain).
+# 7,900+ world cities with true metro-area populations. Fully offline: no runtime
+# HTTP, no rate limits, instant O(1) lookup. Rebuild via scripts/build_metro_vault.py.
+try:
+    _METRO_VAULT_PATH = os.path.join(os.path.dirname(__file__), '../data/world_metro_pop.json')
+    with open(_METRO_VAULT_PATH, 'r') as _f:
+        _mv = json.load(_f)
+    _METRO_KEYED: dict = _mv.get("keyed", {})
+    _METRO_BARE: dict = _mv.get("bare", {})
+    logger.info("Metro Population Vault loaded: %d keyed cities", len(_METRO_KEYED))
+except Exception as e:
+    logger.error("Failed to load metro population vault: %s", e)
+    _METRO_KEYED, _METRO_BARE = {}, {}
+
+
+def _metro_pop_lookup(city: str, iso2: str) -> Optional[int]:
+    """
+    Offline metro-area population (Natural Earth pop_max), disambiguated by the
+    already-resolved country. Returns None when the city is not in the vault
+    (caller then falls back to the live GeoNames figure).
+    """
+    import unicodedata as _ud
+    def _slug(s: str) -> str:
+        s = _ud.normalize("NFD", s or "").encode("ascii", "ignore").decode()
+        s = re.sub(r"[^a-z0-9 ]", "", s.lower())
+        return re.sub(r"\s+", "_", s.strip())
+
+    core = _slug(city.split(",")[0])
+    if not core:
+        return None
+    cc = (iso2 or "").upper()
+    if cc:
+        hit = _METRO_KEYED.get(f"{core}|{cc}")
+        if hit:
+            return int(hit)
+    return None
+
 
 # ── Census Data Validator ──────────────────────────────────────────────────────
 
@@ -610,6 +647,55 @@ async def _fetch_openmeteo_geocoding(
     )
 
 
+async def _fetch_openmeteo_population(
+    location_query: str,
+    country_code_hint: str,
+    client: httpx.AsyncClient,
+) -> int:
+    """
+    Authoritative per-city population from Open-Meteo's GeoNames index.
+
+    Returns the REAL settlement population (GeoNames), disambiguated by the
+    already-resolved country code so e.g. "La Paz" maps to the correct country.
+    Returns 0 when no population figure is available (caller then falls back).
+
+    This replaces the legacy flat-500k placeholder that gave every non-vault
+    city on Earth the same population regardless of its true size.
+    """
+    url = "https://geocoding-api.open-meteo.com/v1/search"
+    city_name_only = _city_token_for_geocoder(location_query)
+    params = {"name": city_name_only, "count": 10, "format": "json"}
+
+    for attempt in range(1, 4):
+        async with OPEN_METEO_SEMAPHORE:
+            try:
+                resp = await client.get(url, params=params, timeout=8.0)
+                if resp.status_code == 429:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                resp.raise_for_status()
+                results = resp.json().get("results", [])
+                break
+            except Exception as exc:
+                if attempt >= 3:
+                    logger.warning("[population] Open-Meteo lookup failed for '%s': %s", location_query, exc)
+                    return 0
+                await asyncio.sleep(2 ** attempt)
+    else:
+        return 0
+
+    if not results:
+        return 0
+
+    # Prefer hits in the country we already resolved via the primary geocoder;
+    # among those, take the most-populous (the principal city of that name).
+    cc = (country_code_hint or "").upper()
+    same_country = [r for r in results if (r.get("country_code") or "").upper() == cc]
+    pool = same_country or results
+    best = max(pool, key=lambda r: r.get("population") or 0)
+    return int(best.get("population") or 0)
+
+
 async def _fetch_nominatim_geocoding(
     location_query: str,
     client: httpx.AsyncClient,
@@ -1136,19 +1222,45 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
         iso3 = iso2_to_iso3(iso2)
         indicators = await fetch_country_indicators(iso3, iso2, client)
 
-    city_pop = geo.city_population
+        # Tier A (offline, instant): Natural Earth metro-area population.
+        metro_vault_pop = _metro_pop_lookup(city, iso2)
 
-    if city_pop == 0:
-        logger.warning(
-            "Precision population unresolvable for '%s'. Downstream scaling will be bypassed.",
-            city,
+        # Tier B (live): GeoNames per-city population, only if not in the vault.
+        geonames_pop = 0
+        if not metro_vault_pop:
+            geonames_pop = await _fetch_openmeteo_population(city, iso2, client)
+
+    if metro_vault_pop and metro_vault_pop > 0:
+        # Natural Earth pop_max IS the metro-area figure — use directly, no multiplier.
+        metro_pop = metro_vault_pop
+        pop_source = "natural_earth_metro"
+    elif geonames_pop and geonames_pop > 0:
+        # GeoNames figures ≥ ~2M are already agglomeration/prefecture level and
+        # must NOT be re-multiplied (would overshoot, e.g. Wuhan 10.4M → 17M).
+        # Smaller figures are city-core and are scaled to the urban agglomeration.
+        if geonames_pop >= 2_000_000:
+            metro_pop = geonames_pop
+        else:
+            metro_pop = compute_metro_population(
+                geonames_pop,
+                indicators["urban_share"],
+                indicators["density_factor"],
+            )
+        pop_source = "geonames_open_meteo"
+    else:
+        # Fallback: legacy geocoder placeholder (only when no real figure exists)
+        city_pop = geo.city_population
+        if city_pop == 0:
+            logger.warning(
+                "Precision population unresolvable for '%s'. Downstream scaling will be bypassed.",
+                city,
+            )
+        metro_pop = compute_metro_population(
+            city_pop,
+            indicators["urban_share"],
+            indicators["density_factor"],
         )
-
-    metro_pop = compute_metro_population(
-        city_pop,
-        indicators["urban_share"],
-        indicators["density_factor"],
-    )
+        pop_source = geo.source
 
     # Validate population before it enters any calculation
     if not validate_census_data(metro_pop, city):
@@ -1187,7 +1299,8 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
         "median_age": median_age,
         "life_expectancy": indicators["life_expectancy"],
         "physicians_per1000": indicators["physicians_per1000"],
-        "_geocoder_source": geo.source,
+        "_geocoder_source": pop_source,
+        "_population_source": pop_source,
         "_tier_imputed": COUNTRY_TO_TIER.get(iso2.upper(), DEFAULT_TIER),
         "_cache_stats": _city_cache.stats,
     }

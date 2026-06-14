@@ -46,6 +46,7 @@ from climate_engine.api.security import (
 from climate_engine.services.cmip6_service import (
     fetch_historical_baseline_full,
     fetch_cmip6_projection,
+    fetch_wetbulb_profile,
     HorizonUnavailable,
     PROJECTION_HORIZON_YEAR,
 )
@@ -341,9 +342,14 @@ async def _get_asi_climate_summary(city_name: str) -> str:
         tx5d = proj["tx5d_c"]
         hw_days = int(proj["hw_days"])
         mean_temp = proj["mean_temp_c"]
-        zone_obj = detect_climate_archetype(mean_temp=mean_temp, p95_rh=rh_p95, tx5d=tx5d)
-        wbt_result = _stull_wetbulb(temp_c=tx5d, rh_pct=rh_p95, zone=zone_obj.zone)
-        wbt = wbt_result.wbt_celsius
+        try:
+            wb_prof = await fetch_wetbulb_profile(lat, lng, "ssp245", year)
+            wbt = wb_prof["projected_wb_c"]
+        except Exception:
+            wbt = None
+        zone_obj = detect_climate_archetype(mean_temp=mean_temp, p95_rh=rh_p95, tx5d=tx5d, true_wbt=wbt)
+        if wbt is None:
+            wbt = _stull_wetbulb(temp_c=tx5d, rh_pct=rh_p95, zone=zone_obj.zone).wbt_celsius
         risk_level = "CRITICAL" if wbt >= 31 else ("DANGER" if wbt >= 28 else "STABLE")
         lines.append(
             f"{year} (SSP2-4.5): Peak Tx5d {tx5d:.1f}°C | {hw_days} heatwave days | "
@@ -706,10 +712,25 @@ def create_app() -> FastAPI:
         mean_temp_tgt = tgt["mean_temp_c"]
         temp_excess = max(0.0, tx5d - p95)
 
+        # ── Physically-consistent wet-bulb (ERA5 observed + CMIP6 delta) ──
+        # Replaces the legacy Stull(tx5d, P95-RH) pairing that produced
+        # non-physical values (peak heat × non-co-occurring monsoon humidity).
+        wb_profile: Optional[dict] = None
+        try:
+            wb_profile = await fetch_wetbulb_profile(lat, lng, ssp_code, target_year)
+        except Exception as exc:
+            logger.warning(
+                "[predict] Physical wet-bulb unavailable (%s); falling back to legacy estimate.",
+                exc,
+            )
+
+        true_wbt_proj = wb_profile["projected_wb_c"] if wb_profile else None
+
         zone_obj_target: ZoneClassification = detect_climate_archetype(
             mean_temp=mean_temp_tgt,
             p95_rh=rh_p95,
             tx5d=tx5d,
+            true_wbt=true_wbt_proj,
         )
 
         logger.info(
@@ -734,19 +755,27 @@ def create_app() -> FastAPI:
             hw_days=hw_days_tgt,
         )
 
+        # Legacy Stull result retained only for cap/lethal-flag metadata.
         wbt_result_proj: WetBulbResult = _stull_wetbulb(
             temp_c=tx5d,
             rh_pct=rh_p95,
             zone=zone_obj_target.zone,
         )
-        wbt_proj = wbt_result_proj.wbt_celsius
 
-        wbt_result_live: WetBulbResult = _stull_wetbulb(
-            temp_c=tx5d,
-            rh_pct=rh_live,
-            zone=zone_obj_target.zone,
-        )
-        wbt_live = wbt_result_live.wbt_celsius
+        if wb_profile:
+            # projected = 2050 peak wet-bulb; live = current observed peak wet-bulb
+            wbt_proj = wb_profile["projected_wb_c"]
+            wbt_live = wb_profile["baseline_wb_c"]
+            wbt_capped = wb_profile["capped"]
+        else:
+            wbt_proj = wbt_result_proj.wbt_celsius
+            wbt_result_live: WetBulbResult = _stull_wetbulb(
+                temp_c=tx5d,
+                rh_pct=rh_live,
+                zone=zone_obj_target.zone,
+            )
+            wbt_live = wbt_result_live.wbt_celsius
+            wbt_capped = wbt_result_proj.capped_at_survivability_limit
 
         loss_str = (
             f"${final_loss / 1e9:.2f}B"
@@ -765,6 +794,7 @@ def create_app() -> FastAPI:
             tx5d=tx5d,
             rh=rh_p95,
             zone=zone_obj_target,
+            true_wbt=true_wbt_proj,
         )
 
         logger.info(
@@ -831,11 +861,17 @@ def create_app() -> FastAPI:
                 "heatwave": str(int(hw_days_tgt)),
                 "wbt": f"{wbt_proj:.1f}",
                 "wbt_live": f"{wbt_live:.1f}",
+                "wbt_capped": wbt_capped,
+                "heatwave_definition": (
+                    "Days/year exceeding the 2011–2020 local 95th-percentile daily-max "
+                    "temperature (extreme-heat days relative to the city's own historical "
+                    "baseline), not fixed-threshold heatwaves."
+                ),
                 "rh_p95": rh_p95,
                 "rh_live": rh_live,
                 "climate_zone": zone_obj_target.zone.value,
                 "zone_confidence": zone_obj_target.confidence,
-                "lethal_risk_flag": wbt_result_proj.lethal_risk_flag,
+                "lethal_risk_flag": bool(wbt_capped or (zone_obj_target.zone == ClimateZone.LETHAL_HUMID and wbt_proj >= 31.0)),
             },
             # Machine-readable confidence descriptor — consumed by frontend badges
             # and downstream API consumers.  Never omit; "high" means ERA5/CMIP6
@@ -843,7 +879,8 @@ def create_app() -> FastAPI:
             "_data_confidence": {
                 "peak_tx5d":    {"level": "high",   "source": "CMIP6 ensemble + ERA5 P95"},
                 "wet_bulb":     {"level": "high",   "source": "Stull 2011 + ERA5 humidity"},
-                "heatwave_days":{"level": "high",   "source": "CMIP6 ensemble + ERA5 P95"},
+                "heatwave_days":{"level": "high",   "source": "CMIP6 ensemble + ERA5 P95",
+                                 "definition": "Days/year exceeding the 2011-2020 local 95th-percentile daily max temperature (extreme-heat days vs the city's own historical baseline), not absolute-threshold heatwaves."},
                 "deaths":       mort_conf,
                 "economic_loss":{"level": "medium", "source": "Burke 2018 + ILO bipartite model",
                                  "note": "Indicative directional estimate. ±8% CI."},
@@ -979,10 +1016,19 @@ def create_app() -> FastAPI:
                 mean_temp = proj["mean_temp_c"]
                 temp_excess = max(0.0, tx5d - p95)
 
+                # Physically-consistent wet-bulb (ERA5 observed + CMIP6 delta)
+                wb_profile_yr: Optional[dict] = None
+                try:
+                    wb_profile_yr = await fetch_wetbulb_profile(req.lat, req.lng, ssp_code, year)
+                except Exception as exc:
+                    logger.warning("[climate-risk] Physical wet-bulb unavailable for %d (%s)", year, exc)
+                true_wbt_yr = wb_profile_yr["projected_wb_c"] if wb_profile_yr else None
+
                 zone_obj: ZoneClassification = detect_climate_archetype(
                     mean_temp=mean_temp,
                     p95_rh=rh_p95,
                     tx5d=tx5d,
+                    true_wbt=true_wbt_yr,
                 )
 
                 deaths = _gasparrini_mortality(
@@ -1007,7 +1053,7 @@ def create_app() -> FastAPI:
                     rh_pct=rh_p95,
                     zone=zone_obj.zone,
                 )
-                wbt = wbt_result.wbt_celsius
+                wbt = true_wbt_yr if true_wbt_yr is not None else wbt_result.wbt_celsius
 
                 audit = _build_audit_trail(
                     pop=pop,
@@ -1020,6 +1066,7 @@ def create_app() -> FastAPI:
                     tx5d=tx5d,
                     rh=rh_p95,
                     zone=zone_obj,
+                    true_wbt=true_wbt_yr,
                 )
 
                 if wbt >= 31:
@@ -1100,7 +1147,8 @@ def create_app() -> FastAPI:
             "_data_confidence": {
                 "peak_tx5d":    {"level": "high",   "source": "CMIP6 ensemble + ERA5 P95"},
                 "wet_bulb":     {"level": "high",   "source": "Stull 2011 + ERA5 humidity"},
-                "heatwave_days":{"level": "high",   "source": "CMIP6 ensemble + ERA5 P95"},
+                "heatwave_days":{"level": "high",   "source": "CMIP6 ensemble + ERA5 P95",
+                                 "definition": "Days/year exceeding the 2011-2020 local 95th-percentile daily max temperature (extreme-heat days vs the city's own historical baseline), not absolute-threshold heatwaves."},
                 "deaths":       cr_mort_conf,
                 "economic_loss":{"level": "medium", "source": "Burke 2018 + ILO bipartite model",
                                  "note": "Indicative directional estimate. ±8% CI."},

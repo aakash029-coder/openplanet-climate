@@ -584,6 +584,199 @@ async def fetch_cmip6_projection(
     return result
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# PHYSICALLY-CONSISTENT WET-BULB PROFILE  (bias-corrected delta downscaling)
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Why this exists
+# ---------------
+# The legacy wet-bulb path paired the projected peak temperature (Tx5d) with the
+# P95 of summer daily-MEAN relative humidity. In monsoon / maritime climates the
+# P95 daily-mean RH is near-saturation (85–95%) and occurs on cool, humid days —
+# NEVER co-occurring with the hottest day. Multiplying peak heat by monsoon
+# humidity produced physically impossible wet-bulb values (e.g. Delhi 39.6°C,
+# above Earth's all-time record of ~35°C; Sherwood & Huber 2010).
+#
+# Correct method (validated against ERA5's own wet_bulb_temperature_2m_max):
+#   1. Baseline absolute value = P95 of ERA5 `wet_bulb_temperature_2m_max` — the
+#      true daily-max wet-bulb computed by Open-Meteo from hourly co-occurring
+#      T + RH. Correctly handles altitude/pressure (e.g. La Paz 13.0°C).
+#   2. Climate-change signal (Δ) = P95[ Stull(Tmax, RH@Tmax) ]_future
+#                                 − P95[ Stull(Tmax, RH@Tmax) ]_baseline
+#      where RH@Tmax is derived from the day's mean dewpoint (moisture is
+#      conserved through the diurnal cycle far better than RH). The SAME Stull
+#      method is applied to both periods, so its systematic bias cancels.
+#   3. Projected wet-bulb = baseline_obs + Δ, capped at the 35°C survivability
+#      limit (Sherwood & Huber 2010, PNAS).
+#
+# Open-Meteo CMIP6 is bias-corrected to ERA5 climatology, so mixing the ERA5
+# baseline with the CMIP6 future delta is internally consistent.
+
+_SURVIVABILITY_CAP_C = 35.0
+
+
+def _stull_raw(temp_c: float, rh_pct: float) -> float:
+    """Pure Stull (2011) wet-bulb from co-occurring T and RH (no diurnal hack)."""
+    rh = max(5.0, min(100.0, rh_pct))
+    return (
+        temp_c * math.atan(0.151977 * math.sqrt(rh + 8.313659))
+        + math.atan(temp_c + rh)
+        - math.atan(rh - 1.676331)
+        + 0.00391838 * (rh ** 1.5) * math.atan(0.023101 * rh)
+        - 4.686035
+    )
+
+
+def _saturation_vapor_pressure(temp_c: float) -> float:
+    """Saturation vapour pressure (hPa) — August–Roche–Magnus approximation."""
+    return 6.112 * math.exp(17.67 * temp_c / (temp_c + 243.5))
+
+
+def _rh_at_tmax(tmax_c: float, dewpoint_mean_c: float) -> float:
+    """
+    Relative humidity at the moment of daily-max temperature, derived from the
+    day's mean dewpoint. Dewpoint (absolute moisture) is conserved through the
+    diurnal cycle, so RH@Tmax = 100 · e_s(Td) / e_s(Tmax).
+    """
+    rh = 100.0 * _saturation_vapor_pressure(dewpoint_mean_c) / _saturation_vapor_pressure(tmax_c)
+    return max(5.0, min(100.0, rh))
+
+
+def _summer_months(lat: float) -> set:
+    """Meteorological summer for the hemisphere (JJA north, DJF south)."""
+    return {6, 7, 8} if lat >= 0 else {12, 1, 2}
+
+
+def _stull_p95_from_daily(daily: dict, summer: set) -> Optional[float]:
+    """P95 of daily Stull(Tmax, RH@Tmax) over summer days only."""
+    times = daily.get("time", [])
+    tmax = daily.get("temperature_2m_max", [])
+    td = daily.get("dew_point_2m_mean", [])
+    vals: List[float] = []
+    for i, t in enumerate(times):
+        if not t or int(t[5:7]) not in summer:
+            continue
+        if i < len(tmax) and i < len(td) and tmax[i] is not None and td[i] is not None:
+            vals.append(_stull_raw(float(tmax[i]), _rh_at_tmax(float(tmax[i]), float(td[i]))))
+    if len(vals) < 10:
+        return None
+    return round(_percentile(vals, 95.0), 2)
+
+
+async def fetch_wetbulb_profile(
+    lat: float,
+    lng: float,
+    ssp: str,
+    target_year: int,
+) -> dict:
+    """
+    Physically-consistent baseline + projected wet-bulb maxima for a location.
+
+    Returns:
+        {
+          "baseline_wb_c":  P95 of observed ERA5 daily-max wet-bulb (current),
+          "projected_wb_c": baseline + bias-corrected CMIP6 warming delta,
+          "delta_c":        climate-change wet-bulb signal,
+          "capped":         True if projected hit the 35°C survivability limit,
+          "source":         provenance string,
+        }
+
+    Raises ValueError if the gold-standard ERA5 wet-bulb series is unavailable;
+    callers should fall back to the legacy estimate in that case.
+    """
+    cache_key = f"wetbulb_{round(lat,2)}_{round(lng,2)}_{SSP_PARAM_MAP.get(ssp,'ssp245')}_{target_year}"
+    cached = _cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    summer = _summer_months(lat)
+
+    # ── Baseline: ERA5 observed daily-max wet-bulb + Stull reference ──────────
+    async with httpx.AsyncClient(headers=HEADERS) as client:
+        era5 = await _fetch_era5_daily(
+            lat, lng, "2011-01-01", "2020-12-31",
+            ["temperature_2m_max", "dew_point_2m_mean", "wet_bulb_temperature_2m_max"],
+            client,
+        )
+
+    times = era5.get("time", [])
+    wb_obs_vals: List[float] = []
+    for i, t in enumerate(times):
+        if not t or int(t[5:7]) not in summer:
+            continue
+        wb = era5.get("wet_bulb_temperature_2m_max", [])
+        if i < len(wb) and wb[i] is not None:
+            wb_obs_vals.append(float(wb[i]))
+
+    if len(wb_obs_vals) < 10:
+        raise ValueError(
+            f"ERA5 wet_bulb_temperature_2m_max unavailable for ({lat:.2f}, {lng:.2f})"
+        )
+
+    wb_base_obs = round(_percentile(wb_obs_vals, 95.0), 2)
+    wb_base_stull = _stull_p95_from_daily(era5, summer)
+
+    # ── Future: CMIP6 ensemble Stull reference (same method as baseline) ──────
+    ssp_param = SSP_PARAM_MAP.get(ssp, "ssp245")
+    models = CMIP6_MODELS_BY_SSP.get(ssp_param, CMIP6_MODELS_BY_SSP["ssp245"])
+    window = 2
+    start_yr = max(2015, target_year - window)
+    end_yr = min(2050, target_year + window - 1)
+    start_date, end_date = f"{start_yr}-01-01", f"{end_yr}-12-31"
+
+    fut_stull_vals: List[float] = []
+    async with httpx.AsyncClient(headers=HEADERS) as client:
+        for model in models:
+            url = (
+                f"https://climate-api.open-meteo.com/v1/climate"
+                f"?latitude={lat}&longitude={lng}"
+                f"&start_date={start_date}&end_date={end_date}"
+                f"&models={model}"
+                f"&daily=temperature_2m_max,dew_point_2m_mean"
+                f"&timezone=auto"
+            )
+            try:
+                data = await _tunnel_get(url, client, timeout=60.0, max_attempts=2)
+                daily = data.get("daily", {})
+                p = _stull_p95_from_daily(daily, summer)
+                if p is not None:
+                    fut_stull_vals.append(p)
+            except Exception as exc:
+                logger.warning("[wetbulb] CMIP6 model %s failed: %s", model, exc)
+
+    # ── Combine: anchor to ERA5 observed, add CMIP6 warming delta ────────────
+    if fut_stull_vals and wb_base_stull is not None:
+        wb_fut_stull = sum(fut_stull_vals) / len(fut_stull_vals)
+        delta = wb_fut_stull - wb_base_stull
+    else:
+        # No usable future signal — report current observed wet-bulb, no warming.
+        logger.warning(
+            "[wetbulb] No CMIP6 wet-bulb signal for (%.2f, %.2f); projecting baseline only.",
+            lat, lng,
+        )
+        delta = 0.0
+
+    projected = wb_base_obs + delta
+    capped = projected > _SURVIVABILITY_CAP_C
+    projected = min(projected, _SURVIVABILITY_CAP_C)
+
+    result = {
+        "baseline_wb_c": round(min(wb_base_obs, _SURVIVABILITY_CAP_C), 2),
+        "projected_wb_c": round(projected, 2),
+        "delta_c": round(delta, 2),
+        "capped": capped,
+        "source": "era5_wet_bulb_observed + cmip6_stull_delta",
+    }
+    _cache_set(cache_key, result)
+    logger.info(
+        "[wetbulb] (%.2f, %.2f) %s %d: base=%.1f°C  Δ=%.1f°C  proj=%.1f°C%s",
+        lat, lng, ssp_param, target_year,
+        result["baseline_wb_c"], result["delta_c"], result["projected_wb_c"],
+        "  [CAPPED@35]" if capped else "",
+    )
+    return result
+
+
 async def fetch_cmip6_timeseries(
     lat: float,
     lng: float,
