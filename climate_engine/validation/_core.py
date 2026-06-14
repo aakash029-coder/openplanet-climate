@@ -62,8 +62,14 @@ def gasparrini_deaths(
     vuln:        float,
 ) -> dict:
     """
-    Gasparrini et al. (2017) heat-attributable mortality formula.
-    Exact replica of physics._gasparrini_mortality().
+    Gasparrini et al. (2017) heat-attributable mortality — base log-linear form.
+
+    These backtests deliberately isolate the un-saturated near-threshold response
+    (β·ΔT) to validate the coefficient against single acute historical events.
+    Production (physics._gasparrini_mortality) extends this with a saturating ΔT
+    term and an attributable-fraction cap for multi-day CHRONIC annual projections,
+    where an unbounded per-day RR over an entire season is not physical. The two
+    regimes (single acute event vs. chronic season) are intentionally distinct.
     β = 0.0801 (global pooled meta-analysis coefficient).
     """
     beta = 0.0801

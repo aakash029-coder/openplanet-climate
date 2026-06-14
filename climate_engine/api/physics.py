@@ -184,12 +184,18 @@ def detect_climate_archetype(
     mean_temp: float,
     p95_rh: float,
     tx5d: float,
+    true_wbt: Optional[float] = None,
 ) -> ZoneClassification:
     flags: list[str] = []
     seasonality_index = tx5d - mean_temp
 
-    # Calculate wet-bulb temperature
-    true_wbt = stull_wetbulb_simple(tx5d, p95_rh)
+    # Wet-bulb temperature. Prefer the physically-consistent value supplied by
+    # the caller (ERA5-observed + CMIP6 delta). Only fall back to the legacy
+    # Stull(tx5d, p95_rh) estimate when no corrected value is available — that
+    # estimate pairs peak heat with non-co-occurring P95 humidity and can be
+    # several °C too high in monsoon/maritime climates.
+    if true_wbt is None:
+        true_wbt = stull_wetbulb_simple(tx5d, p95_rh)
 
     # Priority 1: Permafrost — only when summers are also cold (tx5d < 28°C).
     # Cities like Yakutsk (mean -8.8°C, TX5D 35°C) have brutal summer heat and
@@ -465,6 +471,25 @@ async def _fetch_worldbank_death_rate(iso3: str) -> float:
 # Gasparrini et al. (2017) — Heat-Attributable Mortality
 # ---------------------------------------------------------------------------
 
+# Saturating exposure-response parameters --------------------------------------
+# β = 0.0801 is the Gasparrini et al. (2017) global pooled log-linear slope, valid
+# near the heat threshold. Extrapolating exp(β·ΔT) to large ΔT (e.g. +10°C above
+# the local P95) is unphysical — the per-day relative risk does not grow without
+# bound: the at-risk cohort is finite, and behavioural/AC adaptation and harvesting
+# flatten the curve at extreme percentiles (Gasparrini 2015, Lancet; Honda 2014).
+# We therefore saturate ΔT so the slope is preserved at moderate heat but the
+# effective excess asymptotes, and we cap the attributable fraction.
+_HEAT_BETA = 0.0801
+_DT_SATURATION_C = 6.0   # effective ΔT asymptote (°C above P95)
+_AF_MAX = 0.35           # max single-day heat attributable fraction (≈ RR 1.54)
+
+
+def _saturating_temp_excess(temp_excess_c: float) -> float:
+    """ΔT_eff = S·(1 − e^(−ΔT/S)). Linear for small ΔT, asymptotes to S."""
+    dt = max(0.0, temp_excess_c)
+    return _DT_SATURATION_C * (1.0 - math.exp(-dt / _DT_SATURATION_C))
+
+
 def _gasparrini_mortality(
     pop: int,
     baseline_death_rate_per1000: float,
@@ -473,26 +498,25 @@ def _gasparrini_mortality(
     vulnerability_multiplier: float = 1.0,
 ) -> int:
     """
-    Estimate heat-attributable deaths using Gasparrini et al. (2017).
+    Estimate heat-attributable deaths using a saturating Gasparrini (2017) model.
 
     Formula:
-        RR  = exp(β × ΔT)
-        AF  = (RR − 1) / RR
-        D   = Pop × (DR / 1000) × (HW / 365) × AF × V
+        ΔT_eff = S × (1 − e^(−ΔT/S))          (S = 6°C saturation, see above)
+        RR     = exp(β × ΔT_eff)
+        AF     = min((RR − 1) / RR, AF_max)    (AF_max = 0.35)
+        D      = Pop × (DR / 1000) × (HW / 365) × AF × V
 
-    β = 0.0801 (global meta-analysis coefficient, chronic pooled)
-
-    For projected annual heatwave days (hw_days ≥ 14), the chronic β is
-    appropriate. The function is designed for CMIP6 scenario planning — i.e.
-    comparing cities and scenarios — not for point-predicting individual events.
-    See methodology#backtests for validation accuracy by event duration.
+    β = 0.0801 (global meta-analysis coefficient, chronic pooled). The saturation
+    keeps moderate-heat cities essentially unchanged while preventing implausibly
+    high attributable fractions in extreme-heat cities (e.g. Delhi at +10°C).
+    Designed for CMIP6 scenario comparison, not individual-event point prediction.
     """
     if baseline_death_rate_per1000 <= 0:
         baseline_death_rate_per1000 = _FALLBACK_DEATH_RATE
 
-    beta = 0.0801
-    rr = math.exp(beta * max(0.0, temp_excess_c))
-    af = (rr - 1.0) / rr if rr > 1.0 else 0.0
+    dt_eff = _saturating_temp_excess(temp_excess_c)
+    rr = math.exp(_HEAT_BETA * dt_eff)
+    af = min((rr - 1.0) / rr if rr > 1.0 else 0.0, _AF_MAX)
     hwf = min(hw_days / 365.0, 1.0)
 
     deaths = int(
@@ -907,19 +931,25 @@ def _build_audit_trail(
     tx5d: float,
     rh: float,
     zone: Optional[ZoneClassification] = None,
+    true_wbt: Optional[float] = None,
 ) -> dict:
     """Build a transparent, human-readable audit trail for all scientific formulas."""
     if zone is None:
-        zone = detect_climate_archetype(mean_temp, rh, tx5d)
+        zone = detect_climate_archetype(mean_temp, rh, tx5d, true_wbt=true_wbt)
 
-    beta = 0.0801
-    rr = math.exp(beta * max(0.0, temp_excess))
-    af = round((rr - 1.0) / rr, 4) if rr > 1.0 else 0.0
+    beta = _HEAT_BETA
+    dt_eff = _saturating_temp_excess(temp_excess)
+    rr = math.exp(beta * dt_eff)
+    af = round(min((rr - 1.0) / rr if rr > 1.0 else 0.0, _AF_MAX), 4)
     hwf = round(min(hw_days / 365.0, 1.0), 4)
     deaths_result = int(pop * (death_rate / 1000.0) * hwf * af * vuln)
 
     econ_loss = compute_hybrid_economic_loss(gdp, mean_temp, tx5d, hw_days)
     wbt_result = _stull_wetbulb(tx5d, rh, zone.zone)
+    # Prefer the physically-consistent wet-bulb (ERA5-observed + CMIP6 delta)
+    # for the displayed value; the Stull-on-extremes result above is retained
+    # only for its cap/zone metadata.
+    wbt_display = true_wbt if true_wbt is not None else wbt_result.wbt_celsius
 
     return {
         "climate_zone": {
@@ -940,13 +970,18 @@ def _build_audit_trail(
                 "beta": beta,
                 "RR": round(rr, 4),
                 "temp_excess_c": round(temp_excess, 2),
+                "temp_excess_effective_c": round(dt_eff, 2),
+                "AF_cap": _AF_MAX,
             },
             "computation": (
                 f"{deaths_result:,} = {pop:,} × ({death_rate:.2f}/1000) × "
                 f"({hw_days:.0f}/365) × {af} × {vuln:.3f}"
             ),
             "result": deaths_result,
-            "source": "Gasparrini et al. (2017), Lancet Planetary Health",
+            "source": (
+                "Gasparrini et al. (2017), Lancet Planetary Health — "
+                "saturating exposure-response (ΔT asymptote 6°C, AF cap 0.35)"
+            ),
         },
         "economics": {
             "formula": "Hybrid Bipartite Model (Burke Baseline + ILO Extreme Shocks)",
@@ -974,10 +1009,13 @@ def _build_audit_trail(
                 "RH": round(rh, 1),
                 "survivability_cap": "35.0°C (Sherwood & Huber 2010)",
             },
-            "result": wbt_result.wbt_celsius,
-            "capped": wbt_result.capped_at_survivability_limit,
+            "result": round(wbt_display, 2),
+            "capped": wbt_display >= 35.0,
             "theoretical_uncapped": wbt_result.theoretical_uncapped_wbt,
             "lethal_risk_flag": wbt_result.lethal_risk_flag,
-            "source": "Stull (2011), J. Applied Meteorology and Climatology",
+            "source": (
+                "ERA5 observed daily-max wet-bulb (P95) + CMIP6 warming delta; "
+                "Stull (2011) empirical equation on co-occurring T/RH"
+            ),
         },
     }
