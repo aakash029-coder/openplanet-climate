@@ -46,7 +46,7 @@ function DashboardPageInner() {
   useEffect(() => {
     const check = () => {
       if (sessionStorage.getItem('hasSeenDesktopWarning')) return;
-      if (window.innerWidth < 1024) setShowWarningModal(true);
+      if (window.innerWidth < 768) setShowWarningModal(true);
     };
     check();
     const onResize = () => {

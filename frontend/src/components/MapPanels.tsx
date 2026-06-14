@@ -57,6 +57,29 @@ interface LeftPanelProps {
   isSimulating:          boolean;
 }
 
+/* ─── Confidence badge ─── */
+const ConfidenceBadge = ({
+  level, note,
+}: {
+  level: 'high' | 'medium' | 'low';
+  note?: string;
+}) => {
+  const cfg = {
+    high:   { dot: 'bg-emerald-500', text: 'text-emerald-400', label: 'High confidence' },
+    medium: { dot: 'bg-amber-400',   text: 'text-amber-400',   label: 'Medium confidence' },
+    low:    { dot: 'bg-red-400',     text: 'text-red-400',     label: 'Low confidence'    },
+  }[level];
+  return (
+    <div className="flex items-start gap-1.5 mt-1.5">
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-px ${cfg.dot}`} />
+      <div>
+        <span className={`font-mono text-[7px] uppercase tracking-widest font-bold ${cfg.text}`}>{cfg.label}</span>
+        {note && <p className={`font-mono text-[7px] leading-snug mt-0.5 ${cfg.text} opacity-70`}>{note}</p>}
+      </div>
+    </div>
+  );
+};
+
 /* ─── Shared sub-components ─── */
 const MetricRow = ({
   label, value, sub, color,
@@ -425,8 +448,12 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
                 <p className="text-[32px] font-mono font-bold leading-none tabular-nums glow-red" style={{ color: 'var(--heat-4)' }}>{deaths}</p>
               )}
             </div>
+            <ConfidenceBadge
+              level="medium"
+              note="Comparative triage only — not event-level prediction. Gasparrini 2017 chronic β."
+            />
             <p className="text-[8px] font-mono leading-relaxed" style={{ color: 'var(--muted)' }}>
-              95% CI ±15% · Gasparrini et al. 2017
+              ±15% CI · Gasparrini et al. 2017 · see methodology
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedDeaths || '0'} />}
             <AuditButton label="↳ show derivation" onClick={() => openAudit('mortality')} />
@@ -447,8 +474,12 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
                 <p className="text-[28px] font-mono font-bold leading-none tabular-nums glow-amber" style={{ color: 'var(--heat-2)' }}>{loss}</p>
               )}
             </div>
+            <ConfidenceBadge
+              level="medium"
+              note="Indicative directional estimate. Burke 2018 + ILO bipartite model."
+            />
             <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>
-              95% CI ±8% · Burke et al. 2018 · Nature
+              ±8% CI · Burke et al. 2018 · Nature
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedLoss || '0'} />}
             <AuditButton label="↳ show derivation" onClick={() => openAudit('economics')} />
@@ -468,7 +499,8 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               ) : (
                 <p className="text-[26px] font-mono font-bold leading-none tabular-nums glow-red" style={{ color: 'var(--heat-3)' }}>{heatwave}d</p>
               )}
-              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>days above historical P95 · CMIP6</p>
+              <ConfidenceBadge level="high" />
+              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>days above historical P95 · CMIP6 ensemble</p>
             </div>
 
             <div className="space-y-2 pt-4" style={{ borderTop: '1px solid var(--hairline)' }}>
@@ -483,7 +515,8 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               ) : (
                 <p className="text-[26px] font-mono font-bold leading-none tabular-nums glow-amber" style={{ color: 'var(--heat-2)' }}>{temp}°C</p>
               )}
-              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>TX5d decadal mean · ERA5 reanalysis</p>
+              <ConfidenceBadge level="high" />
+              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>TX5d decadal mean · CMIP6 + ERA5 reanalysis</p>
             </div>
           </div>
         </div>

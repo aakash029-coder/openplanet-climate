@@ -4,10 +4,12 @@ import LandingMobile from '@/components/LandingMobile';
 export default function HomePage() {
   return (
     <>
-      <div className="hidden lg:block w-full">
+      {/* Desktop + Tablet landscape (≥768px) — same component, responsive via CSS */}
+      <div className="hidden md:block w-full">
         <LandingDesktop />
       </div>
-      <div className="block lg:hidden w-full">
+      {/* Mobile (<768px) — touch-optimized layout */}
+      <div className="block md:hidden w-full">
         <LandingMobile />
       </div>
     </>
