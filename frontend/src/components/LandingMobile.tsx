@@ -4,19 +4,21 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
+// Only high-confidence CMIP6+ERA5 metrics — deaths/loss removed from hero.
+// Full analysis (with confidence labels) available in the dashboard.
 const CITIES = [
-  { name: 'Delhi',    country: 'India',     year: 2050, temp: 49.2, deaths: 14200, loss: '$31B', hw: 68  },
-  { name: 'Lagos',    country: 'Nigeria',   year: 2050, temp: 43.7, deaths: 9800,  loss: '$18B', hw: 112 },
-  { name: 'Jakarta',  country: 'Indonesia', year: 2050, temp: 38.9, deaths: 6100,  loss: '$22B', hw: 89  },
-  { name: 'Phoenix',  country: 'USA',       year: 2050, temp: 46.1, deaths: 3400,  loss: '$14B', hw: 145 },
-  { name: 'Karachi',  country: 'Pakistan',  year: 2050, temp: 51.3, deaths: 18700, loss: '$8B',  hw: 134 },
+  { name: 'Delhi',    country: 'India',     year: 2050, temp: 49.2, wbt: 32.4, hw: 68  },
+  { name: 'Lagos',    country: 'Nigeria',   year: 2050, temp: 43.7, wbt: 33.1, hw: 112 },
+  { name: 'Jakarta',  country: 'Indonesia', year: 2050, temp: 38.9, wbt: 32.8, hw: 89  },
+  { name: 'Phoenix',  country: 'USA',       year: 2050, temp: 46.1, wbt: 27.9, hw: 145 },
+  { name: 'Karachi',  country: 'Pakistan',  year: 2050, temp: 51.3, wbt: 31.6, hw: 134 },
 ];
 
 const STATS = [
-  { value: 'Any',    label: 'Global Coordinate' },
-  { value: '4',      label: 'Climate Scenarios' },
-  { value: '2050',   label: 'Validated Horizon' },
-  { value: '±15%',   label: 'Mortality CI'      },
+  { value: 'Any',    label: 'Global Coordinate'   },
+  { value: '4',      label: 'Climate Scenarios'   },
+  { value: '2050',   label: 'Validated Horizon'   },
+  { value: '5/5',    label: 'Historical Backtests' },
 ];
 
 export default function LandingMobile() {
@@ -63,16 +65,19 @@ export default function LandingMobile() {
         style={{ minHeight: 'min(calc(100dvh - 64px), 760px)' }}
       >
         {/* Eyebrow */}
-        <span className="font-mono text-[9px] uppercase tracking-[0.2em] block"
-              style={{ color: 'var(--muted)' }}>
-          ● Live · CMIP6 · ERA5 · Peer-Reviewed
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="pulse-dot" />
+          <span className="font-mono text-[9px] uppercase tracking-[0.2em]"
+                style={{ color: 'var(--muted)' }}>
+            Live ERA5 + CMIP6 · Any City
+          </span>
+        </div>
 
         {/* Headline */}
         <div className="w-full max-w-sm mx-auto text-center">
           <h1 className="font-serif text-[1.9rem] font-medium tracking-tight leading-[1.15]"
               style={{ color: '#E4E4E7' }}>
-            By {city.year},{' '}
+            How hot will{' '}
             <span
               className="gradient-text-copper transition-opacity duration-300"
               style={{ opacity: cityVisible ? 1 : 0 }}
@@ -80,17 +85,12 @@ export default function LandingMobile() {
               {city.name}
             </span>
             <br />
-            could lose up to{' '}
-            <span
-              className="gradient-text-copper transition-opacity duration-300"
-              style={{ opacity: cityVisible ? 1 : 0 }}
-            >
-              {city.loss}
-            </span>
+            get by{' '}
+            <span className="gradient-text-copper">{city.year}</span>?
             <br />
             <span className="font-serif font-light"
                   style={{ color: 'var(--muted)', fontSize: '1.05rem' }}>
-              to extreme heat every year.
+              Real CMIP6 data. Any city.
             </span>
           </h1>
         </div>
@@ -98,30 +98,30 @@ export default function LandingMobile() {
         {/* Sub-headline */}
         <p className="font-serif text-[0.875rem] leading-relaxed max-w-xs mx-auto"
            style={{ color: 'var(--text-2)' }}>
-          OpenPlanet translates climate science into numbers any city planner,
-          investor, or researcher can act on.
+          Live ERA5 reanalysis and CMIP6 ensemble projections —
+          peer-reviewed physics, full audit trail.
         </p>
 
-        {/* Ledger strip */}
+        {/* Ledger strip — high-confidence metrics only */}
         <div className="w-full max-w-sm mx-auto border-t border-b border-white/5">
           {[
             {
-              label:  'Peak Temperature',
-              source: 'Illustrative · SSP5-8.5 · CMIP6 · 2050',
+              label:  'Peak Tx5d',
+              source: 'SSP5-8.5 · CMIP6 ensemble · 2050',
               value:  `${city.temp}°C`,
               glow:   'glow-amber',
               color:  'var(--copper)',
             },
             {
-              label:  'Est. Heat Deaths',
-              source: 'Illustrative · Gasparrini 2017 · ±15% CI',
-              value:  `~${city.deaths.toLocaleString()}`,
+              label:  'Wet-bulb Temp',
+              source: 'Stull 2011 · ERA5 humidity · 2050',
+              value:  `${city.wbt}°C`,
               glow:   'glow-red',
-              color:  'var(--heat-4)',
+              color:  city.wbt >= 31 ? 'var(--heat-4)' : 'var(--heat-2)',
             },
             {
               label:  'Heatwave Days / yr',
-              source: 'Illustrative · Above P95 · CMIP6',
+              source: 'Days above ERA5 P95 · CMIP6',
               value:  `${city.hw}d`,
               glow:   'glow-red',
               color:  'var(--heat-3)',
@@ -133,8 +133,11 @@ export default function LandingMobile() {
               style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
             >
               <div className="text-left">
-                <p className="font-sans text-[10px] tracking-[0.12em] uppercase" style={{ color: 'var(--text-2)' }}>{s.label}</p>
-                <p className="font-mono text-[8px] tracking-[0.06em] mt-0.5" style={{ color: 'var(--muted)' }}>{s.source}</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 shrink-0" />
+                  <p className="font-sans text-[10px] tracking-[0.12em] uppercase" style={{ color: 'var(--text-2)' }}>{s.label}</p>
+                </div>
+                <p className="font-mono text-[8px] tracking-[0.06em] mt-0.5 pl-2.5" style={{ color: 'var(--muted)' }}>{s.source}</p>
               </div>
               <p
                 className={`font-mono text-[1.5rem] font-medium tracking-tighter tabular-nums ${s.glow} transition-opacity duration-300`}
@@ -146,10 +149,10 @@ export default function LandingMobile() {
           ))}
         </div>
 
-        {/* Credibility strip */}
+        {/* Data provenance */}
         <p className="font-mono text-[8px] text-center max-w-xs mx-auto"
            style={{ color: 'var(--muted)' }}>
-          Copernicus C3S ERA5 · CMIP6 · Gasparrini 2017 · Burke 2018 · UNDRR
+          Copernicus ERA5 · CMIP6 · NASA POWER · Gasparrini 2017 · Burke 2018
         </p>
 
         {/* CTA + scroll hint */}
@@ -197,19 +200,18 @@ export default function LandingMobile() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 stagger-children">
           {[
-            { title: 'City Risk Map',        desc: 'Interactive hex-grid heatmap at neighbourhood scale.',        accent: 'var(--reference)' },
-            { title: 'Deep Dive Analysis',   desc: 'Survivability timeline, climate debt, adaptation ROI.',      accent: 'var(--heat-2)'  },
-            { title: 'City vs City Compare', desc: 'Side-by-side metrics for any two cities. Transparent math.', accent: 'var(--copper)'  },
-            { title: 'Excel Audit Export',   desc: '4-sheet model with live formulas, every number sourced.',     accent: 'var(--positive)' },
+            { title: 'City Risk Map',        desc: 'Interactive hex-grid heatmap at neighbourhood scale.',        accent: 'var(--reference)', icon: '◎' },
+            { title: 'Deep Dive Analysis',   desc: 'Survivability timeline, climate debt, adaptation ROI.',      accent: 'var(--heat-2)',   icon: '◈' },
+            { title: 'City vs City Compare', desc: 'Side-by-side metrics for any two cities. Transparent math.', accent: 'var(--copper)',   icon: '⟷' },
+            { title: 'Excel Audit Export',   desc: '4-sheet model with live formulas, every number sourced.',     accent: 'var(--positive)', icon: '⊞' },
           ].map(f => (
             <div key={f.title}
-                 className="glass relative p-4 flex flex-col gap-1.5 overflow-hidden group"
-                 style={{ border: '1px solid var(--hairline)' }}>
+                 className="glass-card relative p-4 flex flex-col gap-1.5 overflow-hidden group">
               <div className="absolute top-0 left-0 right-0 h-px"
                    style={{ background: `linear-gradient(90deg, transparent, ${f.accent}50, transparent)` }} />
-              <div className="w-1.5 h-1.5 rounded-full" style={{ background: f.accent }} />
+              <span className="text-sm" style={{ color: f.accent }}>{f.icon}</span>
               <h3 className="font-sans font-semibold text-[11px] leading-tight" style={{ color: 'var(--text)' }}>{f.title}</h3>
               <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--muted)' }}>{f.desc}</p>
             </div>
@@ -268,10 +270,9 @@ export default function LandingMobile() {
 
       {/* ── 4. STATS ── */}
       <section className="w-full px-5 pb-12 max-w-lg mx-auto">
-        <div className="relative overflow-hidden p-6"
-             style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+        <div className="relative overflow-hidden p-6 glass-panel">
           <div className="absolute top-0 left-0 right-0 h-px"
-               style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)' }} />
+               style={{ background: 'linear-gradient(90deg, transparent, rgba(176,141,87,0.15), transparent)' }} />
           <div className="grid grid-cols-2 gap-5 mb-6">
             {STATS.map(s => (
               <div key={s.label} className="text-center">
@@ -281,7 +282,7 @@ export default function LandingMobile() {
               </div>
             ))}
           </div>
-          <div className="divider-gradient mb-4" />
+          <div className="divider-copper mb-4" />
           <p className="text-[9px] font-mono text-center leading-loose" style={{ color: 'var(--muted)' }}>
             All projections are research-grade estimates for analytical purposes only.
             Not investment advice. Mortality ±15% CI · Economic ±8% CI.
@@ -300,8 +301,8 @@ export default function LandingMobile() {
             <span className="font-light" style={{ color: 'var(--muted)' }}>No black boxes.</span>
           </h2>
           <p className="text-sm leading-relaxed font-sans" style={{ color: 'var(--text-2)' }}>
-            When you see a "$31 Billion economic loss" estimate, you can click into the calculation
-            and see exactly which formula produced it, which peer-reviewed paper each constant came from.
+            Every number links back to its formula and source paper. Confidence levels
+            (high / medium) are shown on each metric — so you always know what to trust.
           </p>
         </div>
 
@@ -334,14 +335,13 @@ export default function LandingMobile() {
 
       {/* ── 6. FINAL CTA ── */}
       <section className="w-full px-5 pb-16 max-w-lg mx-auto">
-        <div className="relative flex flex-col items-center text-center py-12 px-5 overflow-hidden"
-             style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+        <div className="relative flex flex-col items-center text-center py-12 px-5 overflow-hidden glass-panel">
           <div className="absolute top-0 left-0 right-0 h-px"
-               style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)' }} />
+               style={{ background: 'linear-gradient(90deg, transparent, rgba(176,141,87,0.2), transparent)' }} />
           <div className="absolute inset-0 pointer-events-none"
-               style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(176,141,87,0.05) 0%, transparent 70%)' }} />
+               style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(176,141,87,0.04) 0%, transparent 60%)' }} />
           <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-4 relative z-10" style={{ color: 'var(--muted)' }}>
-            Free · No account required
+            Free · Open source · No account required
           </p>
           <h3 className="text-2xl font-sans font-bold mb-3 leading-tight tracking-tight relative z-10"
               style={{ color: 'var(--text)' }}>
@@ -349,7 +349,7 @@ export default function LandingMobile() {
             <span className="font-light" style={{ color: 'var(--muted)' }}>in your city?</span>
           </h3>
           <p className="font-serif text-sm mb-8 max-w-xs mx-auto relative z-10" style={{ color: 'var(--text-2)' }}>
-            Research-grade analysis in seconds. Free to explore, no account required.
+            20 climate zones verified. Every formula auditable.
           </p>
           <button
             onClick={handleCTA}

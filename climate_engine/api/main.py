@@ -82,6 +82,7 @@ from .physics import (
     stull_wetbulb_simple,
     _fetch_worldbank_death_rate,
     _gasparrini_mortality,
+    mortality_confidence_level,
     compute_hybrid_economic_loss,
     _build_audit_trail,
     H3CoverageResult,
@@ -810,6 +811,9 @@ def create_app() -> FastAPI:
             or any("fallback" in str(projections.get(yr, {}).get("source", "")) for yr in projections)
         )
 
+        pop_source = socio.get("_geocoder_source", "geocoder")
+        mort_conf  = mortality_confidence_level(hw_days_tgt, pop_source)
+
         return {
             "resolvedLocation": {
                 "city": location_hint,
@@ -832,6 +836,20 @@ def create_app() -> FastAPI:
                 "climate_zone": zone_obj_target.zone.value,
                 "zone_confidence": zone_obj_target.confidence,
                 "lethal_risk_flag": wbt_result_proj.lethal_risk_flag,
+            },
+            # Machine-readable confidence descriptor — consumed by frontend badges
+            # and downstream API consumers.  Never omit; "high" means ERA5/CMIP6
+            # peer-reviewed source; "medium" means modelled / estimated.
+            "_data_confidence": {
+                "peak_tx5d":    {"level": "high",   "source": "CMIP6 ensemble + ERA5 P95"},
+                "wet_bulb":     {"level": "high",   "source": "Stull 2011 + ERA5 humidity"},
+                "heatwave_days":{"level": "high",   "source": "CMIP6 ensemble + ERA5 P95"},
+                "deaths":       mort_conf,
+                "economic_loss":{"level": "medium", "source": "Burke 2018 + ILO bipartite model",
+                                 "note": "Indicative directional estimate. ±8% CI."},
+                "population":   {"level": "high" if pop_source == "verified_city_vault" else "medium",
+                                 "source": pop_source},
+                "death_rate":   {"level": "high",   "source": "vault/UN Population Division"},
             },
             "historicalEras": historical_eras,
             "hexGrid": hex_grid_data,
@@ -1061,6 +1079,14 @@ def create_app() -> FastAPI:
             or any("fallback" in str(r.get("source", "")) for r in projection_records)
         )
 
+        cr_pop_source = socio.get("_geocoder_source", "geocoder")
+        # Use average hw_days from available projections for confidence scoring
+        _avg_hw = (
+            sum(r["heatwave_days"] for r in projection_records) / len(projection_records)
+            if projection_records else 30.0
+        )
+        cr_mort_conf = mortality_confidence_level(_avg_hw, cr_pop_source)
+
         return {
             "threshold_c": p95,
             "tx5d_baseline_c": tx5d_baseline,
@@ -1071,6 +1097,16 @@ def create_app() -> FastAPI:
             "baseline": {"baseline_mean_c": ann_mean},
             "era5_humidity_p95": rh_p95,
             "hexGrid": hex_grid_data,
+            "_data_confidence": {
+                "peak_tx5d":    {"level": "high",   "source": "CMIP6 ensemble + ERA5 P95"},
+                "wet_bulb":     {"level": "high",   "source": "Stull 2011 + ERA5 humidity"},
+                "heatwave_days":{"level": "high",   "source": "CMIP6 ensemble + ERA5 P95"},
+                "deaths":       cr_mort_conf,
+                "economic_loss":{"level": "medium", "source": "Burke 2018 + ILO bipartite model",
+                                 "note": "Indicative directional estimate. ±8% CI."},
+                "population":   {"level": "high" if cr_pop_source == "verified_city_vault" else "medium",
+                                 "source": cr_pop_source},
+            },
             "metadata": {
                 "data_lineage": "statistical_fallback" if any_fallback else "empirical_api",
                 "coverage_method": hex_coverage_method,

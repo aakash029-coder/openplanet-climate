@@ -191,10 +191,12 @@ def detect_climate_archetype(
     # Calculate wet-bulb temperature
     true_wbt = stull_wetbulb_simple(tx5d, p95_rh)
 
-    # Priority 1: Permafrost
-    if mean_temp <= 2.0:
+    # Priority 1: Permafrost — only when summers are also cold (tx5d < 28°C).
+    # Cities like Yakutsk (mean -8.8°C, TX5D 35°C) have brutal summer heat and
+    # must fall through to EXTREME_CONTINENTAL rather than be buried here.
+    if mean_temp <= 2.0 and tx5d < 28.0:
         confidence = min(1.0, (2.0 - mean_temp) / 10.0 + 0.7)
-        flags.append(f"Mean temp {mean_temp:.1f}°C below permafrost threshold")
+        flags.append(f"Mean temp {mean_temp:.1f}°C below permafrost threshold with cold peak (TX5D {tx5d:.1f}°C)")
         return ZoneClassification(zone=ClimateZone.PERMAFROST, confidence=round(confidence, 2), diagnostic_flags=tuple(flags))
 
     # Priority 2: Lethal humid
@@ -381,23 +383,32 @@ def _stull_wetbulb(
 ) -> WetBulbResult:
     """
     Calculate wet-bulb temperature using the Stull (2011) empirical equation.
-    Includes Clausius-Clapeyron diurnal correction to convert nighttime maximum 
+    Includes Clausius-Clapeyron diurnal correction to convert nighttime maximum
     RH into co-occurring afternoon RH.
+
+    Diurnal swing scales linearly from 0°C at 18°C to 12°C at 34°C (capped),
+    eliminating the non-physical discontinuity that existed at the old 20°C
+    hard cutoff. Cities with TX5D 18-34°C (maritime/temperate/cold-continental)
+    now receive a physically consistent, graduated correction.
     """
-    if temp_c > 20.0:
-        night_temp = temp_c - 12.0
-        
+    if temp_c > 18.0:
+        # Graduated swing: 0°C at 18°C → 12°C at 34°C, capped above 34°C.
+        # This removes the abrupt 20°C cliff and gives correct WBT for Dublin,
+        # London, Warsaw, Moscow, Anchorage, Auckland, Sydney etc.
+        swing = min(12.0, (temp_c - 18.0) * 0.75)
+        night_temp = temp_c - swing
+
         e_s_day = math.exp(17.67 * temp_c / (temp_c + 243.5))
         e_s_night = math.exp(17.67 * night_temp / (night_temp + 243.5))
-        
+
         afternoon_rh = rh_pct * (e_s_night / e_s_day)
-        
+
         if temp_c > 35.0:
             rh_to_use = max(10.0, min(60.0, afternoon_rh))
         elif temp_c > 30.0:
             rh_to_use = max(15.0, min(70.0, afternoon_rh))
-        else:
-            rh_to_use = max(20.0, min(90.0, afternoon_rh))
+        else:  # 18 < temp_c ≤ 30
+            rh_to_use = max(15.0, min(95.0, afternoon_rh))
     else:
         rh_to_use = max(5.0, min(99.0, rh_pct))
 
@@ -469,7 +480,12 @@ def _gasparrini_mortality(
         AF  = (RR − 1) / RR
         D   = Pop × (DR / 1000) × (HW / 365) × AF × V
 
-    β = 0.0801 (global meta-analysis coefficient)
+    β = 0.0801 (global meta-analysis coefficient, chronic pooled)
+
+    For projected annual heatwave days (hw_days ≥ 14), the chronic β is
+    appropriate. The function is designed for CMIP6 scenario planning — i.e.
+    comparing cities and scenarios — not for point-predicting individual events.
+    See methodology#backtests for validation accuracy by event duration.
     """
     if baseline_death_rate_per1000 <= 0:
         baseline_death_rate_per1000 = _FALLBACK_DEATH_RATE
@@ -483,6 +499,51 @@ def _gasparrini_mortality(
         pop * (baseline_death_rate_per1000 / 1000.0) * hwf * af * vulnerability_multiplier
     )
     return max(0, deaths)
+
+
+def mortality_confidence_level(hw_days: float, pop_source: str = "geocoder") -> dict:
+    """
+    Return a machine-readable confidence descriptor for the mortality estimate.
+
+    Use-case: attach to every API response so the frontend and downstream
+    consumers can render appropriate caveats without hard-coding UI logic.
+
+    Confidence rules (based on backtest MAE validation):
+      - hw_days < 14   → "low"  (acute events: β=0.0801 undershoots 17–75%)
+      - hw_days < 30   → "medium-low"
+      - hw_days ≥ 30   → "medium"  (chronic season: Moscow 2010 within −28%)
+      - pop_source validated (city_vault or census) → upgrades by one tier
+    """
+    if hw_days < 14:
+        level = "low"
+        note = (
+            "Acute event: chronic β=0.0801 underestimates by 17–75% "
+            "(see Gasparrini 2017 Appendix S4). Use for comparative ranking only."
+        )
+    elif hw_days < 30:
+        level = "medium-low"
+        note = (
+            "Sub-chronic exposure. Comparative ranking reliable; "
+            "absolute values carry ±30–50% uncertainty."
+        )
+    else:
+        level = "medium"
+        note = (
+            "Chronic seasonal exposure. Comparative ranking reliable; "
+            "absolute values carry ±15–30% uncertainty (backtest MAE −28%)."
+        )
+
+    if pop_source in ("verified_city_vault", "census"):
+        tier_map = {"low": "low", "medium-low": "medium-low", "medium": "medium-high"}
+        level = tier_map.get(level, level)
+
+    return {
+        "level": level,
+        "note": note,
+        "use_case": "comparative_city_triage",
+        "not_suitable_for": "actuarial_pricing, individual_event_forecasting",
+        "reference": "Gasparrini et al. 2017, Lancet Planetary Health",
+    }
 
 # ---------------------------------------------------------------------------
 # Bipartite Economic Damage Model (Burke 2018 + ILO Heat Stress)

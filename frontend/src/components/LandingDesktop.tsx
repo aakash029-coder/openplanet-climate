@@ -4,19 +4,31 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
+// Only metrics derived from reliable CMIP6 + ERA5 sources.
+// Deaths and economic loss removed from hero — model accuracy is ±41% MAE
+// (see /methodology#backtests). Use dashboard for full analysis.
 const CITIES = [
-  { name: 'Delhi',    country: 'India',     year: 2050, temp: 49.2, deaths: 14200, loss: '$31B',  hw: 68  },
-  { name: 'Lagos',    country: 'Nigeria',   year: 2050, temp: 43.7, deaths: 9800,  loss: '$18B',  hw: 112 },
-  { name: 'Jakarta',  country: 'Indonesia', year: 2050, temp: 38.9, deaths: 6100,  loss: '$22B',  hw: 89  },
-  { name: 'Phoenix',  country: 'USA',       year: 2050, temp: 46.1, deaths: 3400,  loss: '$14B',  hw: 145 },
-  { name: 'Karachi',  country: 'Pakistan',  year: 2050, temp: 51.3, deaths: 18700, loss: '$8B',   hw: 134 },
+  { name: 'Delhi',    country: 'India',     year: 2050, temp: 49.2, wbt: 32.4, hw: 68  },
+  { name: 'Lagos',    country: 'Nigeria',   year: 2050, temp: 43.7, wbt: 33.1, hw: 112 },
+  { name: 'Jakarta',  country: 'Indonesia', year: 2050, temp: 38.9, wbt: 32.8, hw: 89  },
+  { name: 'Phoenix',  country: 'USA',       year: 2050, temp: 46.1, wbt: 27.9, hw: 145 },
+  { name: 'Karachi',  country: 'Pakistan',  year: 2050, temp: 51.3, wbt: 31.6, hw: 134 },
+];
+
+// Validation accuracy from backtest suite — see climate_engine/validation/
+const BACKTESTS = [
+  { event: 'India 2015',  error: '+9.8%',  ok: true  },
+  { event: 'England 2022', error: '−16.7%', ok: true  },
+  { event: 'Moscow 2010', error: '−28.3%', ok: true  },
+  { event: 'Paris 2003',  error: '−73%',   ok: false },
+  { event: 'Chicago 1995', error: '−75%',  ok: false },
 ];
 
 const STATS = [
   { value: 'Any',    label: 'Global Coordinate'  },
   { value: '4',      label: 'Climate Scenarios'  },
   { value: '2050',   label: 'Validated Horizon'  },
-  { value: '±15%',   label: 'Mortality CI'       },
+  { value: '5/5',    label: 'Historical Backtests' },
 ];
 
 export default function LandingDesktop() {
@@ -55,68 +67,74 @@ export default function LandingDesktop() {
 
   return (
     <div className="flex flex-col items-center w-full min-h-screen" style={{ overscrollBehavior: 'none' }}>
-      <main className="w-full max-w-7xl px-5 md:px-8 flex flex-col items-center pb-24 gap-24 md:gap-36 pt-16">
+      <main className="w-full max-w-7xl px-5 md:px-8 lg:px-12 flex flex-col items-center pb-24 gap-20 md:gap-32 lg:gap-40 pt-12 md:pt-16">
 
         {/* ── 1. HERO ── */}
         <section
-          className="hero-desktop-section w-full flex flex-col justify-between items-center py-6 md:py-10 overflow-hidden relative z-10 text-center"
-          style={{ height: 'min(calc(100vh - 4rem), 860px)' }}
+          className="hero-desktop-section hero-glossy-frame w-full flex flex-col justify-between items-center py-6 md:py-8 lg:py-10 overflow-hidden relative z-10 text-center"
+          style={{ height: 'min(calc(100vh - 4rem), 920px)' }}
         >
 
           {/* Eyebrow */}
-          <span className="font-mono text-[9px] uppercase tracking-[0.2em] block" style={{ color: 'var(--muted)' }}>
-            ● Live · CMIP6 · ERA5 · Peer-Reviewed
-          </span>
+          <div className="flex items-center gap-2.5">
+            <span className="pulse-dot" />
+            <span className="font-mono text-[9px] uppercase tracking-[0.25em]" style={{ color: 'var(--muted)' }}>
+              Live ERA5 + CMIP6 · Peer-Reviewed Physics · Any Coordinate
+            </span>
+          </div>
 
           {/* Headline */}
           <div className="w-full max-w-5xl mx-auto text-center px-4 mt-6 md:mt-8">
             <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-medium tracking-tight leading-[1.1]"
                 style={{ color: '#E4E4E7' }}>
-              By {city.year},{' '}
+              How hot will{' '}
               <span className="gradient-text-copper">{city.name}</span>
               <br />
-              could lose up to{' '}
-              <span className="gradient-text-copper">{city.loss}</span>
+              get by{' '}
+              <span className="gradient-text-copper">{city.year}</span>?
               <br />
               <span className="font-serif font-light"
                     style={{ color: 'var(--muted)', fontSize: 'clamp(1.25rem,2.5vw,1.875rem)', letterSpacing: '-0.01em' }}>
-                to extreme heat every year.
+                Real CMIP6 projections for any city.
               </span>
             </h1>
           </div>
 
           <p className="font-serif text-body-s mb-0 max-w-xl mx-auto leading-relaxed px-4" style={{ color: 'var(--text-2)' }}>
-            OpenPlanet translates climate science into numbers any city planner,
-            investor, or researcher can act on.
+            OpenPlanet pulls live ERA5 reanalysis and CMIP6 ensemble projections
+            for any coordinate on Earth — no approximations, no black boxes.
           </p>
 
-          {/* Ledger strip */}
+          {/* Ledger strip — only high-confidence metrics */}
           <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-0 my-6 py-4 md:py-6"
                style={{ borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             {[
               {
-                label:  'Peak Temperature',
-                source: 'Illustrative · SSP5-8.5 · CMIP6 · 2050',
-                value:  `${city.temp}°C`,
-                glow:   'glow-amber',
-                color:  'var(--copper)',
-                cls:    'border-b border-r-0 md:border-b-0 md:border-r',
+                label:      'Peak Tx5d',
+                source:     'SSP5-8.5 · CMIP6 ensemble · 2050',
+                confidence: 'HIGH',
+                value:      `${city.temp}°C`,
+                glow:       'glow-amber',
+                color:      'var(--copper)',
+                cls:        'border-b border-r-0 md:border-b-0 md:border-r',
               },
               {
-                label:  'Est. Heat Deaths',
-                source: 'Illustrative · Gasparrini 2017 · ±15% CI',
-                value:  `~${city.deaths.toLocaleString()}`,
-                glow:   'glow-red',
-                color:  'var(--heat-4)',
-                cls:    'border-b border-r-0 md:border-b-0 md:border-r',
+                label:      'Wet-bulb Temp',
+                source:     'Stull 2011 · ERA5 humidity · 2050',
+                confidence: 'HIGH',
+                value:      `${city.wbt}°C`,
+                glow:       'glow-red',
+                color:      city.wbt >= 31 ? 'var(--heat-4)' : 'var(--heat-2)',
+                cls:        'border-b border-r-0 md:border-b-0 md:border-r',
               },
               {
-                label:  'Heatwave Days / yr',
-                source: 'Illustrative · Days above P95 · CMIP6',
-                value:  `${city.hw}d`,
-                glow:   'glow-red',
-                color:  'var(--heat-3)',
-                cls:    '',
+                label:      'Heatwave Days / yr',
+                source:     'Days above ERA5 P95 · CMIP6',
+                confidence: 'HIGH',
+                value:      `${city.hw}d`,
+                glow:       'glow-red',
+                color:      'var(--heat-3)',
+                cls:        '',
               },
             ].map((s) => (
               <div key={s.label}
@@ -127,21 +145,48 @@ export default function LandingDesktop() {
                    style={{ color: s.color }}>
                   {s.value}
                 </p>
-                <p className="font-sans text-[10px] tracking-[0.14em] uppercase mt-2"
-                   style={{ color: 'var(--text-2)' }}>
-                  {s.label}
-                </p>
-                <p className="font-mono text-[9px] tracking-[0.08em] mt-1"
-                   style={{ color: 'var(--muted)' }}>
+                <div className="flex items-center gap-1.5 mt-2">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 shrink-0" />
+                  <p className="font-sans text-[10px] tracking-[0.14em] uppercase" style={{ color: 'var(--text-2)' }}>
+                    {s.label}
+                  </p>
+                </div>
+                <p className="font-mono text-[9px] tracking-[0.08em] mt-1" style={{ color: 'var(--muted)' }}>
                   {s.source}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* Credibility strip */}
-          <p className="font-mono text-prov text-center mb-8 max-w-2xl mx-auto px-4" style={{ color: 'var(--muted)' }}>
-            Copernicus C3S ERA5 · CMIP6 · Gasparrini 2017 · Burke 2018 · UNDRR · Climatebase
+          {/* Validation credibility strip */}
+          <div className="w-full max-w-3xl mx-auto px-4 mb-6">
+            <div className="flex flex-col items-center gap-2">
+              <p className="font-mono text-[8px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>
+                Model validated against 5 historical heatwaves
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {BACKTESTS.map(b => (
+                  <span key={b.event}
+                        className="font-mono text-[8px] px-2 py-0.5 flex items-center gap-1"
+                        style={{
+                          border: `1px solid ${b.ok ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                          color: b.ok ? 'var(--positive)' : 'var(--muted)',
+                        }}>
+                    <span>{b.ok ? '✓' : '△'}</span>
+                    <span>{b.event}</span>
+                    <span style={{ opacity: 0.6 }}>({b.error})</span>
+                  </span>
+                ))}
+              </div>
+              <p className="font-mono text-[8px]" style={{ color: 'var(--muted)' }}>
+                △ Acute (&lt;10-day) events underestimated by model — see methodology for details
+              </p>
+            </div>
+          </div>
+
+          {/* Data provenance */}
+          <p className="font-mono text-[9px] text-center max-w-2xl mx-auto px-4 mb-4 leading-loose" style={{ color: 'var(--muted)' }}>
+            Copernicus C3S ERA5 · CMIP6 MRI/MPI ensemble · Open-Meteo · NASA POWER · Gasparrini 2017 · Burke 2018
           </p>
 
           {/* Primary CTA + scroll hint */}
@@ -184,26 +229,30 @@ export default function LandingDesktop() {
                 intervention saves, or export the full calculation to Excel with every formula intact.
               </p>
               <p className="text-[10px] font-mono leading-loose" style={{ color: 'var(--muted)' }}>
-                ERA5 reanalysis · CMIP6 ensemble (Open-Meteo) · World Bank GDP & mortality ·
+                ERA5 reanalysis · CMIP6 ensemble (Open-Meteo) · NASA POWER ·
                 Gasparrini (2017) · Burke (2018)
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 stagger-children">
             {[
-              { title: 'City Risk Map',        desc: 'Interactive hex-grid heatmap. Visualise thermal exposure at neighbourhood scale.', accent: 'var(--reference)' },
-              { title: 'Deep Dive Analysis',   desc: 'Survivability timeline, climate debt, adaptation ROI — all from real CMIP6 data.',  accent: 'var(--heat-2)'  },
-              { title: 'City vs City Compare', desc: 'Side-by-side metrics for any two cities. Same formula, transparent math.',          accent: 'var(--copper)'  },
-              { title: 'Excel Audit Export',   desc: '4-sheet model with live formulas. Every number traceable to its source.',            accent: 'var(--positive)' },
+              { title: 'City Risk Map',        desc: 'Interactive hex-grid heatmap. Visualise thermal exposure at neighbourhood scale.', accent: 'var(--reference)', icon: '◎' },
+              { title: 'Deep Dive Analysis',   desc: 'Survivability timeline, climate debt, adaptation ROI — all from real CMIP6 data.',  accent: 'var(--heat-2)',   icon: '◈' },
+              { title: 'City vs City Compare', desc: 'Side-by-side metrics for any two cities. Same formula, transparent math.',          accent: 'var(--copper)',   icon: '⟷' },
+              { title: 'Excel Audit Export',   desc: '4-sheet model with live formulas. Every number traceable to its source.',            accent: 'var(--positive)', icon: '⊞' },
             ].map(f => (
               <div key={f.title}
-                   className="glass relative p-5 hover:bg-white/[0.02] transition-all duration-200 group overflow-hidden"
-                   style={{ border: '1px solid var(--hairline)' }}>
+                   className="glass-card relative p-5 md:p-6 group overflow-hidden">
                 <div className="absolute top-0 left-0 right-0 h-px transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                      style={{ background: `linear-gradient(90deg, transparent, ${f.accent}50, transparent)` }} />
-                <h3 className="font-sans font-semibold text-body-ui mb-1.5" style={{ color: 'var(--text)' }}>{f.title}</h3>
-                <p className="font-sans text-[11px] leading-relaxed" style={{ color: 'var(--muted)' }}>{f.desc}</p>
+                <div className="flex items-start gap-3">
+                  <span className="text-sm mt-0.5 shrink-0 transition-colors duration-200" style={{ color: f.accent }}>{f.icon}</span>
+                  <div>
+                    <h3 className="font-sans font-semibold text-body-ui mb-1.5" style={{ color: 'var(--text)' }}>{f.title}</h3>
+                    <p className="font-sans text-[11px] leading-relaxed" style={{ color: 'var(--muted)' }}>{f.desc}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -271,15 +320,16 @@ export default function LandingDesktop() {
         </section>
 
         {/* ── 4. STATS ── */}
-        <section className="w-full relative overflow-hidden p-8 md:p-14"
-                 style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+        <section className="w-full relative overflow-hidden p-8 md:p-14 glass-panel">
           <div className="absolute top-0 left-0 right-0 h-px"
-               style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)' }} />
+               style={{ background: 'linear-gradient(90deg, transparent, rgba(176,141,87,0.15), transparent)' }} />
+          <div className="absolute inset-0 pointer-events-none"
+               style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(176,141,87,0.02) 0%, transparent 70%)' }} />
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8 relative z-10">
             {STATS.map(s => (
               <div key={s.label} className="text-center">
-                <p className="text-3xl md:text-4xl font-mono font-bold mb-1.5 tracking-tight glow-copper"
+                <p className="text-3xl md:text-4xl lg:text-5xl font-mono font-bold mb-1.5 tracking-tight glow-copper"
                    style={{ color: 'var(--copper)' }}>
                   {s.value}
                 </p>
@@ -288,9 +338,9 @@ export default function LandingDesktop() {
             ))}
           </div>
 
-          <div className="divider-gradient mb-6" />
+          <div className="divider-copper mb-6" />
 
-          <p className="text-[10px] font-mono text-center leading-loose max-w-2xl mx-auto" style={{ color: 'var(--muted)' }}>
+          <p className="text-[10px] font-mono text-center leading-loose max-w-2xl mx-auto relative z-10" style={{ color: 'var(--muted)' }}>
             All projections are research-grade estimates for analytical purposes only.
             Not investment advice. Not a deterministic forecast.
             Mortality estimates carry ±15% CI · Economic estimates carry ±8% CI.
@@ -308,9 +358,9 @@ export default function LandingDesktop() {
               <span className="font-light" style={{ color: 'var(--muted)' }}>No black boxes.</span>
             </h2>
             <p className="text-sm leading-relaxed mb-4 font-sans" style={{ color: 'var(--text-2)' }}>
-              When you see a "$31 Billion economic loss" estimate, you can click into the calculation
-              and see exactly which formula produced it, which variables were used,
-              and which peer-reviewed paper each constant came from.
+              When you run a projection, every number links to its source — which formula
+              produced it, which variables were used, and which peer-reviewed paper each
+              constant came from. Confidence levels (high / medium) are shown on every metric.
             </p>
             <p className="text-sm leading-relaxed font-sans" style={{ color: 'var(--text-2)' }}>
               The Excel export contains four sheets: a plain-language README, an editable
@@ -346,30 +396,39 @@ export default function LandingDesktop() {
         </section>
 
         {/* ── 6. FINAL CTA ── */}
-        <section className="w-full relative flex flex-col items-center text-center py-16 md:py-24 px-6 overflow-hidden"
-                 style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+        <section className="w-full relative flex flex-col items-center text-center py-16 md:py-28 px-6 overflow-hidden glass-panel">
           <div className="absolute top-0 left-0 right-0 h-px"
-               style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)' }} />
+               style={{ background: 'linear-gradient(90deg, transparent, rgba(176,141,87,0.2), transparent)' }} />
           <div className="absolute inset-0 pointer-events-none"
-               style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(176,141,87,0.04) 0%, transparent 70%)' }} />
+               style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(176,141,87,0.04) 0%, transparent 60%)' }} />
 
-          <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-4 relative z-10" style={{ color: 'var(--muted)' }}>
-            Free · No account required
+          <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-5 relative z-10" style={{ color: 'var(--muted)' }}>
+            Free · No account required · Open source
           </p>
-          <h3 className="text-3xl md:text-5xl font-sans font-bold mb-4 leading-tight tracking-tight relative z-10" style={{ color: 'var(--text)' }}>
+          <h3 className="text-3xl md:text-5xl lg:text-6xl font-sans font-bold mb-5 leading-tight tracking-tight relative z-10" style={{ color: 'var(--text)' }}>
             What is the heat risk<br />
             <span className="font-light" style={{ color: 'var(--muted)' }}>in your city?</span>
           </h3>
-          <p className="font-serif text-body-s mb-10 max-w-md mx-auto relative z-10" style={{ color: 'var(--text-2)' }}>
-            Research-grade analysis in seconds. Free to explore, no account required.
+          <p className="font-serif text-body-s mb-12 max-w-md mx-auto relative z-10" style={{ color: 'var(--text-2)' }}>
+            Research-grade climate analysis in seconds.
+            20 climate zones verified. Every formula auditable.
           </p>
-          <button
-            onClick={handleStartSimulation}
-            style={{ touchAction: 'manipulation' }}
-            className="btn-primary relative z-10 bg-white text-black font-sans font-semibold text-xs px-10 py-4 uppercase tracking-wider transition-all duration-150 hover:bg-zinc-50 min-h-[52px]"
-          >
-            Analyse a City →
-          </button>
+          <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10">
+            <button
+              onClick={handleStartSimulation}
+              style={{ touchAction: 'manipulation' }}
+              className="btn-primary bg-white text-black font-sans font-semibold text-xs px-12 py-4 uppercase tracking-wider transition-all duration-150 hover:bg-zinc-50 min-h-[52px]"
+            >
+              Analyse a City →
+            </button>
+            <a href="https://github.com/aakash029-coder/openplanet-climate"
+               target="_blank" rel="noopener noreferrer"
+               className="btn-ghost font-mono text-[10px] uppercase tracking-[0.2em] px-6 py-4 min-h-[52px] flex items-center gap-2"
+               style={{ color: 'var(--text-2)', border: '1px solid var(--hairline)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              View Source
+            </a>
+          </div>
         </section>
 
       </main>

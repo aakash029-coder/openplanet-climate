@@ -19,6 +19,11 @@ __pycache__/
 .env.local
 .env.*.local
 backend/.env
+# Service-account credentials — never commit these
+hf_space/secrets/
+secrets/
+*.json.key
+*service-account*.json
 
 # Database artifacts
 ops_shield.duckdb
