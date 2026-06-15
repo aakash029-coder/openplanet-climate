@@ -15,10 +15,12 @@ function fmt(n: number | null | undefined, d = 1): string {
 
 function fmtUSD(n: number | null | undefined): string {
   if (n == null || isNaN(n)) return "—";
-  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (n >= 1e9)  return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
-  return `$${n.toLocaleString()}`;
+  const sign = n < 0 ? "−$" : "$";
+  const abs  = Math.abs(n);
+  if (abs >= 1e12) return `${sign}${(abs / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9)  return `${sign}${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6)  return `${sign}${(abs / 1e6).toFixed(1)}M`;
+  return `${sign}${abs.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -144,7 +146,7 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
   const { primaryData, primaryLoading, fetchPrimaryCity, canopy, setCanopy, coolRoof: albedo, setCoolRoof: setAlbedo } = useClimateData();
 
   const [searchQuery2, setSearchQuery2] = useState("");
-  const [suggestions2, setSuggestions2] = useState<any[]>([]);
+  const [suggestions2, setSuggestions2] = useState<{ id: string; name: string; country: string; latitude: number; longitude: number }[]>([]);
   const [city2Geo, setCity2Geo]         = useState<{ lat: number; lng: number; display_name: string } | null>(null);
 
   const savedState = typeof window !== 'undefined' ? (() => { try { return JSON.parse(localStorage.getItem('op_sync_state') || '{}'); } catch { return {}; } })() : {};

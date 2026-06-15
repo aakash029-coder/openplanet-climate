@@ -119,7 +119,7 @@ export default function MethodologyModule() {
     population:          primaryData.population ?? 0,
     gdp_usd:             primaryData.gdp_usd ?? 0,
     death_rate:          7.7,
-    vulnerability:       (proj.audit_trail as any)?.mortality?.variables?.V ?? 1.0,
+    vulnerability:       Number(proj.audit_trail?.mortality?.variables?.V ?? 1.0),
     canopy_pct:          primaryData.canopy_offset_pct,
     albedo_pct:          primaryData.albedo_offset_pct,
     attributable_deaths: proj.attributable_deaths,

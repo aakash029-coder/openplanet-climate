@@ -24,6 +24,7 @@ export interface CityResult {
   population: number | null;
   projections: Projection[];
   baseline: { baseline_mean_c: number | null };
+  climateIntelligence?: Record<string, unknown> | null;
   loading: boolean;
   error: string | null;
 }
@@ -277,6 +278,55 @@ export function CompareTable({
             </tbody>
           </table>
         </div>
+
+        {/* ── Köppen climate zone comparison ── */}
+        {okResults.some(r => r.climateIntelligence) && (
+          <div className="border-t border-white/[0.05] px-5 md:px-6 py-6">
+            <h4 className="flex items-center gap-3 font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: 'var(--muted)' }}>
+              <span className="w-1.5 h-1.5 bg-[#38bdf8] rounded-full" />
+              Climate zone comparison
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              {okResults.map(r => {
+                const ci = r.climateIntelligence as Record<string, unknown> | null | undefined;
+                if (!ci) return (
+                  <div key={r.query} className="border border-white/[0.04] p-4" style={{ background: 'var(--panel)' }}>
+                    <p className="text-[8px] font-mono text-slate-600 uppercase mb-2 truncate">{r.query}</p>
+                    <p className="text-[9px] font-mono text-slate-700 italic">Climate zone unavailable</p>
+                  </div>
+                );
+                return (
+                  <div key={r.query} className="border border-white/[0.04] p-4 space-y-2" style={{ background: 'var(--panel)' }}>
+                    <p className="text-[8px] font-mono text-slate-600 uppercase mb-1 truncate">{r.query}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[11px] font-bold px-1.5 py-0.5"
+                            style={{ background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)', color: '#38bdf8' }}>
+                        {ci.koppen_class as string}
+                      </span>
+                      <span className="text-[10px] font-mono font-semibold truncate" style={{ color: 'var(--text)' }}>
+                        {ci.koppen_label as string}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>IPCC AR6 warming rate</span>
+                      <span className="text-[10px] font-mono font-bold tabular-nums" style={{ color: 'var(--copper)' }}>
+                        {(ci.ipcc_warming_rate_factor as number).toFixed(2)}×
+                      </span>
+                    </div>
+                    {Array.isArray(ci.primary_risk_drivers) && (
+                      <p className="text-[8px] font-mono leading-snug" style={{ color: 'var(--muted)' }}>
+                        {(ci.primary_risk_drivers as string[])[0]}
+                      </p>
+                    )}
+                    <p className="text-[7px] font-mono italic" style={{ color: 'var(--reference)' }}>
+                      Beck et al. 2018 · IPCC AR6 WG1
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* AI Analysis */}
         <div className="border-t border-white/[0.05] px-5 md:px-8 py-7">

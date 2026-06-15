@@ -269,7 +269,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
           year={year} setYear={setYear} ssp={ssp} setSsp={setSsp}
           handleInitialize={handleInitialize} isLoading={isLoading} isInitialized={isInitialized}
           canGenerate={canGenerate} canopy={canopy} coolRoof={coolRoof}
-          handleMitigationChange={(t: any, v: any) => t === 'canopy' ? setCanopy(v) : setCoolRoof(v)}
+          handleMitigationChange={(t: 'canopy' | 'coolRoof', v: number) => t === 'canopy' ? setCanopy(v) : setCoolRoof(v)}
           isSimulating={isSimulating}
         />
         <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full">

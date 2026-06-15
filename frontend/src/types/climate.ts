@@ -5,6 +5,49 @@
  * so existing importers remain unaffected.
  */
 
+export interface AuditTrailClimateZone {
+  detected_zone:    string;
+  confidence:       number;
+  diagnostic_flags: string[];
+  lethal_risk_days: number;
+  source:           string;
+}
+
+export interface AuditTrailMortality {
+  formula:     string;
+  variables:   Record<string, string | number>;
+  computation: string;
+  result:      number;
+  source:      string;
+}
+
+export interface AuditTrailEconomics {
+  formula:          string;
+  zone_adjustment:  string;
+  variables:        Record<string, string | number>;
+  adjustment_notes: string[];
+  computation:      string;
+  result:           number;
+  source:           string;
+}
+
+export interface AuditTrailWetbulb {
+  formula:                 string;
+  variables:               { T: number; RH: number; survivability_cap: string };
+  result:                  number;
+  capped:                  boolean;
+  theoretical_uncapped:    number;
+  lethal_risk_flag:        boolean;
+  source:                  string;
+}
+
+export interface AuditTrail {
+  climate_zone: AuditTrailClimateZone;
+  mortality:    AuditTrailMortality;
+  economics:    AuditTrailEconomics;
+  wetbulb:      AuditTrailWetbulb;
+}
+
 export interface Projection {
   year: number;
   source: string;
@@ -19,7 +62,7 @@ export interface Projection {
   survivability_status: "STABLE" | "DANGER" | "CRITICAL";
   n_models: number;
   region: string;
-  audit_trail?: any;
+  audit_trail?: AuditTrail;
 }
 
 export interface ClimateBaseline {
@@ -71,27 +114,6 @@ export interface CityClimateData {
   fetch_duration_ms: number;
 }
 
-export interface DashboardMetrics {
-  baseTemp: string;
-  temp: string;
-  deaths: string;
-  ci: string;
-  loss: string;
-  heatwave: string;
-  wbt: string;
-  region: string;
-}
-
-export interface DashboardData {
-  metrics: DashboardMetrics;
-  hexGrid: Array<{ position: [number, number] }>;
-  aiAnalysis: Record<string, string> | null;
-  charts: {
-    heatwave: Array<{ year: string; val: number }>;
-    economic: Array<{ year: string; noAction: number; adapt: number }>;
-  };
-}
-
 export interface FetchParams {
   city_name:         string;
   lat:               number;
@@ -102,12 +124,3 @@ export interface FetchParams {
   elevation?:        number;
 }
 
-export interface DashboardParams {
-  city:     string;
-  lat:      number;
-  lng:      number;
-  ssp:      string;
-  year:     string;
-  canopy:   number;
-  coolRoof: number;
-}

@@ -8,6 +8,7 @@ import CompareModule from "@/components/CompareModule";
 import ResearchModule from "@/components/ResearchModule";
 import MethodologyModule from "@/components/MethodologyModule";
 import { ClimateDataProvider } from "@/context/ClimateDataContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const MapModule = dynamic(() => import("@/components/MapModule"), {
   ssr: false,
@@ -197,18 +198,24 @@ function DashboardPageInner() {
       {/* Content */}
       <div className="w-full h-full flex flex-col flex-grow">
         <div className={activeTab === "Dashboard" ? "block w-full" : "hidden"}>
-          <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
+          <ErrorBoundary>
+            <MapModule onTargetLocked={(city: string) => setTargetCity(city)} />
+          </ErrorBoundary>
         </div>
 
         <div className={(activeTab === "Deep Dive" || activeTab === "Compare") ? "max-w-[1400px] w-full mx-auto px-5 md:px-10 py-14 md:py-16" : "hidden"}>
           {visitedTabs.has('Deep Dive') && targetCity && (
             <div className={activeTab === "Deep Dive" ? "block" : "hidden"}>
-              <ResearchModule baseTarget={targetCity} />
+              <ErrorBoundary>
+                <ResearchModule baseTarget={targetCity} />
+              </ErrorBoundary>
             </div>
           )}
           {visitedTabs.has('Compare') && targetCity && (
             <div className={activeTab === "Compare" ? "block" : "hidden"}>
-              <CompareModule baseTarget={targetCity} />
+              <ErrorBoundary>
+                <CompareModule baseTarget={targetCity} />
+              </ErrorBoundary>
             </div>
           )}
         </div>

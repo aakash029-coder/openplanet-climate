@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { fmtLoss } from './MapHelpers';
 import { formatCoordinates, useClimateData } from '@/context/ClimateDataContext';
 
@@ -133,6 +133,13 @@ export const LeftPanel = ({
   year, setYear, ssp, setSsp, handleInitialize, isLoading, isInitialized, canGenerate,
   canopy, coolRoof, handleMitigationChange, isSimulating,
 }: LeftPanelProps) => {
+  const [slowLoad, setSlowLoad] = useState(false);
+  useEffect(() => {
+    if (!isLoading) { setSlowLoad(false); return; }
+    const t = setTimeout(() => setSlowLoad(true), 8000);
+    return () => clearTimeout(t);
+  }, [isLoading]);
+
   return (
     /* Mobile: order-last so map renders above; bounded to 75vh so sliders are visible
        without scrolling the page. Desktop: fixed-width sidebar, full panel height. */
@@ -280,6 +287,17 @@ export const LeftPanel = ({
             </span>
           )}
         </button>
+
+        {/* Cold-start notice — shown after 8 s of loading */}
+        {isLoading && slowLoad && (
+          <div className="px-3 py-2.5 border animate-fadeIn"
+               style={{ background: 'rgba(176,141,87,0.05)', borderColor: 'rgba(176,141,87,0.2)' }}>
+            <p className="font-mono text-[8px] leading-relaxed" style={{ color: 'var(--copper)' }}>
+              Taking longer than usual — the HuggingFace engine is warming up after idle.
+              First requests can take up to 60 s. Hang tight, real ERA5 + CMIP6 data is loading.
+            </p>
+          </div>
+        )}
 
         {/* SIMULATOR */}
         {isInitialized && (

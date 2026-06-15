@@ -1,11 +1,15 @@
 'use client';
 
 import React, { useState } from "react";
+import type { AuditTrail, AuditTrailMortality, AuditTrailEconomics } from "@/types/climate";
+
+export type CalcAuditSection = AuditTrailMortality | AuditTrailEconomics;
 
 export interface Projection {
   year: number; source: string; heatwave_days: number; peak_tx5d_c: number;
   attributable_deaths: number; economic_decay_usd: number; wbt_max_c?: number;
-  uhi_intensity_c?: number; grid_stress_factor?: number; region?: string; audit_trail?: any;
+  uhi_intensity_c?: number; grid_stress_factor?: number; region?: string;
+  audit_trail?: AuditTrail;
 }
 
 export interface RiskResult {
@@ -88,7 +92,7 @@ export const CalcModal = ({
   open, onClose, auditSection, title, disclaimer,
 }: {
   open: boolean; onClose: () => void;
-  auditSection: any; title: string; disclaimer: string;
+  auditSection: CalcAuditSection | null; title: string; disclaimer: string;
 }) => {
   if (!open || !auditSection) return null;
   return (
@@ -117,7 +121,7 @@ export const CalcModal = ({
         <div className="p-5 space-y-3">
           <div className="bg-[#020912] rounded-xl px-4 py-3 border border-slate-800">
             <p className="text-[8px] font-mono text-slate-500 uppercase tracking-[0.2em] mb-1.5">Formula</p>
-            <p className="text-white font-mono text-[12px] tracking-wide leading-relaxed">{auditSection.formula}</p>
+            <p className="text-white font-mono text-[12px] tracking-wide leading-relaxed">{String(auditSection.formula ?? '')}</p>
           </div>
           {auditSection.variables && (
             <div className="bg-[#020912] rounded-xl px-4 py-3 border border-slate-800">
@@ -150,11 +154,11 @@ export const CalcModal = ({
           {auditSection.computation && (
             <div className="bg-emerald-950/20 rounded-xl px-4 py-3 border border-emerald-500/20">
               <p className="text-[8px] font-mono text-emerald-400 uppercase tracking-[0.2em] mb-1.5">Result</p>
-              <p className="text-[11px] font-mono text-white leading-relaxed break-all">{auditSection.computation}</p>
+              <p className="text-[11px] font-mono text-white leading-relaxed break-all">{String(auditSection.computation ?? '')}</p>
             </div>
           )}
           <div className="flex items-center justify-between pt-1">
-            <p className="text-[8px] font-mono text-slate-600 italic">{auditSection.source}</p>
+            <p className="text-[8px] font-mono text-slate-600 italic">{String(auditSection.source ?? '')}</p>
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest">Calculation validated</span>

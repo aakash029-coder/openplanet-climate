@@ -4,6 +4,8 @@ import React from 'react';
 
 // ── Shared types ──────────────────────────────────────────────────────────────
 
+import type { AuditTrail } from '@/types/climate';
+
 export interface Projection {
   year:                number;
   source:              string;
@@ -14,7 +16,7 @@ export interface Projection {
   attributable_deaths: number;
   economic_decay_usd:  number;
   region?:             string;
-  audit_trail?:        Record<string, unknown>;
+  audit_trail?:        AuditTrail;
 }
 
 interface AuditSection {
@@ -69,10 +71,10 @@ export function SideBySideMathModal({
   const auditA = projA.audit_trail;
   const auditB = projB.audit_trail;
 
-  const getSection = (audit: Record<string, unknown> | undefined): AuditSection | null => {
+  const getSection = (audit: AuditTrail | undefined): AuditSection | null => {
     if (!audit) return null;
-    if (metricKey === 'attributable_deaths') return (audit.mortality as AuditSection) ?? null;
-    if (metricKey === 'economic_decay_usd')  return (audit.economics as AuditSection) ?? null;
+    if (metricKey === 'attributable_deaths') return audit.mortality as AuditSection;
+    if (metricKey === 'economic_decay_usd')  return audit.economics as AuditSection;
     return null;
   };
 

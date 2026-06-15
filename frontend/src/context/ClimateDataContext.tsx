@@ -17,20 +17,16 @@ import React, { createContext, useContext, useState, useCallback, useRef } from 
 // Re-export all types so existing importers continue to work unchanged
 export type {
   Projection,
+  AuditTrail,
   ClimateBaseline,
   ResponseMetadata,
   CityClimateData,
-  DashboardMetrics,
-  DashboardData,
   FetchParams,
-  DashboardParams,
 } from "@/types/climate";
 
 import type {
   CityClimateData,
-  DashboardData,
   FetchParams,
-  DashboardParams,
 } from "@/types/climate";
 
 // ── Cache ─────────────────────────────────────────────────────────────────────
@@ -89,11 +85,6 @@ interface ClimateDataContextType {
   compareBLoading: boolean;
   compareBError:   string | null;
 
-  // Dashboard simulation result (predict endpoint)
-  dashboardData:    DashboardData | null;
-  dashboardLoading: boolean;
-  dashboardError:   string | null;
-
   // Adaptation slider state — single source of truth shared across all tabs
   canopy:      number;
   setCanopy:   React.Dispatch<React.SetStateAction<number>>;
@@ -103,7 +94,6 @@ interface ClimateDataContextType {
   // Actions
   fetchPrimaryCity: (params: FetchParams) => Promise<void>;
   fetchCompareCity: (slot: "A" | "B", params: FetchParams) => Promise<void>;
-  fetchDashboard:   (params: DashboardParams) => Promise<void>;
   clearCompare:     () => void;
 }
 
@@ -126,10 +116,6 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
   const [compareB,        setCompareB]        = useState<CityClimateData | null>(null);
   const [compareBLoading, setCompareBLoading] = useState(false);
   const [compareBError,   setCompareBError]   = useState<string | null>(null);
-
-  const [dashboardData,    setDashboardData]    = useState<DashboardData | null>(null);
-  const [dashboardLoading, setDashboardLoading] = useState(false);
-  const [dashboardError,   setDashboardError]   = useState<string | null>(null);
 
   const [canopy, setCanopy] = useState(0);
   const [coolRoof, setCoolRoof] = useState(0);
@@ -252,31 +238,6 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
     }
   }, [fetchCityData]);
 
-  const fetchDashboard = useCallback(async (params: DashboardParams) => {
-    setDashboardLoading(true);
-    setDashboardError(null);
-    try {
-      const resp = await fetch("/api/engine", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          endpoint: "/api/predict",
-          payload:  params,
-        }),
-      });
-
-      if (!resp.ok) throw new Error(`Engine returned ${resp.status}`);
-      const data: DashboardData = await resp.json();
-      setDashboardData(data);
-
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
-      setDashboardError(msg);
-    } finally {
-      setDashboardLoading(false);
-    }
-  }, []);
-
   const clearCompare = useCallback(() => {
     setCompareA(null);
     setCompareB(null);
@@ -289,11 +250,9 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
       primaryData,    primaryLoading,  primaryError,
       compareA,       compareALoading, compareAError,
       compareB,       compareBLoading, compareBError,
-      dashboardData,  dashboardLoading, dashboardError,
       canopy, setCanopy, coolRoof, setCoolRoof,
       fetchPrimaryCity,
       fetchCompareCity,
-      fetchDashboard,
       clearCompare,
     }}>
       {children}
