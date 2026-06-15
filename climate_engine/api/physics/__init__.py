@@ -19,6 +19,12 @@ ISO3_MAP = {
 }
 
 from .climate_zone import ClimateZone, ZoneClassification, detect_climate_archetype
+from .climate_intelligence import (
+    KoppenMacro,
+    ClimateIntelligence,
+    classify_climate_intelligence,
+    climate_intelligence_to_dict,
+)
 from .wetbulb import (
     WetBulbResult,
     _stull_wetbulb,
@@ -30,9 +36,19 @@ from .mortality import (
     _fetch_worldbank_death_rate,
     _gasparrini_mortality,
     mortality_confidence_level,
+    _HEAT_BETA,
+    _AF_MAX,
+    _DT_SATURATION_C,
+    _saturating_temp_excess,
 )
 from .economics import apply_burke_formula, compute_hybrid_economic_loss
-from .hex_grid import H3CoverageResult, get_city_hexagons
+from .hex_grid import (
+    H3CoverageResult,
+    get_city_hexagons,
+    _H3_CELL_AREA_KM2,
+    _cap_hexagons,
+    _estimate_polygon_area_km2,
+)
 from .audit import _build_audit_trail
 
 __all__ = [
@@ -40,6 +56,10 @@ __all__ = [
     "ClimateZone",
     "ZoneClassification",
     "detect_climate_archetype",
+    "KoppenMacro",
+    "ClimateIntelligence",
+    "classify_climate_intelligence",
+    "climate_intelligence_to_dict",
     "WetBulbResult",
     "_stull_wetbulb",
     "stull_wetbulb_simple",
@@ -48,9 +68,16 @@ __all__ = [
     "_fetch_worldbank_death_rate",
     "_gasparrini_mortality",
     "mortality_confidence_level",
+    "_HEAT_BETA",
+    "_AF_MAX",
+    "_DT_SATURATION_C",
+    "_saturating_temp_excess",
     "apply_burke_formula",
     "compute_hybrid_economic_loss",
     "H3CoverageResult",
     "get_city_hexagons",
+    "_H3_CELL_AREA_KM2",
+    "_cap_hexagons",
+    "_estimate_polygon_area_km2",
     "_build_audit_trail",
 ]

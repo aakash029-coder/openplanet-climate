@@ -140,14 +140,15 @@ class ResponseMetadata(BaseModel):
 class SimulationResponse(BaseModel):
     """Response schema for frontend simulation results."""
 
-    resolvedLocation: Optional[Dict[str, Any]] = None
-    metrics:         Dict[str, Any]
-    hexGrid:         List[Dict[str, Any]]
-    aiAnalysis:      Optional[Dict[str, str]]        = None
-    auditTrail:      Optional[Dict[str, Any]]        = None
-    charts:          Dict[str, List[Dict[str, Any]]] = None
-    historicalEras:  Optional[Dict[str, Any]]        = None
-    metadata:        Optional[ResponseMetadata]      = None
+    resolvedLocation:    Optional[Dict[str, Any]] = None
+    metrics:             Dict[str, Any]
+    hexGrid:             List[Dict[str, Any]]
+    aiAnalysis:          Optional[Dict[str, str]]        = None
+    auditTrail:          Optional[Dict[str, Any]]        = None
+    charts:              Dict[str, List[Dict[str, Any]]] = None
+    historicalEras:      Optional[Dict[str, Any]]        = None
+    metadata:            Optional[ResponseMetadata]      = None
+    climateIntelligence: Optional[Dict[str, Any]]        = None
 
 
 # ---------------------------------------------------------------------------

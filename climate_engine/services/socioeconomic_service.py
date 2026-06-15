@@ -19,6 +19,12 @@ from climate_engine.services.socioeconomic import (  # noqa: F401
     invalidate_city_cache,
     flush_all_caches,
 )
+from climate_engine.services.socioeconomic.geocoding import (  # noqa: F401
+    _country_codes_from_hint,
+    _prepare_geocoding_query,
+    _select_openmeteo_hit,
+    _select_nominatim_hit,
+)
 
 __all__ = [
     "fetch_live_socioeconomics",
@@ -30,4 +36,8 @@ __all__ = [
     "get_cache_stats",
     "invalidate_city_cache",
     "flush_all_caches",
+    "_country_codes_from_hint",
+    "_prepare_geocoding_query",
+    "_select_openmeteo_hit",
+    "_select_nominatim_hit",
 ]

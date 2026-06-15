@@ -42,6 +42,8 @@ from climate_engine.api.physics import (
     H3CoverageResult,
     get_city_hexagons,
     ISO3_MAP,
+    classify_climate_intelligence,
+    climate_intelligence_to_dict,
 )
 from climate_engine.api._helpers import (
     _data_unavailable,
@@ -134,6 +136,13 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
     ann_mean = baseline["annual_mean_c"]
     tx5d_baseline = baseline["tx5d_baseline_c"]
 
+    # ── 1b. Köppen-Geiger baseline climate classification ─────────────────────
+    # Uses ERA5 annual statistics for the 2011-2020 baseline period.
+    # Classifies the city's CURRENT climate zone — independent of projections.
+    # See climate_intelligence.py for sources (Beck et al. 2018, IPCC AR6).
+    # rh_p95 is fetched in step 3; use ERA5 P95 RH for consistency.
+    # We defer the final classification to after step 3 when rh_p95 is available.
+
     # ── 2. Socioeconomics ─────────────────────────────────────────────────────
     try:
         socio = await fetch_live_socioeconomics(location_hint)
@@ -158,6 +167,20 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
         )
     except Exception as exc:
         raise _data_unavailable(str(exc))
+
+    # ── 3b. Köppen-Geiger baseline classification (now rh_p95 is available) ──
+    city_climate_intelligence = classify_climate_intelligence(
+        lat=lat,
+        ann_mean_c=ann_mean,
+        rh_p95=rh_p95,
+        p95_temp_c=p95,
+    )
+    logger.info(
+        "[predict] Climate intelligence: %s (%s) warming_factor=%.2f×",
+        city_climate_intelligence.koppen_class.value,
+        city_climate_intelligence.koppen_label,
+        city_climate_intelligence.ipcc_warming_rate_factor,
+    )
 
     # ── 4. CMIP6 projections ──────────────────────────────────────────────────
     chart_years = sorted(
@@ -393,6 +416,7 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
                               "source": pop_source},
             "death_rate":    {"level": "high",   "source": "vault/UN Population Division"},
         },
+        "climateIntelligence": climate_intelligence_to_dict(city_climate_intelligence),
         "historicalEras": historical_eras,
         "hexGrid": hex_grid_data,
         "aiAnalysis": ai,
