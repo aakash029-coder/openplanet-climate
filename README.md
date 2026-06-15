@@ -256,15 +256,33 @@ docker compose -f infra/docker-compose.yml up --build
 
 ```
 openplanet-climate/
-├── climate_engine/          # FastAPI backend — stateless physics pipeline
-│   ├── api/                 # main.py, schemas.py, security.py
-│   ├── services/            # ERA5, CMIP6, LLM, socioeconomic data services
-│   ├── data/                # socio_vault.json — World Bank socioeconomic reference
-│   └── settings.py          # Pydantic-Settings environment governance
-├── frontend/                # Next.js 16 / React 19 frontend
-│   ├── src/app/             # App Router pages and /api proxy routes
-│   ├── src/components/      # MapModule, ResearchModule, CompareModule, MethodologyModule
-│   └── src/context/         # ClimateDataContext — global single source of truth
+├── climate_engine/
+│   ├── api/
+│   │   ├── routers/        # predict.py, climate.py, analysis.py, asi.py
+│   │   ├── physics/        # mortality.py, economics.py, wetbulb.py, hex_grid.py, utils.py, audit.py, climate_zone.py
+│   │   ├── main.py         # FastAPI app factory + uvicorn entry point
+│   │   ├── schemas.py
+│   │   └── security.py
+│   ├── services/
+│   │   ├── socioeconomic/  # worldbank.py, population.py, vulnerability.py, fallback.py, geocoding.py
+│   │   ├── cmip6_service.py
+│   │   ├── historical_service.py
+│   │   └── llm_service.py
+│   ├── data/
+│   ├── validation/
+│   └── settings.py
+├── frontend/src/
+│   ├── app/
+│   ├── components/
+│   │   ├── map/            # MapCanvas.tsx, HistoricalErasPanel.tsx
+│   │   ├── pdf/            # styles.ts, Sections.tsx, Charts.tsx
+│   │   ├── export/         # projectionSheet.ts, methodologySheet.ts, rawDataSheet.ts, summarySheet.ts, sheetHelpers.ts
+│   │   ├── dashboard/
+│   │   └── [other components]
+│   ├── context/
+│   ├── types/              # climate.ts
+│   ├── hooks/
+│   └── lib/
 ├── hf_space/                # Hugging Face Spaces deployment mirror
 ├── infra/                   # Docker Compose, Nginx, production Dockerfiles
 ├── scripts/                 # Operational utilities
