@@ -1,5 +1,6 @@
 # OpenPlanet — Climate Risk Intelligence Engine
 
+[![CI](https://github.com/aakash029-coder/openplanet-climate/actions/workflows/ci.yml/badge.svg)](https://github.com/aakash029-coder/openplanet-climate/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
@@ -46,6 +47,7 @@ Full projection breakdown across all four CMIP6/IPCC AR6 time horizons (2030, 20
 - SSP scenario and mitigation parameter re-configuration without page navigation — context re-fetches and re-populates all metrics from the same global state.
 - AI narrative analysis (Groq LLM) for geographic and geopolitical risk context.
 - One-click Excel export of the full 4-sheet actuarial model.
+- **One-click research-grade PDF report** — an academic-styled (Times-Roman) document with abstract, baseline climatology, projection tables, **vector charts** (heatwave-days bars, temperature/wet-bulb trajectory), the live hex-map figure, mortality/economic/wet-bulb sections, methodology, and numbered references. Generated client-side; **only verified fields are rendered** — missing data is omitted, never fabricated, and the map figure is included only when a real canvas capture succeeds.
 
 ### 3. Side-by-Side Comparative Matrix
 
@@ -289,6 +291,10 @@ openplanet-climate/
 
 All `/api/*` routes are proxied through the Next.js `/api/engine` route handler to avoid exposing the engine URL client-side and to enforce the ALLOWED endpoint allowlist.
 
+**Full API reference:** [`docs/API.md`](docs/API.md) — request/response schemas, the `data_lineage` contract, rate-limit headers, and examples. Interactive docs are served at `/docs` (Swagger), `/redoc`, and `/openapi.json`.
+
+**Shareable deep links:** the dashboard encodes the active view in the URL — e.g. `/dashboard?city=Delhi,India&lat=28.61&lng=77.21&year=2050&ssp=SSP5-8.5`. Opening the link auto-runs the projection and reproduces the exact scenario; a **Copy link** button is shown once a city is locked.
+
 ---
 
 ## Scientific Citations
@@ -312,6 +318,18 @@ All `/api/*` routes are proxied through the Next.js `/api/engine` route handler 
 
 **No parameters were tuned to match any observed figure.** The Gasparrini (2017)
 mortality formula and OP-CVI index are applied identically to all events.
+
+> **Which formula these numbers use — read this first.**
+> The back-test below isolates the **near-threshold, un-saturated** Gasparrini
+> response (`RR = exp(β·ΔT)`, no ΔT saturation, no attributable-fraction cap) to
+> validate the raw β coefficient against single acute events. The **production
+> engine** (`physics._gasparrini_mortality`, used by the live API and UI) extends
+> this with a saturating ΔT (6 °C asymptote) and an AF cap of 0.35, because an
+> unbounded per-day relative risk applied across a whole projected season is not
+> physical. **For the same large ΔT, the production engine returns a *lower, more
+> conservative* number than the table below** — this invariant is enforced by
+> `tests/test_science_formulas.py`. The two regimes (single acute event vs.
+> chronic annual projection) are intentionally distinct, not a discrepancy.
 
 ### Full Benchmark — 5 Historical Heatwave Events
 
@@ -387,6 +405,31 @@ Arnfield AJ (2003) Int J Climatol 23(1):1–26 §4.2;
 Roth M (2007) Q J R Meteorol Soc 133(629):1551–1563 Fig. 3.*
 
 ---
+
+## Engineering Quality & Quality Gates
+
+Every push and pull request runs the CI pipeline (`.github/workflows/ci.yml`, free GitHub Actions):
+
+| Gate | What it enforces |
+|------|------------------|
+| `pytest tests/` | Offline unit tests for geocoding, climate-zone detection, and H3 spatial helpers |
+| `tests/test_science_formulas.py` | **Pins the scientific formulas** — β, AF cap, ΔT saturation, OP-CVI bounds, wet-bulb < dry-bulb, Burke optimum at 13 °C, and the invariant that production mortality ≤ the un-saturated back-test at high ΔT |
+| `validation/run_all` | Re-reproduces all 5 historical heatwave back-tests on every run |
+| `scripts/check_hf_sync.py` | Fails CI if the **shared scientific core** drifts between `climate_engine/` and the `hf_space/` deployment mirror, so the live Space can never report different numbers than the audited repo |
+| Frontend `tsc --noEmit` + `eslint` + `next build` | Typecheck, lint, and production build of the Next.js app |
+
+> The `hf_space/` mirror is intentionally a **superset** of the root package — it
+> adds the Agentverse/uAgents integration. Only the physics/services/validation
+> files that produce published numbers are required to be byte-identical; the sync
+> guard checks exactly that set.
+
+## Accessibility
+
+- **`prefers-reduced-motion`** fully respected — all CSS keyframe motion and the JS-driven auto-rotating hero are disabled for users who request reduced motion (`usePrefersReducedMotion` + a global media query).
+- **Accessible dialogs** — auth modals use `role="dialog"`, `aria-modal`, labelled headings, **Escape-to-close, focus trap, and focus restoration** (`useModalA11y`).
+- **Pause/stop/hide** — the rotating hero pauses on hover and keyboard focus (WCAG 2.2.2).
+- **Labelled controls** — icon-only buttons carry `aria-label`; decorative SVGs are `aria-hidden`; the mobile nav exposes `aria-expanded`/`aria-controls`.
+- **Contrast** — secondary/muted text colours raised toward WCAG AA on the near-black canvas.
 
 ## Regulatory Compliance, Limitation of Liability & Legal Disclaimer
 

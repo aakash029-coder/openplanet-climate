@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useModalA11y } from '@/hooks/useModalA11y';
 
 // Only high-confidence CMIP6+ERA5 metrics — deaths/loss removed from hero.
 // Full analysis (with confidence labels) available in the dashboard.
@@ -29,8 +31,13 @@ export default function LandingMobile() {
   const [cityVisible,   setCityVisible]   = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reducedMotion = usePrefersReducedMotion();
+
+  const closeAuthModal = useCallback(() => setShowAuthModal(false), []);
+  const modalRef       = useModalA11y(showAuthModal, closeAuthModal);
 
   useEffect(() => {
+    if (reducedMotion) { setCityVisible(true); return; }
     intervalRef.current = setInterval(() => {
       setCityVisible(false);
       setTimeout(() => {
@@ -39,7 +46,7 @@ export default function LandingMobile() {
       }, 280);
     }, 3400);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, []);
+  }, [reducedMotion]);
 
   const city = CITIES[activeCityIdx];
 
@@ -349,7 +356,7 @@ export default function LandingMobile() {
             <span className="font-light" style={{ color: 'var(--muted)' }}>in your city?</span>
           </h3>
           <p className="font-serif text-sm mb-8 max-w-xs mx-auto relative z-10" style={{ color: 'var(--text-2)' }}>
-            20 climate zones verified. Every formula auditable.
+            5 climate-zone archetypes · validated against 5 historical heatwaves · every formula auditable.
           </p>
           <button
             onClick={handleCTA}
@@ -381,6 +388,10 @@ export default function LandingMobile() {
           onClick={() => setShowAuthModal(false)}
         >
           <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auth-modal-title-mobile"
             className="relative w-full max-w-md overflow-hidden animate-fadeSlideUp"
             style={{ background: 'var(--panel)', border: '1px solid var(--hairline)', borderBottom: 'none' }}
             onClick={e => e.stopPropagation()}
@@ -390,17 +401,18 @@ export default function LandingMobile() {
             <div className="p-8">
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center transition-colors hover:text-white"
+                aria-label="Close sign-in dialog"
+                className="absolute top-5 right-5 w-9 h-9 flex items-center justify-center transition-colors hover:text-white"
                 style={{ color: 'var(--muted)' }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     strokeWidth="1.5" strokeLinecap="round">
+                     strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
               <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-1" style={{ color: 'var(--muted)' }}>Access</p>
-              <h2 className="text-lg font-sans font-semibold mb-8 tracking-tight" style={{ color: 'var(--text)' }}>OpenPlanet</h2>
+              <h2 id="auth-modal-title-mobile" className="text-lg font-sans font-semibold mb-8 tracking-tight" style={{ color: 'var(--text)' }}>OpenPlanet</h2>
               <div className="space-y-3">
                 <button
                   onClick={() => signIn('google', { callbackUrl: '/dashboard' })}

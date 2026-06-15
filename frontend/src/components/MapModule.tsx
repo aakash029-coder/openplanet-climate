@@ -8,6 +8,7 @@ import { H3HexagonLayer } from '@deck.gl/geo-layers';
 import { cartoDarkStyle, parseLoss, fmtLoss, fetchElevationSafe } from './MapHelpers';
 import { LeftPanel, RightPanel, type SuggestionCity, type PanelSelectedCity, type MitigatedData } from './MapPanels';
 import { AnalyticsSection } from './MapCharts';
+import { buildReportModel } from '@/lib/reportData';
 
 type SelectedCity = PanelSelectedCity;
 type ViewState = { longitude: number; latitude: number; zoom: number; pitch: number; bearing: number };
@@ -30,12 +31,44 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const [viewState, setViewState] = useState<ViewState>({ longitude: 0, latitude: 20, zoom: 1.8, pitch: 0, bearing: 0 });
 
   const savedState = typeof window !== 'undefined' ? (() => { try { return JSON.parse(localStorage.getItem('op_sync_state') || '{}'); } catch { return {}; } })() : {};
-  const [ssp, setSsp] = useState(savedState.ssp || 'SSP2-4.5');
-  const [year, setYear] = useState(savedState.year || '2050');
+  // Shareable deep-link params take precedence over localStorage so a pasted
+  // /dashboard?city=Delhi&year=2050&ssp=SSP5-8.5 link reproduces the exact view.
+  const urlParams = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search)
+    : new URLSearchParams();
+  const [ssp, setSsp] = useState(urlParams.get('ssp') || savedState.ssp || 'SSP2-4.5');
+  const [year, setYear] = useState(urlParams.get('year') || savedState.year || '2050');
+  const [shareCopied, setShareCopied] = useState(false);
+  const didAutoRun = useRef(false);
 
   useEffect(() => {
     localStorage.setItem('op_sync_state', JSON.stringify({ ssp, year }));
   }, [ssp, year]);
+
+  // ── Shareable link: write current selection to the URL (no reload) ──────────
+  const writeShareUrl = useCallback((cityName: string, lat: number, lng: number) => {
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams();
+    p.set('city', cityName);
+    if (Number.isFinite(lat) && lat !== 0) p.set('lat', lat.toFixed(4));
+    if (Number.isFinite(lng) && lng !== 0) p.set('lng', lng.toFixed(4));
+    p.set('year', year);
+    p.set('ssp', ssp);
+    window.history.replaceState(null, '', `${window.location.pathname}?${p.toString()}`);
+  }, [year, ssp]);
+
+  const handleCopyShareLink = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      // Clipboard blocked — select-and-copy fallback is the browser's URL bar.
+    }
+  }, []);
+
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   const [hexData, setHexData] = useState<Array<{ hex_id: string; position: [number, number]; risk_weight?: number }>>([]);
   const [auditTrail, setAuditTrail] = useState<Record<string, unknown> | null>(null);
@@ -49,6 +82,40 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const openAudit = (k: 'mortality' | 'economics' | 'wetbulb') => { setAuditKey(k); setAuditOpen(true); };
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapRef | null>(null);
+
+  // ── Elite research-paper PDF export ─────────────────────────────────────────
+  const handleDownloadPdf = useCallback(async () => {
+    if (pdfBusy) return;
+    const model = buildReportModel(primaryData, Number(year));
+    if (!model) return; // no verified data → no report (never fabricate)
+    setPdfBusy(true);
+    try {
+      // Capture the live map surface (hexes are interleaved into this canvas).
+      // Only include the figure if a real, non-blank capture succeeds.
+      let mapImage: string | null = null;
+      try {
+        const mlMap = mapRef.current?.getMap?.() as
+          | { redraw?: () => void; getCanvas?: () => HTMLCanvasElement }
+          | undefined;
+        mlMap?.redraw?.();
+        const canvas = mlMap?.getCanvas?.();
+        const dataUrl = canvas?.toDataURL?.('image/png');
+        // A blank capture is a short data URL; require real pixels.
+        if (dataUrl && dataUrl.length > 5000) mapImage = dataUrl;
+      } catch {
+        mapImage = null;
+      }
+      const { downloadClimateReport } = await import('./ClimateReportPDF');
+      await downloadClimateReport(model, mapImage, {
+        aiAnalysis: aiAnalysis ?? undefined,
+        historicalEras: historicalEras ?? undefined,
+      });
+    } catch {
+      // Generation failed — leave UI unchanged; user can retry.
+    } finally {
+      setPdfBusy(false);
+    }
+  }, [pdfBusy, primaryData, year, aiAnalysis, historicalEras]);
 
   // Button only enabled after explicit dropdown selection — disabled while freely typing
   const canGenerate = selectedCity !== null;
@@ -230,6 +297,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
       };
       setSelectedCity(lockedCity);
       setSearchQuery(cleanName);
+      writeShareUrl(cleanName, resolvedLat, resolvedLng);
 
       if (resolvedLat !== 0 && resolvedLng !== 0) {
         mapRef.current?.flyTo({ center: [resolvedLng, resolvedLat], zoom: 10, duration: 1500 });
@@ -264,7 +332,37 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
     } finally {
       setIsLoading(false);
     }
-  }, [selectedCity, searchQuery, ssp, year, onTargetLocked, fetchPrimaryCity]);
+  }, [selectedCity, searchQuery, ssp, year, onTargetLocked, fetchPrimaryCity, writeShareUrl]);
+
+  // Keep the share URL current when scenario/year change after a city is locked.
+  useEffect(() => {
+    if (isInitialized && selectedCity) {
+      const lat = selectedCity.lat ?? selectedCity.latitude ?? 0;
+      const lng = selectedCity.lng ?? selectedCity.longitude ?? 0;
+      writeShareUrl(selectedCity.locationQuery || selectedCity.name || '', lat, lng);
+    }
+  }, [year, ssp, isInitialized, selectedCity, writeShareUrl]);
+
+  // Auto-run from a shareable deep link (?city=...&lat=...&lng=...) — once.
+  useEffect(() => {
+    if (didAutoRun.current) return;
+    const city = urlParams.get('city');
+    if (!city) return;
+    didAutoRun.current = true;
+
+    const lat = parseFloat(urlParams.get('lat') || '');
+    const lng = parseFloat(urlParams.get('lng') || '');
+    const seeded: SelectedCity = {
+      locationQuery: city,
+      name: city.split(',')[0]?.trim() || city,
+      ...(Number.isFinite(lat) ? { lat, latitude: lat } : {}),
+      ...(Number.isFinite(lng) ? { lng, longitude: lng } : {}),
+    };
+    setSearchQuery(city);
+    setSelectedCity(seeded);
+    handleInitialize(seeded);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const h3Data = useMemo(() => {
     if (!hexData || hexData.length === 0) return [];
@@ -390,6 +488,9 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
               ref={mapRef}
               mapStyle={cartoDarkStyle}
               attributionControl={false}
+              // Forwarded to the maplibre constructor so the canvas can be
+              // captured for the PDF report (not in react-map-gl's prop types).
+              {...({ preserveDrawingBuffer: true } as Record<string, unknown>)}
               reuseMaps
               longitude={viewState.longitude}
               latitude={viewState.latitude}
@@ -470,10 +571,51 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
           </div>
 
           {isInitialized && selectedCity && (
-            <p className="font-mono text-center pt-2 pb-1"
-               style={{ fontSize: '0.6875rem', color: 'var(--muted)' }}>
-              {selectedCity.name || selectedCity.locationQuery} · {year} · {ssp} · CMIP6 ensemble projection
-            </p>
+            <div className="flex items-center justify-center gap-3 pt-2 pb-1 flex-wrap">
+              <p className="font-mono text-center"
+                 style={{ fontSize: '0.6875rem', color: 'var(--muted)' }}>
+                {selectedCity.name || selectedCity.locationQuery} · {year} · {ssp} · CMIP6 ensemble projection
+              </p>
+              <button
+                onClick={handleCopyShareLink}
+                aria-label="Copy shareable link to this projection"
+                className="flex items-center gap-1.5 px-2.5 py-1 font-mono uppercase tracking-[0.14em] transition-colors duration-150 hover:text-white"
+                style={{ fontSize: '0.625rem', color: shareCopied ? 'var(--positive)' : 'var(--text-2)', border: '1px solid var(--hairline)', background: 'var(--raised)' }}
+              >
+                {shareCopied ? (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+                    Link copied
+                  </>
+                ) : (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                    Copy link
+                  </>
+                )}
+              </button>
+              {primaryData && (
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={pdfBusy}
+                  aria-label="Download research-grade PDF report"
+                  className="flex items-center gap-1.5 px-2.5 py-1 font-mono uppercase tracking-[0.14em] transition-colors duration-150 hover:text-white disabled:opacity-50"
+                  style={{ fontSize: '0.625rem', color: 'var(--text-2)', border: '1px solid var(--hairline)', background: 'var(--raised)' }}
+                >
+                  {pdfBusy ? (
+                    <>
+                      <span className="w-2.5 h-2.5 border border-white/30 border-t-white/70 rounded-full animate-spin" />
+                      Building…
+                    </>
+                  ) : (
+                    <>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>
+                      PDF report
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           )}
         </div>
 

@@ -370,10 +370,34 @@ async def _get_asi_climate_summary(city_name: str) -> str:
 def create_app() -> FastAPI:
     app = FastAPI(
         title="OpenPlanet Climate Engine",
-        description="High-resolution urban heat risk intelligence.",
+        description=(
+            "Open-source, city-scale physical climate-risk intelligence.\n\n"
+            "Translates ERA5 reanalysis and CMIP6 ensemble projections into "
+            "heat-attributable mortality, economic-damage proxies, and wet-bulb "
+            "survivability for any coordinate on Earth.\n\n"
+            "**All outputs are directional macro-scale proxies** derived from public "
+            "datasets and peer-reviewed methods (Gasparrini 2017, Burke 2018, "
+            "Stull 2011, Sherwood & Huber 2010) — not certified forecasts or "
+            "financial instruments. Every response carries a `metadata.data_lineage` "
+            "field; `statistical_fallback` means an upstream API failed and a "
+            "latitude-model estimate was substituted (treat as order-of-magnitude).\n\n"
+            "Source & full methodology: https://github.com/aakash029-coder/openplanet-climate"
+        ),
         version="2.0.0",
-        docs_url="/docs" if settings.ENV_MODE.value == "development" else None,
-        redoc_url="/redoc" if settings.ENV_MODE.value == "development" else None,
+        contact={
+            "name": "OpenPlanet",
+            "url": "https://github.com/aakash029-coder/openplanet-climate",
+        },
+        license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
+        openapi_tags=[
+            {"name": "climate", "description": "Climate-risk projection endpoints."},
+            {"name": "ops", "description": "Liveness and operational probes."},
+        ],
+        # OpenAPI schema + interactive docs are always available (read-only);
+        # they expose no secrets and make the API self-documenting for the world.
+        docs_url="/docs",
+        redoc_url="/redoc",
+        openapi_url="/openapi.json",
     )
 
     # ── Rate limiter state ────────────────────────────────────────────────
