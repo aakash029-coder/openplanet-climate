@@ -96,7 +96,7 @@ _TROPICAL_HUMID = ClimateIntelligence(
         "environment where the human body's primary cooling mechanism — evaporative "
         "sweat — is severely impaired."
     ),
-    ipcc_warming_rate_factor=1.0,
+    ipcc_warming_rate_factor=1.05,
     ipcc_ar6_region="Equatorial Africa and Asia (EAF/SEA)",
     typical_uhi_range_c="1–4 °C",
     primary_risk_drivers=(
@@ -115,7 +115,7 @@ _TROPICAL_HUMID = ClimateIntelligence(
         "warming can push humid-heat days above the critical 31 °C WBT threshold "
         "(Gasparrini et al. 2017)."
     ),
-    ipcc_reference="IPCC AR6 WG1 Ch. 11.3.3 (SEA, EAF) — Table 11.1 warming rate multiplier",
+    ipcc_reference="IPCC AR6 WG1 Ch. 11.3.3 (SEA, EAF) — Table 11.1; tropical land warms ~1.05× vs ocean-moderated global mean",
 )
 
 _TROPICAL_SAVANNA = ClimateIntelligence(
@@ -430,42 +430,74 @@ def classify_climate_intelligence(
     if ann_mean_c < 3.0 or (ann_mean_c < 8.0 and abs_lat >= 55.0):
         return _BOREAL
 
-    # Priority 3: Arid hot desert — very low humidity + extreme peak temperatures.
-    # BWh threshold: rh_p95 ≤ 45 % matches existing climate_zone.HYPER_ARID
-    # detection (climate_zone.py line 60) and ERA5 P95-RH values for the
-    # Arabian Peninsula, Sahara, and Thar Desert in the 2011-2020 baseline.
+    # Priority 3: Arid hot desert (BWh) — persistently low humidity + extreme peak.
+    # rh_p95 ≤ 45 % is calibrated against ERA5 2011-2020 P95-RH values for the
+    # Arabian Peninsula (Dubai ~40 %, Riyadh ~38 %), Sahara (Cairo ~36 %),
+    # and Australian outback, which all fall below this threshold.
+    # (Beck et al. 2018 Fig. 2 BWh extent; Oke 1987 §1.2 aridity thresholds)
+    #
+    # Known limitation: monsoon-influenced deserts (Karachi PKA, Jacobabad PAK)
+    # record ERA5 P95 RH ~60–70 % because their brief wet season is included in
+    # the annual 95th-percentile computation. Correct BWh classification for
+    # these cities requires monthly precipitation (P < 10 × T; Trewartha 1968).
+    # Without it they fall through to Tropical Savanna — an acceptable
+    # approximation as their dominant risk drivers (pre-monsoon heat extremes,
+    # high WBT spike) overlap with the Aw narrative.
     if rh_p95 <= 45.0 and p95_temp_c >= 38.0:
         return _ARID_HOT_DESERT
 
-    # Priority 4: Arid hot steppe — semi-arid, warm
-    if rh_p95 < 54.0 and ann_mean_c >= 13.0 and p95_temp_c >= 32.0:
+    # Priority 4: Arid hot steppe (BSh) — semi-arid subtropical transition zone.
+    # Threshold calibration (validated against Beck et al. 2018 BSh extent):
+    #   rh_p95 ≤ 50 %   separates BSh from Mediterranean (Athens ~52 %, Perth
+    #                   ~52 % both fail this gate and correctly reach Csa below)
+    #   ann_mean ≥ 14 °C  excludes cold steppes (BSk); Tehran BSk is accepted
+    #                    here as the risk narrative is nearly identical to BSh
+    #   abs_lat ≤ 40°    restricts to subtropical belt per Beck et al. Fig. 2
+    if rh_p95 <= 50.0 and ann_mean_c >= 14.0 and p95_temp_c >= 33.0 and abs_lat <= 40.0:
         return _ARID_HOT_STEPPE
 
-    # Priority 5: Tropical humid — warm year-round + persistently high humidity.
-    # Arid check must precede this to prevent Arabian-coast humid-night mis-fires.
+    # Priority 5: Tropical humid (Af) — warm year-round + persistently high humidity.
+    # Arid checks MUST precede this so Arabian-coast cities with monsoon humidity
+    # spikes do not mis-fire here.
+    # Note: this gate does NOT separate Af from Aw (Köppen requires monthly
+    # precipitation: Af = all months P ≥ 60 mm). Monsoon cities with high
+    # annual-mean RH (Jakarta, Lagos, Bangkok, Kolkata) classify here. Their Aw
+    # risk drivers (dry-season heat spike, pre-monsoon lethal WBT) are partially
+    # captured by the Af projection-context narrative. A precipitation-aware
+    # Af/Aw split is documented as a known gap and tracked for future upgrade.
     if ann_mean_c >= 19.0 and rh_p95 >= 68.0 and abs_lat <= 23.0:
         return _TROPICAL_HUMID
 
-    # Priority 6: Tropical savanna — warm, seasonally dry, low latitude
+    # Priority 6: Tropical savanna (Aw) — warm, seasonally dry, low latitude
     if ann_mean_c >= 17.0 and abs_lat <= 25.0 and rh_p95 < 68.0:
         return _TROPICAL_SAVANNA
 
-    # Priority 7: Continental — mid-latitude interior, cold winters proxy.
-    # Two criteria distinguish Dfb (continental) from Cfb (oceanic):
-    #   1. ann_mean < 12°C (maritime influence keeps London at ~12°C, Chicago ~11°C)
-    #   2. Thermal amplitude (p95_temp - ann_mean) ≥ 18°C — continental interiors
-    #      have large seasonal swings; London's amplitude (~15°C) stays below this
-    #      while Chicago (~19°C) and Moscow (~22°C) exceed it.
-    # Source: Köppen-Geiger Cfb/Dfb boundary analysis, Beck et al. (2018) Fig. 4.
-    if (40.0 <= abs_lat < 62.0 and ann_mean_c < 12.0
+    # Priority 7: Humid continental (Dfb) — mid-latitude interior, cold-winter proxy.
+    # Three criteria differentiate Dfb from Cfb (oceanic) and Csa (Mediterranean):
+    #
+    #   abs_lat ≥ 37°    extended from 40° to 37° to capture East-Asian monsoon-
+    #                    continental cities: Beijing (40°N) and Seoul (37.6°N).
+    #                    Validated against Beck et al. (2018) Fig. 2 Dwa extent.
+    #
+    #   ann_mean < 14°C  excludes warm-winter Mediterranean cities; Madrid
+    #                    (15 °C) and Athens (18 °C) correctly fall through to Csa.
+    #                    London (12 °C) passes but is excluded by the amplitude
+    #                    gate below.
+    #
+    #   thermal amplitude (p95_temp − ann_mean) ≥ 18°C — continental interiors
+    #                    have large seasonal swings (Oke 1987 Table 1.2):
+    #                    London ~15°C (maritime) < 18° → Temperate
+    #                    Chicago ~19°C (continental) ≥ 18° → Continental
+    #                    Beijing ~20°C, Seoul ~19°C, Warsaw ~18°C ≥ 18° → Continental
+    if (37.0 <= abs_lat < 62.0 and ann_mean_c < 14.0
             and (p95_temp_c - ann_mean_c) >= 18.0 and rh_p95 >= 55.0):
         return _CONTINENTAL_HUMID
 
-    # Priority 8: Mediterranean — dry-summer mid-latitude
-    if 28.0 <= abs_lat <= 46.0 and rh_p95 < 64.0 and ann_mean_c >= 10.0:
+    # Priority 8: Mediterranean (Csa) — dry-summer mid-latitude
+    if 28.0 <= abs_lat <= 46.0 and rh_p95 < 65.0 and ann_mean_c >= 10.0:
         return _MEDITERRANEAN
 
-    # Default: Temperate oceanic — moderate temperature, ample humidity
+    # Default: Temperate oceanic (Cfb) — moderate temperature, ample humidity
     return _TEMPERATE_OCEANIC
 
 
