@@ -41,9 +41,25 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
   const [shareCopied, setShareCopied] = useState(false);
   const didAutoRun = useRef(false);
 
+  // Mobile map interaction lock state — declared early so effects/callbacks can reference setters
+  const [isMobile, setIsMobile] = useState(false);
+  const [mapInteractive, setMapInteractive] = useState(false);
+  const mapLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const overlayLastTapRef = useRef<number>(0);
+  const overlayTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+
   useEffect(() => {
     localStorage.setItem('op_sync_state', JSON.stringify({ ssp, year }));
   }, [ssp, year]);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check, { passive: true });
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  useEffect(() => () => { if (mapLockTimerRef.current) clearTimeout(mapLockTimerRef.current); }, []);
 
   // ── Shareable link: write current selection to the URL (no reload) ──────────
   const writeShareUrl = useCallback((cityName: string, lat: number, lng: number) => {
@@ -67,6 +83,27 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
       // Clipboard blocked — select-and-copy fallback is the browser's URL bar.
     }
   }, []);
+
+  const unlockMap = useCallback(() => {
+    setMapInteractive(true);
+    if (mapLockTimerRef.current) clearTimeout(mapLockTimerRef.current);
+    mapLockTimerRef.current = setTimeout(() => setMapInteractive(false), 8000);
+  }, []);
+
+  const handleOverlayTouchStart = useCallback((e: React.TouchEvent) => {
+    overlayTouchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, []);
+
+  const handleOverlayTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!overlayTouchStartRef.current) return;
+    const dx = Math.abs(e.changedTouches[0].clientX - overlayTouchStartRef.current.x);
+    const dy = Math.abs(e.changedTouches[0].clientY - overlayTouchStartRef.current.y);
+    overlayTouchStartRef.current = null;
+    if (dx > 8 || dy > 8) return;
+    const now = Date.now();
+    if (now - overlayLastTapRef.current < 300) unlockMap();
+    overlayLastTapRef.current = now;
+  }, [unlockMap]);
 
   const [pdfBusy, setPdfBusy] = useState(false);
 
@@ -459,7 +496,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
         <div className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0 w-full">
           <div
             ref={mapContainerRef}
-            className={`map-canvas-container transition-gpu overflow-hidden relative transition-all duration-500 ease-in-out md:h-[clamp(44vh,calc(100vh_-_112px),100vh)] min-h-[220px] ${isInitialized ? 'h-[46vh]' : 'h-[28vh]'}`}
+            className="map-canvas-container transition-gpu overflow-hidden relative md:h-[clamp(44vh,calc(100vh_-_112px),100vh)] min-h-[220px] h-[42vh]"
             style={{ background: 'var(--canvas)', border: '1px solid var(--hairline)' }}
           >
             {/* Loading / idle placeholder — prevents DeckGL from initialising into a 0×0 canvas */}
@@ -501,10 +538,51 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
               scrollZoom={false}
               doubleClickZoom={true}
               dragRotate={false}
+              dragPan={!isMobile || mapInteractive}
               style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%' }}
             >
               <DeckOverlay layers={layers} interleaved />
             </Map>
+
+            {/* Mobile map interaction lock — sits below zoom/legend controls (z-25) so
+                they remain tappable, but intercepts raw map drag events.
+                touchAction: pan-y lets the page scroll vertically through this overlay. */}
+            {isMobile && !mapInteractive && !isLoading && (
+              <div
+                className="absolute inset-0 z-[25] flex items-center justify-center"
+                style={{ touchAction: 'pan-y' }}
+                onTouchStart={handleOverlayTouchStart}
+                onTouchEnd={handleOverlayTouchEnd}
+              >
+                <div
+                  className="flex items-center gap-2 px-3 py-2"
+                  style={{ background: 'rgba(5,6,8,0.82)', border: '1px solid var(--hairline)' }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ color: 'var(--muted)' }}>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.18em]" style={{ color: 'var(--muted)' }}>
+                    Double-tap to interact
+                  </span>
+                </div>
+              </div>
+            )}
+            {isMobile && mapInteractive && (
+              <button
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-1.5 px-3 py-1.5"
+                style={{ background: 'rgba(5,6,8,0.85)', border: '1px solid var(--hairline)', touchAction: 'manipulation' }}
+                onClick={() => { setMapInteractive(false); if (mapLockTimerRef.current) clearTimeout(mapLockTimerRef.current); }}
+                aria-label="Lock map interaction"
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ color: 'var(--positive)' }}>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" /><rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                </svg>
+                <span className="font-mono text-[9px] uppercase tracking-[0.18em]" style={{ color: 'var(--positive)' }}>
+                  Map active · tap to lock
+                </span>
+              </button>
+            )}
 
             {/* Zoom controls — 44px touch targets */}
             <div className="absolute top-3 right-3 z-50 flex flex-col glass-nav" style={{ border: '1px solid var(--hairline)' }}>
@@ -571,7 +649,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
           </div>
 
           {isInitialized && selectedCity && (
-            <div className="flex items-center justify-center gap-3 pt-2 pb-1 flex-wrap">
+            <div className="flex items-center justify-center gap-3 pt-2 pb-1 flex-wrap animate-fadeSlideUp">
               <p className="font-mono text-center"
                  style={{ fontSize: '0.6875rem', color: 'var(--muted)' }}>
                 {selectedCity.name || selectedCity.locationQuery} · {year} · {ssp} · CMIP6 ensemble projection
@@ -594,27 +672,25 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
                   </>
                 )}
               </button>
-              {primaryData && (
-                <button
-                  onClick={handleDownloadPdf}
-                  disabled={pdfBusy}
-                  aria-label="Download research-grade PDF report"
-                  className="flex items-center gap-1.5 px-2.5 py-1 font-mono uppercase tracking-[0.14em] transition-colors duration-150 hover:text-white disabled:opacity-50"
-                  style={{ fontSize: '0.625rem', color: 'var(--text-2)', border: '1px solid var(--hairline)', background: 'var(--raised)' }}
-                >
-                  {pdfBusy ? (
-                    <>
-                      <span className="w-2.5 h-2.5 border border-white/30 border-t-white/70 rounded-full animate-spin" />
-                      Building…
-                    </>
-                  ) : (
-                    <>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>
-                      PDF report
-                    </>
-                  )}
-                </button>
-              )}
+              <button
+                onClick={handleDownloadPdf}
+                disabled={pdfBusy || !primaryData}
+                aria-label="Download research-grade PDF report"
+                className="flex items-center gap-1.5 px-2.5 py-1 font-mono uppercase tracking-[0.14em] transition-colors duration-150 hover:text-white disabled:opacity-40"
+                style={{ fontSize: '0.625rem', color: 'var(--text-2)', border: '1px solid var(--hairline)', background: 'var(--raised)' }}
+              >
+                {pdfBusy ? (
+                  <>
+                    <span className="w-2.5 h-2.5 border border-white/30 border-t-white/70 rounded-full animate-spin" />
+                    Building…
+                  </>
+                ) : (
+                  <>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>
+                    PDF report
+                  </>
+                )}
+              </button>
             </div>
           )}
         </div>
@@ -630,7 +706,7 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
 
       {/* ── HISTORICAL DATA ── */}
       {isInitialized && historicalEras && (
-        <div className="w-full max-w-[1440px] mt-2 relative overflow-visible"
+        <div className="w-full max-w-[1440px] mt-2 relative overflow-visible animate-fadeIn"
              style={{ border: '1px solid var(--hairline)', background: 'var(--panel)' }}>
           {/* Header */}
           <div className="flex items-center gap-3 px-5 md:px-8 py-4 border-b" style={{ borderColor: 'var(--hairline)' }}>

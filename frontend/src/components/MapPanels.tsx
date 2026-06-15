@@ -309,7 +309,7 @@ export const LeftPanel = ({
                     type="range" min="0" max="50" value={canopy}
                     onChange={(e) => handleMitigationChange('canopy', Number(e.target.value))}
                     className="w-full h-1 bg-white/[0.05] rounded-none appearance-none cursor-pointer accent-emerald-500"
-                    style={{ touchAction: 'none' }}
+                    style={{ touchAction: 'pan-y' }}
                   />
                   <div
                     className="absolute top-0 left-0 h-1 pointer-events-none"
@@ -330,7 +330,7 @@ export const LeftPanel = ({
                     type="range" min="0" max="100" value={coolRoof}
                     onChange={(e) => handleMitigationChange('coolRoof', Number(e.target.value))}
                     className="w-full h-1 bg-white/[0.05] rounded-none appearance-none cursor-pointer accent-cyan-500"
-                    style={{ touchAction: 'none' }}
+                    style={{ touchAction: 'pan-y' }}
                   />
                   <div
                     className="absolute top-0 left-0 h-1 pointer-events-none"
@@ -431,7 +431,7 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
           <p className="text-[9px] font-mono text-slate-700 uppercase tracking-widest text-center">Select a location to begin</p>
         </div>
       ) : (
-        <div className="flex flex-col flex-grow overflow-y-auto custom-scrollbar divide-y divide-white/[0.04]">
+        <div className="flex flex-col flex-grow overflow-y-auto custom-scrollbar divide-y divide-white/[0.04] animate-fadeIn">
 
           {/* ── DEATHS ── */}
           <div className="p-5 space-y-3" style={{ borderBottom: '1px solid var(--hairline)' }}>
