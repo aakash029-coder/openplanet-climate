@@ -88,21 +88,31 @@ export default function LandingDesktop() {
           onBlurCapture={() => setRotatePaused(false)}
         >
 
-          {/* Trust strip — listed platforms */}
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5">
-            <span className="font-mono text-[8px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>Listed on</span>
-            {[
-              { label: 'Zenodo', href: 'https://doi.org/10.5281/zenodo.19340991' },
-              { label: 'UNDRR PreventionWeb', href: 'https://www.preventionweb.net/organization/openplanet-risk-intelligence' },
-              { label: 'CAKE', href: 'https://www.cakex.org/tools/openplanet-risk-intelligence' },
-              { label: 'ClimateBase', href: 'https://climatebase.org/company/1142537/openplanet-risk-intelligence' },
-            ].map(p => (
-              <a key={p.label} href={p.href} target="_blank" rel="noopener noreferrer"
-                 className="font-mono text-[8px] uppercase tracking-[0.15em] transition-colors duration-150 hover:text-white"
-                 style={{ color: 'var(--muted)' }}>
-                {p.label}
-              </a>
-            ))}
+          {/* Trust strip — publication + listed platforms */}
+          <div className="flex flex-col items-center gap-1.5">
+            <a href="https://doi.org/10.5281/zenodo.19340991" target="_blank" rel="noopener noreferrer"
+               className="flex items-center gap-2 transition-colors duration-150 hover:text-white group"
+               style={{ color: 'var(--muted)' }}>
+              <span className="font-mono text-[7px] uppercase tracking-[0.2em] px-1.5 py-0.5"
+                    style={{ border: '1px solid rgba(176,141,87,0.3)', color: 'var(--copper)' }}>
+                Published
+              </span>
+              <span className="font-mono text-[8px] tracking-[0.12em]">Zenodo · DOI 10.5281/zenodo.19340991</span>
+            </a>
+            <div className="flex items-center gap-x-4 gap-y-1 flex-wrap justify-center">
+              <span className="font-mono text-[7px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)', opacity: 0.5 }}>Listed on</span>
+              {[
+                { label: 'UNDRR PreventionWeb', href: 'https://www.preventionweb.net/organization/openplanet-risk-intelligence' },
+                { label: 'CAKE', href: 'https://www.cakex.org/tools/openplanet-risk-intelligence' },
+                { label: 'ClimateBase', href: 'https://climatebase.org/company/1142537/openplanet-risk-intelligence' },
+              ].map(p => (
+                <a key={p.label} href={p.href} target="_blank" rel="noopener noreferrer"
+                   className="font-mono text-[8px] uppercase tracking-[0.15em] transition-colors duration-150 hover:text-white"
+                   style={{ color: 'var(--muted)' }}>
+                  {p.label}
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Headline */}
