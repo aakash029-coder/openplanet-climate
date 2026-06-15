@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useModalA11y } from '@/hooks/useModalA11y';
 
 // Only metrics derived from reliable CMIP6 + ERA5 sources.
 // Deaths and economic loss removed from hero — model accuracy is ±41% MAE
@@ -36,7 +38,12 @@ export default function LandingDesktop() {
   const router                    = useRouter();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeCityIdx, setActiveCityIdx] = useState(0);
+  const [rotatePaused, setRotatePaused]   = useState(false);
   const intervalRef               = useRef<NodeJS.Timeout | null>(null);
+  const reducedMotion             = usePrefersReducedMotion();
+
+  const closeAuthModal = useCallback(() => setShowAuthModal(false), []);
+  const modalRef       = useModalA11y(showAuthModal, closeAuthModal);
 
   useEffect(() => {
     document.documentElement.style.overscrollBehavior = 'none';
@@ -46,11 +53,13 @@ export default function LandingDesktop() {
   }, []);
 
   useEffect(() => {
+    // Respect reduced-motion and pause state (WCAG 2.2.2 pause/stop/hide).
+    if (reducedMotion || rotatePaused) return;
     intervalRef.current = setInterval(() => {
       setActiveCityIdx(i => (i + 1) % CITIES.length);
     }, 3400);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, []);
+  }, [reducedMotion, rotatePaused]);
 
   const city = CITIES[activeCityIdx];
 
@@ -73,6 +82,10 @@ export default function LandingDesktop() {
         <section
           className="hero-desktop-section hero-glossy-frame w-full flex flex-col justify-between items-center py-6 md:py-8 lg:py-10 overflow-hidden relative z-10 text-center"
           style={{ height: 'min(calc(100vh - 4rem), 920px)' }}
+          onMouseEnter={() => setRotatePaused(true)}
+          onMouseLeave={() => setRotatePaused(false)}
+          onFocusCapture={() => setRotatePaused(true)}
+          onBlurCapture={() => setRotatePaused(false)}
         >
 
           {/* Eyebrow */}
@@ -411,7 +424,7 @@ export default function LandingDesktop() {
           </h3>
           <p className="font-serif text-body-s mb-12 max-w-md mx-auto relative z-10" style={{ color: 'var(--text-2)' }}>
             Research-grade climate analysis in seconds.
-            20 climate zones verified. Every formula auditable.
+            5 climate-zone archetypes · validated against 5 historical heatwaves · every formula auditable.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10">
             <button
@@ -441,6 +454,10 @@ export default function LandingDesktop() {
           onClick={() => setShowAuthModal(false)}
         >
           <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auth-modal-title"
             className="relative w-full max-w-md overflow-hidden animate-fadeSlideUp"
             style={{ background: 'var(--panel)', border: '1px solid var(--hairline)' }}
             onClick={(e) => e.stopPropagation()}
@@ -451,16 +468,17 @@ export default function LandingDesktop() {
             <div className="p-8">
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center transition-colors duration-150 hover:text-white"
+                aria-label="Close sign-in dialog"
+                className="absolute top-5 right-5 w-9 h-9 flex items-center justify-center transition-colors duration-150 hover:text-white"
                 style={{ color: 'var(--muted)' }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
 
               <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-1" style={{ color: 'var(--muted)' }}>Access</p>
-              <h2 className="text-lg font-sans font-semibold mb-8 tracking-tight" style={{ color: 'var(--text)' }}>OpenPlanet</h2>
+              <h2 id="auth-modal-title" className="text-lg font-sans font-semibold mb-8 tracking-tight" style={{ color: 'var(--text)' }}>OpenPlanet</h2>
 
               <div className="space-y-3">
                 <button

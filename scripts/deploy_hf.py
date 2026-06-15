@@ -49,8 +49,31 @@ def _load_dotenv() -> None:
             os.environ[key] = val
 
 
+def _preflight_sync_guard() -> None:
+    """
+    Refuse to deploy if the committed HF mirror (hf_space/climate_engine) has
+    drifted from the canonical package. This makes git the single source of
+    truth: the only safe way to change the live Space is to edit the repo, run
+    the sync, and deploy — never by editing files in the HF web UI, which this
+    upload would then silently overwrite (or, worse, leave inconsistent).
+    """
+    try:
+        from check_hf_sync import main as sync_check  # type: ignore
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from check_hf_sync import main as sync_check  # type: ignore
+
+    if sync_check() != 0:
+        logger.error(
+            "Refusing to deploy: the committed hf_space/ mirror has drifted from "
+            "climate_engine/. Sync them and commit before deploying."
+        )
+        sys.exit(1)
+
+
 def deploy() -> None:
     _load_dotenv()
+    _preflight_sync_guard()
     hf_token = os.environ.get("HF_TOKEN")
     if not hf_token:
         logger.error("HF_TOKEN is not set. Add it to .env or export HF_TOKEN=...")

@@ -248,10 +248,13 @@ async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
     if cached is not None:
         return cached
 
+    # Humidity P95 is anchored to the same WMO 2011–2020 reference decade used
+    # for the temperature baseline (see cmip6_service) so the wet-bulb pair
+    # (T, RH) is drawn from one consistent climatology, not two different windows.
     url = (
         f"https://archive-api.open-meteo.com/v1/archive"
         f"?latitude={lat}&longitude={lng}"
-        f"&start_date=1995-01-01&end_date=2015-12-31"
+        f"&start_date=2011-01-01&end_date=2020-12-31"
         f"&daily=relative_humidity_2m_mean"
         f"&timezone=auto"
     )
@@ -277,7 +280,7 @@ async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
                     times = daily.get("time", [])
                     rh_vals = daily.get("relative_humidity_2m_mean", [])
 
-            target_years = {1995, 2000, 2005, 2010, 2015}
+            target_years = {2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020}
             summer_rh: list[float] = []
 
             for t, rh in zip(times, rh_vals):

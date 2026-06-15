@@ -90,7 +90,9 @@ export default function Navbar() {
           <button
             className="md:hidden flex flex-col justify-center items-center w-11 h-11 gap-[5px] rounded-sm transition-colors duration-150 hover:bg-white/[0.04]"
             onClick={() => setMobileOpen(p => !p)}
-            aria-label="Toggle menu"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-menu"
             style={{ touchAction: 'manipulation' }}
           >
             <span className={`block w-5 h-[1.5px] rounded-full transition-all duration-200 ${mobileOpen ? 'rotate-45 translate-y-[6.5px]' : ''}`}
@@ -111,6 +113,7 @@ export default function Navbar() {
             onClick={() => setMobileOpen(false)}
           />
           <div
+            id="mobile-nav-menu"
             className="fixed top-16 left-0 right-0 z-[99] md:hidden border-b animate-fadeSlideDown glass-nav"
             style={{ borderBottomColor: 'var(--hairline)' }}
           >
