@@ -2,8 +2,23 @@
 climate_engine/validation/_core.py
 ────────────────────────────────────
 Shared formula layer for all back-test scripts.
-Exact mirrors of the production functions in socioeconomic_service.py
-and physics.py — never modified to fit observed data.
+
+SCOPE — read before trusting these numbers:
+These back-tests isolate the *near-threshold, un-saturated* Gasparrini (2017)
+response — RR = exp(β·ΔT) with no ΔT saturation and no attributable-fraction
+cap — to validate the raw β coefficient against single acute historical events.
+
+This is DELIBERATELY NOT identical to the production engine. Production
+(physics._gasparrini_mortality) extends this with a saturating ΔT term
+(asymptote 6 °C) and an AF cap of 0.35, because an unbounded per-day RR applied
+across an entire projected season is not physical. The two regimes — single
+acute event (here) vs. chronic multi-day annual projection (production) — are
+intentionally distinct, and for the same large ΔT the production engine returns
+a *lower, more conservative* number than these back-tests.
+
+`op_cvi()` is an exact replica of the production OP-CVI; only the mortality
+core differs as described above. No parameter here was tuned to fit observed
+data. See tests/test_science_formulas.py for assertions pinning both regimes.
 """
 
 from __future__ import annotations
