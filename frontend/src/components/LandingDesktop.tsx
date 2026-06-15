@@ -88,12 +88,21 @@ export default function LandingDesktop() {
           onBlurCapture={() => setRotatePaused(false)}
         >
 
-          {/* Eyebrow */}
-          <div className="flex items-center gap-2.5">
-            <span className="pulse-dot" />
-            <span className="font-mono text-[9px] uppercase tracking-[0.25em]" style={{ color: 'var(--muted)' }}>
-              Live ERA5 + CMIP6 · Peer-Reviewed Physics · Any Coordinate
-            </span>
+          {/* Trust strip — listed platforms */}
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5">
+            <span className="font-mono text-[8px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>Listed on</span>
+            {[
+              { label: 'Zenodo', href: 'https://doi.org/10.5281/zenodo.19340991' },
+              { label: 'UNDRR PreventionWeb', href: 'https://www.preventionweb.net/organization/openplanet-risk-intelligence' },
+              { label: 'CAKE', href: 'https://www.cakex.org/tools/openplanet-risk-intelligence' },
+              { label: 'ClimateBase', href: 'https://climatebase.org/company/1142537/openplanet-risk-intelligence' },
+            ].map(p => (
+              <a key={p.label} href={p.href} target="_blank" rel="noopener noreferrer"
+                 className="font-mono text-[8px] uppercase tracking-[0.15em] transition-colors duration-150 hover:text-white"
+                 style={{ color: 'var(--muted)' }}>
+                {p.label}
+              </a>
+            ))}
           </div>
 
           {/* Headline */}
@@ -409,7 +418,7 @@ export default function LandingDesktop() {
         </section>
 
         {/* ── 6. FINAL CTA ── */}
-        <section className="w-full relative flex flex-col items-center text-center py-16 md:py-28 px-6 overflow-hidden glass-panel">
+        <section className="w-full relative flex flex-col items-center text-center py-12 md:py-16 px-6 overflow-hidden glass-panel">
           <div className="absolute top-0 left-0 right-0 h-px"
                style={{ background: 'linear-gradient(90deg, transparent, rgba(176,141,87,0.2), transparent)' }} />
           <div className="absolute inset-0 pointer-events-none"
@@ -422,7 +431,7 @@ export default function LandingDesktop() {
             What is the heat risk<br />
             <span className="font-light" style={{ color: 'var(--muted)' }}>in your city?</span>
           </h3>
-          <p className="font-serif text-body-s mb-12 max-w-md mx-auto relative z-10" style={{ color: 'var(--text-2)' }}>
+          <p className="font-serif text-body-s mb-8 max-w-md mx-auto relative z-10" style={{ color: 'var(--text-2)' }}>
             Research-grade climate analysis in seconds.
             5 climate-zone archetypes · validated against 5 historical heatwaves · every formula auditable.
           </p>

@@ -21,10 +21,12 @@ export function fmt(n: number | null | undefined, d = 1): string {
 
 export function fmtUSD(n: number | null | undefined): string {
   if (n == null || isNaN(n)) return "—";
-  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (n >= 1e9)  return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
-  return `$${n.toLocaleString()}`;
+  const sign = n < 0 ? "−$" : "$";
+  const abs  = Math.abs(n);
+  if (abs >= 1e12) return `${sign}${(abs / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9)  return `${sign}${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6)  return `${sign}${(abs / 1e6).toFixed(1)}M`;
+  return `${sign}${abs.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 export function getWBTStatus(wbt: number) {
@@ -274,7 +276,7 @@ export const AdaptationROI = ({
               {[
                 { label: "Economic loss prevented",  val: fmtUSD(savedLoss * 30) },
                 { label: "Lives saved (cumulative)", val: (savedDeaths * 30).toLocaleString() },
-                { label: "Net benefit (benefit−cost)", val: fmtUSD(savedLoss * 30 - totalInvest), highlight: savedLoss * 30 - totalInvest > 0 },
+                { label: "Net benefit (prevented loss − investment)", val: fmtUSD(savedLoss * 30 - totalInvest), highlight: savedLoss * 30 - totalInvest > 0 },
               ].map(item => (
                 <div key={item.label} className="flex justify-between items-center border-b border-slate-800/40 pb-2 last:border-0">
                   <span className="text-[9px] font-mono text-slate-500">{item.label}</span>

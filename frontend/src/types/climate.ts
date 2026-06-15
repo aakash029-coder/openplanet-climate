@@ -60,6 +60,9 @@ export interface CityClimateData {
   // Elevation (metres) — display & AI analysis only
   elevation: number;
 
+  // Köppen-Geiger climate intelligence from backend classifier
+  climateIntelligence?: Record<string, unknown> | null;
+
   // Data lineage and cache freshness from backend compliance metadata
   metadata?: ResponseMetadata;
 

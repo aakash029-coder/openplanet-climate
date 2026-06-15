@@ -72,12 +72,20 @@ export default function LandingMobile() {
         style={{ minHeight: 'min(calc(100dvh - 64px), 760px)' }}
       >
         {/* Eyebrow */}
-        <div className="flex items-center gap-2">
-          <span className="pulse-dot" />
-          <span className="font-mono text-[9px] uppercase tracking-[0.2em]"
-                style={{ color: 'var(--muted)' }}>
-            Live ERA5 + CMIP6 · Any City
-          </span>
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <span className="font-mono text-[8px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>Listed on</span>
+          {[
+            { label: 'Zenodo', href: 'https://doi.org/10.5281/zenodo.19340991' },
+            { label: 'UNDRR', href: 'https://www.preventionweb.net/organization/openplanet-risk-intelligence' },
+            { label: 'CAKE', href: 'https://www.cakex.org/tools/openplanet-risk-intelligence' },
+            { label: 'ClimateBase', href: 'https://climatebase.org/company/1142537/openplanet-risk-intelligence' },
+          ].map(p => (
+            <a key={p.label} href={p.href} target="_blank" rel="noopener noreferrer"
+               className="font-mono text-[8px] uppercase tracking-[0.12em] hover:text-white transition-colors"
+               style={{ color: 'var(--muted)' }}>
+              {p.label}
+            </a>
+          ))}
         </div>
 
         {/* Headline */}

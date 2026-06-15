@@ -23,9 +23,9 @@ export default function SiteFooter() {
               className="w-9 h-9 object-cover shrink-0"
               style={{ border: '1px solid var(--hairline)' }}
             />
-            <div className="flex flex-col">
+            <div className="flex flex-col gap-1">
               <span
-                className="text-sm font-sans font-semibold tracking-tight leading-none mb-1"
+                className="text-sm font-sans font-semibold tracking-tight leading-none"
                 style={{ color: 'var(--text)' }}
               >
                 OpenPlanet
@@ -36,6 +36,20 @@ export default function SiteFooter() {
               >
                 Risk Intelligence
               </span>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5">
+                {[
+                  { label: 'Zenodo DOI', href: 'https://doi.org/10.5281/zenodo.19340991' },
+                  { label: 'UNDRR', href: 'https://www.preventionweb.net/organization/openplanet-risk-intelligence' },
+                  { label: 'CAKE', href: 'https://www.cakex.org/tools/openplanet-risk-intelligence' },
+                  { label: 'ClimateBase', href: 'https://climatebase.org/company/1142537/openplanet-risk-intelligence' },
+                ].map(p => (
+                  <a key={p.label} href={p.href} target="_blank" rel="noopener noreferrer"
+                     className="font-mono text-[7px] uppercase tracking-[0.15em] transition-colors duration-150 hover:text-white"
+                     style={{ color: 'var(--reference)' }}>
+                    {p.label}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 

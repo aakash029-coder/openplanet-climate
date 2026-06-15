@@ -50,10 +50,12 @@ function fmt(n: number | null | undefined, d = 1): string {
 
 function fmtUSD(n: number | null | undefined): string {
   if (n == null || isNaN(n)) return "—";
-  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (n >= 1e9)  return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6)  return `$${(n / 1e6).toFixed(2)}M`;
-  return `$${n.toLocaleString()}`;
+  const sign = n < 0 ? "−$" : "$";
+  const abs  = Math.abs(n);
+  if (abs >= 1e12) return `${sign}${(abs / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9)  return `${sign}${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6)  return `${sign}${(abs / 1e6).toFixed(1)}M`;
+  return `${sign}${abs.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 function cleanAiText(text: string | null): string {
@@ -165,7 +167,7 @@ export function CompareTable({
       )}
 
       {/* ── Main comparison table ── */}
-      <div className="w-full border border-white/[0.05] overflow-hidden" style={{ background: 'var(--raised)' }}>
+      <div className="w-full max-w-[960px] mx-auto border border-white/[0.05] overflow-hidden" style={{ background: 'var(--raised)' }}>
         <div className="border-b border-white/[0.05] px-5 md:px-8 py-5" style={{ background: 'var(--panel)' }}>
           <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>
             City comparison
@@ -180,14 +182,14 @@ export function CompareTable({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/[0.05]" style={{ background: 'var(--panel)' }}>
-                <th className="px-5 md:px-8 py-5 text-[10px] font-mono text-slate-200 uppercase tracking-widest w-[30%]">
+                <th className="px-5 md:px-6 py-5 text-[10px] font-mono text-slate-200 uppercase tracking-widest w-[36%]">
                   Parameter
                   <p className="text-[8px] text-slate-500 mt-1 normal-case tracking-normal font-normal">
                     Rows with <span className="text-[#0ea5e9] font-bold border border-white/[0.09] bg-cyan-900/30 px-1 text-[7px]">CALC</span> badge are auditable
                   </p>
                 </th>
                 {okResults.map(r => (
-                  <th key={r.query} className="px-5 md:px-8 py-5 text-center w-[35%]">
+                  <th key={r.query} className="px-5 md:px-6 py-5 text-center w-[32%]">
                     <span className="font-mono text-xs font-bold text-white block uppercase tracking-widest truncate max-w-[160px] mx-auto">{r.query}</span>
                     <span className="text-[9px] font-mono text-slate-500 block mt-1">{formatCoordinates(r.lat, r.lng)} · {r.elevation.toFixed(0)}m</span>
                   </th>
@@ -224,7 +226,7 @@ export function CompareTable({
                       onMathModal({ metricLabel: m.label, metricKey: m.key, valA: displayVals[0], valB: displayVals[1] });
                     }}
                   >
-                    <td className="px-5 md:px-8 py-5">
+                    <td className="px-5 md:px-6 py-5">
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-mono text-slate-300 uppercase tracking-wider group-hover:text-white transition-colors">{m.label}</span>
                         {m.hasCalc && (
@@ -242,7 +244,7 @@ export function CompareTable({
                       const dispV = displayVals[i];
                       const isMax = dispV != null && dispV === maxVal && maxVal > 0;
                       return (
-                        <td key={r.query} className="px-5 md:px-8 py-5 text-right">
+                        <td key={r.query} className="px-5 md:px-6 py-5 text-right">
                           {hasMitigation && baseV != null && (
                             <div className="text-[9px] font-mono tabular-nums text-slate-600 mb-1">
                               <span className="text-[7px] uppercase tracking-widest text-slate-700 mr-1">Base:</span>
@@ -305,8 +307,8 @@ export function CompareTable({
           ) : (
             <p className="text-[10px] font-mono text-slate-600 italic">Comparative analysis unavailable. Please interpret the metrics above.</p>
           )}
-          <div className="font-mono text-[8px] text-zinc-500 uppercase tracking-widest block mt-4 pt-3 border-t border-white/5 text-center leading-relaxed">
-            SYSTEM DISCLOSURE // The quantitative baseline metrics layer is securely served via direct API telemetry validation grids. The comparative text analysis block utilizes dynamic LHO optimization processing models which may introduce text hallucinations. Cross-verify raw mathematical constants against inline peer-reviewed data registries shown above.
+          <div className="font-mono text-[8px] text-zinc-500 block mt-4 pt-3 border-t border-white/5 text-center leading-relaxed">
+            AI DISCLOSURE — The analyst summary above is AI-generated. Verify all figures against the sourced metrics in the table above.
           </div>
         </div>
       </div>

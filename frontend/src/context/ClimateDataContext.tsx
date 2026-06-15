@@ -195,9 +195,10 @@ export function ClimateDataProvider({ children }: { children: React.ReactNode })
         population:         raw.population,
         projections:        raw.projections ?? [],
         baseline:           raw.baseline,
-        era5_humidity_p95:  raw.era5_humidity_p95 ?? 70.0,
-        elevation:          params.elevation ?? 0,
-        metadata:           raw.metadata ?? undefined,
+        era5_humidity_p95:    raw.era5_humidity_p95 ?? 70.0,
+        climateIntelligence:  raw.climateIntelligence ?? null,
+        elevation:            params.elevation ?? 0,
+        metadata:             raw.metadata ?? undefined,
         fetched_at:         Date.now(),
         fetch_duration_ms:  Date.now() - t0,
       };
