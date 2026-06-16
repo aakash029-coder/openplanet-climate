@@ -129,7 +129,7 @@ export default function MethodologyModule() {
   } : DEMO_EXCEL;
 
   return (
-    <article className="w-full max-w-none px-6 sm:px-12 md:px-16 lg:px-20 xl:px-24 pt-2 pb-6 md:pt-4 text-left block">
+    <article className="w-full max-w-none px-5 sm:px-8 md:px-12 lg:px-16 xl:px-20 pt-2 pb-6 md:pt-4 text-left block">
 
       {/* ── Title block ── */}
       <header className="mb-6 pb-4" style={{ borderBottom: '1px solid var(--hairline)' }}>
