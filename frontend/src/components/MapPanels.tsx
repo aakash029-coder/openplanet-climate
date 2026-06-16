@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fmtLoss } from './MapHelpers';
-import { formatCoordinates, useClimateData } from '@/context/ClimateDataContext';
+import { formatCoordinates, useClimateData, formatDeathsRange, formatEconomicRange } from '@/context/ClimateDataContext';
 
 export interface SuggestionCity {
   id:          string | number;
@@ -56,29 +56,6 @@ interface LeftPanelProps {
   handleMitigationChange:(type: 'canopy' | 'coolRoof', value: number) => void;
   isSimulating:          boolean;
 }
-
-/* ─── Confidence badge ─── */
-const ConfidenceBadge = ({
-  level, note,
-}: {
-  level: 'high' | 'medium' | 'low';
-  note?: string;
-}) => {
-  const cfg = {
-    high:   { dot: 'bg-emerald-500', text: 'text-emerald-400', label: 'High confidence' },
-    medium: { dot: 'bg-amber-400',   text: 'text-amber-400',   label: 'Medium confidence' },
-    low:    { dot: 'bg-red-400',     text: 'text-red-400',     label: 'Low confidence'    },
-  }[level];
-  return (
-    <div className="flex items-start gap-1.5 mt-1.5">
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-px ${cfg.dot}`} />
-      <div>
-        <span className={`font-mono text-[7px] uppercase tracking-widest font-bold ${cfg.text}`}>{cfg.label}</span>
-        {note && <p className={`font-mono text-[7px] leading-snug mt-0.5 ${cfg.text} opacity-70`}>{note}</p>}
-      </div>
-    </div>
-  );
-};
 
 /* ─── Shared sub-components ─── */
 const MetricRow = ({
@@ -465,13 +442,14 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               ) : (
                 <p className="text-[32px] font-mono font-bold leading-none tabular-nums glow-red" style={{ color: 'var(--heat-4)' }}>{deaths}</p>
               )}
+              {projection && (
+                <p className="font-mono text-[8px] tabular-nums mt-1.5" style={{ color: 'var(--muted)' }}>
+                  {formatDeathsRange(projection.attributable_deaths)} est/yr
+                </p>
+              )}
             </div>
-            <ConfidenceBadge
-              level="medium"
-              note="Comparative triage only — not event-level prediction. Gasparrini 2017 chronic β."
-            />
-            <p className="text-[8px] font-mono leading-relaxed" style={{ color: 'var(--muted)' }}>
-              ±15% CI · Gasparrini et al. 2017 · see methodology
+            <p className="text-[8px] font-mono leading-relaxed" style={{ color: 'var(--muted)', opacity: 0.55 }}>
+              Gasparrini 2017 · ±15% model sensitivity
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedDeaths || '0'} />}
             <AuditButton label="↳ show derivation" onClick={() => openAudit('mortality')} />
@@ -491,13 +469,14 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               ) : (
                 <p className="text-[28px] font-mono font-bold leading-none tabular-nums glow-amber" style={{ color: 'var(--heat-2)' }}>{loss}</p>
               )}
+              {projection && (
+                <p className="font-mono text-[8px] tabular-nums mt-1.5" style={{ color: 'var(--muted)' }}>
+                  {formatEconomicRange(projection.economic_decay_usd)}
+                </p>
+              )}
             </div>
-            <ConfidenceBadge
-              level="medium"
-              note="Indicative directional estimate. Burke 2018 + ILO bipartite model."
-            />
-            <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>
-              ±8% CI · Burke et al. 2018 · Nature
+            <p className="text-[8px] font-mono" style={{ color: 'var(--muted)', opacity: 0.55 }}>
+              Burke 2018 · ILO · ±8% SE
             </p>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedLoss || '0'} />}
             <AuditButton label="↳ show derivation" onClick={() => openAudit('economics')} />
@@ -517,8 +496,12 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               ) : (
                 <p className="text-[26px] font-mono font-bold leading-none tabular-nums glow-red" style={{ color: 'var(--heat-3)' }}>{heatwave}d</p>
               )}
-              <ConfidenceBadge level="high" />
-              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>days above historical P95 · CMIP6 ensemble</p>
+              {projection && (
+                <p className="font-mono text-[8px] tabular-nums mt-1.5" style={{ color: 'var(--muted)' }}>
+                  {Math.round(projection.heatwave_days * 0.82)}–{Math.round(projection.heatwave_days * 1.18)} d/yr
+                </p>
+              )}
+              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)', opacity: 0.55 }}>days above P95 · CMIP6 ensemble</p>
             </div>
 
             <div className="space-y-2 pt-4" style={{ borderTop: '1px solid var(--hairline)' }}>
@@ -533,8 +516,12 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
               ) : (
                 <p className="text-[26px] font-mono font-bold leading-none tabular-nums glow-amber" style={{ color: 'var(--heat-2)' }}>{temp}°C</p>
               )}
-              <ConfidenceBadge level="high" />
-              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>TX5d decadal mean · CMIP6 + ERA5 reanalysis</p>
+              {projection && (
+                <p className="font-mono text-[8px] tabular-nums mt-1.5" style={{ color: 'var(--muted)' }}>
+                  {(projection.peak_tx5d_c - 0.8).toFixed(1)}–{(projection.peak_tx5d_c + 0.8).toFixed(1)}°C
+                </p>
+              )}
+              <p className="text-[8px] font-mono" style={{ color: 'var(--muted)', opacity: 0.55 }}>TX5d decadal mean · CMIP6 + ERA5</p>
             </div>
           </div>
         </div>
