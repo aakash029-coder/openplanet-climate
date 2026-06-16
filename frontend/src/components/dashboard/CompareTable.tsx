@@ -44,6 +44,12 @@ export interface CompareTableProps {
 
 // ── Local helpers ──────────────────────────────────────────────────────────────
 
+function getCountry(displayName: string | undefined): string {
+  if (!displayName) return '';
+  const parts = displayName.split(', ');
+  return parts[parts.length - 1] || '';
+}
+
 function fmt(n: number | null | undefined, d = 1): string {
   if (n == null || isNaN(n)) return "—";
   return n.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -168,31 +174,75 @@ export function CompareTable({
       )}
 
       {/* ── Main comparison table ── */}
-      <div className="w-full max-w-[960px] mx-auto border border-white/[0.05] overflow-hidden" style={{ background: 'var(--raised)' }}>
-        <div className="border-b border-white/[0.05] px-5 md:px-8 py-5" style={{ background: 'var(--panel)' }}>
-          <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold" style={{ color: 'var(--muted)' }}>
-            City comparison
-          </h3>
-          <p className="font-mono text-[8px] mt-1 tabular-nums" style={{ color: 'var(--muted)' }}>
-            Dataset: {okResults[0]?.query ?? '—'} vs {okResults[1]?.query ?? '—'} · {ssp.toUpperCase()} · {compareYear}
-            {hasMitigation && ` · +${canopy}% canopy · +${albedo}% albedo`}
-          </p>
+      <div className="w-full border border-white/[0.05]" style={{ background: 'var(--raised)' }}>
+
+        {/* Sticky VS comparison header */}
+        <div className="sticky top-16 z-20 border-b border-white/[0.05]" style={{ background: 'var(--panel)' }}>
+          <div className="grid" style={{ gridTemplateColumns: '1fr 56px 1fr' }}>
+
+            {/* City A */}
+            <div className="px-5 md:px-7 py-5">
+              <p className="font-mono text-[7px] uppercase tracking-[0.22em] mb-2.5" style={{ color: 'var(--reference)' }}>
+                {ssp.toUpperCase()} · {compareYear}
+                {hasMitigation && ` · +${canopy}% canopy`}
+              </p>
+              <p className="font-sans text-base md:text-lg font-semibold tracking-tight leading-none mb-1.5 truncate" style={{ color: 'var(--text)' }}>
+                {okResults[0]?.query ?? '—'}
+              </p>
+              <p className="font-mono text-[8px] mb-0.5" style={{ color: 'var(--muted)' }}>
+                {getCountry(okResults[0]?.display_name)}
+              </p>
+              {(okResults[0]?.lat || okResults[0]?.lng) && (
+                <p className="font-mono text-[8px] tabular-nums" style={{ color: 'var(--muted)', opacity: 0.7 }}>
+                  {formatCoordinates(okResults[0].lat, okResults[0].lng)}
+                  {okResults[0].elevation > 0 && ` · ${okResults[0].elevation.toFixed(0)}m`}
+                </p>
+              )}
+            </div>
+
+            {/* VS divider */}
+            <div
+              className="flex items-center justify-center"
+              style={{ borderLeft: '1px solid var(--hairline)', borderRight: '1px solid var(--hairline)' }}
+            >
+              <span className="font-mono text-[9px] font-bold tracking-[0.3em]" style={{ color: 'var(--muted)', opacity: 0.5 }}>VS</span>
+            </div>
+
+            {/* City B */}
+            <div className="px-5 md:px-7 py-5 text-right">
+              <p className="font-mono text-[7px] uppercase tracking-[0.22em] mb-2.5" style={{ color: 'var(--reference)' }}>
+                {ssp.toUpperCase()} · {compareYear}
+                {hasMitigation && ` · +${albedo}% albedo`}
+              </p>
+              <p className="font-sans text-base md:text-lg font-semibold tracking-tight leading-none mb-1.5 truncate" style={{ color: 'var(--text)' }}>
+                {okResults[1]?.query ?? '—'}
+              </p>
+              <p className="font-mono text-[8px] mb-0.5" style={{ color: 'var(--muted)' }}>
+                {getCountry(okResults[1]?.display_name)}
+              </p>
+              {(okResults[1]?.lat || okResults[1]?.lng) && (
+                <p className="font-mono text-[8px] tabular-nums" style={{ color: 'var(--muted)', opacity: 0.7 }}>
+                  {formatCoordinates(okResults[1].lat, okResults[1].lng)}
+                  {okResults[1].elevation > 0 && ` · ${okResults[1].elevation.toFixed(0)}m`}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/[0.05]" style={{ background: 'var(--panel)' }}>
-                <th className="px-5 md:px-6 py-5 text-[10px] font-mono text-slate-200 uppercase tracking-widest w-[36%]">
+              <tr className="border-b border-white/[0.05]" style={{ background: 'var(--raised)' }}>
+                <th className="px-5 md:px-6 py-4 text-[9px] font-mono uppercase tracking-widest w-[36%]" style={{ color: 'var(--muted)' }}>
                   Parameter
-                  <p className="text-[8px] text-slate-500 mt-1 normal-case tracking-normal font-normal">
-                    Rows with <span className="text-[#0ea5e9] font-bold border border-white/[0.09] bg-cyan-900/30 px-1 text-[7px]">CALC</span> badge are auditable
+                  <p className="text-[8px] mt-1 normal-case tracking-normal font-normal" style={{ color: 'var(--muted)', opacity: 0.55 }}>
+                    Rows with <span className="text-[#0ea5e9] font-bold border border-white/[0.09] bg-cyan-900/30 px-1 text-[7px]">CALC</span> badge open audit
                   </p>
                 </th>
                 {okResults.map(r => (
-                  <th key={r.query} className="px-5 md:px-6 py-5 text-center w-[32%]">
-                    <span className="font-mono text-xs font-bold text-white block uppercase tracking-widest truncate max-w-[160px] mx-auto">{r.query}</span>
-                    <span className="text-[9px] font-mono text-slate-500 block mt-1">{formatCoordinates(r.lat, r.lng)} · {r.elevation.toFixed(0)}m</span>
+                  <th key={r.query} className="px-5 md:px-6 py-4 text-center w-[32%]">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-widest truncate block" style={{ color: 'var(--text-2)' }}>{r.query}</span>
                   </th>
                 ))}
               </tr>
@@ -279,54 +329,6 @@ export function CompareTable({
           </table>
         </div>
 
-        {/* ── Köppen climate zone comparison ── */}
-        {okResults.some(r => r.climateIntelligence) && (
-          <div className="border-t border-white/[0.05] px-5 md:px-6 py-6">
-            <h4 className="flex items-center gap-3 font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: 'var(--muted)' }}>
-              <span className="w-1.5 h-1.5 bg-[#38bdf8] rounded-full" />
-              Climate zone comparison
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              {okResults.map(r => {
-                const ci = r.climateIntelligence as Record<string, unknown> | null | undefined;
-                if (!ci) return (
-                  <div key={r.query} className="border border-white/[0.04] p-4" style={{ background: 'var(--panel)' }}>
-                    <p className="text-[8px] font-mono text-slate-600 uppercase mb-2 truncate">{r.query}</p>
-                    <p className="text-[9px] font-mono text-slate-700 italic">Climate zone unavailable</p>
-                  </div>
-                );
-                return (
-                  <div key={r.query} className="border border-white/[0.04] p-4 space-y-2" style={{ background: 'var(--panel)' }}>
-                    <p className="text-[8px] font-mono text-slate-600 uppercase mb-1 truncate">{r.query}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[11px] font-bold px-1.5 py-0.5"
-                            style={{ background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.2)', color: '#38bdf8' }}>
-                        {ci.koppen_class as string}
-                      </span>
-                      <span className="text-[10px] font-mono font-semibold truncate" style={{ color: 'var(--text)' }}>
-                        {ci.koppen_label as string}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>IPCC AR6 warming rate</span>
-                      <span className="text-[10px] font-mono font-bold tabular-nums" style={{ color: 'var(--copper)' }}>
-                        {(ci.ipcc_warming_rate_factor as number).toFixed(2)}×
-                      </span>
-                    </div>
-                    {Array.isArray(ci.primary_risk_drivers) && (
-                      <p className="text-[8px] font-mono leading-snug" style={{ color: 'var(--muted)' }}>
-                        {(ci.primary_risk_drivers as string[])[0]}
-                      </p>
-                    )}
-                    <p className="text-[7px] font-mono italic" style={{ color: 'var(--reference)' }}>
-                      Beck et al. 2018 · IPCC AR6 WG1
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* AI Analysis */}
         <div className="border-t border-white/[0.05] px-5 md:px-8 py-7">
