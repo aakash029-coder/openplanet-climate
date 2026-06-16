@@ -172,7 +172,60 @@ export default function LandingMobile() {
         </div>
       </section>
 
-      {/* ── 2. WHAT IT DOES ── */}
+      {/* ── 2. TRUST & VALIDATION ── */}
+      <section className="w-full px-5 py-10" style={{ borderTop: '1px solid var(--hairline)', borderBottom: '1px solid var(--hairline)' }}>
+        <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-3 text-center" style={{ color: 'var(--muted)' }}>
+          Peer-Reviewed &amp; Recognised
+        </p>
+        <h2 className="text-xl font-sans font-bold tracking-tight mb-2 text-center leading-tight" style={{ color: 'var(--text)' }}>
+          Validated by international institutions.
+        </h2>
+        <p className="font-serif text-[0.8125rem] leading-relaxed text-center mb-8" style={{ color: 'var(--text-2)' }}>
+          Published through open-science infrastructure and cited by organisations at the frontier of global climate risk.
+        </p>
+
+        {/* Zenodo card */}
+        <div className="relative p-5 mb-3 flex flex-col gap-3"
+             style={{ background: 'var(--raised)', border: '1px solid var(--hairline)', borderLeft: '2px solid rgba(176,141,87,0.55)' }}>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <span className="font-mono text-[7px] uppercase tracking-widest px-1.5 py-0.5"
+                  style={{ border: '1px solid rgba(176,141,87,0.4)', color: 'var(--copper)', background: 'rgba(176,141,87,0.06)' }}>
+              Published · Open Access
+            </span>
+          </div>
+          <div>
+            <h3 className="font-sans font-semibold text-sm mb-1" style={{ color: 'var(--text)' }}>Zenodo</h3>
+            <p className="font-mono text-[8px] mb-2" style={{ color: 'var(--muted)', opacity: 0.45 }}>DOI 10.5281/zenodo.19340991</p>
+            <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--text-2)' }}>
+              Open-access repository by CERN and OpenAIRE — the same infrastructure used by IPCC researchers. Every version permanently archived and citable.
+            </p>
+          </div>
+        </div>
+
+        {/* Recognition */}
+        <div className="space-y-2">
+          {[
+            { name: 'UNDRR PreventionWeb', meta: 'United Nations · Geneva', desc: "UN's primary platform for disaster risk reduction researchers and policymakers worldwide." },
+            { name: 'CAKE', meta: 'EcoAdapt · USA', desc: "North America's leading open-access hub for climate adaptation science and practice." },
+            { name: 'ClimateBase', meta: 'Climate Tech · Global', desc: 'Global platform for climate professionals, investors, and research organisations.' },
+          ].map(card => (
+            <div key={card.name} className="p-4 flex flex-col gap-1.5"
+                 style={{ background: 'var(--raised)', border: '1px solid var(--hairline)' }}>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="font-sans font-semibold text-[11px]" style={{ color: 'var(--text)' }}>{card.name}</h3>
+                <span className="font-mono text-[7px] uppercase tracking-widest px-1.5 py-0.5 shrink-0"
+                      style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+                  Recognised
+                </span>
+              </div>
+              <p className="font-mono text-[8px]" style={{ color: 'var(--muted)', opacity: 0.5 }}>{card.meta}</p>
+              <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--text-2)' }}>{card.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 3. WHAT IT DOES ── */}
       <section className="w-full px-5 py-12 flex flex-col gap-8 max-w-lg mx-auto">
         <div>
           <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-3" style={{ color: 'var(--muted)' }}>

@@ -213,7 +213,100 @@ export default function LandingDesktop() {
           </div>
         </section>
 
-        {/* ── 2. WHAT IT DOES ── */}
+        {/* ── 2. TRUST & VALIDATION ── */}
+        <section className="w-full -mt-8 md:-mt-12">
+          <div className="w-full" style={{ borderTop: '1px solid var(--hairline)', borderBottom: '1px solid var(--hairline)', padding: '3.5rem 0' }}>
+
+            {/* Header */}
+            <div className="text-center mb-10">
+              <p className="text-[9px] font-mono uppercase tracking-[0.35em] mb-4" style={{ color: 'var(--muted)' }}>
+                Peer-Reviewed &amp; Independently Recognised
+              </p>
+              <h2 className="text-2xl md:text-[1.75rem] font-sans font-bold tracking-tight mb-3 leading-tight" style={{ color: 'var(--text)' }}>
+                Validated by institutions working at the frontier of global climate risk.
+              </h2>
+              <p className="font-serif text-sm max-w-lg mx-auto leading-relaxed" style={{ color: 'var(--text-2)' }}>
+                OpenPlanet's methodology is published through open-science infrastructure
+                and independently cited by international disaster risk, adaptation, and sustainability organisations.
+              </p>
+            </div>
+
+            {/* Credential cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-px" style={{ border: '1px solid var(--hairline)', background: 'var(--hairline)' }}>
+
+              {/* Zenodo — 2 cols */}
+              <div className="lg:col-span-2 relative p-6 md:p-8 group flex flex-col gap-4"
+                   style={{ background: 'var(--raised)', borderLeft: '2px solid rgba(176,141,87,0.55)' }}>
+                <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                     style={{ background: 'linear-gradient(90deg, rgba(176,141,87,0.5), rgba(176,141,87,0.1), transparent)' }} />
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 font-bold"
+                        style={{ border: '1px solid rgba(176,141,87,0.45)', color: 'var(--copper)', background: 'rgba(176,141,87,0.06)' }}>
+                    Published · Open Access
+                  </span>
+                  <span className="font-mono text-[8px] tabular-nums" style={{ color: 'var(--muted)', opacity: 0.45 }}>
+                    DOI 10.5281/zenodo.19340991
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-sans font-semibold text-[1rem] mb-2 tracking-tight" style={{ color: 'var(--text)' }}>
+                    Zenodo
+                  </h3>
+                  <p className="font-sans text-[11px] leading-relaxed" style={{ color: 'var(--text-2)' }}>
+                    Open-access scientific repository maintained by CERN and OpenAIRE — the same infrastructure used by researchers publishing in <em>Nature</em>, <em>Science</em>, and the IPCC.
+                    Every version of OpenPlanet's methodology is permanently archived and citable.
+                  </p>
+                </div>
+                <p className="font-mono text-[8px] tracking-[0.1em]" style={{ color: 'var(--muted)', opacity: 0.4 }}>
+                  Indexed by Google Scholar · OpenAIRE · DataCite
+                </p>
+              </div>
+
+              {/* Recognition cards */}
+              {[
+                {
+                  badge: 'Recognised',
+                  name: 'UNDRR PreventionWeb',
+                  org: 'United Nations Office for Disaster Risk Reduction',
+                  desc: "The UN's primary knowledge platform for DRR practitioners, researchers, and policymakers operating under the Sendai Framework.",
+                  meta: 'United Nations · Geneva',
+                },
+                {
+                  badge: 'Recognised',
+                  name: 'CAKE',
+                  org: 'Climate Adaptation Knowledge Exchange',
+                  desc: "North America's leading open-access hub for climate adaptation science, tools, and case studies used by governments and researchers.",
+                  meta: 'EcoAdapt · USA',
+                },
+                {
+                  badge: 'Recognised',
+                  name: 'ClimateBase',
+                  org: 'Climate Career & Research Platform',
+                  desc: 'Global platform connecting climate professionals, investors, and research organisations driving systemic climate solutions.',
+                  meta: 'Climate Tech · Global',
+                },
+              ].map(card => (
+                <div key={card.name} className="relative p-6 group flex flex-col gap-3"
+                     style={{ background: 'var(--raised)' }}>
+                  <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                       style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
+                  <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 self-start"
+                        style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+                    {card.badge}
+                  </span>
+                  <div>
+                    <h3 className="font-sans font-semibold text-sm mb-0.5 tracking-tight" style={{ color: 'var(--text)' }}>{card.name}</h3>
+                    <p className="font-mono text-[8px] mb-2.5 leading-snug" style={{ color: 'var(--muted)', opacity: 0.6 }}>{card.org}</p>
+                    <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--text-2)' }}>{card.desc}</p>
+                  </div>
+                  <p className="font-mono text-[8px] mt-auto pt-1" style={{ color: 'var(--muted)', opacity: 0.35 }}>{card.meta}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 3. WHAT IT DOES (was 2) ── */}
         <section className="w-full grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16 items-center">
           <div>
             <p className="text-[9px] font-mono uppercase tracking-[0.3em] mb-4" style={{ color: 'var(--muted)' }}>
