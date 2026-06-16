@@ -36,29 +36,37 @@ export default function SiteFooter() {
               >
                 Risk Intelligence
               </span>
-              <div className="flex flex-col gap-1 mt-1.5">
-                <a href="https://doi.org/10.5281/zenodo.19340991" target="_blank" rel="noopener noreferrer"
-                   className="flex items-center gap-1.5 transition-colors duration-150 hover:text-white"
-                   style={{ color: 'var(--reference)' }}>
-                  <span className="font-mono text-[6px] uppercase tracking-widest px-1 py-0.5"
-                        style={{ border: '1px solid rgba(176,141,87,0.25)', color: 'var(--copper)' }}>
-                    Published
-                  </span>
-                  <span className="font-mono text-[7px] tracking-[0.1em]">Zenodo · DOI 10.5281/zenodo.19340991</span>
-                </a>
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="font-mono text-[6px] uppercase tracking-widest opacity-40" style={{ color: 'var(--reference)' }}>Listed on</span>
-                  {[
-                    { label: 'UNDRR', href: 'https://www.preventionweb.net/organization/openplanet-risk-intelligence' },
-                    { label: 'CAKE', href: 'https://www.cakex.org/tools/openplanet-risk-intelligence' },
-                    { label: 'ClimateBase', href: 'https://climatebase.org/company/1142537/openplanet-risk-intelligence' },
-                  ].map(p => (
-                    <a key={p.label} href={p.href} target="_blank" rel="noopener noreferrer"
-                       className="font-mono text-[7px] uppercase tracking-[0.12em] transition-colors duration-150 hover:text-white"
-                       style={{ color: 'var(--reference)' }}>
-                      {p.label}
+              <div className="flex flex-col gap-2 mt-2" style={{ maxWidth: '260px' }}>
+                <div>
+                  <p className="font-mono text-[6px] uppercase tracking-widest mb-0.5" style={{ color: 'var(--copper)' }}>Published Research</p>
+                  <p className="font-mono text-[7px] leading-snug" style={{ color: 'var(--muted)' }}>
+                    Published on{' '}
+                    <a href="https://doi.org/10.5281/zenodo.19340991" target="_blank" rel="noopener noreferrer"
+                       className="hover:text-white transition-colors" style={{ color: 'var(--reference)' }}>
+                      Zenodo
                     </a>
-                  ))}
+                    {' '}— open-science repository backed by CERN &amp; OpenAIRE.{' '}
+                    <span style={{ color: 'var(--muted)', opacity: 0.6 }}>DOI 10.5281/zenodo.19340991</span>
+                  </p>
+                </div>
+                <div>
+                  <p className="font-mono text-[6px] uppercase tracking-widest mb-0.5" style={{ color: 'var(--copper)' }}>Recognised By</p>
+                  <ul className="space-y-0.5">
+                    {[
+                      { label: 'UNDRR PreventionWeb', href: 'https://www.preventionweb.net/organization/openplanet-risk-intelligence' },
+                      { label: 'CAKE', href: 'https://www.cakex.org/tools/openplanet-risk-intelligence' },
+                      { label: 'ClimateBase', href: 'https://climatebase.org/company/1142537/openplanet-risk-intelligence' },
+                    ].map(p => (
+                      <li key={p.label} className="flex items-center gap-1.5">
+                        <span className="w-0.5 h-0.5 rounded-full shrink-0" style={{ background: 'var(--copper)' }} />
+                        <a href={p.href} target="_blank" rel="noopener noreferrer"
+                           className="font-mono text-[7px] tracking-[0.08em] hover:text-white transition-colors"
+                           style={{ color: 'var(--muted)' }}>
+                          {p.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </div>

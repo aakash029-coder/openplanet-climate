@@ -436,42 +436,6 @@ export default function LandingDesktop() {
           </div>
         </section>
 
-        {/* ── 7. TRUSTED & RECOGNIZED ── */}
-        <section className="w-full max-w-2xl mx-auto flex flex-col gap-6 py-14 px-8"
-                 style={{ borderTop: '1px solid var(--hairline)' }}>
-          <h3 className="font-sans text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>
-            Trusted &amp; Recognized
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <p className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--copper)' }}>
-                Published Research
-              </p>
-              <p className="font-serif text-[0.875rem] leading-relaxed" style={{ color: 'var(--text-2)' }}>
-                Published on <span style={{ color: 'var(--text)' }}>Zenodo</span> — the open-science repository backed by CERN and OpenAIRE.
-              </p>
-              <p className="font-mono text-[9px] tracking-[0.08em]" style={{ color: 'var(--muted)' }}>
-                DOI: 10.5281/zenodo.19340991
-              </p>
-            </div>
-            <div className="space-y-2">
-              <p className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold" style={{ color: 'var(--copper)' }}>
-                Recognised By
-              </p>
-              <p className="font-serif text-[0.875rem] leading-relaxed" style={{ color: 'var(--text-2)' }}>
-                Our work has been independently featured by leading climate resilience, disaster risk reduction, and sustainability platforms.
-              </p>
-              <ul className="space-y-1 pt-1">
-                {['UNDRR PreventionWeb', 'CAKE — Climate Adaptation Knowledge Exchange', 'ClimateBase'].map(name => (
-                  <li key={name} className="flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full shrink-0" style={{ background: 'var(--copper)' }} />
-                    <span className="font-mono text-[9px] tracking-[0.08em]" style={{ color: 'var(--text-2)' }}>{name}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
 
       </main>
 
