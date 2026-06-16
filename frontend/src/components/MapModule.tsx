@@ -283,20 +283,10 @@ export default function MapModule({ onTargetLocked }: { onTargetLocked?: (city: 
             handleOverlayTouchEnd={handleOverlayTouchEnd}
           />
           {isInitialized && selectedCity && (
-            <div className="flex items-center justify-center gap-3 pt-2 pb-1 flex-wrap animate-fadeSlideUp">
+            <div className="flex items-center justify-center pt-2 pb-1 animate-fadeSlideUp">
               <p className="font-mono text-center" style={{ fontSize: '0.6875rem', color: 'var(--muted)' }}>
                 {selectedCity.name || selectedCity.locationQuery} · {year} · {ssp} · CMIP6 ensemble projection
               </p>
-              <button onClick={handleCopyShareLink} aria-label="Copy shareable link to this projection"
-                className="flex items-center gap-1.5 px-2.5 py-1 font-mono uppercase tracking-[0.14em] transition-colors duration-150 hover:text-white"
-                style={{ fontSize: '0.625rem', color: shareCopied ? 'var(--positive)' : 'var(--text-2)', border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
-                {shareCopied ? (<><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>Link copied</>) : (<><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>Copy link</>)}
-              </button>
-              <button onClick={handleDownloadPdf} disabled={pdfBusy || !primaryData} aria-label="Download research-grade PDF report"
-                className="flex items-center gap-1.5 px-2.5 py-1 font-mono uppercase tracking-[0.14em] transition-colors duration-150 hover:text-white disabled:opacity-40"
-                style={{ fontSize: '0.625rem', color: 'var(--text-2)', border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
-                {pdfBusy ? (<><span className="w-2.5 h-2.5 border border-white/30 border-t-white/70 rounded-full animate-spin" />Building…</>) : (<><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>PDF report</>)}
-              </button>
             </div>
           )}
         </div>

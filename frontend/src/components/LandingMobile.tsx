@@ -71,33 +71,6 @@ export default function LandingMobile() {
         className="w-full flex flex-col justify-center items-center px-4 py-4 gap-6 overflow-hidden relative z-10 text-center"
         style={{ minHeight: 'min(calc(100dvh - 64px), 760px)' }}
       >
-        {/* Eyebrow */}
-        <div className="flex flex-col items-center gap-1.5">
-          <a href="https://doi.org/10.5281/zenodo.19340991" target="_blank" rel="noopener noreferrer"
-             className="flex items-center gap-2 transition-colors duration-150 hover:text-white"
-             style={{ color: 'var(--muted)' }}>
-            <span className="font-mono text-[7px] uppercase tracking-[0.2em] px-1.5 py-0.5"
-                  style={{ border: '1px solid rgba(176,141,87,0.3)', color: 'var(--copper)' }}>
-              Published
-            </span>
-            <span className="font-mono text-[8px]">Zenodo · DOI 10.5281/zenodo.19340991</span>
-          </a>
-          <div className="flex items-center gap-x-3 flex-wrap justify-center">
-            <span className="font-mono text-[7px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)', opacity: 0.5 }}>Listed on</span>
-            {[
-              { label: 'UNDRR', href: 'https://www.preventionweb.net/organization/openplanet-risk-intelligence' },
-              { label: 'CAKE', href: 'https://www.cakex.org/tools/openplanet-risk-intelligence' },
-              { label: 'ClimateBase', href: 'https://climatebase.org/company/1142537/openplanet-risk-intelligence' },
-            ].map(p => (
-              <a key={p.label} href={p.href} target="_blank" rel="noopener noreferrer"
-                 className="font-mono text-[8px] uppercase tracking-[0.12em] hover:text-white transition-colors"
-                 style={{ color: 'var(--muted)' }}>
-                {p.label}
-              </a>
-            ))}
-          </div>
-        </div>
-
         {/* Headline */}
         <div className="w-full max-w-sm mx-auto text-center">
           <h1 className="font-serif text-[1.9rem] font-medium tracking-tight leading-[1.15]"
@@ -386,9 +359,36 @@ export default function LandingMobile() {
         </div>
       </section>
 
-      {/* ── DISCLAIMER ── */}
-      <div className="w-full flex flex-col items-center text-center gap-2 pt-6 pb-10 px-5"
+      {/* ── TRUST STRIP ── */}
+      <div className="w-full flex flex-col items-center text-center gap-3 pt-6 pb-4 px-5"
            style={{ borderTop: '1px solid var(--hairline)' }}>
+        <a href="https://doi.org/10.5281/zenodo.19340991" target="_blank" rel="noopener noreferrer"
+           className="flex items-center gap-2 transition-colors duration-150 hover:text-white"
+           style={{ color: 'var(--muted)' }}>
+          <span className="font-mono text-[7px] uppercase tracking-[0.2em] px-1.5 py-0.5"
+                style={{ border: '1px solid rgba(176,141,87,0.3)', color: 'var(--copper)' }}>
+            Published
+          </span>
+          <span className="font-mono text-[8px]">Zenodo · DOI 10.5281/zenodo.19340991</span>
+        </a>
+        <div className="flex items-center gap-x-3 flex-wrap justify-center">
+          <span className="font-mono text-[7px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)', opacity: 0.5 }}>Recognised by</span>
+          {[
+            { label: 'UNDRR PreventionWeb', href: 'https://www.preventionweb.net/organization/openplanet-risk-intelligence' },
+            { label: 'CAKE', href: 'https://www.cakex.org/tools/openplanet-risk-intelligence' },
+            { label: 'ClimateBase', href: 'https://climatebase.org/company/1142537/openplanet-risk-intelligence' },
+          ].map(p => (
+            <a key={p.label} href={p.href} target="_blank" rel="noopener noreferrer"
+               className="font-mono text-[8px] uppercase tracking-[0.12em] hover:text-white transition-colors"
+               style={{ color: 'var(--muted)' }}>
+              {p.label}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* ── DISCLAIMER ── */}
+      <div className="w-full flex flex-col items-center text-center gap-2 pt-4 pb-10 px-5">
         <p className="text-[9px] font-mono uppercase tracking-[0.25em] font-bold" style={{ color: 'var(--muted)' }}>
           Disclaimer
         </p>

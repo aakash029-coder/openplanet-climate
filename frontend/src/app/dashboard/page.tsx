@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import dynamic from "next/dynamic";
 
@@ -42,7 +42,16 @@ function DashboardPageInner() {
   const [targetCity, setTargetCity]   = useState<string | null>(null);
   const [visitedTabs, setVisitedTabs] = useState<Set<Tab>>(new Set(['Dashboard']));
   const [showWarningModal, setShowWarningModal] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleCopyLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch { /* clipboard unavailable */ }
+  }, []);
 
   useEffect(() => {
     const check = () => {
@@ -183,12 +192,26 @@ function DashboardPageInner() {
             </div>
 
             {targetCity && (
-              <div className="ml-4 flex items-center gap-2 px-3 py-1.5 shrink-0"
-                   style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--positive)' }} />
-                <span className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: 'var(--positive)' }}>
-                  {targetCity}
-                </span>
+              <div className="ml-4 flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 px-3 py-1.5"
+                     style={{ border: '1px solid var(--hairline)', background: 'var(--raised)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--positive)' }} />
+                  <span className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: 'var(--positive)' }}>
+                    {targetCity}
+                  </span>
+                </div>
+                <button
+                  onClick={handleCopyLink}
+                  aria-label="Copy shareable link"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 font-mono uppercase tracking-[0.14em] transition-colors duration-150 hover:text-white"
+                  style={{ fontSize: '0.625rem', color: linkCopied ? 'var(--positive)' : 'var(--text-2)', border: '1px solid var(--hairline)', background: 'var(--raised)' }}
+                >
+                  {linkCopied ? (
+                    <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>Copied</>
+                  ) : (
+                    <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>Copy link</>
+                  )}
+                </button>
               </div>
             )}
           </div>

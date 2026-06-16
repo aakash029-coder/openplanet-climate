@@ -503,49 +503,6 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
             <AuditButton label="↳ show derivation" onClick={() => openAudit('economics')} />
           </div>
 
-          {/* ── CLIMATE INTELLIGENCE ── */}
-          {primaryData?.climateIntelligence && (() => {
-            const ci = primaryData.climateIntelligence as Record<string, unknown>;
-            return (
-              <div className="p-5 space-y-2.5" style={{ borderBottom: '1px solid var(--hairline)' }}>
-                <span className="text-[8px] font-mono uppercase tracking-widest font-bold flex items-center" style={{ color: 'var(--muted)' }}>
-                  Climate Zone
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] font-bold px-1.5 py-0.5"
-                        style={{ background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', color: '#38bdf8' }}>
-                    {ci.koppen_class as string}
-                  </span>
-                  <span className="text-[10px] font-mono font-semibold" style={{ color: 'var(--text)' }}>
-                    {ci.koppen_label as string}
-                  </span>
-                </div>
-                <p className="text-[8px] font-mono leading-snug" style={{ color: 'var(--muted)' }}>
-                  {ci.koppen_description as string}
-                </p>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-[8px] font-mono" style={{ color: 'var(--muted)' }}>IPCC AR6 warming rate</span>
-                  <span className="text-[10px] font-mono font-bold tabular-nums" style={{ color: 'var(--copper)' }}>
-                    {(ci.ipcc_warming_rate_factor as number).toFixed(2)}× global mean
-                  </span>
-                </div>
-                {Array.isArray(ci.primary_risk_drivers) && (
-                  <ul className="space-y-1 pt-0.5">
-                    {(ci.primary_risk_drivers as string[]).slice(0, 3).map((d, i) => (
-                      <li key={i} className="flex items-start gap-1.5">
-                        <span className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ background: 'var(--copper)' }} />
-                        <span className="text-[8px] font-mono leading-snug" style={{ color: 'var(--muted)' }}>{d}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <p className="text-[7px] font-mono italic" style={{ color: 'var(--reference)' }}>
-                  Beck et al. 2018 · IPCC AR6 WG1
-                </p>
-              </div>
-            );
-          })()}
-
           {/* ── HEATWAVE + TEMP ── */}
           <div className="p-5 space-y-5">
             <div className="space-y-2">
