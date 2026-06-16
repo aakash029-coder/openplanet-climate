@@ -158,9 +158,10 @@ export default function LandingMobile() {
           <button
             onClick={handleCTA}
             style={{ touchAction: 'manipulation' }}
-            className="w-full btn-primary bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-all duration-150 hover:bg-zinc-100 min-h-[52px]"
+            className="w-full btn-primary inline-flex items-center justify-center gap-2.5 bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-all duration-150 hover:bg-zinc-100 min-h-[52px]"
           >
-            Analyse Your City →
+            Analyse a City
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
           <div className="flex flex-col items-center gap-0.5 animate-bounce" style={{ opacity: 0.2 }}>
             <span className="font-mono text-[8px] uppercase tracking-[0.2em]" style={{ color: 'var(--muted)' }}>scroll</span>
@@ -405,9 +406,10 @@ export default function LandingMobile() {
           <button
             onClick={handleCTA}
             style={{ touchAction: 'manipulation' }}
-            className="w-full btn-primary relative z-10 bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-all duration-150 hover:bg-zinc-50 min-h-[52px]"
+            className="w-full btn-primary relative z-10 inline-flex items-center justify-center gap-2.5 bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-all duration-150 hover:bg-zinc-50 min-h-[52px]"
           >
-            Analyse a City →
+            Analyse a City
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
         </div>
       </section>
