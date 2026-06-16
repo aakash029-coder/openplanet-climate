@@ -302,6 +302,65 @@ export default function LandingDesktop() {
                   <p className="font-mono text-[8px] mt-auto pt-1" style={{ color: 'var(--muted)', opacity: 0.35 }}>{card.meta}</p>
                 </div>
               ))}
+
+              {/* Methodology at a Glance — spans remaining 3 cols in row 2 */}
+              <div className="lg:col-span-3 relative p-6 md:p-8 group flex flex-col gap-5"
+                   style={{ background: 'var(--raised)' }}>
+                <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                     style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)' }} />
+
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div>
+                    <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 inline-block mb-3"
+                          style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+                      Methodology
+                    </span>
+                    <h3 className="font-sans font-semibold text-sm tracking-tight" style={{ color: 'var(--text)' }}>
+                      Every number has a source. Every formula is auditable.
+                    </h3>
+                  </div>
+                  <a href="/methodology"
+                     className="font-mono text-[8px] uppercase tracking-[0.18em] px-3 py-1.5 shrink-0 flex items-center gap-1.5 transition-colors duration-150 hover:text-white"
+                     style={{ border: '1px solid var(--hairline)', color: 'var(--muted)', background: 'var(--canvas)' }}>
+                    Read full paper
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-px" style={{ background: 'var(--hairline)' }}>
+                  {[
+                    {
+                      label: 'Mortality Model',
+                      citation: 'Gasparrini et al. · Lancet 2017',
+                      detail: 'Distributed lag non-linear model (DLNM) across 732 locations in 43 countries. Attributable fraction method applied to heat-mortality exposure-response functions.',
+                    },
+                    {
+                      label: 'Economic Model',
+                      citation: 'Burke, Hsiang & Miguel · Nature 2018',
+                      detail: 'Global non-linear temperature–GDP relationship. Zone-specific productivity decay applied to World Bank GDP per capita. ILO (2019) labor output adjustment.',
+                    },
+                    {
+                      label: 'Wet-Bulb Thermodynamics',
+                      citation: 'Stull · J. Atmos. Sci. 2011',
+                      detail: 'Empirical wet-bulb temperature from dry-bulb T and relative humidity RH. Physiological survivability cap at 35°C TW per Sherwood & Huber (2010).',
+                    },
+                  ].map(m => (
+                    <div key={m.label} className="p-4 flex flex-col gap-2" style={{ background: 'var(--raised)' }}>
+                      <p className="font-mono text-[8px] uppercase tracking-[0.18em] font-semibold" style={{ color: 'var(--copper)' }}>{m.label}</p>
+                      <p className="font-mono text-[8px] leading-snug" style={{ color: 'var(--muted)', opacity: 0.55 }}>{m.citation}</p>
+                      <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--text-2)' }}>{m.detail}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-6 flex-wrap pt-1">
+                  <p className="font-mono text-[8px] uppercase tracking-[0.15em]" style={{ color: 'var(--muted)', opacity: 0.45 }}>Data sources</p>
+                  {['ERA5 · Copernicus C3S', 'CMIP6 Ensemble', 'Open-Meteo API', 'World Bank WDI', 'NASA POWER'].map(s => (
+                    <span key={s} className="font-mono text-[8px] tracking-[0.08em]" style={{ color: 'var(--muted)', opacity: 0.55 }}>{s}</span>
+                  ))}
+                </div>
+              </div>
+
             </div>
           </div>
         </section>
