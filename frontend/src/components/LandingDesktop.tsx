@@ -213,135 +213,199 @@ export default function LandingDesktop() {
           </div>
         </section>
 
-        {/* ── 2. TRUST & VALIDATION ── */}
+        {/* ── 2. PUBLISHED, DOCUMENTED & REFERENCED ── */}
         <section className="w-full -mt-8 md:-mt-12">
           <div className="w-full" style={{ borderTop: '1px solid var(--hairline)', borderBottom: '1px solid var(--hairline)', padding: '3.5rem 0' }}>
 
             {/* Header */}
             <div className="text-center mb-10">
               <p className="text-[9px] font-mono uppercase tracking-[0.35em] mb-4" style={{ color: 'var(--muted)' }}>
-                Peer-Reviewed &amp; Independently Recognised
+                Open Science · Research Archive · Ecosystem Recognition
               </p>
               <h2 className="text-2xl md:text-[1.75rem] font-sans font-bold tracking-tight mb-3 leading-tight" style={{ color: 'var(--text)' }}>
-                Validated by institutions working at the frontier of global climate risk.
+                Published, documented, and independently referenced.
               </h2>
-              <p className="font-serif text-sm max-w-lg mx-auto leading-relaxed" style={{ color: 'var(--text-2)' }}>
-                OpenPlanet's methodology is published through open-science infrastructure
-                and independently cited by international disaster risk, adaptation, and sustainability organisations.
+              <p className="font-serif text-sm max-w-xl mx-auto leading-relaxed" style={{ color: 'var(--text-2)' }}>
+                OpenPlanet's methodology is openly archived, documented in peer-reviewed technical literature,
+                and referenced by international disaster risk, climate adaptation, and sustainability organisations.
               </p>
             </div>
 
-            {/* Credential cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-px" style={{ border: '1px solid var(--hairline)', background: 'var(--hairline)' }}>
+            {/* ── Grid: 4 cols × 2 rows, no empty cells ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-px"
+                 style={{ border: '1px solid var(--hairline)', background: 'var(--hairline)' }}>
 
-              {/* Zenodo — 2 cols */}
-              <div className="lg:col-span-2 relative p-6 md:p-8 group flex flex-col gap-4"
+              {/* ── ROW 1 ── */}
+
+              {/* Zenodo — Research Archive — col-span-2 */}
+              <div className="lg:col-span-2 relative p-6 md:p-8 group flex flex-col gap-5"
                    style={{ background: 'var(--raised)', borderLeft: '2px solid rgba(176,141,87,0.55)' }}>
                 <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                      style={{ background: 'linear-gradient(90deg, rgba(176,141,87,0.5), rgba(176,141,87,0.1), transparent)' }} />
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 font-bold"
+                  <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 font-semibold"
                         style={{ border: '1px solid rgba(176,141,87,0.45)', color: 'var(--copper)', background: 'rgba(176,141,87,0.06)' }}>
-                    Published · Open Access
+                    Research Archive · Open Access
                   </span>
                   <span className="font-mono text-[8px] tabular-nums" style={{ color: 'var(--muted)', opacity: 0.45 }}>
                     DOI 10.5281/zenodo.19340991
                   </span>
                 </div>
-                <div>
-                  <h3 className="font-sans font-semibold text-[1rem] mb-2 tracking-tight" style={{ color: 'var(--text)' }}>
-                    Zenodo
-                  </h3>
+                <div className="flex flex-col gap-2">
+                  <h3 className="font-sans font-semibold text-base tracking-tight" style={{ color: 'var(--text)' }}>Zenodo</h3>
                   <p className="font-sans text-[11px] leading-relaxed" style={{ color: 'var(--text-2)' }}>
-                    Open-access scientific repository maintained by CERN and OpenAIRE — the same infrastructure used by researchers publishing in <em>Nature</em>, <em>Science</em>, and the IPCC.
-                    Every version of OpenPlanet's methodology is permanently archived and citable.
+                    Permanently archived in the open-science repository maintained by CERN and OpenAIRE —
+                    the same infrastructure used by research teams publishing in <em>Nature</em>, <em>Science</em>,
+                    and IPCC working groups. Every version is citable, reproducible, and DOI-registered.
                   </p>
                 </div>
-                <p className="font-mono text-[8px] tracking-[0.1em]" style={{ color: 'var(--muted)', opacity: 0.4 }}>
-                  Indexed by Google Scholar · OpenAIRE · DataCite
+                <p className="font-mono text-[8px] mt-auto" style={{ color: 'var(--muted)', opacity: 0.38 }}>
+                  Indexed · Google Scholar · OpenAIRE · DataCite
                 </p>
               </div>
 
-              {/* Recognition cards */}
-              {[
-                {
-                  badge: 'Recognised',
-                  name: 'UNDRR PreventionWeb',
-                  org: 'United Nations Office for Disaster Risk Reduction',
-                  desc: "The UN's primary knowledge platform for DRR practitioners, researchers, and policymakers operating under the Sendai Framework.",
-                  meta: 'United Nations · Geneva',
-                },
-                {
-                  badge: 'Recognised',
-                  name: 'CAKE',
-                  org: 'Climate Adaptation Knowledge Exchange',
-                  desc: "North America's leading open-access hub for climate adaptation science, tools, and case studies used by governments and researchers.",
-                  meta: 'EcoAdapt · USA',
-                },
-                {
-                  badge: 'Recognised',
-                  name: 'ClimateBase',
-                  org: 'Climate Career & Research Platform',
-                  desc: 'Global platform connecting climate professionals, investors, and research organisations driving systemic climate solutions.',
-                  meta: 'Climate Tech · Global',
-                },
-              ].map(card => (
-                <div key={card.name} className="relative p-6 group flex flex-col gap-3"
-                     style={{ background: 'var(--raised)' }}>
-                  <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                       style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
-                  <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 self-start"
-                        style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
-                    {card.badge}
-                  </span>
-                  <div>
-                    <h3 className="font-sans font-semibold text-sm mb-0.5 tracking-tight" style={{ color: 'var(--text)' }}>{card.name}</h3>
-                    <p className="font-mono text-[8px] mb-2.5 leading-snug" style={{ color: 'var(--muted)', opacity: 0.6 }}>{card.org}</p>
-                    <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--text-2)' }}>{card.desc}</p>
-                  </div>
-                  <p className="font-mono text-[8px] mt-auto pt-1" style={{ color: 'var(--muted)', opacity: 0.35 }}>{card.meta}</p>
-                </div>
-              ))}
-
-              {/* Peer-reviewed citations — col-span-3, row 2 */}
-              <div className="lg:col-span-3 relative p-6 md:p-8 group flex flex-col justify-between gap-6"
+              {/* Towards Data Science — Technical Publication — col-span-1 */}
+              <div className="relative p-6 group flex flex-col gap-4"
                    style={{ background: 'var(--raised)' }}>
                 <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                     style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)' }} />
+                     style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
+                <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 self-start"
+                      style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+                  Technical Publication
+                </span>
+                <div className="flex flex-col gap-2 flex-1">
+                  <h3 className="font-sans font-semibold text-sm tracking-tight leading-tight" style={{ color: 'var(--text)' }}>
+                    Towards Data Science
+                  </h3>
+                  <p className="font-mono text-[8px] leading-snug" style={{ color: 'var(--muted)', opacity: 0.55 }}>
+                    Medium Publications · 700K+ monthly readers
+                  </p>
+                  <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--text-2)' }}>
+                    "From NetCDF to Insights: A Practical Pipeline for City-Level Climate Risk Analysis" —
+                    a documented walkthrough of the data engineering and scientific pipeline behind OpenPlanet.
+                  </p>
+                </div>
+                <a href="https://towardsdatascience.com/from-netcdf-to-insights-a-practical-pipeline-for-city-level-climate-risk-analysis/"
+                   target="_blank" rel="noopener noreferrer"
+                   className="font-mono text-[8px] uppercase tracking-[0.15em] flex items-center gap-1.5 mt-auto transition-colors duration-150 hover:text-white"
+                   style={{ color: 'var(--muted)', opacity: 0.55 }}>
+                  Read article
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M7 17L17 7M7 7h10v10"/></svg>
+                </a>
+              </div>
+
+              {/* UNDRR PreventionWeb — col-span-1 */}
+              <div className="relative p-6 group flex flex-col gap-4"
+                   style={{ background: 'var(--raised)' }}>
+                <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                     style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
+                <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 self-start"
+                      style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+                  Referenced
+                </span>
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <h3 className="font-sans font-semibold text-sm tracking-tight" style={{ color: 'var(--text)' }}>UNDRR PreventionWeb</h3>
+                  <p className="font-mono text-[8px] leading-snug" style={{ color: 'var(--muted)', opacity: 0.55 }}>
+                    United Nations Office for Disaster Risk Reduction · Geneva
+                  </p>
+                  <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--text-2)' }}>
+                    The UN's primary knowledge platform for researchers and practitioners operating under the Sendai Framework for Disaster Risk Reduction 2015–2030.
+                  </p>
+                </div>
+              </div>
+
+              {/* ── ROW 2 ── */}
+
+              {/* CAKE — col-span-1 */}
+              <div className="relative p-6 group flex flex-col gap-4"
+                   style={{ background: 'var(--raised)' }}>
+                <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                     style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
+                <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 self-start"
+                      style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+                  Referenced
+                </span>
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <h3 className="font-sans font-semibold text-sm tracking-tight" style={{ color: 'var(--text)' }}>CAKE</h3>
+                  <p className="font-mono text-[8px] leading-snug" style={{ color: 'var(--muted)', opacity: 0.55 }}>
+                    Climate Adaptation Knowledge Exchange · EcoAdapt · USA
+                  </p>
+                  <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--text-2)' }}>
+                    North America's primary open-access resource for climate adaptation science, used by government agencies, research institutions, and policy organisations.
+                  </p>
+                </div>
+              </div>
+
+              {/* ClimateBase — col-span-1 */}
+              <div className="relative p-6 group flex flex-col gap-4"
+                   style={{ background: 'var(--raised)' }}>
+                <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                     style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }} />
+                <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 self-start"
+                      style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
+                  Referenced
+                </span>
+                <div className="flex flex-col gap-1.5 flex-1">
+                  <h3 className="font-sans font-semibold text-sm tracking-tight" style={{ color: 'var(--text)' }}>ClimateBase</h3>
+                  <p className="font-mono text-[8px] leading-snug" style={{ color: 'var(--muted)', opacity: 0.55 }}>
+                    Climate Career &amp; Research Directory · Global
+                  </p>
+                  <p className="font-sans text-[10px] leading-relaxed" style={{ color: 'var(--text-2)' }}>
+                    Global directory connecting climate professionals, researchers, and organisations. Listed alongside tools from leading climate-tech institutions worldwide.
+                  </p>
+                </div>
+              </div>
+
+              {/* Open Science Infrastructure — col-span-2, fills row 2 */}
+              <div className="lg:col-span-2 relative p-6 md:p-8 group flex flex-col gap-5"
+                   style={{ background: 'var(--raised)', borderRight: '2px solid rgba(176,141,87,0.22)' }}>
+                <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                     style={{ background: 'linear-gradient(90deg, transparent, rgba(176,141,87,0.15), transparent)' }} />
 
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div>
                     <span className="font-mono text-[7px] uppercase tracking-[0.22em] px-2 py-1 inline-block mb-3"
                           style={{ border: '1px solid var(--hairline)', color: 'var(--muted)' }}>
-                      Peer-Reviewed Models
+                      Open Science Infrastructure
                     </span>
-                    <h3 className="font-sans font-semibold text-sm tracking-tight" style={{ color: 'var(--text)' }}>
-                      Every projection is derived from published, citable science.
+                    <h3 className="font-sans font-semibold text-sm tracking-tight leading-snug" style={{ color: 'var(--text)' }}>
+                      Reproducible research. Auditable formulas.<br />
+                      <span className="font-light" style={{ color: 'var(--text-2)' }}>No proprietary black boxes.</span>
                     </h3>
                   </div>
                   <a href="/methodology"
                      className="font-mono text-[8px] uppercase tracking-[0.18em] px-3 py-1.5 shrink-0 flex items-center gap-1.5 transition-colors duration-150 hover:text-white"
                      style={{ border: '1px solid var(--hairline)', color: 'var(--muted)', background: 'var(--canvas)' }}>
-                    Read methodology
+                    Full methodology
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </a>
                 </div>
 
-                {/* Citation rows — horizontal, no nested sub-grid */}
-                <div className="flex flex-col gap-3">
+                {/* Citation table */}
+                <div className="flex flex-col gap-0" style={{ borderTop: '1px solid var(--hairline)' }}>
                   {[
-                    { field: 'Mortality',     ref: 'Gasparrini et al. · Lancet 2017',          note: 'Distributed-lag non-linear model (DLNM) · 732 locations · 43 countries' },
-                    { field: 'Economics',     ref: 'Burke, Hsiang & Miguel · Nature 2018',     note: 'Non-linear temperature–GDP relationship · World Bank GDP · ILO labour adjustment' },
-                    { field: 'Wet-Bulb',      ref: 'Stull · J. Atmos. Sci. 2011',              note: 'Empirical T_w from dry-bulb T and RH · survivability cap 35 °C (Sherwood & Huber 2010)' },
-                    { field: 'Climate Data',  ref: 'Copernicus C3S · ERA5 + CMIP6 ensemble',   note: 'ERA5 P95 baseline · CMIP6 multi-model projection · Open-Meteo · NASA POWER' },
+                    { field: 'Mortality',    ref: 'Gasparrini et al. · Lancet 2017',        note: 'DLNM · 732 locations · 43 countries' },
+                    { field: 'Economics',    ref: 'Burke, Hsiang & Miguel · Nature 2018',   note: 'Non-linear temp–GDP · World Bank · ILO' },
+                    { field: 'Wet-Bulb',     ref: 'Stull · J. Atmos. Sci. 2011',            note: '35 °C survivability cap · Sherwood & Huber 2010' },
+                    { field: 'Climate Data', ref: 'ERA5 · CMIP6 · Open-Meteo · NASA POWER', note: 'Copernicus C3S · World Bank WDI · GeoNames' },
                   ].map((row, i, arr) => (
                     <div key={row.field}
-                         className="grid grid-cols-[7rem_1fr_1fr] gap-4 items-baseline py-2.5"
+                         className="grid grid-cols-[5.5rem_1fr_1fr] gap-3 items-baseline py-2"
                          style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--hairline)' : 'none' }}>
-                      <p className="font-mono text-[8px] uppercase tracking-[0.18em] font-semibold shrink-0" style={{ color: 'var(--copper)' }}>{row.field}</p>
+                      <p className="font-mono text-[7.5px] uppercase tracking-[0.16em] font-semibold" style={{ color: 'var(--copper)' }}>{row.field}</p>
                       <p className="font-mono text-[8px] leading-snug" style={{ color: 'var(--text-2)' }}>{row.ref}</p>
-                      <p className="font-sans text-[10px] leading-snug" style={{ color: 'var(--muted)', opacity: 0.6 }}>{row.note}</p>
+                      <p className="font-sans text-[9.5px] leading-snug" style={{ color: 'var(--muted)', opacity: 0.55 }}>{row.note}</p>
                     </div>
+                  ))}
+                </div>
+
+                {/* Transparency pillars */}
+                <div className="flex flex-wrap gap-2 mt-auto">
+                  {['DOI Archive', 'Open Source · GitHub', 'Auditable Excel Export', 'Reproducible Pipeline', 'No Hidden APIs'].map(pill => (
+                    <span key={pill} className="font-mono text-[7.5px] uppercase tracking-[0.12em] px-2 py-1"
+                          style={{ border: '1px solid var(--hairline)', color: 'var(--muted)', opacity: 0.7 }}>
+                      {pill}
+                    </span>
                   ))}
                 </div>
               </div>
