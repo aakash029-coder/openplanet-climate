@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatCurrency } from '@/lib/format';
 
 export function getRiskColor(weight: number): [number, number, number] {
   if (weight >= 0.75) return [220, 38, 38];
@@ -18,10 +19,10 @@ export function parseLoss(lossStr: string): { num: number; prefix: string; suffi
   return { num: parseFloat(m[2]) * multiplier, prefix: m[1] || '$', suffix: m[3] || '' };
 }
 
+// Delegates to the lib/format.ts SoT: guards null/NaN/Infinity → "—", uses the
+// real "−" sign for negatives, and never prints raw fractional cents.
 export function fmtLoss(n: number): string {
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-  return `$${n.toLocaleString()}`;
+  return formatCurrency(n);
 }
 
 export async function fetchElevationSafe(lat: number, lng: number): Promise<number> {

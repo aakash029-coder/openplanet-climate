@@ -143,13 +143,15 @@ function DashboardPageInner() {
       )}
 
       {/* Dashboard tab nav */}
-      <nav className="w-full glass-nav border-b pt-16 sticky top-0 z-[40]"
+      <nav aria-label="Dashboard sections"
+           className="w-full glass-nav border-b pt-16 sticky top-0 z-[40]"
            style={{ borderBottomColor: 'var(--hairline)' }}>
-        <div className="w-full overflow-x-auto scrollbar-none relative">
+        <div className="w-full overflow-x-auto scrollbar-none relative snap-x">
           {/* Right-edge fade hints at more tabs on narrow viewports */}
           <div className="absolute right-0 top-0 bottom-0 w-10 pointer-events-none lg:hidden z-10"
                style={{ background: 'linear-gradient(to right, transparent, var(--canvas))' }} />
-          <div className="flex items-center justify-between px-4 md:px-10 lg:px-16 min-w-max md:min-w-0 w-full">
+          {/* pr-12 on mobile clears the 40px fade so the last tab is never cut off */}
+          <div className="flex items-center justify-between pl-4 pr-12 md:px-10 lg:px-16 min-w-max md:min-w-0 w-full">
             <div className="flex items-center">
               {TABS.map((tab) => {
                 const isLocked = !targetCity && tab !== 'Dashboard';
@@ -158,8 +160,9 @@ function DashboardPageInner() {
                   <button
                     key={tab}
                     disabled={isLocked}
+                    aria-current={isActive ? 'page' : undefined}
                     onClick={() => setActiveTab(tab)}
-                    className={`relative whitespace-nowrap transition-all duration-200 px-3 md:px-5 font-sans text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-medium flex items-center min-h-[52px]
+                    className={`relative snap-start whitespace-nowrap transition-all duration-200 px-3 md:px-5 font-sans text-[10px] md:text-[11px] uppercase tracking-[0.12em] font-medium flex items-center min-h-[52px]
                       ${isActive      ? '' : ''}
                       ${isLocked      ? 'cursor-not-allowed' : 'hover:text-white'}
                     `}

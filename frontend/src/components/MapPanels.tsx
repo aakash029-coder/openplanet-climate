@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { fmtLoss } from './MapHelpers';
-import { formatCoordinates, useClimateData, formatDeathsRange, formatEconomicRange } from '@/context/ClimateDataContext';
+import { useClimateData, formatDeathsRange, formatEconomicRange } from '@/context/ClimateDataContext';
+import { formatCoord } from '@/lib/format';
+import { ConfidenceDot } from '@/components/ui/primitives';
 
 export interface SuggestionCity {
   id:          string | number;
@@ -188,7 +190,7 @@ export const LeftPanel = ({
           {selectedCity && (
             <div className="flex items-center gap-1.5 pl-1">
               <div className="w-1 h-1 rounded-full bg-emerald-500/60" />
-              <p className="text-[8px] font-mono text-slate-600 italic">{formatCoordinates(selectedCity.lat ?? 0, selectedCity.lng ?? 0)}</p>
+              <p className="text-[8px] font-mono text-slate-600 italic">{formatCoord(selectedCity.lat ?? null, selectedCity.lng ?? null)}</p>
             </div>
           )}
         </div>
@@ -208,7 +210,7 @@ export const LeftPanel = ({
                 border: '1px solid var(--hairline)',
                 color: 'var(--text)',
                 height: '40px',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2352525B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C8C96' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'right 12px center',
               }}
@@ -232,7 +234,7 @@ export const LeftPanel = ({
                 border: '1px solid var(--hairline)',
                 color: 'var(--text)',
                 height: '40px',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2352525B' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C8C96' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'right 12px center',
               }}
@@ -247,8 +249,8 @@ export const LeftPanel = ({
         <button
           onClick={handleInitialize}
           disabled={!canGenerate || isLoading}
-          className="btn-primary relative w-full text-[11px] font-sans font-semibold uppercase tracking-wider transition-all duration-150 disabled:opacity-25 disabled:cursor-not-allowed overflow-hidden"
-          style={{ background: 'var(--text)', color: 'var(--canvas)', minHeight: '40px', touchAction: 'manipulation' }}
+          className="btn-primary relative w-full py-3 text-[11px] font-sans font-semibold uppercase tracking-wider transition-all duration-150 disabled:opacity-25 disabled:cursor-not-allowed"
+          style={{ background: 'var(--text)', color: 'var(--canvas)', minHeight: '44px', touchAction: 'manipulation' }}
           onMouseEnter={e => { if (!e.currentTarget.disabled) e.currentTarget.style.background = '#ffffff'; }}
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--text)')}
         >
@@ -426,7 +428,7 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
           <p className="text-[9px] font-mono text-slate-700 uppercase tracking-widest text-center">Select a location to begin</p>
         </div>
       ) : (
-        <div className="flex flex-col flex-grow overflow-y-auto custom-scrollbar divide-y divide-white/[0.04] animate-fadeIn">
+        <div aria-live="polite" className="flex flex-col flex-grow overflow-y-auto custom-scrollbar divide-y divide-white/[0.04] animate-fadeIn">
 
           {/* ── DEATHS ── */}
           <div className="p-5 space-y-3" style={{ borderBottom: '1px solid var(--hairline)' }}>
@@ -448,9 +450,12 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
                 </p>
               )}
             </div>
-            <p className="text-[8px] font-mono leading-relaxed" style={{ color: 'var(--muted)', opacity: 0.55 }}>
-              Gasparrini 2017 · ±15% model sensitivity
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <ConfidenceDot level="medium" />
+              <span className="text-[8px] font-mono" style={{ color: 'var(--muted)', opacity: 0.7 }}>
+                Gasparrini 2017 · ±15%
+              </span>
+            </div>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedDeaths || '0'} />}
             <AuditButton label="↳ show derivation" onClick={() => openAudit('mortality')} />
           </div>
@@ -475,9 +480,12 @@ export const RightPanel = ({ isInitialized, year, isSimulating, mitigatedData, o
                 </p>
               )}
             </div>
-            <p className="text-[8px] font-mono" style={{ color: 'var(--muted)', opacity: 0.55 }}>
-              Burke 2018 · ILO · ±8% SE
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <ConfidenceDot level="high" />
+              <span className="text-[8px] font-mono" style={{ color: 'var(--muted)', opacity: 0.7 }}>
+                Burke 2018 · ILO · ±8% SE
+              </span>
+            </div>
             {isSimulating && mitigatedData && <SavedBadge value={mitigatedData.savedLoss || '0'} />}
             <AuditButton label="↳ show derivation" onClick={() => openAudit('economics')} />
           </div>

@@ -2,11 +2,14 @@
 
 import React from 'react';
 import {
-  formatWBT,
   formatDeathsRange,
   formatEconomicRange,
-  formatCoordinates,
 } from '@/context/ClimateDataContext';
+import {
+  formatNumber,
+  formatCurrency,
+  formatWetBulb,
+} from '@/lib/format';
 import type { Projection } from './SideBySideMathModal';
 import { useProgressiveText } from '@/hooks/useProgressiveText';
 
@@ -44,26 +47,10 @@ export interface CompareTableProps {
 
 // ── Local helpers ──────────────────────────────────────────────────────────────
 
-function getCountry(displayName: string | undefined): string {
-  if (!displayName) return '';
-  const parts = displayName.split(', ');
-  return parts[parts.length - 1] || '';
-}
-
-function fmt(n: number | null | undefined, d = 1): string {
-  if (n == null || isNaN(n)) return "—";
-  return n.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
-}
-
-function fmtUSD(n: number | null | undefined): string {
-  if (n == null || isNaN(n)) return "—";
-  const sign = n < 0 ? "−$" : "$";
-  const abs  = Math.abs(n);
-  if (abs >= 1e12) return `${sign}${(abs / 1e12).toFixed(1)}T`;
-  if (abs >= 1e9)  return `${sign}${(abs / 1e9).toFixed(1)}B`;
-  if (abs >= 1e6)  return `${sign}${(abs / 1e6).toFixed(1)}M`;
-  return `${sign}${abs.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-}
+// Thin aliases so all numeric output routes through the lib/format.ts SoT
+// (guards null/NaN/Infinity → "—", real "−" sign, sensible money sig-figs).
+const fmt = (n: number | null | undefined, d = 1): string => formatNumber(n, d);
+const fmtUSD = (n: number | null | undefined): string => formatCurrency(n);
 
 function cleanAiText(text: string | null): string {
   if (!text) return "";
@@ -101,7 +88,7 @@ export function getMitigatedValue(
 const METRICS = [
   { key: "heatwave_days",       label: "Heatwave Days",       unit: "d/yr",   source: "CMIP6 Ensemble · ERA5 P95",        fmt: (v: number) => `${fmt(v, 0)}d`,                             hasCalc: false },
   { key: "peak_tx5d_c",         label: "Peak Tx5d",           unit: "°C",     source: "Open-Meteo CMIP6",                 fmt: (v: number) => `${fmt(v)}°C`,                               hasCalc: false },
-  { key: "wbt_max_c",           label: "Max Wet-Bulb",        unit: "°C",     source: "Stull (2011) · ERA5 P95 Humidity", fmt: (v: number) => formatWBT(v),                                hasCalc: false },
+  { key: "wbt_max_c",           label: "Max Wet-Bulb",        unit: "°C",     source: "Stull (2011) · ERA5 P95 Humidity", fmt: (v: number) => formatWetBulb(v),                            hasCalc: false },
   { key: "uhi_intensity_c",     label: "Surface UHI",         unit: "°C",     source: "",                                 fmt: (v: number) => `+${fmt(v)}°C`,                              hasCalc: false },
   { key: "attributable_deaths", label: "Attributable Deaths", unit: "est/yr", source: "Gasparrini (2017), Lancet",        fmt: (v: number) => Math.round(v).toLocaleString(),              hasCalc: true  },
   { key: "economic_decay_usd",  label: "Economic Decay",      unit: "USD",    source: "Burke (2018) · ILO (2019)",        fmt: (v: number) => fmtUSD(v),                                   hasCalc: true  },
@@ -110,7 +97,7 @@ const METRICS = [
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function CompareTable({
-  okResults, compareYear, canopy, albedo, ssp,
+  okResults, compareYear, canopy, albedo,
   projA, projB, aiAnalysis, aiLoading, onMathModal,
 }: CompareTableProps) {
   const hasMitigation = canopy > 0 || albedo > 0;
@@ -175,60 +162,6 @@ export function CompareTable({
 
       {/* ── Main comparison table ── */}
       <div className="w-full border border-white/[0.05]" style={{ background: 'var(--raised)' }}>
-
-        {/* Sticky VS comparison header */}
-        <div className="sticky top-16 z-20 border-b border-white/[0.05]" style={{ background: 'var(--panel)' }}>
-          <div className="grid" style={{ gridTemplateColumns: '1fr 56px 1fr' }}>
-
-            {/* City A */}
-            <div className="px-5 md:px-7 py-5">
-              <p className="font-mono text-[7px] uppercase tracking-[0.22em] mb-2.5" style={{ color: 'var(--reference)' }}>
-                {ssp.toUpperCase()} · {compareYear}
-                {hasMitigation && ` · +${canopy}% canopy`}
-              </p>
-              <p className="font-sans text-base md:text-lg font-semibold tracking-tight leading-none mb-1.5 truncate" style={{ color: 'var(--text)' }}>
-                {okResults[0]?.query ?? '—'}
-              </p>
-              <p className="font-mono text-[8px] mb-0.5" style={{ color: 'var(--muted)' }}>
-                {getCountry(okResults[0]?.display_name)}
-              </p>
-              {(okResults[0]?.lat || okResults[0]?.lng) && (
-                <p className="font-mono text-[8px] tabular-nums" style={{ color: 'var(--muted)', opacity: 0.7 }}>
-                  {formatCoordinates(okResults[0].lat, okResults[0].lng)}
-                  {okResults[0].elevation > 0 && ` · ${okResults[0].elevation.toFixed(0)}m`}
-                </p>
-              )}
-            </div>
-
-            {/* VS divider */}
-            <div
-              className="flex items-center justify-center"
-              style={{ borderLeft: '1px solid var(--hairline)', borderRight: '1px solid var(--hairline)' }}
-            >
-              <span className="font-mono text-[9px] font-bold tracking-[0.3em]" style={{ color: 'var(--muted)', opacity: 0.5 }}>VS</span>
-            </div>
-
-            {/* City B */}
-            <div className="px-5 md:px-7 py-5 text-right">
-              <p className="font-mono text-[7px] uppercase tracking-[0.22em] mb-2.5" style={{ color: 'var(--reference)' }}>
-                {ssp.toUpperCase()} · {compareYear}
-                {hasMitigation && ` · +${albedo}% albedo`}
-              </p>
-              <p className="font-sans text-base md:text-lg font-semibold tracking-tight leading-none mb-1.5 truncate" style={{ color: 'var(--text)' }}>
-                {okResults[1]?.query ?? '—'}
-              </p>
-              <p className="font-mono text-[8px] mb-0.5" style={{ color: 'var(--muted)' }}>
-                {getCountry(okResults[1]?.display_name)}
-              </p>
-              {(okResults[1]?.lat || okResults[1]?.lng) && (
-                <p className="font-mono text-[8px] tabular-nums" style={{ color: 'var(--muted)', opacity: 0.7 }}>
-                  {formatCoordinates(okResults[1].lat, okResults[1].lng)}
-                  {okResults[1].elevation > 0 && ` · ${okResults[1].elevation.toFixed(0)}m`}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

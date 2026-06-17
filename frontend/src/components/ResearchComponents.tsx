@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import type { AuditTrail, AuditTrailMortality, AuditTrailEconomics } from "@/types/climate";
+import { formatNumber, formatCurrency } from "@/lib/format";
 
 export type CalcAuditSection = AuditTrailMortality | AuditTrailEconomics;
 
@@ -18,20 +19,10 @@ export interface RiskResult {
   baseline: { baseline_mean_c: number | null }; era5_humidity_p95?: number;
 }
 
-export function fmt(n: number | null | undefined, d = 1): string {
-  if (n == null || isNaN(n)) return "—";
-  return n.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
-}
-
-export function fmtUSD(n: number | null | undefined): string {
-  if (n == null || isNaN(n)) return "—";
-  const sign = n < 0 ? "−$" : "$";
-  const abs  = Math.abs(n);
-  if (abs >= 1e12) return `${sign}${(abs / 1e12).toFixed(1)}T`;
-  if (abs >= 1e9)  return `${sign}${(abs / 1e9).toFixed(1)}B`;
-  if (abs >= 1e6)  return `${sign}${(abs / 1e6).toFixed(1)}M`;
-  return `${sign}${abs.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-}
+// Route all numeric/monetary output through the lib/format.ts SoT so guards
+// (null/NaN/Infinity → "—"), the real "−" sign, and money sig-figs are uniform.
+export const fmt = (n: number | null | undefined, d = 1): string => formatNumber(n, d);
+export const fmtUSD = (n: number | null | undefined): string => formatCurrency(n);
 
 export function getWBTStatus(wbt: number) {
   if (wbt >= 35) return { label: "> 35°C — Critical Physiological Limit", color: "text-red-500",    bg: "bg-red-500/10",    border: "border-red-500/30"    };
@@ -247,6 +238,20 @@ export const AdaptationROI = ({
             </div>
           ))}
         </div>
+
+        {/* Horizon note — flagged when the modeled payback runs past the 30-year
+            window (so a negative ROI is never shown without explanation). */}
+        {totalInvest > 0 && (roi < 0 || payback > 30) && (
+          <div className="bg-amber-950/20 border border-amber-800/30 rounded-xl px-4 py-3 mb-5 flex items-start gap-2.5">
+            <span className="text-amber-500 text-[11px] leading-none mt-0.5">⚠</span>
+            <p className="text-[9px] font-mono text-amber-500/80 leading-relaxed">
+              At this configuration the modeled payback
+              {isFinite(payback) ? ` (${fmt(payback, 1)} years)` : ""} exceeds the
+              30-year analysis horizon, so the net benefit is negative. Try a higher
+              canopy/albedo level or a preset above to reach break-even within the window.
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
           <div className="bg-slate-900/30 border border-slate-800/60 rounded-xl p-4">

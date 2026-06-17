@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  formatCoordinates,
   useClimateData,
 } from "@/context/ClimateDataContext";
 import { SideBySideMathModal } from './dashboard/SideBySideMathModal';
@@ -328,139 +327,157 @@ export default function CompareModule({ baseTarget }: { baseTarget: string }) {
         valA={mathModal.valA} valB={mathModal.valB}
       />
 
-      {/* ── HEADER ── */}
-      <div className="border border-white/[0.05] p-5 md:p-8 relative overflow-hidden" style={{ background: 'var(--raised)' }}>
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/10 blur-[100px] pointer-events-none" />
-        <h2 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-6" style={{ color: 'var(--muted)' }}>City comparison</h2>
+      {/* ── CONFIGURATION PANEL ── */}
+      <div className="border border-white/[0.06] relative overflow-visible" style={{ background: 'var(--raised)' }}>
 
-        {/* City cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-          {/* City A — locked to primaryData */}
-          <div className="relative border border-white/[0.09] overflow-hidden min-h-[120px] flex flex-col justify-center p-5 bg-black">
-            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(34,211,238,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,0.3) 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
-            <div className="relative z-20">
-              <span className="text-[10px] font-mono text-[#0ea5e9] uppercase tracking-widest block mb-1 font-bold">City A — Locked</span>
-              <h3 className="text-lg md:text-xl font-mono text-white tracking-wider uppercase truncate" title={primaryData?.city_name ?? baseTarget}>
-                {primaryData?.city_name ?? baseTarget}
-              </h3>
-              {primaryData && (
-                <span className="text-[9px] font-mono text-slate-400 tracking-widest block mt-1">
-                  {formatCoordinates(primaryData.lat, primaryData.lng)}
-                </span>
-              )}
+        {/* Top bar — clear compare prompt + city search */}
+        <div className="border-b border-white/[0.06] px-5 py-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3">
+            <span className="text-[10px] font-mono text-white uppercase tracking-[0.16em] font-bold">
+              Which city do you want to compare with?
+            </span>
+            <span className="flex items-center gap-1.5 text-[8px] font-mono uppercase tracking-widest" style={{ color: 'var(--muted)' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 shrink-0" />
+              Base: <span className="text-slate-300 font-bold">{primaryData?.city_name ?? baseTarget}</span>
               {primaryLoading && (
-                <span className="text-[9px] font-mono text-[#0ea5e9]/60 tracking-widest block mt-1">Loading...</span>
+                <span className="w-2.5 h-2.5 border border-white/20 border-t-cyan-400 rounded-full animate-spin shrink-0" />
               )}
-            </div>
+            </span>
           </div>
-
-          {/* City B input */}
-          <div className={`relative border overflow-visible min-h-[120px] flex flex-col justify-center p-5 bg-black transition-colors ${city2Geo ? 'border-emerald-500/50' : 'border-white/[0.05]'}`}>
-            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(16,185,129,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,0.3) 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
-            <div className="relative z-20 w-full overflow-visible">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-widest block mb-3 font-bold">City B — Target</span>
-              <div className="relative w-full overflow-visible">
-                <input
-                  type="text"
-                  value={searchQuery2}
-                  onChange={(e) => { setSearchQuery2(e.target.value); if (city2Geo) setCity2Geo(null); }}
-                  placeholder="Search city to compare..."
-                  className="w-full bg-white/[0.03] p-3 text-[11px] font-mono text-white placeholder-slate-500 outline-none focus:border-white/20 transition-colors uppercase tracking-widest"
-                  style={{ border: '1px solid var(--hairline)' }}
-                />
-                {suggestions2.length > 0 && !city2Geo && (
-                  <div className="absolute top-full left-0 w-full mt-2 border border-white/[0.05] z-[9999] max-h-48 overflow-y-auto" style={{ background: 'var(--panel)' }}>
-                    {suggestions2.map((city, idx) => (
-                      <div
-                        key={`${city.id}-${idx}`}
-                        onClick={() => {
-                          const n = `${city.name}, ${city.country}`;
-                          setSearchQuery2(n);
-                          setCity2Geo({ display_name: n, lat: city.latitude, lng: city.longitude });
-                          setSuggestions2([]);
-                        }}
-                        className="px-4 py-3 text-[10px] font-mono text-slate-300 hover:bg-white/[0.05] hover:text-white cursor-pointer transition-colors border-b border-white/[0.05] last:border-0 uppercase tracking-widest"
-                      >
-                        {city.name}, <span className="opacity-50">{city.country}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          <div className="relative max-w-md">
+            <input
+              type="text"
+              value={searchQuery2}
+              onChange={(e) => { setSearchQuery2(e.target.value); if (city2Geo) setCity2Geo(null); }}
+              placeholder="Type a city name…"
+              className="w-full px-4 py-2.5 text-[11px] font-mono text-white placeholder-slate-600 outline-none"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--hairline)' }}
+            />
+            {city2Geo && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[8px] font-mono text-emerald-400 uppercase tracking-widest">Locked</span>
               </div>
-              {city2Geo && <span className="text-[9px] font-mono text-emerald-400 tracking-widest block mt-2">{formatCoordinates(city2Geo.lat, city2Geo.lng)}</span>}
-            </div>
+            )}
+            {suggestions2.length > 0 && !city2Geo && (
+              <div className="absolute top-full left-0 w-full mt-1 border border-white/[0.06] z-[9999] max-h-48 overflow-y-auto shadow-2xl" style={{ background: '#0a0a0f' }}>
+                {suggestions2.map((city, idx) => (
+                  <div
+                    key={`${city.id}-${idx}`}
+                    onClick={() => {
+                      const n = `${city.name}, ${city.country}`;
+                      setSearchQuery2(n);
+                      setCity2Geo({ display_name: n, lat: city.latitude, lng: city.longitude });
+                      setSuggestions2([]);
+                    }}
+                    className="px-4 py-2.5 text-[10px] font-mono text-slate-400 hover:bg-white/[0.04] hover:text-white cursor-pointer transition-colors border-b border-white/[0.04] last:border-0"
+                  >
+                    {city.name}, <span className="opacity-40">{city.country}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Config */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-cyan-950/10 border border-cyan-500/10 mb-6">
-          <div>
-            <label className="block text-[10px] font-mono text-slate-300 uppercase tracking-widest mb-2">Scenario</label>
+        {/* 3-column config strip */}
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-white/[0.06]">
+
+          {/* Column 1 — Scenario */}
+          <div className="px-5 py-4 text-center">
+            <label className="block text-[8px] font-mono text-slate-500 uppercase tracking-[0.2em] font-bold mb-2">Scenario</label>
             <select
               value={ssp}
               onChange={(e) => setSsp(e.target.value)}
-              className="w-full bg-black/40 px-3 py-2 text-xs font-mono text-[#0ea5e9] outline-none focus:border-white/20"
-              style={{ border: '1px solid var(--hairline)' }}
+              className="w-full max-w-[200px] mx-auto bg-transparent text-center text-sm font-mono text-white outline-none cursor-pointer appearance-none"
+              style={{ border: 'none' }}
             >
-              <option value="SSP2-4.5">SSP2-4.5 (MODERATE)</option>
-              <option value="SSP5-8.5">SSP5-8.5 (HIGH RISK)</option>
+              <option value="SSP2-4.5" className="bg-[#0a0a0f]">SSP2-4.5</option>
+              <option value="SSP5-8.5" className="bg-[#0a0a0f]">SSP5-8.5</option>
             </select>
+            <p className="text-[7px] font-mono text-slate-600 uppercase tracking-widest mt-1">
+              {ssp === 'SSP2-4.5' ? 'Moderate pathway' : 'High-emission baseline'}
+            </p>
           </div>
-          <div>
-            <label className="block text-[10px] font-mono text-slate-300 uppercase tracking-widest mb-2">Year</label>
-            <select
-              value={compareYear}
-              onChange={(e) => setCompareYear(Number(e.target.value))}
-              className="w-full bg-black/40 px-3 py-2 text-xs font-mono text-white outline-none focus:border-white/20"
-              style={{ border: '1px solid var(--hairline)' }}
-            >
-              {COMPARE_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <label className="text-[10px] font-mono text-slate-300 uppercase">Canopy</label>
-              <span className="text-[10px] font-mono text-emerald-400">+{canopy}%</span>
+
+          {/* Column 2 — Year */}
+          <div className="px-5 py-4 text-center">
+            <label className="block text-[8px] font-mono text-slate-500 uppercase tracking-[0.2em] font-bold mb-2">Year</label>
+            <div className="flex items-center justify-center gap-3">
+              {COMPARE_YEARS.map(y => (
+                <button
+                  key={y}
+                  onClick={() => setCompareYear(y)}
+                  className={`px-4 py-1.5 font-mono text-sm transition-all duration-150 ${
+                    compareYear === y
+                      ? 'text-white border-b-2 border-white font-bold'
+                      : 'text-slate-500 hover:text-slate-300 border-b-2 border-transparent'
+                  }`}
+                >
+                  {y}
+                </button>
+              ))}
             </div>
-            <input type="range" min={0} max={50} value={canopy} onChange={(e) => setCanopy(Number(e.target.value))} className="w-full accent-emerald-500 cursor-pointer" style={{ touchAction: 'manipulation' }} />
+            <p className="text-[7px] font-mono text-slate-600 uppercase tracking-widest mt-1">Projection horizon</p>
           </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <label className="text-[10px] font-mono text-slate-300 uppercase">Albedo</label>
-              <span className="text-[10px] font-mono text-sky-400">+{albedo}%</span>
+
+          {/* Column 3 — Mitigation */}
+          <div className="px-5 py-4">
+            <label className="block text-[8px] font-mono text-slate-500 uppercase tracking-[0.2em] font-bold mb-3 text-center">Mitigation</label>
+            <div className="space-y-2.5 max-w-[220px] mx-auto">
+              <div className="flex items-center gap-3">
+                <span className="text-[8px] font-mono text-slate-500 uppercase w-12 shrink-0">Canopy</span>
+                <input type="range" min={0} max={50} value={canopy}
+                  onChange={(e) => setCanopy(Number(e.target.value))}
+                  className="flex-1 h-1 bg-white/[0.06] appearance-none cursor-pointer accent-emerald-500"
+                  style={{ touchAction: 'manipulation' }}
+                />
+                <span className="text-[10px] font-mono text-emerald-400 tabular-nums w-8 text-right font-bold">+{canopy}%</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[8px] font-mono text-slate-500 uppercase w-12 shrink-0">Albedo</span>
+                <input type="range" min={0} max={100} value={albedo}
+                  onChange={(e) => setAlbedo(Number(e.target.value))}
+                  className="flex-1 h-1 bg-white/[0.06] appearance-none cursor-pointer accent-cyan-500"
+                  style={{ touchAction: 'manipulation' }}
+                />
+                <span className="text-[10px] font-mono text-sky-400 tabular-nums w-8 text-right font-bold">+{albedo}%</span>
+              </div>
             </div>
-            <input type="range" min={0} max={100} value={albedo} onChange={(e) => setAlbedo(Number(e.target.value))} className="w-full accent-cyan-500 cursor-pointer" style={{ touchAction: 'manipulation' }} />
           </div>
         </div>
 
-        <button
-          onClick={handleCompare}
-          disabled={running || !city2Geo || !primaryData || primaryLoading}
-          className="w-full md:w-auto px-10 py-3 bg-cyan-900 border border-cyan-500/50 text-white font-mono text-xs font-bold uppercase tracking-[0.2em] hover:bg-cyan-800 disabled:opacity-50 transition-all"
-          style={{ touchAction: 'manipulation' }}
-        >
-          {running ? "PROCESSING..." : primaryLoading ? "LOADING CITY A..." : "RUN COMPARISON"}
-        </button>
+        {/* Run button */}
+        <div className="border-t border-white/[0.06] px-5 py-4 flex flex-col items-center gap-3">
+          <button
+            onClick={handleCompare}
+            disabled={running || !city2Geo || !primaryData || primaryLoading}
+            className="w-full md:w-auto min-w-[240px] py-3 px-10 font-mono text-xs font-bold uppercase tracking-[0.2em] transition-all duration-150 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{
+              background: (running || !city2Geo || !primaryData || primaryLoading) ? 'rgba(255,255,255,0.04)' : 'white',
+              color: (running || !city2Geo || !primaryData || primaryLoading) ? 'var(--muted)' : 'black',
+              touchAction: 'manipulation',
+            }}
+          >
+            {running ? "Processing..." : primaryLoading ? "Loading City A..." : "Run Comparison"}
+          </button>
 
-        {retryStatus && (
-          <p className="mt-4 text-[10px] font-mono text-[#0ea5e9] font-bold uppercase tracking-widest">
-            <span className="inline-block w-2 h-2 bg-[#0ea5e9] rounded-full mr-2" />{retryStatus}
-          </p>
-        )}
-        {globalError && (
-          <div className="mt-4 border border-amber-900/40 p-4" style={{ background: 'rgba(120,53,15,0.08)' }}>
-            <p className="font-mono text-[9px] uppercase tracking-[0.2em] font-bold mb-2" style={{ color: 'var(--heat-2)' }}>
-              UPSTREAM NODE DISRUPTION
+          {retryStatus && (
+            <p className="text-[9px] font-mono text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />{retryStatus}
             </p>
-            <p className="font-mono text-[9px] leading-relaxed" style={{ color: 'var(--muted)' }}>
-              Copernicus data gateway currently handling extreme request load threshold.
-              Falling back to localized historical downscaling cache layers.
-              Please toggle execution loop again within 15 seconds.
-            </p>
-          </div>
-        )}
+          )}
+          {globalError && (
+            <div className="w-full border border-amber-900/30 p-3 mt-1" style={{ background: 'rgba(120,53,15,0.06)' }}>
+              <p className="font-mono text-[8px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: 'var(--heat-2)' }}>
+                Upstream data disruption
+              </p>
+              <p className="font-mono text-[8px] leading-relaxed" style={{ color: 'var(--muted)' }}>
+                Copernicus gateway under load. Please retry within 15 seconds.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Loading */}

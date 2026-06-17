@@ -19,14 +19,16 @@ const config: Config = {
         mono:    ["var(--font-mono)", "JetBrains Mono", "monospace"], // JetBrains Mono  — ALL numbers
       },
 
-      // Archival color palette — §3 — color encodes meaning, never decorates
+      // Archival color palette — §3 — color encodes meaning, never decorates.
+      // Aligned to the canonical globals.css :root variables so the Tailwind
+      // utilities and the CSS custom properties share ONE source of truth.
       colors: {
-        canvas:   "#08080A",  // page background
-        panel:    "#0C0C0E",  // sidebars, sunken panels
-        raised:   "#111113",  // only card surface
-        ink:      "#ECECEE",  // primary text
-        ink2:     "#A1A1AA",  // secondary
-        muted:    "#52525B",  // labels, captions, provenance
+        canvas:   "#050608",  // page background (matches --canvas)
+        panel:    "#0A0A0C",  // sidebars, sunken panels (matches --panel)
+        raised:   "#0F0F12",  // card surface (matches --raised)
+        ink:      "#EDEDEF",  // primary text (matches --text)
+        ink2:     "#B4B4BD",  // secondary (matches --text-2; raised for AA)
+        muted:    "#8C8C96",  // labels, captions (matches --muted; AA-compliant)
         copper:   "#B08D57",  // monetary headline — muted copper
         positive: "#5E8C6A",  // saved/improved — sage, not neon
         ref:      "#6E8CA8",  // links, references — ink blue

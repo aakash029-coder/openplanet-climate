@@ -40,6 +40,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Agent worktrees / local tooling
+.claude/
+
 # TypeScript build info
 *.tsbuildinfo
 

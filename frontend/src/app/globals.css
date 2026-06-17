@@ -245,6 +245,33 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   box-shadow: 0 0 0 1px rgba(176, 141, 87, 0.3);
 }
 
+/* ── Keyboard focus ring for interactive controls (WCAG 2.4.7) ──
+   focus-visible only fires on keyboard navigation, so mouse/touch clicks
+   stay clean while keyboard users always get a clear, AA-visible indicator. */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--reference);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── Skeleton loading shimmer — drives the <Skeleton> primitive ── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════
    Typography
    ══════════════════════════════════════════════════════════════════════════════ */
@@ -415,7 +442,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .stagger-children > *,
   .animate-bounce,
   .animate-spin-reverse,
-  .pulse-dot::after {
+  .pulse-dot::after,
+  .skeleton::after {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

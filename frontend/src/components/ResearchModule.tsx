@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  formatWBT, formatEconomicRange, formatCoordinates,
+  formatEconomicRange,
   useClimateData, CityClimateData,
 } from "@/context/ClimateDataContext";
+import { formatCoord, formatWetBulb } from "@/lib/format";
 import { ExcelExportIconButton, type ExcelExportData } from "@/components/ExcelExport";
 
 import {
@@ -12,6 +13,7 @@ import {
   CalcModal, AdaptationROI, MortalityDecomposition, SourceLine, CalcBtn
 } from "./ResearchComponents";
 import { useProgressiveText } from "@/hooks/useProgressiveText";
+import { SkeletonText } from "@/components/ui/primitives";
 
 // ─────────────────────────────────────────────────────────────────
 // MOBILE COLLAPSIBLE SECTION
@@ -255,7 +257,7 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
           </h1>
           {result && (
             <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-2">
-              {formatCoordinates(result.lat, result.lng)}
+              {formatCoord(result.lat, result.lng)}
               {result.elevation ? ` · ELEV: ${result.elevation}m` : ''}
             </p>
           )}
@@ -425,14 +427,14 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
             <div className="border border-white/[0.05] p-5 flex flex-col" style={{ background: 'var(--raised)' }}>
               <h3 className="font-sans text-eye uppercase tracking-[0.14em] font-semibold mb-4" style={{ color: 'var(--muted)' }}>Physiological Limit Monitor</h3>
               <div className={`flex flex-col items-center justify-center py-8 border-y border-white/[0.05] my-4 flex-grow ${wbtStatus.bg}`}>
-                <span className={`text-4xl font-mono font-bold tabular-nums ${wbtStatus.color}`}>{formatWBT(dynamicData.wbt)}</span>
+                <span className={`text-4xl font-mono font-bold tabular-nums ${wbtStatus.color}`}>{formatWetBulb(dynamicData.wbt)}</span>
                 <span className="text-[10px] font-mono text-slate-500 mt-2 tracking-widest">WET-BULB TEMPERATURE</span>
                 <div className={`mt-3 px-4 py-1 border ${wbtStatus.border} ${wbtStatus.color} ${wbtStatus.bg} text-[9px] font-mono font-bold`}>
                   {wbtStatus.label}
                 </div>
                 {hasMitigation && (
                   <p className="text-[9px] font-mono text-slate-600 mt-3 italic">
-                    Baseline: {selectedProj.wbt_max_c != null ? formatWBT(selectedProj.wbt_max_c) : '—'}
+                    Baseline: {selectedProj.wbt_max_c != null ? formatWetBulb(selectedProj.wbt_max_c) : '—'}
                   </p>
                 )}
               </div>
@@ -595,13 +597,8 @@ export default function ResearchModule({ baseTarget }: { baseTarget: string }) {
               Analyst summary — Geological &amp; Thermal Context
             </h4>
             {aiLoading ? (
-              <div className="space-y-2 py-3">
-                <div className="animate-pulse bg-zinc-900/60 h-3 w-full rounded-none" />
-                <div className="animate-pulse bg-zinc-900/60 h-3 w-[94%] rounded-none" />
-                <div className="animate-pulse bg-zinc-900/60 h-3 w-5/6 rounded-none" />
-                <div className="animate-pulse bg-zinc-900/60 h-3 w-4/5 rounded-none" />
-                <div className="animate-pulse bg-zinc-900/60 h-3 w-3/4 rounded-none" />
-                <div className="animate-pulse bg-zinc-900/60 h-3 w-2/3 rounded-none" />
+              <div className="py-3">
+                <SkeletonText lines={6} label="Generating scientific summary" />
                 <div className="flex items-center gap-2 pt-3 font-mono text-[9px] uppercase tracking-[0.18em]"
                      style={{ color: 'var(--reference)' }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse shrink-0" />
