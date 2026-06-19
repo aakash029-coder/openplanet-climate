@@ -24,7 +24,9 @@ logger = logging.getLogger(__name__)
 
 INDICATORS: dict[str, str] = {
     "SP.DYN.CDRT.IN": "death_rate",
-    "NY.GDP.PCAP.CD": "gdp_per_capita",
+    "NY.GDP.PCAP.CD": "gdp_per_capita",          # nominal GDP per capita (current US$)
+    "NY.GDP.MKTP.CD": "gdp_total_usd",           # national nominal GDP (current US$)
+    "SP.POP.TOTL": "population_total",           # national population
     "SP.URB.TOTL.IN.ZS": "urban_share",
     "SP.DYN.LE00.IN": "life_expectancy",
     "SH.MED.PHYS.ZS": "physicians_per1000",

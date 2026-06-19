@@ -151,6 +151,8 @@ class GeocodingResult:
     latitude: float
     longitude: float
     source: str
+    elevation: float = 0.0
+    elevation_source: str = "unresolved"
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,6 +165,97 @@ class GeocodingCandidate:
     latitude: float
     longitude: float
     source: str
+
+
+# ── Null-island & DEM elevation ────────────────────────────────────────────────
+
+# Plausible global elevation band (Dead Sea ≈ −430 m, habitable max ≈ La Rinconada
+# ~5100 m). Anything outside is treated as a bad DEM read.
+_ELEVATION_MIN_M = -450.0
+_ELEVATION_MAX_M = 6000.0
+
+
+def _is_null_island(lat: float, lng: float) -> bool:
+    """True for the (0,0) Gulf-of-Guinea 'null island' geocoder leak."""
+    return abs(lat) < 0.01 and abs(lng) < 0.01
+
+
+async def _fetch_dem_elevation(
+    lat: float, lng: float, client: httpx.AsyncClient
+) -> tuple[float, str]:
+    """
+    Authoritative DEM point elevation, reconciled across two free sources:
+      1. Open-Meteo Elevation API (Copernicus DEM GLO-90)
+      2. Open-Topo-Data SRTM 30 m (fallback)
+
+    Disk-cached and retried on 429 so a transient rate limit (common on the HF
+    shared IP) does not silently degrade to 0.0. Returns (elevation_m, source);
+    returns (0.0, 'unresolved') only if both sources truly fail — never fabricates.
+    """
+    from climate_engine.services.disk_cache import disk_get, disk_set
+
+    cache_key = f"dem_elev_{round(lat, 4)}_{round(lng, 4)}"
+    cached = disk_get(cache_key, ttl=86400 * 90)
+    if cached is not None:
+        return cached[0], cached[1]
+
+    # Primary: Open-Meteo Elevation (Copernicus DEM), with 429 backoff.
+    for attempt in range(1, 4):
+        try:
+            resp = await client.get(
+                "https://api.open-meteo.com/v1/elevation",
+                params={"latitude": lat, "longitude": lng},
+                timeout=8.0,
+            )
+            if resp.status_code == 429:
+                await asyncio.sleep(2 ** attempt)
+                continue
+            resp.raise_for_status()
+            arr = resp.json().get("elevation", [])
+            if arr and arr[0] is not None:
+                elev = float(arr[0])
+                if _ELEVATION_MIN_M <= elev <= _ELEVATION_MAX_M:
+                    disk_set(cache_key, [round(elev, 1), "open_meteo_copernicus_dem"])
+                    return round(elev, 1), "open_meteo_copernicus_dem"
+            break
+        except Exception as exc:
+            logger.warning("[elevation] Open-Meteo DEM attempt %d failed for (%.4f,%.4f): %s", attempt, lat, lng, exc)
+            if attempt < 3:
+                await asyncio.sleep(2 ** attempt)
+
+    # Fallback: Open-Topo-Data SRTM 30 m
+    try:
+        resp = await client.get(
+            "https://api.opentopodata.org/v1/srtm30m",
+            params={"locations": f"{lat},{lng}"},
+            timeout=10.0,
+        )
+        resp.raise_for_status()
+        results = resp.json().get("results", [])
+        if results and results[0].get("elevation") is not None:
+            elev = float(results[0]["elevation"])
+            if _ELEVATION_MIN_M <= elev <= _ELEVATION_MAX_M:
+                disk_set(cache_key, [round(elev, 1), "opentopodata_srtm30m"])
+                return round(elev, 1), "opentopodata_srtm30m"
+    except Exception as exc:
+        logger.warning("[elevation] Open-Topo-Data failed for (%.4f,%.4f): %s", lat, lng, exc)
+
+    return 0.0, "unresolved"
+
+
+async def _finalize_geocode(
+    result: GeocodingResult, client: httpx.AsyncClient
+) -> GeocodingResult:
+    """Reject null-island leaks and attach a DEM-reconciled point elevation."""
+    from dataclasses import replace
+
+    if _is_null_island(result.latitude, result.longitude):
+        raise ValueError(
+            f"Geocoder returned null-island (0,0) for source '{result.source}' — rejected."
+        )
+
+    elev, elev_src = await _fetch_dem_elevation(result.latitude, result.longitude, client)
+    return replace(result, elevation=elev, elevation_source=elev_src)
 
 
 # ── Hit selectors ─────────────────────────────────────────────────────────────
@@ -297,6 +390,31 @@ async def _fetch_nominatim_geocoding(
     )
 
 
+# Populated-place points must outrank administrative-boundary centroids: an admin
+# polygon's centroid drifts off the city (Lisbon *District* centroid is ~30 km N of
+# the city at 339 m vs the city itself at ~10 m — the root of the elevation bug).
+_PHOTON_PLACE_RANK = {
+    "city": 0, "town": 1, "municipality": 2, "borough": 3,
+    "village": 4, "suburb": 5, "locality": 6, "hamlet": 7,
+}
+
+
+def _photon_feature_rank(feature: Dict[str, Any]) -> int:
+    props = feature.get("properties", {})
+    osm_key = (props.get("osm_key") or "").lower()
+    osm_value = (props.get("osm_value") or "").lower()
+    if osm_key == "place" and osm_value in _PHOTON_PLACE_RANK:
+        return _PHOTON_PLACE_RANK[osm_value]
+    if osm_key == "place":
+        return 10
+    return 20  # boundary/administrative (county/region/state) — last resort
+
+
+def _rank_photon_features(features: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Stable-sort Photon features so populated places precede admin-boundary centroids."""
+    return sorted(features, key=_photon_feature_rank)
+
+
 async def _search_photon_candidates(
     query: str, client: httpx.AsyncClient
 ) -> List[GeocodingCandidate]:
@@ -310,14 +428,7 @@ async def _search_photon_candidates(
     data = resp.json()
 
     features = data.get("features", [])
-
-    PLACE_TYPES = {"city", "district", "municipality", "county", "locality", "region", "borough"}
-    city_features = [
-        f for f in features
-        if f.get("properties", {}).get("type", "").lower() in PLACE_TYPES
-    ]
-    if not city_features:
-        city_features = features
+    city_features = _rank_photon_features(features)
 
     country_hint = _location_country_hint(query)
     if country_hint:
@@ -498,23 +609,30 @@ async def geocode_city(city: str, client: httpx.AsyncClient) -> GeocodingResult:
         )
 
     try:
-        candidates = await _search_photon_candidates(location_query, client)
+        candidates = [
+            c for c in await _search_photon_candidates(location_query, client)
+            if not _is_null_island(c.latitude, c.longitude)
+        ]
         if candidates:
             logger.info(
                 "[geocode] Photon resolved '%s' -> (%.4f, %.4f) [%s]",
                 location_query, candidates[0].latitude, candidates[0].longitude, candidates[0].country_code,
             )
-            return _candidate_to_result(candidates[0])
+            return await _finalize_geocode(_candidate_to_result(candidates[0]), client)
     except Exception as e:
         logger.warning("Photon geocoding failed for '%s': %s", location_query, e)
 
     try:
-        return await _fetch_openmeteo_geocoding(location_query, client)
+        return await _finalize_geocode(
+            await _fetch_openmeteo_geocoding(location_query, client), client
+        )
     except ValueError as e:
         logger.warning("Open-Meteo geocoding failed for '%s': %s", location_query, e)
 
     try:
-        return await _fetch_nominatim_geocoding(location_query, client)
+        return await _finalize_geocode(
+            await _fetch_nominatim_geocoding(location_query, client), client
+        )
     except ValueError as e:
         raise ValueError(
             f"All geocoding providers failed for '{city}' (query: '{location_query}'). "

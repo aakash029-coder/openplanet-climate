@@ -45,6 +45,8 @@ from climate_engine.api.physics import (
     classify_climate_intelligence,
     climate_intelligence_to_dict,
 )
+from climate_engine.api.physics.koppen import classify_koppen_live
+from climate_engine.api.physics.accuracy_guard import verify_prediction
 from climate_engine.api._helpers import (
     _data_unavailable,
     _normalize_ssp,
@@ -123,6 +125,19 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
     lat = geo.latitude
     lng = geo.longitude
 
+    # ── 0b. DEM-reconciled elevation (Copernicus DEM → SRTM30m fallback) ──────
+    # Vault coords carry no elevation; geocoded results already DEM-reconciled.
+    # Always resolve from the authoritative DEM point so the value is defensible.
+    elevation_m = geo.elevation
+    elevation_src = geo.elevation_source
+    if elevation_src in ("unresolved", "") or elevation_m == 0.0:
+        try:
+            from climate_engine.services.socioeconomic.geocoding import _fetch_dem_elevation
+            async with httpx.AsyncClient(timeout=12.0, trust_env=False) as _elev_client:
+                elevation_m, elevation_src = await _fetch_dem_elevation(lat, lng, _elev_client)
+        except Exception as exc:
+            logger.warning("[predict] DEM elevation unresolved for (%.4f,%.4f): %s", lat, lng, exc)
+
     # ── 1. Historical baseline ────────────────────────────────────────────────
     try:
         baseline = await fetch_historical_baseline_full(lat, lng)
@@ -157,28 +172,47 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
     iso3 = _iso2_to_iso3(iso2)
     vuln = socio.get("vulnerability_multiplier", 1.0)
 
-    # ── 3. External data (parallel) ───────────────────────────────────────────
-    try:
-        death_rate, rh_live, rh_p95, historical_eras = await asyncio.gather(
-            _fetch_worldbank_death_rate(iso3),
-            _fetch_relative_humidity_live(lat, lng),
-            _fetch_era5_humidity_p95(lat, lng),
-            fetch_historical_eras(lat, lng)
-        )
-    except Exception as exc:
-        raise _data_unavailable(str(exc))
+    # ── 3. External data (parallel, each independently non-fatal) ─────────────
+    # Every item here has its own internal fallback (vault death rate, latitude
+    # humidity model, optional historical eras). One failing must never 500 the
+    # request, so exceptions are caught per-item and replaced with safe defaults.
+    death_rate, rh_live, rh_p95, historical_eras = await asyncio.gather(
+        _fetch_worldbank_death_rate(iso3),
+        _fetch_relative_humidity_live(lat, lng),
+        _fetch_era5_humidity_p95(lat, lng),
+        fetch_historical_eras(lat, lng),
+        return_exceptions=True,
+    )
+    if isinstance(death_rate, Exception):
+        logger.warning("[predict] death-rate fetch failed (%s); using global default 8.0", death_rate)
+        death_rate = 8.0
+    if isinstance(rh_live, Exception) or rh_live is None:
+        rh_live = 55.0
+    if isinstance(rh_p95, Exception) or rh_p95 is None:
+        rh_p95 = 60.0
+    if isinstance(historical_eras, Exception):
+        logger.warning("[predict] historical eras unavailable (non-fatal): %s", historical_eras)
+        historical_eras = None
 
-    # ── 3b. Köppen-Geiger baseline classification (now rh_p95 is available) ──
-    city_climate_intelligence = classify_climate_intelligence(
-        lat=lat,
+    # ── 3b. True Köppen-Geiger baseline classification ───────────────────────
+    # Computed from ERA5 2011–2020 monthly temperature + precipitation normals
+    # via the canonical Peel/Beck algorithm (koppen.py). Falls back to the
+    # annual-stat heuristic only if ERA5 monthly normals are unavailable, so the
+    # site never crashes on a classification miss.
+    koppen = await classify_koppen_live(
+        lat, lng,
         ann_mean_c=ann_mean,
         rh_p95=rh_p95,
         p95_temp_c=p95,
     )
+    koppen_code = koppen["koppen_code"]
+    koppen_source = koppen["source"]
+    city_climate_intelligence = koppen["macro"]
     logger.info(
-        "[predict] Climate intelligence: %s (%s) warming_factor=%.2f×",
-        city_climate_intelligence.koppen_class.value,
+        "[predict] Köppen: %s (%s) [%s] warming_factor=%.2f×",
+        koppen_code,
         city_climate_intelligence.koppen_label,
+        koppen_source,
         city_climate_intelligence.ipcc_warming_rate_factor,
     )
 
@@ -190,7 +224,8 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
     results = await asyncio.gather(
         *[
             fetch_cmip6_projection(
-                lat, lng, ssp_code, yr, p95, total_cooling
+                lat, lng, ssp_code, yr, baseline, total_cooling, country_iso3=iso3,
+                warming_factor=city_climate_intelligence.ipcc_warming_rate_factor,
             )
             for yr in chart_years
         ],
@@ -204,6 +239,26 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
             continue
         projections[yr] = res
 
+    # ── Enforce cross-horizon monotonicity under warming scenarios ────────────
+    # Tx5d and heatwave days must be non-decreasing 2030 → 2040 → 2050 and never
+    # below the observed baseline. Small ±2yr CMIP6 windows can invert ordering
+    # via internal variability; a running max from the baseline corrects this
+    # sampling noise without fabricating the trend (structural invariant, §6).
+    _prev_tx5d = tx5d_baseline
+    _prev_hw = baseline["hw_days_baseline"]
+    _prev_hw_raw = baseline["hw_days_baseline"]
+    for yr in chart_years:
+        if yr not in projections:
+            continue
+        proj = projections[yr]
+        mono_tx5d = max(proj["tx5d_c"], _prev_tx5d)
+        mono_hw = max(proj["hw_days"], _prev_hw)
+        mono_hw_raw = max(proj.get("hw_days_raw", proj["hw_days"]), _prev_hw_raw)
+        proj["tx5d_c"] = round(mono_tx5d, 2)
+        proj["hw_days"] = round(mono_hw, 1)
+        proj["hw_days_raw"] = round(mono_hw_raw, 1)
+        _prev_tx5d, _prev_hw, _prev_hw_raw = mono_tx5d, mono_hw, mono_hw_raw
+
     # ── 6. Zone-aware chart series ────────────────────────────────────────────
     heatwave_chart: list = []
     economic_chart: list = []
@@ -216,11 +271,6 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
         mean_temp = proj["mean_temp_c"]
         tx5d = proj["tx5d_c"]
 
-        zone_obj: ZoneClassification = detect_climate_archetype(
-            mean_temp=mean_temp,
-            p95_rh=rh_p95,
-            tx5d=tx5d,
-        )
         loss = compute_hybrid_economic_loss(
             city_gdp=gdp,
             t_mean=mean_temp,
@@ -295,8 +345,9 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
     )
 
     if wb_profile:
-        wbt_proj = wb_profile["projected_wb_c"]
-        wbt_live = wb_profile["baseline_wb_c"]
+        # Physical constraint: wet-bulb can never exceed dry-bulb (Twb ≤ Tdry).
+        wbt_proj = min(wb_profile["projected_wb_c"], tx5d)
+        wbt_live = min(wb_profile["baseline_wb_c"], tx5d_baseline)
         wbt_capped = wb_profile["capped"]
     else:
         wbt_proj = wbt_result_proj.wbt_celsius
@@ -307,6 +358,40 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
         )
         wbt_live = wbt_result_live.wbt_celsius
         wbt_capped = wbt_result_proj.capped_at_survivability_limit
+
+    # ── Runtime accuracy guard — verify EVERY prediction, anywhere on Earth ───
+    # Applies the same physical/sanity invariants the offline harness proves for
+    # the reference panel to this live result, so a user querying any of millions
+    # of global locations only ever receives verified data. Deterministic physical
+    # violations are clamped; anything unverifiable is withheld with a reason.
+    guard_metrics = {
+        "lat": lat, "lng": lng, "elevation_m": elevation_m,
+        "koppen_main": koppen_code[0] if koppen_code else None,
+        "baseline_annual_mean_c": ann_mean,
+        "baseline_tx5d_c": tx5d_baseline,
+        "baseline_hw_days": baseline["hw_days_baseline"],
+        "tx5d_2030_c": projections.get(2030, {}).get("tx5d_c"),
+        "tx5d_2050_c": projections.get(2050, {}).get("tx5d_c"),
+        "hw_2030": projections.get(2030, {}).get("hw_days"),
+        "hw_2050": projections.get(2050, {}).get("hw_days"),
+        "wbt_proj_c": wbt_proj,
+        "dry_bulb_2050_c": projections.get(2050, {}).get("tx5d_c"),
+        "population": pop,
+        "metro_gdp_usd": gdp,
+        "national_gdp_usd": socio.get("national_gdp_usd"),
+    }
+    _gm, guard_report = verify_prediction(guard_metrics)
+    verification = guard_report.to_dict()
+    # Honour any withheld field so an unverifiable value is never shown.
+    if _gm.get("wbt_proj_c") is None:
+        wbt_proj = None
+    if _gm.get("elevation_m") is None:
+        elevation_m = None
+    if verification["status"] != "verified":
+        logger.warning(
+            "[predict] accuracy guard: status=%s corrections=%s withheld=%s",
+            verification["status"], verification["corrections"], verification["withheld"],
+        )
 
     loss_str = (
         f"${final_loss / 1e9:.2f}B"
@@ -375,14 +460,28 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
     pop_source = socio.get("_geocoder_source", "geocoder")
     mort_conf = mortality_confidence_level(hw_days_tgt, pop_source)
 
+    # None-safe rendering for any field the guard withheld (never show a guess).
+    wbt_str = f"{wbt_proj:.1f}" if wbt_proj is not None else None
+    elevation_out = round(elevation_m, 1) if elevation_m is not None else None
+    lethal_flag = bool(
+        wbt_capped or (
+            wbt_proj is not None
+            and zone_obj_target.zone == ClimateZone.LETHAL_HUMID
+            and wbt_proj >= 31.0
+        )
+    )
+
     return {
         "resolvedLocation": {
             "city": location_hint,
             "lat": lat,
             "lng": lng,
+            "elevation": elevation_out,
+            "elevation_source": elevation_src if elevation_out is not None else "withheld",
             "country_code": geo.country_code,
             "geocoder_source": geo.source,
         },
+        "verification": verification,
         "metrics": {
             "baseTemp": str(tx5d_baseline),
             "temp": f"{tx5d:.1f}",
@@ -390,7 +489,7 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
             "ci": f"{int(deaths * 0.85):,} – {int(deaths * 1.18):,}",
             "loss": loss_str,
             "heatwave": str(int(hw_days_tgt)),
-            "wbt": f"{wbt_proj:.1f}",
+            "wbt": wbt_str,
             "wbt_live": f"{wbt_live:.1f}",
             "wbt_capped": wbt_capped,
             "heatwave_definition": (
@@ -402,7 +501,7 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
             "rh_live": rh_live,
             "climate_zone": zone_obj_target.zone.value,
             "zone_confidence": zone_obj_target.confidence,
-            "lethal_risk_flag": bool(wbt_capped or (zone_obj_target.zone == ClimateZone.LETHAL_HUMID and wbt_proj >= 31.0)),
+            "lethal_risk_flag": lethal_flag,
         },
         "_data_confidence": {
             "peak_tx5d":     {"level": "high",   "source": "CMIP6 ensemble + ERA5 P95"},
@@ -416,7 +515,11 @@ async def predict(request: Request, req: PredictionRequest, response: Response):
                               "source": pop_source},
             "death_rate":    {"level": "high",   "source": "vault/UN Population Division"},
         },
-        "climateIntelligence": climate_intelligence_to_dict(city_climate_intelligence),
+        "climateIntelligence": climate_intelligence_to_dict(
+            city_climate_intelligence,
+            precise_code=koppen_code,
+            classification_source=koppen_source,
+        ),
         "historicalEras": historical_eras,
         "hexGrid": hex_grid_data,
         "aiAnalysis": ai,

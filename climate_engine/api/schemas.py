@@ -141,6 +141,7 @@ class SimulationResponse(BaseModel):
     """Response schema for frontend simulation results."""
 
     resolvedLocation:    Optional[Dict[str, Any]] = None
+    verification:        Optional[Dict[str, Any]] = None
     metrics:             Dict[str, Any]
     hexGrid:             List[Dict[str, Any]]
     aiAnalysis:          Optional[Dict[str, str]]        = None

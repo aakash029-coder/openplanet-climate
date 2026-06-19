@@ -167,6 +167,8 @@ async def fetch_country_indicators(
 
     final_data: Dict[str, Any] = {
         "gdp_per_capita": country_data.get("gdp_per_capita") or tier.gdp_per_capita,
+        "gdp_total_usd": country_data.get("gdp_total_usd"),          # national nominal GDP (cap)
+        "population_total": country_data.get("population_total"),    # national population
         "urban_share": country_data.get("urban_share") or tier.urban_share,
         "gni_per_capita": country_data.get("gdp_per_capita") or tier.gdp_per_capita,
         "life_expectancy": country_data.get("life_expectancy") or tier.life_expectancy,

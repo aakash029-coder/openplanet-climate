@@ -42,13 +42,14 @@ def _metro_pop_lookup(city: str, iso2: str) -> Optional[int]:
 def validate_census_data(pop: int, city: str) -> bool:
     """
     Strict boundary check on population figures before they enter the pipeline.
-    Megacities cap: 35M (Tokyo metro is ~37M — the single realistic upper bound).
-    Minimum: 10K.
+    Upper bound 40M: Greater Tokyo (~37.7M) is the world's largest metro, so the
+    cap must sit just above it — a 35M cap wrongly rejected Tokyo and defaulted it
+    to a tiny figure. Minimum 10K filters bad geocodes.
     """
-    if pop > 35_000_000 or pop < 10_000:
+    if pop > 40_000_000 or pop < 10_000:
         logger.critical(
             "CRITICAL: Data Poisoning Detected — population %d for '%s' "
-            "is outside defensible bounds [10K, 35M]. Defaulting to "
+            "is outside defensible bounds [10K, 40M]. Defaulting to "
             "World Bank national averages.",
             pop, city,
         )

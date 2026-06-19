@@ -501,10 +501,24 @@ def classify_climate_intelligence(
     return _TEMPERATE_OCEANIC
 
 
-def climate_intelligence_to_dict(ci: ClimateIntelligence) -> dict:
-    """Serialize ClimateIntelligence to a JSON-safe dict for API responses."""
-    return {
-        "koppen_class": ci.koppen_class.value,
+def climate_intelligence_to_dict(
+    ci: ClimateIntelligence,
+    precise_code: Optional[str] = None,
+    classification_source: Optional[str] = None,
+) -> dict:
+    """
+    Serialize ClimateIntelligence to a JSON-safe dict for API responses.
+
+    When ``precise_code`` is supplied (e.g. 'Csb', 'Cfc', 'Dfd' from the true
+    Köppen classifier), it overrides the macro-zone representative code so the
+    response reports the exact class for the city, while the narrative fields
+    still come from the mapped macro zone.
+    """
+    code = precise_code or ci.koppen_class.value
+    out = {
+        "koppen_class": code,
+        "koppen_macro": ci.koppen_class.value,
+        "koppen_main_group": code[0] if code else "",
         "koppen_label": ci.koppen_label,
         "koppen_description": ci.koppen_description,
         "ipcc_warming_rate_factor": ci.ipcc_warming_rate_factor,
@@ -514,3 +528,6 @@ def climate_intelligence_to_dict(ci: ClimateIntelligence) -> dict:
         "projection_context": ci.projection_context,
         "ipcc_reference": ci.ipcc_reference,
     }
+    if classification_source:
+        out["classification_source"] = classification_source
+    return out

@@ -115,10 +115,10 @@ async def climate_risk(request: Request, req: ClimateRiskRequest, response: Resp
     # ── CMIP6 base projections ────────────────────────────────────────────────
     res_2030, res_2050 = await asyncio.gather(
         fetch_cmip6_projection(
-            req.lat, req.lng, ssp_code, 2030, p95, total_cooling
+            req.lat, req.lng, ssp_code, 2030, baseline, total_cooling
         ),
         fetch_cmip6_projection(
-            req.lat, req.lng, ssp_code, 2050, p95, total_cooling
+            req.lat, req.lng, ssp_code, 2050, baseline, total_cooling
         ),
         return_exceptions=True,
     )

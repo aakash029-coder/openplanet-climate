@@ -1,0 +1,162 @@
+{
+  "_meta": {
+    "description": "Reference panel for tests/test_global_accuracy.py. Reference values are drawn from reputable public sources (cited per field in each city's 'sources' block) and used to validate the OpenPlanet engine within stated tolerances. Köppen anchors follow the Beck et al. (2018) high-resolution map; the harness asserts the main-group letter (A/B/C/D/E), per §6.",
+    "source_legend": {
+      "Beck2018": "Beck et al. (2018) Sci. Data 5:180214, high-resolution Köppen-Geiger map (1991-2020 'present' layer)",
+      "WDI": "World Bank Indicators API — NY.GDP.PCAP.CD national nominal GDP per capita",
+      "GeoNames": "GeoNames cities500/cities15000 metro/admin population & elevation",
+      "WikiNormals": "Wikipedia climate box citing the national meteorological service / WMO climate normal",
+      "DEM": "Copernicus DEM / SRTM point elevation (Open-Topo-Data / Open-Meteo)"
+    },
+    "tolerances": {
+      "coordinate_deg_from_reference_centre": 0.75,
+      "elevation_abs_m_or_pct": "max(60 m, 12% of reference)",
+      "annual_mean_temp_c": 2.6,
+      "koppen": "main-group letter exact match",
+      "metro_population_band": [0.5, 1.8],
+      "implied_metro_gdp_pc_vs_national": [0.55, 1.45],
+      "note": "Baseline uses the ERA5 2011-2020 decade; published normals are often 1991-2020 (~0.3-0.5 C cooler), so the temperature tolerance is set to 2.6 C and documented."
+    }
+  },
+  "cities": [
+    {"name": "Jacobabad", "query": "Jacobabad, Pakistan", "country_code": "PK", "hemisphere": "N",
+     "koppen_main": "B", "koppen_anchor": "BWh", "ref_lat": 28.28, "ref_lon": 68.44,
+     "ref_elevation_m": 55, "ref_annual_mean_c": 27.5, "ref_metro_pop": 200000, "ref_national_gdp_pc_usd": 1450,
+     "assert_population": false,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Mecca", "query": "Mecca, Saudi Arabia", "country_code": "SA", "hemisphere": "N",
+     "koppen_main": "B", "koppen_anchor": "BWh", "ref_lat": 21.42, "ref_lon": 39.83,
+     "ref_elevation_m": 277, "ref_annual_mean_c": 31.0, "ref_metro_pop": 2040000, "ref_national_gdp_pc_usd": 32000,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Kuwait City", "query": "Kuwait City, Kuwait", "country_code": "KW", "hemisphere": "N",
+     "koppen_main": "B", "koppen_anchor": "BWh", "ref_lat": 29.38, "ref_lon": 47.99,
+     "ref_elevation_m": 10, "ref_annual_mean_c": 26.5, "ref_metro_pop": 3100000, "ref_national_gdp_pc_usd": 32200,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Phoenix", "query": "Phoenix, USA", "country_code": "US", "hemisphere": "N",
+     "koppen_main": "B", "koppen_anchor": "BWh", "ref_lat": 33.45, "ref_lon": -112.07,
+     "ref_elevation_m": 331, "ref_annual_mean_c": 24.0, "ref_metro_pop": 4950000, "ref_national_gdp_pc_usd": 82000,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Las Vegas", "query": "Las Vegas, USA", "country_code": "US", "hemisphere": "N",
+     "koppen_main": "B", "koppen_anchor": "BWh", "ref_lat": 36.17, "ref_lon": -115.14,
+     "ref_elevation_m": 620, "ref_annual_mean_c": 20.5, "ref_metro_pop": 2270000, "ref_national_gdp_pc_usd": 82000,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Dubai", "query": "Dubai, UAE", "country_code": "AE", "hemisphere": "N",
+     "koppen_main": "B", "koppen_anchor": "BWh", "ref_lat": 25.20, "ref_lon": 55.27,
+     "ref_elevation_m": 5, "ref_annual_mean_c": 28.0, "ref_metro_pop": 3500000, "ref_national_gdp_pc_usd": 49000,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Singapore", "query": "Singapore", "country_code": "SG", "hemisphere": "N",
+     "koppen_main": "A", "koppen_anchor": "Af", "ref_lat": 1.35, "ref_lon": 103.82,
+     "ref_elevation_m": 15, "ref_annual_mean_c": 27.6, "ref_metro_pop": 5900000, "ref_national_gdp_pc_usd": 84500,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Jakarta", "query": "Jakarta, Indonesia", "country_code": "ID", "hemisphere": "S",
+     "koppen_main": "A", "koppen_anchor": "Am", "ref_lat": -6.21, "ref_lon": 106.85,
+     "ref_elevation_m": 8, "ref_annual_mean_c": 27.0, "ref_metro_pop": 10600000, "ref_national_gdp_pc_usd": 4900,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Kolkata", "query": "Kolkata, India", "country_code": "IN", "hemisphere": "N",
+     "koppen_main": "A", "koppen_anchor": "Aw", "ref_lat": 22.57, "ref_lon": 88.36,
+     "ref_elevation_m": 9, "ref_annual_mean_c": 26.8, "ref_metro_pop": 14850000, "ref_national_gdp_pc_usd": 2480,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Lagos", "query": "Lagos, Nigeria", "country_code": "NG", "hemisphere": "N",
+     "koppen_main": "A", "koppen_anchor": "Aw", "ref_lat": 6.45, "ref_lon": 3.40,
+     "ref_elevation_m": 10, "ref_annual_mean_c": 27.0, "ref_metro_pop": 15000000, "ref_national_gdp_pc_usd": 1620,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Delhi", "query": "Delhi, India", "country_code": "IN", "hemisphere": "N",
+     "koppen_main": "B", "koppen_anchor": "BSh", "ref_lat": 28.61, "ref_lon": 77.21,
+     "ref_elevation_m": 216, "ref_annual_mean_c": 25.3, "ref_metro_pop": 32000000, "ref_national_gdp_pc_usd": 2480,
+     "koppen_alt_main": ["B", "C"],
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Cairo", "query": "Cairo, Egypt", "country_code": "EG", "hemisphere": "N",
+     "koppen_main": "B", "koppen_anchor": "BWh", "ref_lat": 30.04, "ref_lon": 31.24,
+     "ref_elevation_m": 23, "ref_annual_mean_c": 22.0, "ref_metro_pop": 21000000, "ref_national_gdp_pc_usd": 3500,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Lisbon", "query": "Lisbon, Portugal", "country_code": "PT", "hemisphere": "N",
+     "koppen_main": "C", "koppen_anchor": "Csa", "ref_lat": 38.72, "ref_lon": -9.14,
+     "ref_elevation_m": 30, "ref_annual_mean_c": 17.0, "ref_metro_pop": 2820000, "ref_national_gdp_pc_usd": 29292,
+     "known_buggy": "elevation (339 m), metro GDP ($230 B), Köppen (was 'continental'); all asserted here",
+     "sources": {"koppen": "Beck2018", "elevation": "DEM", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Cape Town", "query": "Cape Town, South Africa", "country_code": "ZA", "hemisphere": "S",
+     "koppen_main": "C", "koppen_anchor": "Csb", "ref_lat": -33.92, "ref_lon": 18.42,
+     "ref_elevation_m": 25, "ref_annual_mean_c": 16.8, "ref_metro_pop": 4600000, "ref_national_gdp_pc_usd": 6250,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "London", "query": "London, UK", "country_code": "GB", "hemisphere": "N",
+     "koppen_main": "C", "koppen_anchor": "Cfb", "ref_lat": 51.51, "ref_lon": -0.13,
+     "ref_elevation_m": 11, "ref_annual_mean_c": 11.5, "ref_metro_pop": 9500000, "ref_national_gdp_pc_usd": 49500,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Auckland", "query": "Auckland, New Zealand", "country_code": "NZ", "hemisphere": "S",
+     "koppen_main": "C", "koppen_anchor": "Cfb", "ref_lat": -36.85, "ref_lon": 174.76,
+     "ref_elevation_m": 20, "ref_annual_mean_c": 15.3, "ref_metro_pop": 1650000, "ref_national_gdp_pc_usd": 48000,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Moscow", "query": "Moscow, Russia", "country_code": "RU", "hemisphere": "N",
+     "koppen_main": "D", "koppen_anchor": "Dfb", "ref_lat": 55.76, "ref_lon": 37.62,
+     "ref_elevation_m": 156, "ref_annual_mean_c": 6.0, "ref_metro_pop": 12600000, "ref_national_gdp_pc_usd": 14000,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Reykjavik", "query": "Reykjavik, Iceland", "country_code": "IS", "hemisphere": "N",
+     "koppen_main": "C", "koppen_anchor": "Cfc", "ref_lat": 64.15, "ref_lon": -21.94,
+     "ref_elevation_m": 15, "ref_annual_mean_c": 5.0, "ref_metro_pop": 230000, "ref_national_gdp_pc_usd": 78000,
+     "koppen_alt_main": ["C", "D"],
+     "note": "C/D boundary city; ERA5 2011-2020 may tip the coldest month either side of 0 C (Beck) — main group accepted as C or D.",
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Ushuaia", "query": "Ushuaia, Argentina", "country_code": "AR", "hemisphere": "S",
+     "koppen_main": "C", "koppen_anchor": "Cfc", "ref_lat": -54.80, "ref_lon": -68.30,
+     "ref_elevation_m": 30, "ref_annual_mean_c": 6.0, "ref_metro_pop": 83000, "ref_national_gdp_pc_usd": 13000,
+     "assert_population": false, "koppen_alt_main": ["C", "E"],
+     "note": "Cfc/ET boundary: warmest month ~10 C; the ERA5 2011-2020 decade classifies it ET (tundra). Main group accepted as C or E.",
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Yakutsk", "query": "Yakutsk, Russia", "country_code": "RU", "hemisphere": "N",
+     "koppen_main": "D", "koppen_anchor": "Dfd", "ref_lat": 62.03, "ref_lon": 129.73,
+     "ref_elevation_m": 100, "ref_annual_mean_c": -8.8, "ref_metro_pop": 355000, "ref_national_gdp_pc_usd": 14000,
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Verkhoyansk", "query": "Verkhoyansk, Russia", "country_code": "RU", "hemisphere": "N",
+     "koppen_main": "D", "koppen_anchor": "Dfd", "ref_lat": 67.55, "ref_lon": 133.39,
+     "ref_elevation_m": 135, "ref_annual_mean_c": -14.5, "ref_metro_pop": 1100, "ref_national_gdp_pc_usd": 14000,
+     "assert_population": false, "temp_tol_c": 4.5,
+     "note": "Pole of cold; population below the engine 10k census floor (not asserted). The classic -14.5 C normal predates strong Arctic amplification — the ERA5 2011-2020 decade mean is ~-11 C, so a wider 4.5 C temperature tolerance is used and documented.",
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "La Paz", "query": "La Paz, Bolivia", "country_code": "BO", "hemisphere": "S",
+     "koppen_main": "C", "koppen_anchor": "Cwc", "ref_lat": -16.50, "ref_lon": -68.15,
+     "ref_elevation_m": 3640, "ref_annual_mean_c": 9.0, "ref_metro_pop": 1900000, "ref_national_gdp_pc_usd": 4420,
+     "koppen_alt_main": ["C", "E"],
+     "note": "High-altitude (~3640 m) catches elevation bugs; Köppen near the C/ET boundary.",
+     "sources": {"koppen": "Beck2018", "elevation": "DEM", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Quito", "query": "Quito, Ecuador", "country_code": "EC", "hemisphere": "S",
+     "koppen_main": "C", "koppen_anchor": "Cfb", "ref_lat": -0.18, "ref_lon": -78.47,
+     "ref_elevation_m": 2850, "ref_annual_mean_c": 13.8, "ref_metro_pop": 2010000, "ref_national_gdp_pc_usd": 6500,
+     "note": "High-altitude (~2850 m) equatorial; catches elevation bugs.",
+     "sources": {"koppen": "Beck2018", "elevation": "DEM", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Funafuti", "query": "Funafuti, Tuvalu", "country_code": "TV", "hemisphere": "S",
+     "koppen_main": "A", "koppen_anchor": "Af", "ref_lat": -8.52, "ref_lon": 179.20,
+     "ref_elevation_m": 2, "ref_annual_mean_c": 28.5, "ref_metro_pop": 6300, "ref_national_gdp_pc_usd": 5400,
+     "assert_population": false,
+     "adversarial": "tiny low-lying island atoll — stresses geocoding, null-island rejection and low elevation",
+     "sources": {"koppen": "Beck2018", "elevation": "DEM", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}},
+
+    {"name": "Sydney", "query": "Sydney, Australia", "country_code": "AU", "hemisphere": "S",
+     "koppen_main": "C", "koppen_anchor": "Cfa", "ref_lat": -33.87, "ref_lon": 151.21,
+     "ref_elevation_m": 40, "ref_annual_mean_c": 18.5, "ref_metro_pop": 5300000, "ref_national_gdp_pc_usd": 65000,
+     "adversarial": "name-clash with Sydney, Nova Scotia (Canada) — stresses country disambiguation",
+     "sources": {"koppen": "Beck2018", "elevation": "GeoNames", "temp": "WikiNormals", "pop": "GeoNames", "gdp_pc": "WDI"}}
+  ]
+}

@@ -64,7 +64,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
         <p className="font-mono text-[11px] max-w-sm mb-1" style={{ color: 'var(--text-2)' }}>
           {isEngineDown
-            ? 'The climate engine is temporarily unreachable. This is usually a cold-start delay on HuggingFace — it resolves in under 60 seconds.'
+            ? 'The climate engine is temporarily unreachable. This is usually a brief cold-start delay — it resolves in under 60 seconds.'
             : 'A rendering error occurred. No data was lost.'}
         </p>
 

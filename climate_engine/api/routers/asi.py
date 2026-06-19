@@ -71,11 +71,9 @@ async def _get_asi_climate_summary(city_name: str) -> str:
         _fetch_era5_humidity_p95(lat, lng),
     )
 
-    p95 = baseline["p95_threshold_c"]
-
     proj_2030, proj_2050 = await asyncio.gather(
-        fetch_cmip6_projection(lat, lng, "ssp245", 2030, p95, 0.0),
-        fetch_cmip6_projection(lat, lng, "ssp245", 2050, p95, 0.0),
+        fetch_cmip6_projection(lat, lng, "ssp245", 2030, baseline, 0.0),
+        fetch_cmip6_projection(lat, lng, "ssp245", 2050, baseline, 0.0),
         return_exceptions=True,
     )
 

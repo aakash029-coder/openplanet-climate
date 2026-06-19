@@ -49,3 +49,6 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Runtime disk cache (heavy upstream API payloads)
+climate_engine/data/cache/

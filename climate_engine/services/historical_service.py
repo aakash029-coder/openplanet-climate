@@ -22,7 +22,11 @@ import httpx
 from collections import OrderedDict
 import threading
 
+from climate_engine.services.disk_cache import disk_get, disk_set
+
 logger = logging.getLogger(__name__)
+
+_DISK_TTL = 86400 * 30  # persist historical-eras payloads 30 days (HF cold-start safe)
 
 _CACHE_TTL = 86400 * 7   # 7-day TTL
 _CACHE_MAX  = 10_000     # hard cap: ~10K unique grid cells max in RAM
@@ -370,6 +374,10 @@ async def fetch_historical_eras(lat: float, lng: float) -> Dict[str, Any]:
     cached = _cache_get(cache_key)
     if cached:
         return cached
+    on_disk = disk_get(cache_key, ttl=_DISK_TTL)
+    if on_disk:
+        _cache_set(cache_key, on_disk)
+        return on_disk
 
     # ── Tier 1: ERA5 primary ──────────────────────────────────────────────────
     result = await _fetch_open_meteo_era5(lat, lng)
@@ -414,4 +422,5 @@ async def fetch_historical_eras(lat: float, lng: float) -> Dict[str, Any]:
         )
 
     _cache_set(cache_key, result)
+    disk_set(cache_key, result)
     return result

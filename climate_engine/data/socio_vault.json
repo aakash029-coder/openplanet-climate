@@ -1,2396 +1,2915 @@
 {
-    "ABW": {
-        "death_rate": 7.778,
-        "gdp_per_capita": 39498.594,
-        "urban_share": 61.791,
-        "life_expectancy": 76.5,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.0,
-        "pct_over65": 15.0
-    },
-    "AFE": {
-        "death_rate": 6.915,
-        "gdp_per_capita": 1615.396,
-        "urban_share": 38.241,
-        "life_expectancy": 65.35,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.5,
-        "pct_over65": 3.2
-    },
-    "AFG": {
-        "death_rate": 5.702,
-        "gdp_per_capita": null,
-        "urban_share": 25.701,
-        "life_expectancy": 66.289,
-        "physicians_per1000": 0.3,
-        "pct_under15": 43.0,
-        "pct_over65": 2.8
-    },
-    "AFW": {
-        "death_rate": 9.572,
-        "gdp_per_capita": 1411.337,
-        "urban_share": 52.86,
-        "life_expectancy": 59.05,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.5,
-        "pct_over65": 3.0
-    },
-    "AGO": {
-        "death_rate": 6.84,
-        "gdp_per_capita": 2665.874,
-        "urban_share": 70.655,
-        "life_expectancy": 64.805,
-        "physicians_per1000": 0.3,
-        "pct_under15": 45.0,
-        "pct_over65": 2.5
-    },
-    "ALB": {
-        "death_rate": 8.457,
-        "gdp_per_capita": 11377.776,
-        "urban_share": 58.546,
-        "life_expectancy": 79.776,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.5,
-        "pct_over65": 15.5
-    },
-    "AND": {
-        "death_rate": 6.139,
-        "gdp_per_capita": 49303.649,
-        "urban_share": 88.885,
-        "life_expectancy": 84.188,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.0,
-        "pct_over65": 17.5
-    },
-    "ARB": {
-        "death_rate": 5.018,
-        "gdp_per_capita": 7583.812,
-        "urban_share": 59.82,
-        "life_expectancy": 72.722,
-        "physicians_per1000": 0.3,
-        "pct_under15": 29.0,
-        "pct_over65": 4.5
-    },
-    "ARE": {
-        "death_rate": 0.972,
-        "gdp_per_capita": 50273.506,
-        "urban_share": 85.817,
-        "life_expectancy": 83.069,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.5,
-        "pct_over65": 1.5
-    },
-    "ARG": {
-        "death_rate": 7.732,
-        "gdp_per_capita": 13969.784,
-        "urban_share": 92.274,
-        "life_expectancy": 77.543,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 11.5
-    },
-    "ARM": {
-        "death_rate": 8.4,
-        "gdp_per_capita": 8556.214,
-        "urban_share": 65.811,
-        "life_expectancy": 78.32,
-        "physicians_per1000": 0.3,
-        "pct_under15": 18.5,
-        "pct_over65": 13.0
-    },
-    "ASM": {
-        "death_rate": 7.293,
-        "gdp_per_capita": null,
-        "urban_share": 80.945,
-        "life_expectancy": 72.992,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 7.0
-    },
-    "ATG": {
-        "death_rate": 7.028,
-        "gdp_per_capita": 23542.453,
-        "urban_share": 24.391,
-        "life_expectancy": 77.766,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 10.5
-    },
-    "AUS": {
-        "death_rate": 6.884,
-        "gdp_per_capita": 64603.986,
-        "urban_share": 87.602,
-        "life_expectancy": 83.051,
-        "physicians_per1000": 3.7,
-        "pct_under15": 19.0,
-        "pct_over65": 16.0
-    },
-    "AUT": {
-        "death_rate": 9.6,
-        "gdp_per_capita": 58268.879,
-        "urban_share": 69.466,
-        "life_expectancy": 81.995,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.5,
-        "pct_over65": 19.5
-    },
-    "AZE": {
-        "death_rate": 5.8,
-        "gdp_per_capita": 7283.85,
-        "urban_share": 58.574,
-        "life_expectancy": 74.576,
-        "physicians_per1000": 0.3,
-        "pct_under15": 23.0,
-        "pct_over65": 7.0
-    },
-    "BDI": {
-        "death_rate": 6.67,
-        "gdp_per_capita": 219.425,
-        "urban_share": 24.83,
-        "life_expectancy": 63.818,
-        "physicians_per1000": 0.3,
-        "pct_under15": 43.5,
-        "pct_over65": 2.8
-    },
-    "BEL": {
-        "death_rate": 9.5,
-        "gdp_per_capita": 56614.568,
-        "urban_share": 87.613,
-        "life_expectancy": 82.3,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.5,
-        "pct_over65": 19.5
-    },
-    "BEN": {
-        "death_rate": 8.71,
-        "gdp_per_capita": 1485.38,
-        "urban_share": 52.546,
-        "life_expectancy": 60.961,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.0,
-        "pct_over65": 3.0
-    },
-    "BFA": {
-        "death_rate": 7.915,
-        "gdp_per_capita": 981.993,
-        "urban_share": 28.335,
-        "life_expectancy": 61.292,
-        "physicians_per1000": 0.3,
-        "pct_under15": 44.5,
-        "pct_over65": 2.6
-    },
-    "BGD": {
-        "death_rate": 5.105,
-        "gdp_per_capita": 2593.416,
-        "urban_share": 32.678,
-        "life_expectancy": 74.93,
-        "physicians_per1000": 0.8,
-        "pct_under15": 26.0,
-        "pct_over65": 7.0
-    },
-    "BGR": {
-        "death_rate": 15.6,
-        "gdp_per_capita": 17596.017,
-        "urban_share": 73.95,
-        "life_expectancy": 75.761,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.5,
-        "pct_over65": 22.0
-    },
-    "BHR": {
-        "death_rate": 2.21,
-        "gdp_per_capita": 29653.568,
-        "urban_share": 100.0,
-        "life_expectancy": 81.423,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.0,
-        "pct_over65": 2.5
-    },
-    "BHS": {
-        "death_rate": 8.77,
-        "gdp_per_capita": 39455.447,
-        "urban_share": 81.325,
-        "life_expectancy": 74.71,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.0,
-        "pct_over65": 9.5
-    },
-    "BIH": {
-        "death_rate": 13.522,
-        "gdp_per_capita": 9358.788,
-        "urban_share": 52.122,
-        "life_expectancy": 78.044,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.0,
-        "pct_over65": 18.5
-    },
-    "BLR": {
-        "death_rate": 13.136,
-        "gdp_per_capita": 8317.634,
-        "urban_share": 79.155,
-        "life_expectancy": 74.365,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.5,
-        "pct_over65": 16.0
-    },
-    "BLZ": {
-        "death_rate": 4.96,
-        "gdp_per_capita": 7681.244,
-        "urban_share": 41.753,
-        "life_expectancy": 73.739,
-        "physicians_per1000": 0.3,
-        "pct_under15": 29.0,
-        "pct_over65": 5.5
-    },
-    "BMU": {
-        "death_rate": 9.004,
-        "gdp_per_capita": 142855.375,
-        "urban_share": 100.0,
-        "life_expectancy": 82.49,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 18.0
-    },
-    "BOL": {
-        "death_rate": 7.172,
-        "gdp_per_capita": 4421.166,
-        "urban_share": 71.236,
-        "life_expectancy": 68.739,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 7.5
-    },
-    "BRA": {
-        "death_rate": 7.068,
-        "gdp_per_capita": 10310.549,
-        "urban_share": 87.896,
-        "life_expectancy": 76.023,
-        "physicians_per1000": 2.1,
-        "pct_under15": 23.0,
-        "pct_over65": 9.0
-    },
-    "BRB": {
-        "death_rate": 10.23,
-        "gdp_per_capita": 26544.871,
-        "urban_share": 59.54,
-        "life_expectancy": 76.332,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.5,
-        "pct_over65": 16.0
-    },
-    "BRN": {
-        "death_rate": 5.335,
-        "gdp_per_capita": 33153.474,
-        "urban_share": 74.898,
-        "life_expectancy": 75.501,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.5,
-        "pct_over65": 5.0
-    },
-    "BTN": {
-        "death_rate": 6.065,
-        "gdp_per_capita": null,
-        "urban_share": 42.565,
-        "life_expectancy": 73.262,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 6.5
-    },
-    "BWA": {
-        "death_rate": 5.738,
-        "gdp_per_capita": 7695.753,
-        "urban_share": 67.462,
-        "life_expectancy": 69.293,
-        "physicians_per1000": 0.3,
-        "pct_under15": 33.0,
-        "pct_over65": 4.5
-    },
-    "CAF": {
-        "death_rate": 9.379,
-        "gdp_per_capita": 516.161,
-        "urban_share": 44.124,
-        "life_expectancy": 57.671,
-        "physicians_per1000": 0.3,
-        "pct_under15": 43.5,
-        "pct_over65": 2.7
-    },
-    "CAN": {
-        "death_rate": 7.9,
-        "gdp_per_capita": 54340.348,
-        "urban_share": 82.7,
-        "life_expectancy": 82.108,
-        "physicians_per1000": 2.6,
-        "pct_under15": 18.0,
-        "pct_over65": 17.0
-    },
-    "CEB": {
-        "death_rate": 11.997,
-        "gdp_per_capita": 24604.807,
-        "urban_share": 61.798,
-        "life_expectancy": 77.918,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 19.5
-    },
-    "CHE": {
-        "death_rate": 8.0,
-        "gdp_per_capita": 103998.187,
-        "urban_share": 85.462,
-        "life_expectancy": 84.407,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.0,
-        "pct_over65": 19.0
-    },
-    "CHI": {
-        "death_rate": 10.4,
-        "gdp_per_capita": null,
-        "urban_share": 32.706,
-        "life_expectancy": 81.2,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.0,
-        "pct_over65": 18.5
-    },
-    "CHL": {
-        "death_rate": 6.58,
-        "gdp_per_capita": 16709.889,
-        "urban_share": 88.995,
-        "life_expectancy": 81.359,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.0,
-        "pct_over65": 12.5
-    },
-    "CHN": {
-        "death_rate": 7.76,
-        "gdp_per_capita": 13303.148,
-        "urban_share": 65.895,
-        "life_expectancy": 78.017,
-        "physicians_per1000": 2.2,
-        "pct_under15": 17.0,
-        "pct_over65": 13.0
-    },
-    "CIV": {
-        "death_rate": 7.607,
-        "gdp_per_capita": 2727.894,
-        "urban_share": 53.973,
-        "life_expectancy": 62.11,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.5,
-        "pct_over65": 3.0
-    },
-    "CMR": {
-        "death_rate": 7.032,
-        "gdp_per_capita": 1830.008,
-        "urban_share": 55.403,
-        "life_expectancy": 63.968,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.5,
-        "pct_over65": 3.0
-    },
-    "COD": {
-        "death_rate": 8.424,
-        "gdp_per_capita": 649.383,
-        "urban_share": 44.746,
-        "life_expectancy": 62.074,
-        "physicians_per1000": 0.3,
-        "pct_under15": 45.5,
-        "pct_over65": 2.8
-    },
-    "COG": {
-        "death_rate": 6.241,
-        "gdp_per_capita": 2482.249,
-        "urban_share": 63.887,
-        "life_expectancy": 66.001,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.0,
-        "pct_over65": 3.1
-    },
-    "COL": {
-        "death_rate": 5.466,
-        "gdp_per_capita": 7919.209,
-        "urban_share": 78.521,
-        "life_expectancy": 77.913,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 9.5
-    },
-    "COM": {
-        "death_rate": 7.123,
-        "gdp_per_capita": 1662.757,
-        "urban_share": 33.539,
-        "life_expectancy": 67.023,
-        "physicians_per1000": 0.3,
-        "pct_under15": 39.0,
-        "pct_over65": 3.5
-    },
-    "CPV": {
-        "death_rate": 5.096,
-        "gdp_per_capita": 5192.482,
-        "urban_share": 76.772,
-        "life_expectancy": 76.224,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.0,
-        "pct_over65": 6.5
-    },
-    "CRI": {
-        "death_rate": 5.566,
-        "gdp_per_capita": 18587.153,
-        "urban_share": 79.311,
-        "life_expectancy": 80.996,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.5,
-        "pct_over65": 10.5
-    },
-    "CSS": {
-        "death_rate": 8.091,
-        "gdp_per_capita": 19903.811,
-        "urban_share": 50.1,
-        "life_expectancy": 73.313,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 9.0
-    },
-    "CUB": {
-        "death_rate": 10.375,
-        "gdp_per_capita": null,
-        "urban_share": 77.166,
-        "life_expectancy": 78.264,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.0,
-        "pct_over65": 16.5
-    },
-    "CUW": {
-        "death_rate": 10.1,
-        "gdp_per_capita": 22832.895,
-        "urban_share": 91.432,
-        "life_expectancy": 76.989,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.5,
-        "pct_over65": 17.0
-    },
-    "CYM": {
-        "death_rate": 4.863,
-        "gdp_per_capita": null,
-        "urban_share": 100.0,
-        "life_expectancy": 80.54,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.0,
-        "pct_over65": 10.5
-    },
-    "CYP": {
-        "death_rate": 7.016,
-        "gdp_per_capita": 38674.293,
-        "urban_share": 66.682,
-        "life_expectancy": 81.821,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.0,
-        "pct_over65": 15.5
-    },
-    "CZE": {
-        "death_rate": 10.3,
-        "gdp_per_capita": 31823.308,
-        "urban_share": 72.795,
-        "life_expectancy": 79.978,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 20.5
-    },
-    "DEU": {
-        "death_rate": 12.1,
-        "gdp_per_capita": 56103.732,
-        "urban_share": 82.021,
-        "life_expectancy": 80.793,
-        "physicians_per1000": 3.8,
-        "pct_under15": 15.0,
-        "pct_over65": 20.0
-    },
-    "DJI": {
-        "death_rate": 7.487,
-        "gdp_per_capita": 3552.723,
-        "urban_share": 72.905,
-        "life_expectancy": 66.202,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 4.5
-    },
-    "DMA": {
-        "death_rate": 12.623,
-        "gdp_per_capita": 10405.279,
-        "urban_share": 73.545,
-        "life_expectancy": 71.294,
-        "physicians_per1000": 0.3,
-        "pct_under15": 21.0,
-        "pct_over65": 12.0
-    },
-    "DNK": {
-        "death_rate": 9.5,
-        "gdp_per_capita": 71026.483,
-        "urban_share": 88.696,
-        "life_expectancy": 82.254,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.0,
-        "pct_over65": 20.0
-    },
-    "DOM": {
-        "death_rate": 6.249,
-        "gdp_per_capita": 10875.662,
-        "urban_share": 72.412,
-        "life_expectancy": 73.868,
-        "physicians_per1000": 0.3,
-        "pct_under15": 27.0,
-        "pct_over65": 8.0
-    },
-    "DZA": {
-        "death_rate": 4.618,
-        "gdp_per_capita": 5752.991,
-        "urban_share": 75.279,
-        "life_expectancy": 76.475,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.0,
-        "pct_over65": 7.0
-    },
-    "EAP": {
-        "death_rate": 7.649,
-        "gdp_per_capita": 10396.796,
-        "urban_share": 61.613,
-        "life_expectancy": 75.959,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.0,
-        "pct_over65": 11.0
-    },
-    "EAR": {
-        "death_rate": 6.389,
-        "gdp_per_capita": 4450.187,
-        "urban_share": 47.344,
-        "life_expectancy": 72.008,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 5.5
-    },
-    "EAS": {
-        "death_rate": 7.92,
-        "gdp_per_capita": 13405.736,
-        "urban_share": 64.374,
-        "life_expectancy": 76.738,
-        "physicians_per1000": 0.3,
-        "pct_under15": 18.0,
-        "pct_over65": 13.0
-    },
-    "ECA": {
-        "death_rate": 7.842,
-        "gdp_per_capita": 9793.692,
-        "urban_share": 68.273,
-        "life_expectancy": 75.142,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.0,
-        "pct_over65": 13.0
-    },
-    "ECS": {
-        "death_rate": 10.073,
-        "gdp_per_capita": 31555.521,
-        "urban_share": 73.97,
-        "life_expectancy": 78.599,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.5,
-        "pct_over65": 18.0
-    },
-    "ECU": {
-        "death_rate": 5.207,
-        "gdp_per_capita": 6874.706,
-        "urban_share": 63.238,
-        "life_expectancy": 77.579,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.5,
-        "pct_over65": 8.0
-    },
-    "EGY": {
-        "death_rate": 5.506,
-        "gdp_per_capita": 3338.474,
-        "urban_share": 42.8,
-        "life_expectancy": 71.806,
-        "physicians_per1000": 0.3,
-        "pct_under15": 33.0,
-        "pct_over65": 5.5
-    },
-    "EMU": {
-        "death_rate": 10.463,
-        "gdp_per_capita": 46945.419,
-        "urban_share": 77.402,
-        "life_expectancy": 82.366,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.0,
-        "pct_over65": 21.0
-    },
-    "ERI": {
-        "death_rate": 5.995,
-        "gdp_per_capita": null,
-        "urban_share": 34.537,
-        "life_expectancy": 68.893,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.0,
-        "pct_over65": 3.5
-    },
-    "ESP": {
-        "death_rate": 8.9,
-        "gdp_per_capita": 35326.768,
-        "urban_share": 80.315,
-        "life_expectancy": 83.888,
-        "physicians_per1000": 3.8,
-        "pct_under15": 15.0,
-        "pct_over65": 20.0
-    },
-    "EST": {
-        "death_rate": 11.5,
-        "gdp_per_capita": 31428.355,
-        "urban_share": 70.698,
-        "life_expectancy": 79.295,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.0,
-        "pct_over65": 20.5
-    },
-    "ETH": {
-        "death_rate": 5.879,
-        "gdp_per_capita": 1133.883,
-        "urban_share": 23.622,
-        "life_expectancy": 67.603,
-        "physicians_per1000": 0.3,
-        "pct_under15": 39.5,
-        "pct_over65": 3.5
-    },
-    "EUU": {
-        "death_rate": 10.697,
-        "gdp_per_capita": 43304.964,
-        "urban_share": 75.03,
-        "life_expectancy": 81.561,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 21.0
-    },
-    "FCS": {
-        "death_rate": 8.276,
-        "gdp_per_capita": 1527.958,
-        "urban_share": 46.154,
-        "life_expectancy": 63.605,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.0,
-        "pct_over65": 3.0
-    },
-    "FIN": {
-        "death_rate": 10.4,
-        "gdp_per_capita": 53149.767,
-        "urban_share": 74.264,
-        "life_expectancy": 82.337,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 23.0
-    },
-    "FJI": {
-        "death_rate": 9.511,
-        "gdp_per_capita": 6425.742,
-        "urban_share": 59.077,
-        "life_expectancy": 67.463,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.0,
-        "pct_over65": 6.5
-    },
-    "FRA": {
-        "death_rate": 9.4,
-        "gdp_per_capita": 46103.084,
-        "urban_share": 78.8,
-        "life_expectancy": 82.98,
-        "physicians_per1000": 3.8,
-        "pct_under15": 15.0,
-        "pct_over65": 20.0
-    },
-    "FRO": {
-        "death_rate": 8.203,
-        "gdp_per_capita": 74119.661,
-        "urban_share": 39.413,
-        "life_expectancy": 83.083,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.5,
-        "pct_over65": 15.5
-    },
-    "FSM": {
-        "death_rate": 7.712,
-        "gdp_per_capita": 4166.005,
-        "urban_share": 22.456,
-        "life_expectancy": 67.357,
-        "physicians_per1000": 0.3,
-        "pct_under15": 32.0,
-        "pct_over65": 5.0
-    },
-    "GAB": {
-        "death_rate": 6.226,
-        "gdp_per_capita": 8230.043,
-        "urban_share": 91.863,
-        "life_expectancy": 68.511,
-        "physicians_per1000": 0.3,
-        "pct_under15": 36.5,
-        "pct_over65": 3.5
-    },
-    "GBR": {
-        "death_rate": 9.701,
-        "gdp_per_capita": 53246.368,
-        "urban_share": 83.243,
-        "life_expectancy": 81.387,
-        "physicians_per1000": 3.8,
-        "pct_under15": 15.0,
-        "pct_over65": 20.0
-    },
-    "GEO": {
-        "death_rate": 11.836,
-        "gdp_per_capita": 9241.491,
-        "urban_share": 61.079,
-        "life_expectancy": 74.657,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.5,
-        "pct_over65": 15.5
-    },
-    "GHA": {
-        "death_rate": 7.009,
-        "gdp_per_capita": 2390.772,
-        "urban_share": 58.365,
-        "life_expectancy": 65.695,
-        "physicians_per1000": 0.3,
-        "pct_under15": 37.5,
-        "pct_over65": 3.5
-    },
-    "GIB": {
-        "death_rate": 6.589,
-        "gdp_per_capita": null,
-        "urban_share": 100.0,
-        "life_expectancy": 83.63,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.0,
-        "pct_over65": 19.0
-    },
-    "GIN": {
-        "death_rate": 9.028,
-        "gdp_per_capita": 1694.954,
-        "urban_share": 38.071,
-        "life_expectancy": 60.904,
-        "physicians_per1000": 0.3,
-        "pct_under15": 43.5,
-        "pct_over65": 3.0
-    },
-    "GMB": {
-        "death_rate": 6.249,
-        "gdp_per_capita": 871.34,
-        "urban_share": 64.299,
-        "life_expectancy": 66.057,
-        "physicians_per1000": 0.3,
-        "pct_under15": 44.0,
-        "pct_over65": 2.6
-    },
-    "GNB": {
-        "death_rate": 7.009,
-        "gdp_per_capita": 1007.742,
-        "urban_share": 46.113,
-        "life_expectancy": 64.254,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.0,
-        "pct_over65": 3.0
-    },
-    "GNQ": {
-        "death_rate": 7.851,
-        "gdp_per_capita": 6745.4,
-        "urban_share": 71.357,
-        "life_expectancy": 63.906,
-        "physicians_per1000": 0.3,
-        "pct_under15": 36.5,
-        "pct_over65": 2.8
-    },
-    "GRC": {
-        "death_rate": 12.1,
-        "gdp_per_capita": 24626.148,
-        "urban_share": 78.997,
-        "life_expectancy": 81.839,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.0,
-        "pct_over65": 22.5
-    },
-    "GRD": {
-        "death_rate": 8.918,
-        "gdp_per_capita": 11705.09,
-        "urban_share": 36.563,
-        "life_expectancy": 75.367,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 9.0
-    },
-    "GRL": {
-        "death_rate": 9.3,
-        "gdp_per_capita": null,
-        "urban_share": 88.32,
-        "life_expectancy": 70.273,
-        "physicians_per1000": 0.3,
-        "pct_under15": 21.0,
-        "pct_over65": 8.5
-    },
-    "GTM": {
-        "death_rate": 4.86,
-        "gdp_per_capita": 6150.026,
-        "urban_share": 55.955,
-        "life_expectancy": 72.746,
-        "physicians_per1000": 0.3,
-        "pct_under15": 33.5,
-        "pct_over65": 5.0
-    },
-    "GUM": {
-        "death_rate": 6.92,
-        "gdp_per_capita": null,
-        "urban_share": 94.173,
-        "life_expectancy": 77.422,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 14.0
-    },
-    "GUY": {
-        "death_rate": 7.477,
-        "gdp_per_capita": 29675.244,
-        "urban_share": 26.478,
-        "life_expectancy": 70.319,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.0,
-        "pct_over65": 6.5
-    },
-    "HIC": {
-        "death_rate": 9.709,
-        "gdp_per_capita": 50302.605,
-        "urban_share": 80.132,
-        "life_expectancy": 80.394,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.5,
-        "pct_over65": 18.5
-    },
-    "HKG": {
-        "death_rate": 7.0,
-        "gdp_per_capita": 54074.693,
-        "urban_share": 100.0,
-        "life_expectancy": 85.393,
-        "physicians_per1000": 0.3,
-        "pct_under15": 11.5,
-        "pct_over65": 20.5
-    },
-    "HND": {
-        "death_rate": 4.519,
-        "gdp_per_capita": 3426.435,
-        "urban_share": 58.785,
-        "life_expectancy": 73.044,
-        "physicians_per1000": 0.3,
-        "pct_under15": 29.5,
-        "pct_over65": 5.5
-    },
-    "HPC": {
-        "death_rate": 6.91,
-        "gdp_per_capita": 1216.375,
-        "urban_share": 37.868,
-        "life_expectancy": 64.918,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.5,
-        "pct_over65": 3.0
-    },
-    "HRV": {
-        "death_rate": 13.2,
-        "gdp_per_capita": 24050.44,
-        "urban_share": 57.516,
-        "life_expectancy": 78.929,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.5,
-        "pct_over65": 22.0
-    },
-    "HTI": {
-        "death_rate": 7.804,
-        "gdp_per_capita": 2142.623,
-        "urban_share": 55.037,
-        "life_expectancy": 65.119,
-        "physicians_per1000": 0.3,
-        "pct_under15": 32.0,
-        "pct_over65": 5.0
-    },
-    "HUN": {
-        "death_rate": 13.4,
-        "gdp_per_capita": 23292.326,
-        "urban_share": 70.492,
-        "life_expectancy": 76.724,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.5,
-        "pct_over65": 20.5
-    },
-    "IBD": {
-        "death_rate": 7.235,
-        "gdp_per_capita": 8219.913,
-        "urban_share": 58.326,
-        "life_expectancy": 74.673,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 8.5
-    },
-    "IBT": {
-        "death_rate": 7.237,
-        "gdp_per_capita": 6327.144,
-        "urban_share": 53.367,
-        "life_expectancy": 72.133,
-        "physicians_per1000": 0.3,
-        "pct_under15": 27.0,
-        "pct_over65": 7.0
-    },
-    "IDA": {
-        "death_rate": 7.243,
-        "gdp_per_capita": 1485.922,
-        "urban_share": 40.684,
-        "life_expectancy": 65.635,
-        "physicians_per1000": 0.3,
-        "pct_under15": 40.5,
-        "pct_over65": 3.5
-    },
-    "IDB": {
-        "death_rate": 8.385,
-        "gdp_per_capita": 1650.638,
-        "urban_share": 48.696,
-        "life_expectancy": 62.62,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.0,
-        "pct_over65": 3.0
-    },
-    "IDN": {
-        "death_rate": 7.624,
-        "gdp_per_capita": 4925.43,
-        "urban_share": 58.751,
-        "life_expectancy": 71.288,
-        "physicians_per1000": 0.3,
-        "pct_under15": 25.0,
-        "pct_over65": 6.5
-    },
-    "IDX": {
-        "death_rate": 6.634,
-        "gdp_per_capita": 1398.112,
-        "urban_share": 36.414,
-        "life_expectancy": 67.243,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.5,
-        "pct_over65": 3.0
-    },
-    "IMN": {
-        "death_rate": 10.649,
-        "gdp_per_capita": null,
-        "urban_share": 52.163,
-        "life_expectancy": 81.091,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.0,
-        "pct_over65": 20.0
-    },
-    "IND": {
-        "death_rate": 6.587,
-        "gdp_per_capita": 2694.738,
-        "urban_share": 35.379,
-        "life_expectancy": 72.235,
-        "physicians_per1000": 0.8,
-        "pct_under15": 26.0,
-        "pct_over65": 7.0
-    },
-    "INX": {
-        "death_rate": null,
-        "gdp_per_capita": null,
-        "urban_share": null,
-        "life_expectancy": null,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.0,
-        "pct_over65": 10.0
-    },
-    "IRL": {
-        "death_rate": 6.5,
-        "gdp_per_capita": 112894.953,
-        "urban_share": 64.347,
-        "life_expectancy": 83.01,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.5,
-        "pct_over65": 15.0
-    },
-    "IRN": {
-        "death_rate": 4.754,
-        "gdp_per_capita": 5190.17,
-        "urban_share": 77.02,
-        "life_expectancy": 77.854,
-        "physicians_per1000": 0.3,
-        "pct_under15": 23.5,
-        "pct_over65": 7.5
-    },
-    "IRQ": {
-        "death_rate": 4.166,
-        "gdp_per_capita": 6073.61,
-        "urban_share": 69.886,
-        "life_expectancy": 72.424,
-        "physicians_per1000": 0.3,
-        "pct_under15": 37.0,
-        "pct_over65": 3.5
-    },
-    "ISL": {
-        "death_rate": 6.8,
-        "gdp_per_capita": 86040.531,
-        "urban_share": 94.182,
-        "life_expectancy": 82.81,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.0,
-        "pct_over65": 15.5
-    },
-    "ISR": {
-        "death_rate": 5.3,
-        "gdp_per_capita": 54176.684,
-        "urban_share": 91.536,
-        "life_expectancy": 83.198,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.0,
-        "pct_over65": 12.5
-    },
-    "ITA": {
-        "death_rate": 11.0,
-        "gdp_per_capita": 40385.341,
-        "urban_share": 69.605,
-        "life_expectancy": 83.951,
-        "physicians_per1000": 0.3,
-        "pct_under15": 12.5,
-        "pct_over65": 24.0
-    },
-    "JAM": {
-        "death_rate": 8.206,
-        "gdp_per_capita": 7753.801,
-        "urban_share": 58.93,
-        "life_expectancy": 71.606,
-        "physicians_per1000": 0.3,
-        "pct_under15": 21.5,
-        "pct_over65": 10.0
-    },
-    "JOR": {
-        "death_rate": 3.121,
-        "gdp_per_capita": 4618.096,
-        "urban_share": 92.95,
-        "life_expectancy": 77.981,
-        "physicians_per1000": 0.3,
-        "pct_under15": 33.0,
-        "pct_over65": 4.2
-    },
-    "JPN": {
-        "death_rate": 13.3,
-        "gdp_per_capita": 32487.078,
-        "urban_share": 92.19,
-        "life_expectancy": 84.036,
-        "physicians_per1000": 2.5,
-        "pct_under15": 12.0,
-        "pct_over65": 28.0
-    },
-    "KAZ": {
-        "death_rate": 6.697,
-        "gdp_per_capita": 14154.632,
-        "urban_share": 62.073,
-        "life_expectancy": 74.531,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.0,
-        "pct_over65": 8.5
-    },
-    "KEN": {
-        "death_rate": 7.18,
-        "gdp_per_capita": 2132.435,
-        "urban_share": 31.894,
-        "life_expectancy": 63.834,
-        "physicians_per1000": 0.3,
-        "pct_under15": 38.0,
-        "pct_over65": 3.0
-    },
-    "KGZ": {
-        "death_rate": 4.4,
-        "gdp_per_capita": 2420.185,
-        "urban_share": 34.722,
-        "life_expectancy": 72.4,
-        "physicians_per1000": 0.3,
-        "pct_under15": 32.0,
-        "pct_over65": 5.0
-    },
-    "KHM": {
-        "death_rate": 6.454,
-        "gdp_per_capita": 2627.88,
-        "urban_share": 40.873,
-        "life_expectancy": 70.817,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 5.0
-    },
-    "KIR": {
-        "death_rate": 7.059,
-        "gdp_per_capita": 2288.635,
-        "urban_share": 62.462,
-        "life_expectancy": 66.6,
-        "physicians_per1000": 0.3,
-        "pct_under15": 34.0,
-        "pct_over65": 4.5
-    },
-    "KNA": {
-        "death_rate": 9.977,
-        "gdp_per_capita": 23960.653,
-        "urban_share": 31.795,
-        "life_expectancy": 72.281,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.0,
-        "pct_over65": 10.0
-    },
-    "KOR": {
-        "death_rate": 7.0,
-        "gdp_per_capita": 36238.64,
-        "urban_share": 81.168,
-        "life_expectancy": 83.629,
-        "physicians_per1000": 0.3,
-        "pct_under15": 11.5,
-        "pct_over65": 18.5
-    },
-    "KWT": {
-        "death_rate": 1.52,
-        "gdp_per_capita": 32717.719,
-        "urban_share": 100.0,
-        "life_expectancy": 84.58,
-        "physicians_per1000": 0.3,
-        "pct_under15": 21.0,
-        "pct_over65": 2.5
-    },
-    "LAC": {
-        "death_rate": 6.561,
-        "gdp_per_capita": 10382.391,
-        "urban_share": 80.77,
-        "life_expectancy": 75.673,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 9.0
-    },
-    "LAO": {
-        "death_rate": 6.187,
-        "gdp_per_capita": 2123.979,
-        "urban_share": 39.555,
-        "life_expectancy": 69.225,
-        "physicians_per1000": 0.3,
-        "pct_under15": 32.0,
-        "pct_over65": 4.5
-    },
-    "LBN": {
-        "death_rate": 6.035,
-        "gdp_per_capita": null,
-        "urban_share": 90.704,
-        "life_expectancy": 77.945,
-        "physicians_per1000": 0.3,
-        "pct_under15": 23.0,
-        "pct_over65": 8.0
-    },
-    "LBR": {
-        "death_rate": 8.016,
-        "gdp_per_capita": 851.498,
-        "urban_share": 55.539,
-        "life_expectancy": 62.324,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.5,
-        "pct_over65": 3.0
-    },
-    "LBY": {
-        "death_rate": 6.534,
-        "gdp_per_capita": 6569.164,
-        "urban_share": 87.885,
-        "life_expectancy": 71.121,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.0,
-        "pct_over65": 4.5
-    },
-    "LCA": {
-        "death_rate": 8.712,
-        "gdp_per_capita": 14181.63,
-        "urban_share": 29.097,
-        "life_expectancy": 72.846,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 10.0
-    },
-    "LCN": {
-        "death_rate": 6.636,
-        "gdp_per_capita": 10737.646,
-        "urban_share": 81.272,
-        "life_expectancy": 75.818,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.5,
-        "pct_over65": 9.0
-    },
-    "LDC": {
-        "death_rate": 6.711,
-        "gdp_per_capita": 1293.401,
-        "urban_share": 36.165,
-        "life_expectancy": 66.706,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.0,
-        "pct_over65": 3.5
-    },
-    "LIC": {
-        "death_rate": 7.245,
-        "gdp_per_capita": 751.323,
-        "urban_share": 37.218,
-        "life_expectancy": 64.702,
-        "physicians_per1000": 0.3,
-        "pct_under15": 43.0,
-        "pct_over65": 3.0
-    },
-    "LIE": {
-        "death_rate": 7.5,
-        "gdp_per_capita": null,
-        "urban_share": 14.658,
-        "life_expectancy": 84.2,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.0,
-        "pct_over65": 18.5
-    },
-    "LKA": {
-        "death_rate": 7.8,
-        "gdp_per_capita": 4515.568,
-        "urban_share": 20.3,
-        "life_expectancy": 77.672,
-        "physicians_per1000": 0.3,
-        "pct_under15": 23.5,
-        "pct_over65": 11.5
-    },
-    "LMC": {
-        "death_rate": 6.852,
-        "gdp_per_capita": 2544.492,
-        "urban_share": 41.617,
-        "life_expectancy": 69.786,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 6.0
-    },
-    "LMY": {
-        "death_rate": 7.118,
-        "gdp_per_capita": 6002.451,
-        "urban_share": 53.234,
-        "life_expectancy": 72.109,
-        "physicians_per1000": 0.3,
-        "pct_under15": 27.5,
-        "pct_over65": 7.0
-    },
-    "LSO": {
-        "death_rate": 10.478,
-        "gdp_per_capita": 971.908,
-        "urban_share": 43.678,
-        "life_expectancy": 57.798,
-        "physicians_per1000": 0.3,
-        "pct_under15": 34.0,
-        "pct_over65": 4.5
-    },
-    "LTE": {
-        "death_rate": 7.899,
-        "gdp_per_capita": 12874.168,
-        "urban_share": 67.258,
-        "life_expectancy": 77.233,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.0,
-        "pct_over65": 13.0
-    },
-    "LTU": {
-        "death_rate": 13.0,
-        "gdp_per_capita": 29384.019,
-        "urban_share": 68.829,
-        "life_expectancy": 77.195,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.0,
-        "pct_over65": 21.0
-    },
-    "LUX": {
-        "death_rate": 6.6,
-        "gdp_per_capita": 137781.682,
-        "urban_share": 94.844,
-        "life_expectancy": 83.195,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 15.0
-    },
-    "LVA": {
-        "death_rate": 14.3,
-        "gdp_per_capita": 23409.085,
-        "urban_share": 68.484,
-        "life_expectancy": 76.429,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 21.5
-    },
-    "MAC": {
-        "death_rate": 3.6,
-        "gdp_per_capita": 72004.744,
-        "urban_share": 100.0,
-        "life_expectancy": 83.332,
-        "physicians_per1000": 0.3,
-        "pct_under15": 13.0,
-        "pct_over65": 13.5
-    },
-    "MAF": {
-        "death_rate": 9.657,
-        "gdp_per_capita": null,
-        "urban_share": 100.0,
-        "life_expectancy": 80.438,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 8.5
-    },
-    "MAR": {
-        "death_rate": 5.726,
-        "gdp_per_capita": 4153.194,
-        "urban_share": 62.8,
-        "life_expectancy": 75.493,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.5,
-        "pct_over65": 7.5
-    },
-    "MCO": {
-        "death_rate": 20.141,
-        "gdp_per_capita": 288001.433,
-        "urban_share": 100.0,
-        "life_expectancy": 86.497,
-        "physicians_per1000": 0.3,
-        "pct_under15": 12.5,
-        "pct_over65": 27.0
-    },
-    "MDA": {
-        "death_rate": 13.823,
-        "gdp_per_capita": 7576.196,
-        "urban_share": 43.516,
-        "life_expectancy": 71.332,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 14.5
-    },
-    "MDG": {
-        "death_rate": 7.471,
-        "gdp_per_capita": 544.988,
-        "urban_share": 32.434,
-        "life_expectancy": 63.835,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.0,
-        "pct_over65": 3.2
-    },
-    "MDV": {
-        "death_rate": 2.364,
-        "gdp_per_capita": 13379.351,
-        "urban_share": 41.998,
-        "life_expectancy": 81.285,
-        "physicians_per1000": 0.3,
-        "pct_under15": 21.0,
-        "pct_over65": 5.0
-    },
-    "MEA": {
-        "death_rate": 5.273,
-        "gdp_per_capita": 6265.444,
-        "urban_share": 55.694,
-        "life_expectancy": 72.315,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 5.0
-    },
-    "MEX": {
-        "death_rate": 6.219,
-        "gdp_per_capita": 14185.781,
-        "urban_share": 79.754,
-        "life_expectancy": 75.264,
-        "physicians_per1000": 2.1,
-        "pct_under15": 23.0,
-        "pct_over65": 9.0
-    },
-    "MHL": {
-        "death_rate": 7.131,
-        "gdp_per_capita": 7726.337,
-        "urban_share": 78.733,
-        "life_expectancy": 67.075,
-        "physicians_per1000": 0.3,
-        "pct_under15": 32.5,
-        "pct_over65": 4.5
-    },
-    "MIC": {
-        "death_rate": 7.104,
-        "gdp_per_capita": 6554.371,
-        "urban_share": 54.918,
-        "life_expectancy": 72.888,
-        "physicians_per1000": 0.3,
-        "pct_under15": 25.0,
-        "pct_over65": 8.0
-    },
-    "MKD": {
-        "death_rate": 11.1,
-        "gdp_per_capita": 9291.857,
-        "urban_share": 62.565,
-        "life_expectancy": 76.617,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.0,
-        "pct_over65": 15.5
-    },
-    "MLI": {
-        "death_rate": 8.51,
-        "gdp_per_capita": 1094.619,
-        "urban_share": 31.608,
-        "life_expectancy": 60.675,
-        "physicians_per1000": 0.3,
-        "pct_under15": 46.5,
-        "pct_over65": 2.5
-    },
-    "MLT": {
-        "death_rate": 7.3,
-        "gdp_per_capita": 43898.578,
-        "urban_share": 95.655,
-        "life_expectancy": 82.956,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.0,
-        "pct_over65": 21.0
-    },
-    "MMR": {
-        "death_rate": 9.176,
-        "gdp_per_capita": 1359.05,
-        "urban_share": 30.45,
-        "life_expectancy": 67.095,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.0,
-        "pct_over65": 6.5
-    },
-    "MNA": {
-        "death_rate": 5.547,
-        "gdp_per_capita": 2971.055,
-        "urban_share": 52.642,
-        "life_expectancy": 71.487,
-        "physicians_per1000": 0.3,
-        "pct_under15": 31.0,
-        "pct_over65": 5.0
-    },
-    "MNE": {
-        "death_rate": 10.2,
-        "gdp_per_capita": 13263.328,
-        "urban_share": 65.542,
-        "life_expectancy": 77.89,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.5,
-        "pct_over65": 16.0
-    },
-    "MNG": {
-        "death_rate": 5.5,
-        "gdp_per_capita": 6750.63,
-        "urban_share": 70.957,
-        "life_expectancy": 72.398,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 4.5
-    },
-    "MNP": {
-        "death_rate": 4.977,
-        "gdp_per_capita": null,
-        "urban_share": 92.075,
-        "life_expectancy": 78.947,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.0,
-        "pct_over65": 9.5
-    },
-    "MOZ": {
-        "death_rate": 6.908,
-        "gdp_per_capita": 656.777,
-        "urban_share": 36.433,
-        "life_expectancy": 63.797,
-        "physicians_per1000": 0.3,
-        "pct_under15": 44.0,
-        "pct_over65": 2.8
-    },
-    "MRT": {
-        "death_rate": 5.414,
-        "gdp_per_capita": 2110.12,
-        "urban_share": 60.607,
-        "life_expectancy": 68.713,
-        "physicians_per1000": 0.3,
-        "pct_under15": 39.0,
-        "pct_over65": 3.0
-    },
-    "MUS": {
-        "death_rate": 10.0,
-        "gdp_per_capita": 11990.78,
-        "urban_share": 39.016,
-        "life_expectancy": 73.789,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.5,
-        "pct_over65": 13.0
-    },
-    "MWI": {
-        "death_rate": 5.292,
-        "gdp_per_capita": 522.57,
-        "urban_share": 17.269,
-        "life_expectancy": 67.561,
-        "physicians_per1000": 0.3,
-        "pct_under15": 43.0,
-        "pct_over65": 2.8
-    },
-    "MYS": {
-        "death_rate": 5.273,
-        "gdp_per_capita": 11874.427,
-        "urban_share": 76.917,
-        "life_expectancy": 76.821,
-        "physicians_per1000": 0.3,
-        "pct_under15": 23.5,
-        "pct_over65": 7.5
-    },
-    "NAC": {
-        "death_rate": 8.881,
-        "gdp_per_capita": 81275.844,
-        "urban_share": 80.407,
-        "life_expectancy": 79.239,
-        "physicians_per1000": 0.3,
-        "pct_under15": 18.0,
-        "pct_over65": 17.0
-    },
-    "NAM": {
-        "death_rate": 6.176,
-        "gdp_per_capita": 4413.128,
-        "urban_share": 50.409,
-        "life_expectancy": 67.516,
-        "physicians_per1000": 0.3,
-        "pct_under15": 35.5,
-        "pct_over65": 3.8
-    },
-    "NCL": {
-        "death_rate": 6.251,
-        "gdp_per_capita": 29213.192,
-        "urban_share": 67.951,
-        "life_expectancy": 78.921,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 10.0
-    },
-    "NER": {
-        "death_rate": 8.719,
-        "gdp_per_capita": 735.27,
-        "urban_share": 18.05,
-        "life_expectancy": 61.433,
-        "physicians_per1000": 0.3,
-        "pct_under15": 49.5,
-        "pct_over65": 2.5
-    },
-    "NGA": {
-        "death_rate": 11.641,
-        "gdp_per_capita": 1084.16,
-        "urban_share": 62.976,
-        "life_expectancy": 54.635,
-        "physicians_per1000": 0.1,
-        "pct_under15": 44.0,
-        "pct_over65": 3.0
-    },
-    "NIC": {
-        "death_rate": 4.636,
-        "gdp_per_capita": 2847.54,
-        "urban_share": 59.263,
-        "life_expectancy": 75.1,
-        "physicians_per1000": 0.3,
-        "pct_under15": 27.5,
-        "pct_over65": 6.0
-    },
-    "NLD": {
-        "death_rate": 9.6,
-        "gdp_per_capita": 67520.422,
-        "urban_share": 95.64,
-        "life_expectancy": 81.966,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 20.5
-    },
-    "NOR": {
-        "death_rate": 7.9,
-        "gdp_per_capita": 86785.433,
-        "urban_share": 83.329,
-        "life_expectancy": 83.161,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.0,
-        "pct_over65": 18.0
-    },
-    "NPL": {
-        "death_rate": 6.972,
-        "gdp_per_capita": 1447.31,
-        "urban_share": 66.772,
-        "life_expectancy": 70.636,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.0,
-        "pct_over65": 6.5
-    },
-    "NRU": {
-        "death_rate": 7.574,
-        "gdp_per_capita": 13609.159,
-        "urban_share": 100.0,
-        "life_expectancy": 62.279,
-        "physicians_per1000": 0.3,
-        "pct_under15": 33.0,
-        "pct_over65": 3.5
-    },
-    "NZL": {
-        "death_rate": 7.13,
-        "gdp_per_capita": 49205.179,
-        "urban_share": 83.937,
-        "life_expectancy": 82.01,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.5,
-        "pct_over65": 16.5
-    },
-    "OED": {
-        "death_rate": 9.036,
-        "gdp_per_capita": 48322.164,
-        "urban_share": 81.186,
-        "life_expectancy": 80.398,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.0,
-        "pct_over65": 17.5
-    },
-    "OMN": {
-        "death_rate": 1.904,
-        "gdp_per_capita": 20285.227,
-        "urban_share": 79.444,
-        "life_expectancy": 80.246,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 2.5
-    },
-    "OSS": {
-        "death_rate": 7.667,
-        "gdp_per_capita": 16094.127,
-        "urban_share": 54.962,
-        "life_expectancy": 73.814,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 8.5
-    },
-    "PAK": {
-        "death_rate": 6.445,
-        "gdp_per_capita": 1478.773,
-        "urban_share": 39.173,
-        "life_expectancy": 67.799,
-        "physicians_per1000": 0.8,
-        "pct_under15": 26.0,
-        "pct_over65": 7.0
-    },
-    "PAN": {
-        "death_rate": 4.914,
-        "gdp_per_capita": 19161.219,
-        "urban_share": 65.996,
-        "life_expectancy": 79.775,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.0,
-        "pct_over65": 9.0
-    },
-    "PER": {
-        "death_rate": 5.595,
-        "gdp_per_capita": 8452.372,
-        "urban_share": 85.191,
-        "life_expectancy": 77.941,
-        "physicians_per1000": 0.3,
-        "pct_under15": 25.0,
-        "pct_over65": 9.0
-    },
-    "PHL": {
-        "death_rate": 6.35,
-        "gdp_per_capita": 3984.832,
-        "urban_share": 55.452,
-        "life_expectancy": 69.946,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 5.5
-    },
-    "PLW": {
-        "death_rate": 11.729,
-        "gdp_per_capita": null,
-        "urban_share": 79.21,
-        "life_expectancy": 69.383,
-        "physicians_per1000": 0.3,
-        "pct_under15": 18.5,
-        "pct_over65": 10.5
-    },
-    "PNG": {
-        "death_rate": 6.554,
-        "gdp_per_capita": 3006.706,
-        "urban_share": 15.406,
-        "life_expectancy": 66.256,
-        "physicians_per1000": 0.3,
-        "pct_under15": 36.0,
-        "pct_over65": 3.5
-    },
-    "POL": {
-        "death_rate": 11.2,
-        "gdp_per_capita": 25103.566,
-        "urban_share": 59.971,
-        "life_expectancy": 78.41,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.0,
-        "pct_over65": 19.5
-    },
-    "PRE": {
-        "death_rate": 7.994,
-        "gdp_per_capita": 1366.066,
-        "urban_share": 45.441,
-        "life_expectancy": 62.354,
-        "physicians_per1000": 0.3,
-        "pct_under15": 43.0,
-        "pct_over65": 3.0
-    },
-    "PRI": {
-        "death_rate": 10.3,
-        "gdp_per_capita": 39343.715,
-        "urban_share": 94.254,
-        "life_expectancy": 81.902,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.0,
-        "pct_over65": 22.0
-    },
-    "PRK": {
-        "death_rate": 9.858,
-        "gdp_per_capita": null,
-        "urban_share": 63.859,
-        "life_expectancy": 73.743,
-        "physicians_per1000": 0.3,
-        "pct_under15": 19.5,
-        "pct_over65": 10.5
-    },
-    "PRT": {
-        "death_rate": 11.1,
-        "gdp_per_capita": 29292.242,
-        "urban_share": 61.328,
-        "life_expectancy": 82.383,
-        "physicians_per1000": 0.3,
-        "pct_under15": 13.5,
-        "pct_over65": 23.5
-    },
-    "PRY": {
-        "death_rate": 5.697,
-        "gdp_per_capita": 6416.097,
-        "urban_share": 69.862,
-        "life_expectancy": 73.982,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.0,
-        "pct_over65": 7.5
-    },
-    "PSE": {
-        "death_rate": 5.87,
-        "gdp_per_capita": 2592.306,
-        "urban_share": 87.12,
-        "life_expectancy": 69.213,
-        "physicians_per1000": 0.3,
-        "pct_under15": 38.5,
-        "pct_over65": 3.0
-    },
-    "PSS": {
-        "death_rate": 7.028,
-        "gdp_per_capita": 4453.586,
-        "urban_share": 40.563,
-        "life_expectancy": 69.44,
-        "physicians_per1000": 0.3,
-        "pct_under15": 34.0,
-        "pct_over65": 5.0
-    },
-    "PST": {
-        "death_rate": 10.032,
-        "gdp_per_capita": 55644.315,
-        "urban_share": 81.155,
-        "life_expectancy": 81.112,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.0,
-        "pct_over65": 19.5
-    },
-    "PYF": {
-        "death_rate": 3.808,
-        "gdp_per_capita": 22439.884,
-        "urban_share": 61.719,
-        "life_expectancy": 84.192,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 9.0
-    },
-    "QAT": {
-        "death_rate": 1.051,
-        "gdp_per_capita": 76688.694,
-        "urban_share": 99.322,
-        "life_expectancy": 82.522,
-        "physicians_per1000": 0.3,
-        "pct_under15": 13.5,
-        "pct_over65": 1.5
-    },
-    "ROU": {
-        "death_rate": 12.8,
-        "gdp_per_capita": 20080.21,
-        "urban_share": 52.167,
-        "life_expectancy": 76.459,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 19.5
-    },
-    "RUS": {
-        "death_rate": 12.4,
-        "gdp_per_capita": 14889.019,
-        "urban_share": 75.112,
-        "life_expectancy": 73.44,
-        "physicians_per1000": 0.3,
-        "pct_under15": 18.0,
-        "pct_over65": 16.0
-    },
-    "RWA": {
-        "death_rate": 5.895,
-        "gdp_per_capita": 999.655,
-        "urban_share": 29.885,
-        "life_expectancy": 68.017,
-        "physicians_per1000": 0.3,
-        "pct_under15": 39.5,
-        "pct_over65": 3.0
-    },
-    "SAS": {
-        "death_rate": 6.455,
-        "gdp_per_capita": 2690.079,
-        "urban_share": 35.463,
-        "life_expectancy": 72.56,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.0,
-        "pct_over65": 7.0
-    },
-    "SAU": {
-        "death_rate": 2.337,
-        "gdp_per_capita": 35121.663,
-        "urban_share": 84.455,
-        "life_expectancy": 78.982,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 3.5
-    },
-    "SDN": {
-        "death_rate": 6.335,
-        "gdp_per_capita": 984.608,
-        "urban_share": 34.867,
-        "life_expectancy": 66.521,
-        "physicians_per1000": 0.3,
-        "pct_under15": 40.5,
-        "pct_over65": 3.5
-    },
-    "SEN": {
-        "death_rate": 5.505,
-        "gdp_per_capita": 1773.218,
-        "urban_share": 55.237,
-        "life_expectancy": 68.924,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.0,
-        "pct_over65": 3.0
-    },
-    "SGP": {
-        "death_rate": 6.0,
-        "gdp_per_capita": 90674.067,
-        "urban_share": 100.0,
-        "life_expectancy": 83.346,
-        "physicians_per1000": 0.3,
-        "pct_under15": 12.0,
-        "pct_over65": 17.0
-    },
-    "SLB": {
-        "death_rate": 5.083,
-        "gdp_per_capita": 1933.555,
-        "urban_share": 30.662,
-        "life_expectancy": 70.694,
-        "physicians_per1000": 0.3,
-        "pct_under15": 39.0,
-        "pct_over65": 3.5
-    },
-    "SLE": {
-        "death_rate": 8.211,
-        "gdp_per_capita": 806.655,
-        "urban_share": 45.363,
-        "life_expectancy": 61.964,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.0,
-        "pct_over65": 2.8
-    },
-    "SLV": {
-        "death_rate": 7.47,
-        "gdp_per_capita": 5579.66,
-        "urban_share": 75.067,
-        "life_expectancy": 72.302,
-        "physicians_per1000": 0.3,
-        "pct_under15": 25.0,
-        "pct_over65": 9.0
-    },
-    "SMR": {
-        "death_rate": 7.5,
-        "gdp_per_capita": null,
-        "urban_share": 97.156,
-        "life_expectancy": 85.817,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.0,
-        "pct_over65": 19.5
-    },
-    "SOM": {
-        "death_rate": 9.741,
-        "gdp_per_capita": 629.539,
-        "urban_share": 54.618,
-        "life_expectancy": 58.967,
-        "physicians_per1000": 0.3,
-        "pct_under15": 46.0,
-        "pct_over65": 2.6
-    },
-    "SRB": {
-        "death_rate": 14.9,
-        "gdp_per_capita": 13679.207,
-        "urban_share": 62.383,
-        "life_expectancy": 75.968,
-        "physicians_per1000": 0.3,
-        "pct_under15": 14.5,
-        "pct_over65": 21.5
-    },
-    "SSA": {
-        "death_rate": 8.229,
-        "gdp_per_capita": 1576.692,
-        "urban_share": 46.488,
-        "life_expectancy": 62.255,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.5,
-        "pct_over65": 3.0
-    },
-    "SSD": {
-        "death_rate": 9.821,
-        "gdp_per_capita": null,
-        "urban_share": 21.377,
-        "life_expectancy": 57.738,
-        "physicians_per1000": 0.3,
-        "pct_under15": 44.0,
-        "pct_over65": 2.8
-    },
-    "SSF": {
-        "death_rate": 7.989,
-        "gdp_per_capita": 1532.928,
-        "urban_share": 44.149,
-        "life_expectancy": 62.804,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.5,
-        "pct_over65": 3.0
-    },
-    "SST": {
-        "death_rate": 7.676,
-        "gdp_per_capita": 15383.343,
-        "urban_share": 51.928,
-        "life_expectancy": 73.112,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 8.5
-    },
-    "STP": {
-        "death_rate": 5.53,
-        "gdp_per_capita": 3490.569,
-        "urban_share": 68.871,
-        "life_expectancy": 69.905,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.0,
-        "pct_over65": 3.2
-    },
-    "SUR": {
-        "death_rate": 6.841,
-        "gdp_per_capita": 6961.79,
-        "urban_share": 65.764,
-        "life_expectancy": 73.757,
-        "physicians_per1000": 0.3,
-        "pct_under15": 25.0,
-        "pct_over65": 8.0
-    },
-    "SVK": {
-        "death_rate": 9.9,
-        "gdp_per_capita": 25992.675,
-        "urban_share": 53.192,
-        "life_expectancy": 78.371,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 17.5
-    },
-    "SVN": {
-        "death_rate": 10.1,
-        "gdp_per_capita": 34301.032,
-        "urban_share": 55.758,
-        "life_expectancy": 82.285,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.0,
-        "pct_over65": 21.5
-    },
-    "SWE": {
-        "death_rate": 8.6,
-        "gdp_per_capita": 57117.488,
-        "urban_share": 88.856,
-        "life_expectancy": 84.063,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.5,
-        "pct_over65": 20.5
-    },
-    "SWZ": {
-        "death_rate": 7.731,
-        "gdp_per_capita": 3909.559,
-        "urban_share": 26.25,
-        "life_expectancy": 64.264,
-        "physicians_per1000": 0.3,
-        "pct_under15": 35.0,
-        "pct_over65": 3.8
-    },
-    "SXM": {
-        "death_rate": 8.303,
-        "gdp_per_capita": 41472.587,
-        "urban_share": 100.0,
-        "life_expectancy": 76.528,
-        "physicians_per1000": 0.3,
-        "pct_under15": 18.0,
-        "pct_over65": 10.0
-    },
-    "SYC": {
-        "death_rate": 7.0,
-        "gdp_per_capita": 17858.823,
-        "urban_share": 45.29,
-        "life_expectancy": 76.295,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 9.5
-    },
-    "SYR": {
-        "death_rate": 4.932,
-        "gdp_per_capita": null,
-        "urban_share": 72.076,
-        "life_expectancy": 72.56,
-        "physicians_per1000": 0.3,
-        "pct_under15": 32.0,
-        "pct_over65": 4.5
-    },
-    "TCA": {
-        "death_rate": 7.39,
-        "gdp_per_capita": 37506.78,
-        "urban_share": 94.167,
-        "life_expectancy": 78.181,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.0,
-        "pct_over65": 6.5
-    },
-    "TCD": {
-        "death_rate": 11.08,
-        "gdp_per_capita": 961.56,
-        "urban_share": 26.932,
-        "life_expectancy": 55.238,
-        "physicians_per1000": 0.3,
-        "pct_under15": 46.5,
-        "pct_over65": 2.5
-    },
-    "TEA": {
-        "death_rate": 7.621,
-        "gdp_per_capita": 10513.953,
-        "urban_share": 61.585,
-        "life_expectancy": 75.987,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.0,
-        "pct_over65": 10.5
-    },
-    "TEC": {
-        "death_rate": 9.891,
-        "gdp_per_capita": 13337.439,
-        "urban_share": 69.07,
-        "life_expectancy": 74.966,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.0,
-        "pct_over65": 12.0
-    },
-    "TGO": {
-        "death_rate": 8.486,
-        "gdp_per_capita": 1119.382,
-        "urban_share": 43.815,
-        "life_expectancy": 62.935,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.5,
-        "pct_over65": 3.0
-    },
-    "THA": {
-        "death_rate": 9.033,
-        "gdp_per_capita": 7346.62,
-        "urban_share": 61.869,
-        "life_expectancy": 76.564,
-        "physicians_per1000": 0.3,
-        "pct_under15": 16.0,
-        "pct_over65": 14.0
-    },
-    "TJK": {
-        "death_rate": 4.591,
-        "gdp_per_capita": 1341.202,
-        "urban_share": 26.179,
-        "life_expectancy": 71.927,
-        "physicians_per1000": 0.3,
-        "pct_under15": 35.0,
-        "pct_over65": 3.5
-    },
-    "TKM": {
-        "death_rate": 5.836,
-        "gdp_per_capita": 6856.658,
-        "urban_share": 47.088,
-        "life_expectancy": 70.201,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 4.5
-    },
-    "TLA": {
-        "death_rate": 6.552,
-        "gdp_per_capita": 10474.281,
-        "urban_share": 81.272,
-        "life_expectancy": 75.745,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.5,
-        "pct_over65": 9.0
-    },
-    "TLS": {
-        "death_rate": 7.219,
-        "gdp_per_capita": 1331.971,
-        "urban_share": 28.664,
-        "life_expectancy": 67.904,
-        "physicians_per1000": 0.3,
-        "pct_under15": 37.5,
-        "pct_over65": 3.5
-    },
-    "TMN": {
-        "death_rate": 5.544,
-        "gdp_per_capita": 2973.775,
-        "urban_share": 52.394,
-        "life_expectancy": 71.504,
-        "physicians_per1000": 0.3,
-        "pct_under15": 31.0,
-        "pct_over65": 5.0
-    },
-    "TON": {
-        "death_rate": 6.442,
-        "gdp_per_capita": null,
-        "urban_share": 21.151,
-        "life_expectancy": 73.07,
-        "physicians_per1000": 0.3,
-        "pct_under15": 34.0,
-        "pct_over65": 7.5
-    },
-    "TSA": {
-        "death_rate": 6.455,
-        "gdp_per_capita": 2690.079,
-        "urban_share": 35.463,
-        "life_expectancy": 72.56,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.0,
-        "pct_over65": 7.0
-    },
-    "TSS": {
-        "death_rate": 7.989,
-        "gdp_per_capita": 1532.928,
-        "urban_share": 44.149,
-        "life_expectancy": 62.804,
-        "physicians_per1000": 0.3,
-        "pct_under15": 42.5,
-        "pct_over65": 3.0
-    },
-    "TTO": {
-        "death_rate": 8.739,
-        "gdp_per_capita": 18733.411,
-        "urban_share": 53.961,
-        "life_expectancy": 73.617,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.0,
-        "pct_over65": 11.5
-    },
-    "TUN": {
-        "death_rate": 6.128,
-        "gdp_per_capita": 4181.138,
-        "urban_share": 70.359,
-        "life_expectancy": 76.711,
-        "physicians_per1000": 0.3,
-        "pct_under15": 24.0,
-        "pct_over65": 9.0
-    },
-    "TUR": {
-        "death_rate": 5.7,
-        "gdp_per_capita": 15892.716,
-        "urban_share": 89.344,
-        "life_expectancy": 77.421,
-        "physicians_per1000": 0.3,
-        "pct_under15": 23.0,
-        "pct_over65": 9.5
-    },
-    "TUV": {
-        "death_rate": 9.268,
-        "gdp_per_capita": null,
-        "urban_share": 64.725,
-        "life_expectancy": 67.259,
-        "physicians_per1000": 0.3,
-        "pct_under15": 30.0,
-        "pct_over65": 6.0
-    },
-    "TZA": {
-        "death_rate": 5.721,
-        "gdp_per_capita": 1186.717,
-        "urban_share": 36.168,
-        "life_expectancy": 67.212,
-        "physicians_per1000": 0.3,
-        "pct_under15": 43.0,
-        "pct_over65": 3.0
-    },
-    "UGA": {
-        "death_rate": 4.767,
-        "gdp_per_capita": 1077.913,
-        "urban_share": 31.278,
-        "life_expectancy": 68.487,
-        "physicians_per1000": 0.3,
-        "pct_under15": 46.0,
-        "pct_over65": 2.2
-    },
-    "UKR": {
-        "death_rate": 13.603,
-        "gdp_per_capita": 5389.473,
-        "urban_share": 69.532,
-        "life_expectancy": 74.692,
-        "physicians_per1000": 0.3,
-        "pct_under15": 15.5,
-        "pct_over65": 17.0
-    },
-    "UMC": {
-        "death_rate": 7.383,
-        "gdp_per_capita": 10996.102,
-        "urban_share": 69.65,
-        "life_expectancy": 76.323,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 10.0
-    },
-    "URY": {
-        "death_rate": 9.933,
-        "gdp_per_capita": 23906.513,
-        "urban_share": 95.598,
-        "life_expectancy": 78.287,
-        "physicians_per1000": 0.3,
-        "pct_under15": 20.0,
-        "pct_over65": 15.5
-    },
-    "USA": {
-        "death_rate": 9.0,
-        "gdp_per_capita": 84534.041,
-        "urban_share": 80.125,
-        "life_expectancy": 78.89,
-        "physicians_per1000": 2.6,
-        "pct_under15": 18.0,
-        "pct_over65": 17.0
-    },
-    "UZB": {
-        "death_rate": 6.034,
-        "gdp_per_capita": 3161.7,
-        "urban_share": 50.999,
-        "life_expectancy": 72.528,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.0,
-        "pct_over65": 5.0
-    },
-    "VCT": {
-        "death_rate": 11.536,
-        "gdp_per_capita": 11501.227,
-        "urban_share": 47.849,
-        "life_expectancy": 71.382,
-        "physicians_per1000": 0.3,
-        "pct_under15": 23.0,
-        "pct_over65": 9.5
-    },
-    "VEN": {
-        "death_rate": 7.678,
-        "gdp_per_capita": 4217.591,
-        "urban_share": 89.286,
-        "life_expectancy": 72.673,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.0,
-        "pct_over65": 7.5
-    },
-    "VGB": {
-        "death_rate": 6.049,
-        "gdp_per_capita": null,
-        "urban_share": 56.507,
-        "life_expectancy": 77.431,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.5,
-        "pct_over65": 9.5
-    },
-    "VIR": {
-        "death_rate": 9.2,
-        "gdp_per_capita": null,
-        "urban_share": 95.331,
-        "life_expectancy": 80.771,
-        "physicians_per1000": 0.3,
-        "pct_under15": 17.5,
-        "pct_over65": 17.0
-    },
-    "VNM": {
-        "death_rate": 6.646,
-        "gdp_per_capita": 4717.29,
-        "urban_share": 38.49,
-        "life_expectancy": 74.736,
-        "physicians_per1000": 0.3,
-        "pct_under15": 23.0,
-        "pct_over65": 8.5
-    },
-    "VUT": {
-        "death_rate": 5.018,
-        "gdp_per_capita": 3410.77,
-        "urban_share": 22.287,
-        "life_expectancy": 71.654,
-        "physicians_per1000": 0.3,
-        "pct_under15": 36.0,
-        "pct_over65": 4.5
-    },
-    "WLD": {
-        "death_rate": 7.551,
-        "gdp_per_capita": 13631.204,
-        "urban_share": 57.563,
-        "life_expectancy": 73.48,
-        "physicians_per1000": 0.3,
-        "pct_under15": 26.0,
-        "pct_over65": 10.0
-    },
-    "WSM": {
-        "death_rate": 6.16,
-        "gdp_per_capita": 5392.878,
-        "urban_share": 17.503,
-        "life_expectancy": 71.826,
-        "physicians_per1000": 0.3,
-        "pct_under15": 33.5,
-        "pct_over65": 5.5
-    },
-    "XKX": {
-        "death_rate": 5.973,
-        "gdp_per_capita": 7023.066,
-        "urban_share": 50.321,
-        "life_expectancy": 78.222,
-        "physicians_per1000": 0.3,
-        "pct_under15": 22.0,
-        "pct_over65": 8.5
-    },
-    "YEM": {
-        "death_rate": 4.734,
-        "gdp_per_capita": null,
-        "urban_share": 36.808,
-        "life_expectancy": 69.439,
-        "physicians_per1000": 0.3,
-        "pct_under15": 39.5,
-        "pct_over65": 2.8
-    },
-    "ZAF": {
-        "death_rate": 9.237,
-        "gdp_per_capita": 6267.187,
-        "urban_share": 63.692,
-        "life_expectancy": 66.312,
-        "physicians_per1000": 0.3,
-        "pct_under15": 28.5,
-        "pct_over65": 5.5
-    },
-    "ZMB": {
-        "death_rate": 5.165,
-        "gdp_per_capita": 1187.109,
-        "urban_share": 45.47,
-        "life_expectancy": 66.528,
-        "physicians_per1000": 0.3,
-        "pct_under15": 44.0,
-        "pct_over65": 2.6
-    },
-    "ZWE": {
-        "death_rate": 7.498,
-        "gdp_per_capita": 2497.203,
-        "urban_share": 39.893,
-        "life_expectancy": 63.064,
-        "physicians_per1000": 0.3,
-        "pct_under15": 41.0,
-        "pct_over65": 3.2
-    }
+  "ABW": {
+    "death_rate": 7.778,
+    "gdp_per_capita": 39498.594,
+    "gdp_total_usd": 4265650673.002,
+    "life_expectancy": 76.5,
+    "pct_over65": 15.0,
+    "pct_under15": 17.0,
+    "physicians_per1000": 0.3,
+    "population_total": 107995.0,
+    "urban_share": 61.791
+  },
+  "AFE": {
+    "death_rate": 6.915,
+    "gdp_per_capita": 1615.396,
+    "gdp_total_usd": 1242693542929.85,
+    "life_expectancy": 65.35,
+    "pct_over65": 3.2,
+    "pct_under15": 41.5,
+    "physicians_per1000": 0.3,
+    "population_total": 769280888.0,
+    "urban_share": 38.241
+  },
+  "AFG": {
+    "death_rate": 5.702,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 17152234636.872,
+    "life_expectancy": 66.289,
+    "pct_over65": 2.8,
+    "pct_under15": 43.0,
+    "physicians_per1000": 0.3,
+    "population_total": 42647492.0,
+    "urban_share": 25.701
+  },
+  "AFW": {
+    "death_rate": 9.572,
+    "gdp_per_capita": 1411.337,
+    "gdp_total_usd": 736384961061.523,
+    "life_expectancy": 59.05,
+    "pct_over65": 3.0,
+    "pct_under15": 42.5,
+    "physicians_per1000": 0.3,
+    "population_total": 521764076.0,
+    "urban_share": 52.86
+  },
+  "AGO": {
+    "death_rate": 6.84,
+    "gdp_per_capita": 2665.874,
+    "gdp_total_usd": 100998916781.079,
+    "life_expectancy": 64.805,
+    "pct_over65": 2.5,
+    "pct_under15": 45.0,
+    "physicians_per1000": 0.3,
+    "population_total": 37885849.0,
+    "urban_share": 70.655
+  },
+  "ALB": {
+    "death_rate": 8.457,
+    "gdp_per_capita": 11377.776,
+    "gdp_total_usd": 27046429296.667,
+    "life_expectancy": 79.776,
+    "pct_over65": 15.5,
+    "pct_under15": 16.5,
+    "physicians_per1000": 0.3,
+    "population_total": 2377128.0,
+    "urban_share": 58.546
+  },
+  "AND": {
+    "death_rate": 6.139,
+    "gdp_per_capita": 49303.649,
+    "gdp_total_usd": 4039842405.481,
+    "life_expectancy": 84.188,
+    "pct_over65": 17.5,
+    "pct_under15": 14.0,
+    "physicians_per1000": 0.3,
+    "population_total": 81938.0,
+    "urban_share": 88.885
+  },
+  "ARB": {
+    "death_rate": 5.018,
+    "gdp_per_capita": 7583.812,
+    "gdp_total_usd": 3735881442514.34,
+    "life_expectancy": 72.722,
+    "pct_over65": 4.5,
+    "pct_under15": 29.0,
+    "physicians_per1000": 0.3,
+    "population_total": 492612632.0,
+    "urban_share": 59.82
+  },
+  "ARE": {
+    "death_rate": 0.972,
+    "gdp_per_capita": 50273.506,
+    "gdp_total_usd": 552324846834.581,
+    "life_expectancy": 83.069,
+    "pct_over65": 1.5,
+    "pct_under15": 14.5,
+    "physicians_per1000": 0.3,
+    "population_total": 10986400.0,
+    "urban_share": 85.817
+  },
+  "ARG": {
+    "death_rate": 7.732,
+    "gdp_per_capita": 13969.784,
+    "gdp_total_usd": 638365455340.04,
+    "life_expectancy": 77.543,
+    "pct_over65": 11.5,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 45696159.0,
+    "urban_share": 92.274
+  },
+  "ARM": {
+    "death_rate": 8.4,
+    "gdp_per_capita": 8556.214,
+    "gdp_total_usd": 25955275380.032,
+    "life_expectancy": 78.32,
+    "pct_over65": 13.0,
+    "pct_under15": 18.5,
+    "physicians_per1000": 0.3,
+    "population_total": 3033500.0,
+    "urban_share": 65.811
+  },
+  "ASM": {
+    "death_rate": 7.293,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 871000000.0,
+    "life_expectancy": 72.992,
+    "pct_over65": 7.0,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 46765.0,
+    "urban_share": 80.945
+  },
+  "ATG": {
+    "death_rate": 7.028,
+    "gdp_per_capita": 23542.453,
+    "gdp_total_usd": 2207622874.074,
+    "life_expectancy": 77.766,
+    "pct_over65": 10.5,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 93772.0,
+    "urban_share": 24.391
+  },
+  "AUS": {
+    "death_rate": 6.884,
+    "gdp_per_capita": 64603.986,
+    "gdp_total_usd": 1757022451652.83,
+    "life_expectancy": 83.051,
+    "pct_over65": 16.0,
+    "pct_under15": 19.0,
+    "physicians_per1000": 3.7,
+    "population_total": 27196812.0,
+    "urban_share": 87.602
+  },
+  "AUT": {
+    "death_rate": 9.6,
+    "gdp_per_capita": 58268.879,
+    "gdp_total_usd": 534790720466.822,
+    "life_expectancy": 81.995,
+    "pct_over65": 19.5,
+    "pct_under15": 14.5,
+    "physicians_per1000": 0.3,
+    "population_total": 9177982.0,
+    "urban_share": 69.466
+  },
+  "AZE": {
+    "death_rate": 5.8,
+    "gdp_per_capita": 7283.85,
+    "gdp_total_usd": 74315882352.941,
+    "life_expectancy": 74.576,
+    "pct_over65": 7.0,
+    "pct_under15": 23.0,
+    "physicians_per1000": 0.3,
+    "population_total": 10202830.0,
+    "urban_share": 58.574
+  },
+  "BDI": {
+    "death_rate": 6.67,
+    "gdp_per_capita": 219.425,
+    "gdp_total_usd": 3082433067.326,
+    "life_expectancy": 63.818,
+    "pct_over65": 2.8,
+    "pct_under15": 43.5,
+    "physicians_per1000": 0.3,
+    "population_total": 14047786.0,
+    "urban_share": 24.83
+  },
+  "BEL": {
+    "death_rate": 9.5,
+    "gdp_per_capita": 56614.568,
+    "gdp_total_usd": 671370081636.406,
+    "life_expectancy": 82.3,
+    "pct_over65": 19.5,
+    "pct_under15": 16.5,
+    "physicians_per1000": 0.3,
+    "population_total": 11858610.0,
+    "urban_share": 87.613
+  },
+  "BEN": {
+    "death_rate": 8.71,
+    "gdp_per_capita": 1485.38,
+    "gdp_total_usd": 21482643706.425,
+    "life_expectancy": 60.961,
+    "pct_over65": 3.0,
+    "pct_under15": 42.0,
+    "physicians_per1000": 0.3,
+    "population_total": 14462724.0,
+    "urban_share": 52.546
+  },
+  "BFA": {
+    "death_rate": 7.915,
+    "gdp_per_capita": 981.993,
+    "gdp_total_usd": 23124729853.022,
+    "life_expectancy": 61.292,
+    "pct_over65": 2.6,
+    "pct_under15": 44.5,
+    "physicians_per1000": 0.3,
+    "population_total": 23548781.0,
+    "urban_share": 28.335
+  },
+  "BGD": {
+    "death_rate": 5.105,
+    "gdp_per_capita": 2593.416,
+    "gdp_total_usd": 450119432068.852,
+    "life_expectancy": 74.93,
+    "pct_over65": 7.0,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.8,
+    "population_total": 173562364.0,
+    "urban_share": 32.678
+  },
+  "BGR": {
+    "death_rate": 15.6,
+    "gdp_per_capita": 17596.017,
+    "gdp_total_usd": 113343355779.985,
+    "life_expectancy": 75.761,
+    "pct_over65": 22.0,
+    "pct_under15": 14.5,
+    "physicians_per1000": 0.3,
+    "population_total": 6441421.0,
+    "urban_share": 73.95
+  },
+  "BHR": {
+    "death_rate": 2.21,
+    "gdp_per_capita": 29653.568,
+    "gdp_total_usd": 47109734308.511,
+    "life_expectancy": 81.423,
+    "pct_over65": 2.5,
+    "pct_under15": 19.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1588670.0,
+    "urban_share": 100.0
+  },
+  "BHS": {
+    "death_rate": 8.77,
+    "gdp_per_capita": 39455.447,
+    "gdp_total_usd": 15832800000.0,
+    "life_expectancy": 74.71,
+    "pct_over65": 9.5,
+    "pct_under15": 20.0,
+    "physicians_per1000": 0.3,
+    "population_total": 401283.0,
+    "urban_share": 81.325
+  },
+  "BIH": {
+    "death_rate": 13.522,
+    "gdp_per_capita": 9358.788,
+    "gdp_total_usd": 29613572022.899,
+    "life_expectancy": 78.044,
+    "pct_over65": 18.5,
+    "pct_under15": 14.0,
+    "physicians_per1000": 0.3,
+    "population_total": 3164253.0,
+    "urban_share": 52.122
+  },
+  "BLR": {
+    "death_rate": 13.136,
+    "gdp_per_capita": 8317.634,
+    "gdp_total_usd": 75961865471.913,
+    "life_expectancy": 74.365,
+    "pct_over65": 16.0,
+    "pct_under15": 16.5,
+    "physicians_per1000": 0.3,
+    "population_total": 9132629.0,
+    "urban_share": 79.155
+  },
+  "BLZ": {
+    "death_rate": 4.96,
+    "gdp_per_capita": 7681.244,
+    "gdp_total_usd": 3203631800.0,
+    "life_expectancy": 73.739,
+    "pct_over65": 5.5,
+    "pct_under15": 29.0,
+    "physicians_per1000": 0.3,
+    "population_total": 417072.0,
+    "urban_share": 41.753
+  },
+  "BMU": {
+    "death_rate": 9.004,
+    "gdp_per_capita": 142855.375,
+    "gdp_total_usd": 9233600000.0,
+    "life_expectancy": 82.49,
+    "pct_over65": 18.0,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 64636.0,
+    "urban_share": 100.0
+  },
+  "BOL": {
+    "death_rate": 7.172,
+    "gdp_per_capita": 4421.166,
+    "gdp_total_usd": 54881327452.967,
+    "life_expectancy": 68.739,
+    "pct_over65": 7.5,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 12413315.0,
+    "urban_share": 71.236
+  },
+  "BRA": {
+    "death_rate": 7.068,
+    "gdp_per_capita": 10310.549,
+    "gdp_total_usd": 2185821648943.86,
+    "life_expectancy": 76.023,
+    "pct_over65": 9.0,
+    "pct_under15": 23.0,
+    "physicians_per1000": 2.1,
+    "population_total": 211998573.0,
+    "urban_share": 87.896
+  },
+  "BRB": {
+    "death_rate": 10.23,
+    "gdp_per_capita": 26544.871,
+    "gdp_total_usd": 7498050000.0,
+    "life_expectancy": 76.332,
+    "pct_over65": 16.0,
+    "pct_under15": 16.5,
+    "physicians_per1000": 0.3,
+    "population_total": 282467.0,
+    "urban_share": 59.54
+  },
+  "BRN": {
+    "death_rate": 5.335,
+    "gdp_per_capita": 33153.474,
+    "gdp_total_usd": 15340808592.48,
+    "life_expectancy": 75.501,
+    "pct_over65": 5.0,
+    "pct_under15": 22.5,
+    "physicians_per1000": 0.3,
+    "population_total": 462721.0,
+    "urban_share": 74.898
+  },
+  "BTN": {
+    "death_rate": 6.065,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 3012896789.249,
+    "life_expectancy": 73.262,
+    "pct_over65": 6.5,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 791524.0,
+    "urban_share": 42.565
+  },
+  "BWA": {
+    "death_rate": 5.738,
+    "gdp_per_capita": 7695.753,
+    "gdp_total_usd": 19402063512.907,
+    "life_expectancy": 69.293,
+    "pct_over65": 4.5,
+    "pct_under15": 33.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2521139.0,
+    "urban_share": 67.462
+  },
+  "CAF": {
+    "death_rate": 9.379,
+    "gdp_per_capita": 516.161,
+    "gdp_total_usd": 2751494281.069,
+    "life_expectancy": 57.671,
+    "pct_over65": 2.7,
+    "pct_under15": 43.5,
+    "physicians_per1000": 0.3,
+    "population_total": 5330690.0,
+    "urban_share": 44.124
+  },
+  "CAN": {
+    "death_rate": 7.9,
+    "gdp_per_capita": 54340.348,
+    "gdp_total_usd": 2243636826633.76,
+    "life_expectancy": 82.108,
+    "pct_over65": 17.0,
+    "pct_under15": 18.0,
+    "physicians_per1000": 2.6,
+    "population_total": 41288599.0,
+    "urban_share": 82.7
+  },
+  "CEB": {
+    "death_rate": 11.997,
+    "gdp_per_capita": 24604.807,
+    "gdp_total_usd": 2462005273603.48,
+    "life_expectancy": 77.918,
+    "pct_over65": 19.5,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 100061963.0,
+    "urban_share": 61.798
+  },
+  "CHE": {
+    "death_rate": 8.0,
+    "gdp_per_capita": 103998.187,
+    "gdp_total_usd": 936564198048.516,
+    "life_expectancy": 84.407,
+    "pct_over65": 19.0,
+    "pct_under15": 15.0,
+    "physicians_per1000": 0.3,
+    "population_total": 9005582.0,
+    "urban_share": 85.462
+  },
+  "CHI": {
+    "death_rate": 10.4,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 12507320838.393,
+    "life_expectancy": 81.2,
+    "pct_over65": 18.5,
+    "pct_under15": 15.0,
+    "physicians_per1000": 0.3,
+    "population_total": 168126.0,
+    "urban_share": 32.706
+  },
+  "CHL": {
+    "death_rate": 6.58,
+    "gdp_per_capita": 16709.889,
+    "gdp_total_usd": 330267137371.592,
+    "life_expectancy": 81.359,
+    "pct_over65": 12.5,
+    "pct_under15": 19.0,
+    "physicians_per1000": 0.3,
+    "population_total": 19764771.0,
+    "urban_share": 88.995
+  },
+  "CHN": {
+    "death_rate": 7.76,
+    "gdp_per_capita": 13303.148,
+    "gdp_total_usd": 18743803170827.2,
+    "life_expectancy": 78.017,
+    "pct_over65": 13.0,
+    "pct_under15": 17.0,
+    "physicians_per1000": 2.2,
+    "population_total": 1408975000.0,
+    "urban_share": 65.895
+  },
+  "CIV": {
+    "death_rate": 7.607,
+    "gdp_per_capita": 2727.894,
+    "gdp_total_usd": 87113179149.284,
+    "life_expectancy": 62.11,
+    "pct_over65": 3.0,
+    "pct_under15": 41.5,
+    "physicians_per1000": 0.3,
+    "population_total": 31934230.0,
+    "urban_share": 53.973
+  },
+  "CMR": {
+    "death_rate": 7.032,
+    "gdp_per_capita": 1830.008,
+    "gdp_total_usd": 53296694320.206,
+    "life_expectancy": 63.968,
+    "pct_over65": 3.0,
+    "pct_under15": 42.5,
+    "physicians_per1000": 0.3,
+    "population_total": 29123744.0,
+    "urban_share": 55.403
+  },
+  "COD": {
+    "death_rate": 8.424,
+    "gdp_per_capita": 649.383,
+    "gdp_total_usd": 70962185790.709,
+    "life_expectancy": 62.074,
+    "pct_over65": 2.8,
+    "pct_under15": 45.5,
+    "physicians_per1000": 0.3,
+    "population_total": 109276265.0,
+    "urban_share": 44.746
+  },
+  "COG": {
+    "death_rate": 6.241,
+    "gdp_per_capita": 2482.249,
+    "gdp_total_usd": 15719986076.646,
+    "life_expectancy": 66.001,
+    "pct_over65": 3.1,
+    "pct_under15": 42.0,
+    "physicians_per1000": 0.3,
+    "population_total": 6332961.0,
+    "urban_share": 63.887
+  },
+  "COL": {
+    "death_rate": 5.466,
+    "gdp_per_capita": 7919.209,
+    "gdp_total_usd": 418818154879.271,
+    "life_expectancy": 77.913,
+    "pct_over65": 9.5,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 52886363.0,
+    "urban_share": 78.521
+  },
+  "COM": {
+    "death_rate": 7.123,
+    "gdp_per_capita": 1662.757,
+    "gdp_total_usd": 1440991455.452,
+    "life_expectancy": 67.023,
+    "pct_over65": 3.5,
+    "pct_under15": 39.0,
+    "physicians_per1000": 0.3,
+    "population_total": 866628.0,
+    "urban_share": 33.539
+  },
+  "CPV": {
+    "death_rate": 5.096,
+    "gdp_per_capita": 5192.482,
+    "gdp_total_usd": 2725414150.727,
+    "life_expectancy": 76.224,
+    "pct_over65": 6.5,
+    "pct_under15": 28.0,
+    "physicians_per1000": 0.3,
+    "population_total": 524877.0,
+    "urban_share": 76.772
+  },
+  "CRI": {
+    "death_rate": 5.566,
+    "gdp_per_capita": 18587.153,
+    "gdp_total_usd": 95350423176.596,
+    "life_expectancy": 80.996,
+    "pct_over65": 10.5,
+    "pct_under15": 20.5,
+    "physicians_per1000": 0.3,
+    "population_total": 5129910.0,
+    "urban_share": 79.311
+  },
+  "CSS": {
+    "death_rate": 8.091,
+    "gdp_per_capita": 19903.811,
+    "gdp_total_usd": 90344593407.049,
+    "life_expectancy": 73.313,
+    "pct_over65": 9.0,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 4539060.0,
+    "urban_share": 50.1
+  },
+  "CUB": {
+    "death_rate": 10.375,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 107352000000.0,
+    "life_expectancy": 78.264,
+    "pct_over65": 16.5,
+    "pct_under15": 16.0,
+    "physicians_per1000": 0.3,
+    "population_total": 10979783.0,
+    "urban_share": 77.166
+  },
+  "CUW": {
+    "death_rate": 10.1,
+    "gdp_per_capita": 22832.895,
+    "gdp_total_usd": 3561178196.207,
+    "life_expectancy": 76.989,
+    "pct_over65": 17.0,
+    "pct_under15": 17.5,
+    "physicians_per1000": 0.3,
+    "population_total": 155967.0,
+    "urban_share": 91.432
+  },
+  "CYM": {
+    "death_rate": 4.863,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 7241244269.46,
+    "life_expectancy": 80.54,
+    "pct_over65": 10.5,
+    "pct_under15": 17.0,
+    "physicians_per1000": 0.3,
+    "population_total": 74457.0,
+    "urban_share": 100.0
+  },
+  "CYP": {
+    "death_rate": 7.016,
+    "gdp_per_capita": 38674.293,
+    "gdp_total_usd": 37634533331.89,
+    "life_expectancy": 81.821,
+    "pct_over65": 15.5,
+    "pct_under15": 16.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1358282.0,
+    "urban_share": 66.682
+  },
+  "CZE": {
+    "death_rate": 10.3,
+    "gdp_per_capita": 31823.308,
+    "gdp_total_usd": 347034062928.479,
+    "life_expectancy": 79.978,
+    "pct_over65": 20.5,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 10905028.0,
+    "urban_share": 72.795
+  },
+  "DEU": {
+    "death_rate": 12.1,
+    "gdp_per_capita": 56103.732,
+    "gdp_total_usd": 4685592577804.69,
+    "life_expectancy": 80.793,
+    "pct_over65": 20.0,
+    "pct_under15": 15.0,
+    "physicians_per1000": 3.8,
+    "population_total": 83516593.0,
+    "urban_share": 82.021
+  },
+  "DJI": {
+    "death_rate": 7.487,
+    "gdp_per_capita": 3552.723,
+    "gdp_total_usd": 4152145939.985,
+    "life_expectancy": 66.202,
+    "pct_over65": 4.5,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1168722.0,
+    "urban_share": 72.905
+  },
+  "DMA": {
+    "death_rate": 12.623,
+    "gdp_per_capita": 10405.279,
+    "gdp_total_usd": 688881481.481,
+    "life_expectancy": 71.294,
+    "pct_over65": 12.0,
+    "pct_under15": 21.0,
+    "physicians_per1000": 0.3,
+    "population_total": 66205.0,
+    "urban_share": 73.545
+  },
+  "DNK": {
+    "death_rate": 9.5,
+    "gdp_per_capita": 71026.483,
+    "gdp_total_usd": 424524722037.047,
+    "life_expectancy": 82.254,
+    "pct_over65": 20.0,
+    "pct_under15": 16.0,
+    "physicians_per1000": 0.3,
+    "population_total": 5976992.0,
+    "urban_share": 88.696
+  },
+  "DOM": {
+    "death_rate": 6.249,
+    "gdp_per_capita": 10875.662,
+    "gdp_total_usd": 124282245638.568,
+    "life_expectancy": 73.868,
+    "pct_over65": 8.0,
+    "pct_under15": 27.0,
+    "physicians_per1000": 0.3,
+    "population_total": 11427557.0,
+    "urban_share": 72.412
+  },
+  "DZA": {
+    "death_rate": 4.618,
+    "gdp_per_capita": 5752.991,
+    "gdp_total_usd": 269322281664.773,
+    "life_expectancy": 76.475,
+    "pct_over65": 7.0,
+    "pct_under15": 28.0,
+    "physicians_per1000": 0.3,
+    "population_total": 46814308.0,
+    "urban_share": 75.279
+  },
+  "EAP": {
+    "death_rate": 7.649,
+    "gdp_per_capita": 10396.796,
+    "gdp_total_usd": 22260810771875.1,
+    "life_expectancy": 75.959,
+    "pct_over65": 11.0,
+    "pct_under15": 20.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2141122258.0,
+    "urban_share": 61.613
+  },
+  "EAR": {
+    "death_rate": 6.389,
+    "gdp_per_capita": 4450.187,
+    "gdp_total_usd": 15808304487948.1,
+    "life_expectancy": 72.008,
+    "pct_over65": 5.5,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 3552278604.0,
+    "urban_share": 47.344
+  },
+  "EAS": {
+    "death_rate": 7.92,
+    "gdp_per_capita": 13405.736,
+    "gdp_total_usd": 32017179839273.0,
+    "life_expectancy": 76.738,
+    "pct_over65": 13.0,
+    "pct_under15": 18.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2388319494.0,
+    "urban_share": 64.374
+  },
+  "ECA": {
+    "death_rate": 7.842,
+    "gdp_per_capita": 9793.692,
+    "gdp_total_usd": 2451180144505.47,
+    "life_expectancy": 75.142,
+    "pct_over65": 13.0,
+    "pct_under15": 20.0,
+    "physicians_per1000": 0.3,
+    "population_total": 250281521.0,
+    "urban_share": 68.273
+  },
+  "ECS": {
+    "death_rate": 10.073,
+    "gdp_per_capita": 31555.521,
+    "gdp_total_usd": 29291828957768.8,
+    "life_expectancy": 78.599,
+    "pct_over65": 18.0,
+    "pct_under15": 16.5,
+    "physicians_per1000": 0.3,
+    "population_total": 928263208.0,
+    "urban_share": 73.97
+  },
+  "ECU": {
+    "death_rate": 5.207,
+    "gdp_per_capita": 6874.706,
+    "gdp_total_usd": 124676074700.0,
+    "life_expectancy": 77.579,
+    "pct_over65": 8.0,
+    "pct_under15": 26.5,
+    "physicians_per1000": 0.3,
+    "population_total": 18135478.0,
+    "urban_share": 63.238
+  },
+  "EGY": {
+    "death_rate": 5.506,
+    "gdp_per_capita": 3338.474,
+    "gdp_total_usd": 389059911003.566,
+    "life_expectancy": 71.806,
+    "pct_over65": 5.5,
+    "pct_under15": 33.0,
+    "physicians_per1000": 0.3,
+    "population_total": 116538258.0,
+    "urban_share": 42.8
+  },
+  "EMU": {
+    "death_rate": 10.463,
+    "gdp_per_capita": 46945.419,
+    "gdp_total_usd": 16485444160371.0,
+    "life_expectancy": 82.366,
+    "pct_over65": 21.0,
+    "pct_under15": 15.0,
+    "physicians_per1000": 0.3,
+    "population_total": 351161936.0,
+    "urban_share": 77.402
+  },
+  "ERI": {
+    "death_rate": 5.995,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 2065001626.016,
+    "life_expectancy": 68.893,
+    "pct_over65": 3.5,
+    "pct_under15": 41.0,
+    "physicians_per1000": 0.3,
+    "population_total": 3535603.0,
+    "urban_share": 34.537
+  },
+  "ESP": {
+    "death_rate": 8.9,
+    "gdp_per_capita": 35326.768,
+    "gdp_total_usd": 1725671652742.19,
+    "life_expectancy": 83.888,
+    "pct_over65": 20.0,
+    "pct_under15": 15.0,
+    "physicians_per1000": 3.8,
+    "population_total": 48848840.0,
+    "urban_share": 80.315
+  },
+  "EST": {
+    "death_rate": 11.5,
+    "gdp_per_capita": 31428.355,
+    "gdp_total_usd": 43130419829.35,
+    "life_expectancy": 79.295,
+    "pct_over65": 20.5,
+    "pct_under15": 16.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1372341.0,
+    "urban_share": 70.698
+  },
+  "ETH": {
+    "death_rate": 5.879,
+    "gdp_per_capita": 1133.883,
+    "gdp_total_usd": 149740297952.986,
+    "life_expectancy": 67.603,
+    "pct_over65": 3.5,
+    "pct_under15": 39.5,
+    "physicians_per1000": 0.3,
+    "population_total": 132059767.0,
+    "urban_share": 23.622
+  },
+  "EUU": {
+    "death_rate": 10.697,
+    "gdp_per_capita": 43304.964,
+    "gdp_total_usd": 19497115588443.6,
+    "life_expectancy": 81.561,
+    "pct_over65": 21.0,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 450228188.0,
+    "urban_share": 75.03
+  },
+  "FCS": {
+    "death_rate": 8.276,
+    "gdp_per_capita": 1527.958,
+    "gdp_total_usd": 1652895518697.74,
+    "life_expectancy": 63.605,
+    "pct_over65": 3.0,
+    "pct_under15": 41.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1081767572.0,
+    "urban_share": 46.154
+  },
+  "FIN": {
+    "death_rate": 10.4,
+    "gdp_per_capita": 53149.767,
+    "gdp_total_usd": 298696961297.656,
+    "life_expectancy": 82.337,
+    "pct_over65": 23.0,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 5619911.0,
+    "urban_share": 74.264
+  },
+  "FJI": {
+    "death_rate": 9.511,
+    "gdp_per_capita": 6425.742,
+    "gdp_total_usd": 5968125909.271,
+    "life_expectancy": 67.463,
+    "pct_over65": 6.5,
+    "pct_under15": 28.0,
+    "physicians_per1000": 0.3,
+    "population_total": 928784.0,
+    "urban_share": 59.077
+  },
+  "FRA": {
+    "death_rate": 9.4,
+    "gdp_per_capita": 46103.084,
+    "gdp_total_usd": 3160442622465.08,
+    "life_expectancy": 82.98,
+    "pct_over65": 20.0,
+    "pct_under15": 15.0,
+    "physicians_per1000": 3.8,
+    "population_total": 68551653.0,
+    "urban_share": 78.8
+  },
+  "FRO": {
+    "death_rate": 8.203,
+    "gdp_per_capita": 74119.661,
+    "gdp_total_usd": 4052937169.765,
+    "life_expectancy": 83.083,
+    "pct_over65": 15.5,
+    "pct_under15": 19.5,
+    "physicians_per1000": 0.3,
+    "population_total": 54681.0,
+    "urban_share": 39.413
+  },
+  "FSM": {
+    "death_rate": 7.712,
+    "gdp_per_capita": 4166.005,
+    "gdp_total_usd": 471425099.489,
+    "life_expectancy": 67.357,
+    "pct_over65": 5.0,
+    "pct_under15": 32.0,
+    "physicians_per1000": 0.3,
+    "population_total": 113160.0,
+    "urban_share": 22.456
+  },
+  "GAB": {
+    "death_rate": 6.226,
+    "gdp_per_capita": 8230.043,
+    "gdp_total_usd": 20895684425.675,
+    "life_expectancy": 68.511,
+    "pct_over65": 3.5,
+    "pct_under15": 36.5,
+    "physicians_per1000": 0.3,
+    "population_total": 2538952.0,
+    "urban_share": 91.863
+  },
+  "GBR": {
+    "death_rate": 9.701,
+    "gdp_per_capita": 53246.368,
+    "gdp_total_usd": 3686033044482.13,
+    "life_expectancy": 81.387,
+    "pct_over65": 20.0,
+    "pct_under15": 15.0,
+    "physicians_per1000": 3.8,
+    "population_total": 69226000.0,
+    "urban_share": 83.243
+  },
+  "GEO": {
+    "death_rate": 11.836,
+    "gdp_per_capita": 9241.491,
+    "gdp_total_usd": 34189423544.995,
+    "life_expectancy": 74.657,
+    "pct_over65": 15.5,
+    "pct_under15": 19.5,
+    "physicians_per1000": 0.3,
+    "population_total": 3699557.0,
+    "urban_share": 61.079
+  },
+  "GHA": {
+    "death_rate": 7.009,
+    "gdp_per_capita": 2390.772,
+    "gdp_total_usd": 82308110386.464,
+    "life_expectancy": 65.695,
+    "pct_over65": 3.5,
+    "pct_under15": 37.5,
+    "physicians_per1000": 0.3,
+    "population_total": 34427414.0,
+    "urban_share": 58.365
+  },
+  "GIB": {
+    "death_rate": 6.589,
+    "gdp_per_capita": null,
+    "life_expectancy": 83.63,
+    "pct_over65": 19.0,
+    "pct_under15": 16.0,
+    "physicians_per1000": 0.3,
+    "population_total": 39329.0,
+    "urban_share": 100.0
+  },
+  "GIN": {
+    "death_rate": 9.028,
+    "gdp_per_capita": 1694.954,
+    "gdp_total_usd": 25008678293.408,
+    "life_expectancy": 60.904,
+    "pct_over65": 3.0,
+    "pct_under15": 43.5,
+    "physicians_per1000": 0.3,
+    "population_total": 14754785.0,
+    "urban_share": 38.071
+  },
+  "GMB": {
+    "death_rate": 6.249,
+    "gdp_per_capita": 871.34,
+    "gdp_total_usd": 2404888749.219,
+    "life_expectancy": 66.057,
+    "pct_over65": 2.6,
+    "pct_under15": 44.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2759988.0,
+    "urban_share": 64.299
+  },
+  "GNB": {
+    "death_rate": 7.009,
+    "gdp_per_capita": 1007.742,
+    "gdp_total_usd": 2218393804.548,
+    "life_expectancy": 64.254,
+    "pct_over65": 3.0,
+    "pct_under15": 42.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2201352.0,
+    "urban_share": 46.113
+  },
+  "GNQ": {
+    "death_rate": 7.851,
+    "gdp_per_capita": 6745.4,
+    "gdp_total_usd": 12765777677.062,
+    "life_expectancy": 63.906,
+    "pct_over65": 2.8,
+    "pct_under15": 36.5,
+    "physicians_per1000": 0.3,
+    "population_total": 1892516.0,
+    "urban_share": 71.357
+  },
+  "GRC": {
+    "death_rate": 12.1,
+    "gdp_per_capita": 24626.148,
+    "gdp_total_usd": 256238371778.118,
+    "life_expectancy": 81.839,
+    "pct_over65": 22.5,
+    "pct_under15": 14.0,
+    "physicians_per1000": 0.3,
+    "population_total": 10405134.0,
+    "urban_share": 78.997
+  },
+  "GRD": {
+    "death_rate": 8.918,
+    "gdp_per_capita": 11705.09,
+    "gdp_total_usd": 1371918518.519,
+    "life_expectancy": 75.367,
+    "pct_over65": 9.0,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 117207.0,
+    "urban_share": 36.563
+  },
+  "GRL": {
+    "death_rate": 9.3,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 3326543974.392,
+    "life_expectancy": 70.273,
+    "pct_over65": 8.5,
+    "pct_under15": 21.0,
+    "physicians_per1000": 0.3,
+    "population_total": 56836.0,
+    "urban_share": 88.32
+  },
+  "GTM": {
+    "death_rate": 4.86,
+    "gdp_per_capita": 6150.026,
+    "gdp_total_usd": 113199581158.203,
+    "life_expectancy": 72.746,
+    "pct_over65": 5.0,
+    "pct_under15": 33.5,
+    "physicians_per1000": 0.3,
+    "population_total": 18406359.0,
+    "urban_share": 55.955
+  },
+  "GUM": {
+    "death_rate": 6.92,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 6910000000.0,
+    "life_expectancy": 77.422,
+    "pct_over65": 14.0,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 167777.0,
+    "urban_share": 94.173
+  },
+  "GUY": {
+    "death_rate": 7.477,
+    "gdp_per_capita": 29675.244,
+    "gdp_total_usd": 24662709832.134,
+    "life_expectancy": 70.319,
+    "pct_over65": 6.5,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.3,
+    "population_total": 831087.0,
+    "urban_share": 26.478
+  },
+  "HIC": {
+    "death_rate": 9.709,
+    "gdp_per_capita": 50302.605,
+    "life_expectancy": 80.394,
+    "pct_over65": 18.5,
+    "pct_under15": 16.5,
+    "physicians_per1000": 0.3,
+    "urban_share": 80.132
+  },
+  "HKG": {
+    "death_rate": 7.0,
+    "gdp_per_capita": 54074.693,
+    "gdp_total_usd": 406863396487.342,
+    "life_expectancy": 85.393,
+    "pct_over65": 20.5,
+    "pct_under15": 11.5,
+    "physicians_per1000": 0.3,
+    "population_total": 7524100.0,
+    "urban_share": 100.0
+  },
+  "HND": {
+    "death_rate": 4.519,
+    "gdp_per_capita": 3426.435,
+    "gdp_total_usd": 37093565854.044,
+    "life_expectancy": 73.044,
+    "pct_over65": 5.5,
+    "pct_under15": 29.5,
+    "physicians_per1000": 0.3,
+    "population_total": 10825703.0,
+    "urban_share": 58.785
+  },
+  "HPC": {
+    "death_rate": 6.91,
+    "gdp_per_capita": 1216.375,
+    "gdp_total_usd": 1145111349262.57,
+    "life_expectancy": 64.918,
+    "pct_over65": 3.0,
+    "pct_under15": 42.5,
+    "physicians_per1000": 0.3,
+    "population_total": 941413026.0,
+    "urban_share": 37.868
+  },
+  "HRV": {
+    "death_rate": 13.2,
+    "gdp_per_capita": 24050.44,
+    "gdp_total_usd": 92983810328.909,
+    "life_expectancy": 78.929,
+    "pct_over65": 22.0,
+    "pct_under15": 14.5,
+    "physicians_per1000": 0.3,
+    "population_total": 3866200.0,
+    "urban_share": 57.516
+  },
+  "HTI": {
+    "death_rate": 7.804,
+    "gdp_per_capita": 2142.623,
+    "gdp_total_usd": 25224154990.795,
+    "life_expectancy": 65.119,
+    "pct_over65": 5.0,
+    "pct_under15": 32.0,
+    "physicians_per1000": 0.3,
+    "population_total": 11772557.0,
+    "urban_share": 55.037
+  },
+  "HUN": {
+    "death_rate": 13.4,
+    "gdp_per_capita": 23292.326,
+    "gdp_total_usd": 222722738925.641,
+    "life_expectancy": 76.724,
+    "pct_over65": 20.5,
+    "pct_under15": 14.5,
+    "physicians_per1000": 0.3,
+    "population_total": 9562065.0,
+    "urban_share": 70.492
+  },
+  "IBD": {
+    "death_rate": 7.235,
+    "gdp_per_capita": 8219.913,
+    "gdp_total_usd": 40930410371533.4,
+    "life_expectancy": 74.673,
+    "pct_over65": 8.5,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 4979421568.0,
+    "urban_share": 58.326
+  },
+  "IBT": {
+    "death_rate": 7.237,
+    "gdp_per_capita": 6327.144,
+    "gdp_total_usd": 43823204664493.9,
+    "life_expectancy": 72.133,
+    "pct_over65": 7.0,
+    "pct_under15": 27.0,
+    "physicians_per1000": 0.3,
+    "population_total": 6926222113.0,
+    "urban_share": 53.367
+  },
+  "IDA": {
+    "death_rate": 7.243,
+    "gdp_per_capita": 1485.922,
+    "gdp_total_usd": 2892794292960.5,
+    "life_expectancy": 65.635,
+    "pct_over65": 3.5,
+    "pct_under15": 40.5,
+    "physicians_per1000": 0.3,
+    "population_total": 1946800545.0,
+    "urban_share": 40.684
+  },
+  "IDB": {
+    "death_rate": 8.385,
+    "gdp_per_capita": 1650.638,
+    "gdp_total_usd": 1117411942661.72,
+    "life_expectancy": 62.62,
+    "pct_over65": 3.0,
+    "pct_under15": 42.0,
+    "physicians_per1000": 0.3,
+    "population_total": 676957651.0,
+    "urban_share": 48.696
+  },
+  "IDN": {
+    "death_rate": 7.624,
+    "gdp_per_capita": 4925.43,
+    "gdp_total_usd": 1396300098190.97,
+    "life_expectancy": 71.288,
+    "pct_over65": 6.5,
+    "pct_under15": 25.0,
+    "physicians_per1000": 0.3,
+    "population_total": 283487931.0,
+    "urban_share": 58.751
+  },
+  "IDX": {
+    "death_rate": 6.634,
+    "gdp_per_capita": 1398.112,
+    "gdp_total_usd": 1775382350298.79,
+    "life_expectancy": 67.243,
+    "pct_over65": 3.0,
+    "pct_under15": 42.5,
+    "physicians_per1000": 0.3,
+    "population_total": 1269842894.0,
+    "urban_share": 36.414
+  },
+  "IMN": {
+    "death_rate": 10.649,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 7431257410.927,
+    "life_expectancy": 81.091,
+    "pct_over65": 20.0,
+    "pct_under15": 16.0,
+    "physicians_per1000": 0.3,
+    "population_total": 84160.0,
+    "urban_share": 52.163
+  },
+  "IND": {
+    "death_rate": 6.587,
+    "gdp_per_capita": 2694.738,
+    "gdp_total_usd": 3909891533858.08,
+    "life_expectancy": 72.235,
+    "pct_over65": 7.0,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.8,
+    "population_total": 1450935791.0,
+    "urban_share": 35.379
+  },
+  "INX": {
+    "death_rate": null,
+    "gdp_per_capita": null,
+    "life_expectancy": null,
+    "pct_over65": 10.0,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.3,
+    "urban_share": null
+  },
+  "IRL": {
+    "death_rate": 6.5,
+    "gdp_per_capita": 112894.953,
+    "gdp_total_usd": 609157459747.205,
+    "life_expectancy": 83.01,
+    "pct_over65": 15.0,
+    "pct_under15": 19.5,
+    "physicians_per1000": 0.3,
+    "population_total": 5395790.0,
+    "urban_share": 64.347
+  },
+  "IRN": {
+    "death_rate": 4.754,
+    "gdp_per_capita": 5190.17,
+    "gdp_total_usd": 475252089215.416,
+    "life_expectancy": 77.854,
+    "pct_over65": 7.5,
+    "pct_under15": 23.5,
+    "physicians_per1000": 0.3,
+    "population_total": 91567738.0,
+    "urban_share": 77.02
+  },
+  "IRQ": {
+    "death_rate": 4.166,
+    "gdp_per_capita": 6073.61,
+    "gdp_total_usd": 279641257615.385,
+    "life_expectancy": 72.424,
+    "pct_over65": 3.5,
+    "pct_under15": 37.0,
+    "physicians_per1000": 0.3,
+    "population_total": 46042015.0,
+    "urban_share": 69.886
+  },
+  "ISL": {
+    "death_rate": 6.8,
+    "gdp_per_capita": 86040.531,
+    "gdp_total_usd": 33255181468.938,
+    "life_expectancy": 82.81,
+    "pct_over65": 15.5,
+    "pct_under15": 19.0,
+    "physicians_per1000": 0.3,
+    "population_total": 386506.0,
+    "urban_share": 94.182
+  },
+  "ISR": {
+    "death_rate": 5.3,
+    "gdp_per_capita": 54176.684,
+    "gdp_total_usd": 540379921261.681,
+    "life_expectancy": 83.198,
+    "pct_over65": 12.5,
+    "pct_under15": 28.0,
+    "physicians_per1000": 0.3,
+    "population_total": 9974400.0,
+    "urban_share": 91.536
+  },
+  "ITA": {
+    "death_rate": 11.0,
+    "gdp_per_capita": 40385.341,
+    "gdp_total_usd": 2380825077243.59,
+    "life_expectancy": 83.951,
+    "pct_over65": 24.0,
+    "pct_under15": 12.5,
+    "physicians_per1000": 0.3,
+    "population_total": 58952704.0,
+    "urban_share": 69.605
+  },
+  "JAM": {
+    "death_rate": 8.206,
+    "gdp_per_capita": 7753.801,
+    "gdp_total_usd": 22014397089.769,
+    "life_expectancy": 71.606,
+    "pct_over65": 10.0,
+    "pct_under15": 21.5,
+    "physicians_per1000": 0.3,
+    "population_total": 2839175.0,
+    "urban_share": 58.93
+  },
+  "JOR": {
+    "death_rate": 3.121,
+    "gdp_per_capita": 4618.096,
+    "gdp_total_usd": 53352289577.465,
+    "life_expectancy": 77.981,
+    "pct_over65": 4.2,
+    "pct_under15": 33.0,
+    "physicians_per1000": 0.3,
+    "population_total": 11552876.0,
+    "urban_share": 92.95
+  },
+  "JPN": {
+    "death_rate": 13.3,
+    "gdp_per_capita": 32487.078,
+    "gdp_total_usd": 4027597523550.58,
+    "life_expectancy": 84.036,
+    "pct_over65": 28.0,
+    "pct_under15": 12.0,
+    "physicians_per1000": 2.5,
+    "population_total": 123975371.0,
+    "urban_share": 92.19
+  },
+  "KAZ": {
+    "death_rate": 6.697,
+    "gdp_per_capita": 14154.632,
+    "gdp_total_usd": 291480274648.826,
+    "life_expectancy": 74.531,
+    "pct_over65": 8.5,
+    "pct_under15": 28.0,
+    "physicians_per1000": 0.3,
+    "population_total": 20592571.0,
+    "urban_share": 62.073
+  },
+  "KEN": {
+    "death_rate": 7.18,
+    "gdp_per_capita": 2132.435,
+    "gdp_total_usd": 120339557905.932,
+    "life_expectancy": 63.834,
+    "pct_over65": 3.0,
+    "pct_under15": 38.0,
+    "physicians_per1000": 0.3,
+    "population_total": 56432944.0,
+    "urban_share": 31.894
+  },
+  "KGZ": {
+    "death_rate": 4.4,
+    "gdp_per_capita": 2420.185,
+    "gdp_total_usd": 17478259659.263,
+    "life_expectancy": 72.4,
+    "pct_over65": 5.0,
+    "pct_under15": 32.0,
+    "physicians_per1000": 0.3,
+    "population_total": 7221868.0,
+    "urban_share": 34.722
+  },
+  "KHM": {
+    "death_rate": 6.454,
+    "gdp_per_capita": 2627.88,
+    "gdp_total_usd": 46352647037.241,
+    "life_expectancy": 70.817,
+    "pct_over65": 5.0,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 17638801.0,
+    "urban_share": 40.873
+  },
+  "KIR": {
+    "death_rate": 7.059,
+    "gdp_per_capita": 2288.635,
+    "gdp_total_usd": 307862564.49,
+    "life_expectancy": 66.6,
+    "pct_over65": 4.5,
+    "pct_under15": 34.0,
+    "physicians_per1000": 0.3,
+    "population_total": 134518.0,
+    "urban_share": 62.462
+  },
+  "KNA": {
+    "death_rate": 9.977,
+    "gdp_per_capita": 23960.653,
+    "gdp_total_usd": 1122388888.889,
+    "life_expectancy": 72.281,
+    "pct_over65": 10.0,
+    "pct_under15": 20.0,
+    "physicians_per1000": 0.3,
+    "population_total": 46843.0,
+    "urban_share": 31.795
+  },
+  "KOR": {
+    "death_rate": 7.0,
+    "gdp_per_capita": 36238.64,
+    "gdp_total_usd": 1875388209406.8,
+    "life_expectancy": 83.629,
+    "pct_over65": 18.5,
+    "pct_under15": 11.5,
+    "physicians_per1000": 0.3,
+    "population_total": 51751065.0,
+    "urban_share": 81.168
+  },
+  "KWT": {
+    "death_rate": 1.52,
+    "gdp_per_capita": 32717.719,
+    "gdp_total_usd": 160227273053.334,
+    "life_expectancy": 84.58,
+    "pct_over65": 2.5,
+    "pct_under15": 21.0,
+    "physicians_per1000": 0.3,
+    "population_total": 4897263.0,
+    "urban_share": 100.0
+  },
+  "LAC": {
+    "death_rate": 6.561,
+    "gdp_per_capita": 10382.391,
+    "gdp_total_usd": 6168787362595.33,
+    "life_expectancy": 75.673,
+    "pct_over65": 9.0,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 594158638.0,
+    "urban_share": 80.77
+  },
+  "LAO": {
+    "death_rate": 6.187,
+    "gdp_per_capita": 2123.979,
+    "gdp_total_usd": 16502933121.338,
+    "life_expectancy": 69.225,
+    "pct_over65": 4.5,
+    "pct_under15": 32.0,
+    "physicians_per1000": 0.3,
+    "population_total": 7769819.0,
+    "urban_share": 39.555
+  },
+  "LBN": {
+    "death_rate": 6.035,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 20078620356.993,
+    "life_expectancy": 77.945,
+    "pct_over65": 8.0,
+    "pct_under15": 23.0,
+    "physicians_per1000": 0.3,
+    "population_total": 5805962.0,
+    "urban_share": 90.704
+  },
+  "LBR": {
+    "death_rate": 8.016,
+    "gdp_per_capita": 851.498,
+    "gdp_total_usd": 4779300900.0,
+    "life_expectancy": 62.324,
+    "pct_over65": 3.0,
+    "pct_under15": 41.5,
+    "physicians_per1000": 0.3,
+    "population_total": 5612817.0,
+    "urban_share": 55.539
+  },
+  "LBY": {
+    "death_rate": 6.534,
+    "gdp_per_capita": 6569.164,
+    "gdp_total_usd": 48487151215.345,
+    "life_expectancy": 71.121,
+    "pct_over65": 4.5,
+    "pct_under15": 28.0,
+    "physicians_per1000": 0.3,
+    "population_total": 7381023.0,
+    "urban_share": 87.885
+  },
+  "LCA": {
+    "death_rate": 8.712,
+    "gdp_per_capita": 14181.63,
+    "gdp_total_usd": 2549062962.963,
+    "life_expectancy": 72.846,
+    "pct_over65": 10.0,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 179744.0,
+    "urban_share": 29.097
+  },
+  "LCN": {
+    "death_rate": 6.636,
+    "gdp_per_capita": 10737.646,
+    "gdp_total_usd": 7110323254687.35,
+    "life_expectancy": 75.818,
+    "pct_over65": 9.0,
+    "pct_under15": 24.5,
+    "physicians_per1000": 0.3,
+    "population_total": 662186388.0,
+    "urban_share": 81.272
+  },
+  "LDC": {
+    "death_rate": 6.711,
+    "gdp_per_capita": 1293.401,
+    "gdp_total_usd": 1536272727812.71,
+    "life_expectancy": 66.706,
+    "pct_over65": 3.5,
+    "pct_under15": 41.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1187777591.0,
+    "urban_share": 36.165
+  },
+  "LIC": {
+    "death_rate": 7.245,
+    "gdp_per_capita": 751.323,
+    "life_expectancy": 64.702,
+    "pct_over65": 3.0,
+    "pct_under15": 43.0,
+    "physicians_per1000": 0.3,
+    "urban_share": 37.218
+  },
+  "LIE": {
+    "death_rate": 7.5,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 8239379403.221,
+    "life_expectancy": 84.2,
+    "pct_over65": 18.5,
+    "pct_under15": 15.0,
+    "physicians_per1000": 0.3,
+    "population_total": 40450.0,
+    "urban_share": 14.658
+  },
+  "LKA": {
+    "death_rate": 7.8,
+    "gdp_per_capita": 4515.568,
+    "gdp_total_usd": 98963185509.65,
+    "life_expectancy": 77.672,
+    "pct_over65": 11.5,
+    "pct_under15": 23.5,
+    "physicians_per1000": 0.3,
+    "population_total": 21916000.0,
+    "urban_share": 20.3
+  },
+  "LMC": {
+    "death_rate": 6.852,
+    "gdp_per_capita": 2544.492,
+    "life_expectancy": 69.786,
+    "pct_over65": 6.0,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "urban_share": 41.617
+  },
+  "LMY": {
+    "death_rate": 7.118,
+    "gdp_per_capita": 6002.451,
+    "gdp_total_usd": 39397098753614.4,
+    "life_expectancy": 72.109,
+    "pct_over65": 7.0,
+    "pct_under15": 27.5,
+    "physicians_per1000": 0.3,
+    "population_total": 6563501708.0,
+    "urban_share": 53.234
+  },
+  "LSO": {
+    "death_rate": 10.478,
+    "gdp_per_capita": 971.908,
+    "gdp_total_usd": 2271759454.511,
+    "life_expectancy": 57.798,
+    "pct_over65": 4.5,
+    "pct_under15": 34.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2337423.0,
+    "urban_share": 43.678
+  },
+  "LTE": {
+    "death_rate": 7.899,
+    "gdp_per_capita": 12874.168,
+    "gdp_total_usd": 29979152245112.6,
+    "life_expectancy": 77.233,
+    "pct_over65": 13.0,
+    "pct_under15": 19.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2328628339.0,
+    "urban_share": 67.258
+  },
+  "LTU": {
+    "death_rate": 13.0,
+    "gdp_per_capita": 29384.019,
+    "gdp_total_usd": 84869215513.365,
+    "life_expectancy": 77.195,
+    "pct_over65": 21.0,
+    "pct_under15": 15.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2888278.0,
+    "urban_share": 68.829
+  },
+  "LUX": {
+    "death_rate": 6.6,
+    "gdp_per_capita": 137781.682,
+    "gdp_total_usd": 93279851863.406,
+    "life_expectancy": 83.195,
+    "pct_over65": 15.0,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 677012.0,
+    "urban_share": 94.844
+  },
+  "LVA": {
+    "death_rate": 14.3,
+    "gdp_per_capita": 23409.085,
+    "gdp_total_usd": 43684254432.361,
+    "life_expectancy": 76.429,
+    "pct_over65": 21.5,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 1866124.0,
+    "urban_share": 68.484
+  },
+  "MAC": {
+    "death_rate": 3.6,
+    "gdp_per_capita": 72004.744,
+    "gdp_total_usd": 49467258923.324,
+    "life_expectancy": 83.332,
+    "pct_over65": 13.5,
+    "pct_under15": 13.0,
+    "physicians_per1000": 0.3,
+    "population_total": 687000.0,
+    "urban_share": 100.0
+  },
+  "MAF": {
+    "death_rate": 9.657,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 649206262.848,
+    "life_expectancy": 80.438,
+    "pct_over65": 8.5,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 26129.0,
+    "urban_share": 100.0
+  },
+  "MAR": {
+    "death_rate": 5.726,
+    "gdp_per_capita": 4153.194,
+    "gdp_total_usd": 160610994054.734,
+    "life_expectancy": 75.493,
+    "pct_over65": 7.5,
+    "pct_under15": 26.5,
+    "physicians_per1000": 0.3,
+    "population_total": 38081173.0,
+    "urban_share": 62.8
+  },
+  "MCO": {
+    "death_rate": 20.141,
+    "gdp_per_capita": 288001.433,
+    "gdp_total_usd": 11125783372.479,
+    "life_expectancy": 86.497,
+    "pct_over65": 27.0,
+    "pct_under15": 12.5,
+    "physicians_per1000": 0.3,
+    "population_total": 38631.0,
+    "urban_share": 100.0
+  },
+  "MDA": {
+    "death_rate": 13.823,
+    "gdp_per_capita": 7576.196,
+    "gdp_total_usd": 18200340853.652,
+    "life_expectancy": 71.332,
+    "pct_over65": 14.5,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 2402306.0,
+    "urban_share": 43.516
+  },
+  "MDG": {
+    "death_rate": 7.471,
+    "gdp_per_capita": 544.988,
+    "gdp_total_usd": 17420501490.123,
+    "life_expectancy": 63.835,
+    "pct_over65": 3.2,
+    "pct_under15": 41.0,
+    "physicians_per1000": 0.3,
+    "population_total": 31964956.0,
+    "urban_share": 32.434
+  },
+  "MDV": {
+    "death_rate": 2.364,
+    "gdp_per_capita": 13379.351,
+    "gdp_total_usd": 7061608267.255,
+    "life_expectancy": 81.285,
+    "pct_over65": 5.0,
+    "pct_under15": 21.0,
+    "physicians_per1000": 0.3,
+    "population_total": 527799.0,
+    "urban_share": 41.998
+  },
+  "MEA": {
+    "death_rate": 5.273,
+    "gdp_per_capita": 6265.444,
+    "gdp_total_usd": 5094721946852.29,
+    "life_expectancy": 72.315,
+    "pct_over65": 5.0,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 813146136.0,
+    "urban_share": 55.694
+  },
+  "MEX": {
+    "death_rate": 6.219,
+    "gdp_per_capita": 14185.781,
+    "gdp_total_usd": 1856365616165.94,
+    "life_expectancy": 75.264,
+    "pct_over65": 9.0,
+    "pct_under15": 23.0,
+    "physicians_per1000": 2.1,
+    "population_total": 130861007.0,
+    "urban_share": 79.754
+  },
+  "MHL": {
+    "death_rate": 7.131,
+    "gdp_per_capita": 7726.337,
+    "gdp_total_usd": 290108489.99,
+    "life_expectancy": 67.075,
+    "pct_over65": 4.5,
+    "pct_under15": 32.5,
+    "physicians_per1000": 0.3,
+    "population_total": 37548.0,
+    "urban_share": 78.733
+  },
+  "MIC": {
+    "death_rate": 7.104,
+    "gdp_per_capita": 6554.371,
+    "gdp_total_usd": 38925709373017.6,
+    "life_expectancy": 72.888,
+    "pct_over65": 8.0,
+    "pct_under15": 25.0,
+    "physicians_per1000": 0.3,
+    "population_total": 5938893610.0,
+    "urban_share": 54.918
+  },
+  "MKD": {
+    "death_rate": 11.1,
+    "gdp_per_capita": 9291.857,
+    "gdp_total_usd": 16951682245.42,
+    "life_expectancy": 76.617,
+    "pct_over65": 15.5,
+    "pct_under15": 16.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1824359.0,
+    "urban_share": 62.565
+  },
+  "MLI": {
+    "death_rate": 8.51,
+    "gdp_per_capita": 1094.619,
+    "gdp_total_usd": 26794747239.881,
+    "life_expectancy": 60.675,
+    "pct_over65": 2.5,
+    "pct_under15": 46.5,
+    "physicians_per1000": 0.3,
+    "population_total": 24478595.0,
+    "urban_share": 31.608
+  },
+  "MLT": {
+    "death_rate": 7.3,
+    "gdp_per_capita": 43898.578,
+    "gdp_total_usd": 24971574502.447,
+    "life_expectancy": 82.956,
+    "pct_over65": 21.0,
+    "pct_under15": 14.0,
+    "physicians_per1000": 0.3,
+    "population_total": 568847.0,
+    "urban_share": 95.655
+  },
+  "MMR": {
+    "death_rate": 9.176,
+    "gdp_per_capita": 1359.05,
+    "gdp_total_usd": 74068349523.809,
+    "life_expectancy": 67.095,
+    "pct_over65": 6.5,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.3,
+    "population_total": 54500091.0,
+    "urban_share": 30.45
+  },
+  "MNA": {
+    "death_rate": 5.547,
+    "gdp_per_capita": 2971.055,
+    "gdp_total_usd": 2203604227426.38,
+    "life_expectancy": 71.487,
+    "pct_over65": 5.0,
+    "pct_under15": 31.0,
+    "physicians_per1000": 0.3,
+    "population_total": 741690916.0,
+    "urban_share": 52.642
+  },
+  "MNE": {
+    "death_rate": 10.2,
+    "gdp_per_capita": 13263.328,
+    "gdp_total_usd": 8270016670.868,
+    "life_expectancy": 77.89,
+    "pct_over65": 16.0,
+    "pct_under15": 17.5,
+    "physicians_per1000": 0.3,
+    "population_total": 623525.0,
+    "urban_share": 65.542
+  },
+  "MNG": {
+    "death_rate": 5.5,
+    "gdp_per_capita": 6750.63,
+    "gdp_total_usd": 23794540024.513,
+    "life_expectancy": 72.398,
+    "pct_over65": 4.5,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 3524788.0,
+    "urban_share": 70.957
+  },
+  "MNP": {
+    "death_rate": 4.977,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 1096000000.0,
+    "life_expectancy": 78.947,
+    "pct_over65": 9.5,
+    "pct_under15": 19.0,
+    "physicians_per1000": 0.3,
+    "population_total": 44278.0,
+    "urban_share": 92.075
+  },
+  "MOZ": {
+    "death_rate": 6.908,
+    "gdp_per_capita": 656.777,
+    "gdp_total_usd": 22745341305.062,
+    "life_expectancy": 63.797,
+    "pct_over65": 2.8,
+    "pct_under15": 44.0,
+    "physicians_per1000": 0.3,
+    "population_total": 34631766.0,
+    "urban_share": 36.433
+  },
+  "MRT": {
+    "death_rate": 5.414,
+    "gdp_per_capita": 2110.12,
+    "gdp_total_usd": 10908045686.881,
+    "life_expectancy": 68.713,
+    "pct_over65": 3.0,
+    "pct_under15": 39.0,
+    "physicians_per1000": 0.3,
+    "population_total": 5169395.0,
+    "urban_share": 60.607
+  },
+  "MUS": {
+    "death_rate": 10.0,
+    "gdp_per_capita": 11990.78,
+    "gdp_total_usd": 14937861786.17,
+    "life_expectancy": 73.789,
+    "pct_over65": 13.0,
+    "pct_under15": 17.5,
+    "physicians_per1000": 0.3,
+    "population_total": 1245779.0,
+    "urban_share": 39.016
+  },
+  "MWI": {
+    "death_rate": 5.292,
+    "gdp_per_capita": 522.57,
+    "gdp_total_usd": 11316411329.462,
+    "life_expectancy": 67.561,
+    "pct_over65": 2.8,
+    "pct_under15": 43.0,
+    "physicians_per1000": 0.3,
+    "population_total": 21655286.0,
+    "urban_share": 17.269
+  },
+  "MYS": {
+    "death_rate": 5.273,
+    "gdp_per_capita": 11874.427,
+    "gdp_total_usd": 422227005428.688,
+    "life_expectancy": 76.821,
+    "pct_over65": 7.5,
+    "pct_under15": 23.5,
+    "physicians_per1000": 0.3,
+    "population_total": 35557673.0,
+    "urban_share": 76.917
+  },
+  "NAC": {
+    "death_rate": 8.881,
+    "gdp_per_capita": 81275.844,
+    "gdp_total_usd": 31003826557365.0,
+    "life_expectancy": 79.239,
+    "pct_over65": 17.0,
+    "pct_under15": 18.0,
+    "physicians_per1000": 0.3,
+    "population_total": 381464223.0,
+    "urban_share": 80.407
+  },
+  "NAM": {
+    "death_rate": 6.176,
+    "gdp_per_capita": 4413.128,
+    "gdp_total_usd": 13372354511.716,
+    "life_expectancy": 67.516,
+    "pct_over65": 3.8,
+    "pct_under15": 35.5,
+    "physicians_per1000": 0.3,
+    "population_total": 3030131.0,
+    "urban_share": 50.409
+  },
+  "NCL": {
+    "death_rate": 6.251,
+    "gdp_per_capita": 29213.192,
+    "gdp_total_usd": 8548919387.126,
+    "life_expectancy": 78.921,
+    "pct_over65": 10.0,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 292639.0,
+    "urban_share": 67.951
+  },
+  "NER": {
+    "death_rate": 8.719,
+    "gdp_per_capita": 735.27,
+    "gdp_total_usd": 19876128485.786,
+    "life_expectancy": 61.433,
+    "pct_over65": 2.5,
+    "pct_under15": 49.5,
+    "physicians_per1000": 0.3,
+    "population_total": 27032412.0,
+    "urban_share": 18.05
+  },
+  "NGA": {
+    "death_rate": 11.641,
+    "gdp_per_capita": 1084.16,
+    "gdp_total_usd": 252261880141.151,
+    "life_expectancy": 54.635,
+    "pct_over65": 3.0,
+    "pct_under15": 44.0,
+    "physicians_per1000": 0.1,
+    "population_total": 232679478.0,
+    "urban_share": 62.976
+  },
+  "NIC": {
+    "death_rate": 4.636,
+    "gdp_per_capita": 2847.54,
+    "gdp_total_usd": 19693982967.593,
+    "life_expectancy": 75.1,
+    "pct_over65": 6.0,
+    "pct_under15": 27.5,
+    "physicians_per1000": 0.3,
+    "population_total": 6916140.0,
+    "urban_share": 59.263
+  },
+  "NLD": {
+    "death_rate": 9.6,
+    "gdp_per_capita": 67520.422,
+    "gdp_total_usd": 1214927698572.66,
+    "life_expectancy": 81.966,
+    "pct_over65": 20.5,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 17993485.0,
+    "urban_share": 95.64
+  },
+  "NOR": {
+    "death_rate": 7.9,
+    "gdp_per_capita": 86785.433,
+    "gdp_total_usd": 483592648313.301,
+    "life_expectancy": 83.161,
+    "pct_over65": 18.0,
+    "pct_under15": 17.0,
+    "physicians_per1000": 0.3,
+    "population_total": 5572279.0,
+    "urban_share": 83.329
+  },
+  "NPL": {
+    "death_rate": 6.972,
+    "gdp_per_capita": 1447.31,
+    "gdp_total_usd": 42914268286.711,
+    "life_expectancy": 70.636,
+    "pct_over65": 6.5,
+    "pct_under15": 28.0,
+    "physicians_per1000": 0.3,
+    "population_total": 29651054.0,
+    "urban_share": 66.772
+  },
+  "NRU": {
+    "death_rate": 7.574,
+    "gdp_per_capita": 13609.159,
+    "gdp_total_usd": 162588620.632,
+    "life_expectancy": 62.279,
+    "pct_over65": 3.5,
+    "pct_under15": 33.0,
+    "physicians_per1000": 0.3,
+    "population_total": 11947.0,
+    "urban_share": 100.0
+  },
+  "NZL": {
+    "death_rate": 7.13,
+    "gdp_per_capita": 49205.179,
+    "gdp_total_usd": 260172385097.616,
+    "life_expectancy": 82.01,
+    "pct_over65": 16.5,
+    "pct_under15": 19.5,
+    "physicians_per1000": 0.3,
+    "population_total": 5287500.0,
+    "urban_share": 83.937
+  },
+  "OED": {
+    "death_rate": 9.036,
+    "gdp_per_capita": 48322.164,
+    "gdp_total_usd": 67500141717526.4,
+    "life_expectancy": 80.398,
+    "pct_over65": 17.5,
+    "pct_under15": 17.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1396877448.0,
+    "urban_share": 81.186
+  },
+  "OMN": {
+    "death_rate": 1.904,
+    "gdp_per_capita": 20285.227,
+    "gdp_total_usd": 107137198769.386,
+    "life_expectancy": 80.246,
+    "pct_over65": 2.5,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 5281538.0,
+    "urban_share": 79.444
+  },
+  "OSS": {
+    "death_rate": 7.667,
+    "gdp_per_capita": 16094.127,
+    "gdp_total_usd": 208127281931.64,
+    "life_expectancy": 73.814,
+    "pct_over65": 8.5,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 12931878.0,
+    "urban_share": 54.962
+  },
+  "PAK": {
+    "death_rate": 6.445,
+    "gdp_per_capita": 1478.773,
+    "gdp_total_usd": 371570000121.266,
+    "life_expectancy": 67.799,
+    "pct_over65": 7.0,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.8,
+    "population_total": 251269164.0,
+    "urban_share": 39.173
+  },
+  "PAN": {
+    "death_rate": 4.914,
+    "gdp_per_capita": 19161.219,
+    "gdp_total_usd": 86523959131.747,
+    "life_expectancy": 79.775,
+    "pct_over65": 9.0,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.3,
+    "population_total": 4515577.0,
+    "urban_share": 65.996
+  },
+  "PER": {
+    "death_rate": 5.595,
+    "gdp_per_capita": 8452.372,
+    "gdp_total_usd": 289221969062.941,
+    "life_expectancy": 77.941,
+    "pct_over65": 9.0,
+    "pct_under15": 25.0,
+    "physicians_per1000": 0.3,
+    "population_total": 34217848.0,
+    "urban_share": 85.191
+  },
+  "PHL": {
+    "death_rate": 6.35,
+    "gdp_per_capita": 3984.832,
+    "gdp_total_usd": 461617509782.355,
+    "life_expectancy": 69.946,
+    "pct_over65": 5.5,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 115843670.0,
+    "urban_share": 55.452
+  },
+  "PLW": {
+    "death_rate": 11.729,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 276733062.744,
+    "life_expectancy": 69.383,
+    "pct_over65": 10.5,
+    "pct_under15": 18.5,
+    "physicians_per1000": 0.3,
+    "population_total": 17695.0,
+    "urban_share": 79.21
+  },
+  "PNG": {
+    "death_rate": 6.554,
+    "gdp_per_capita": 3006.706,
+    "gdp_total_usd": 31800428265.525,
+    "life_expectancy": 66.256,
+    "pct_over65": 3.5,
+    "pct_under15": 36.0,
+    "physicians_per1000": 0.3,
+    "population_total": 10576502.0,
+    "urban_share": 15.406
+  },
+  "POL": {
+    "death_rate": 11.2,
+    "gdp_per_capita": 25103.566,
+    "gdp_total_usd": 917767106146.761,
+    "life_expectancy": 78.41,
+    "pct_over65": 19.5,
+    "pct_under15": 15.0,
+    "physicians_per1000": 0.3,
+    "population_total": 36559233.0,
+    "urban_share": 59.971
+  },
+  "PRE": {
+    "death_rate": 7.994,
+    "gdp_per_capita": 1366.066,
+    "gdp_total_usd": 1510802883684.15,
+    "life_expectancy": 62.354,
+    "pct_over65": 3.0,
+    "pct_under15": 43.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1105951788.0,
+    "urban_share": 45.441
+  },
+  "PRI": {
+    "death_rate": 10.3,
+    "gdp_per_capita": 39343.715,
+    "gdp_total_usd": 126029527033.705,
+    "life_expectancy": 81.902,
+    "pct_over65": 22.0,
+    "pct_under15": 15.0,
+    "physicians_per1000": 0.3,
+    "population_total": 3203295.0,
+    "urban_share": 94.254
+  },
+  "PRK": {
+    "death_rate": 9.858,
+    "gdp_per_capita": null,
+    "life_expectancy": 73.743,
+    "pct_over65": 10.5,
+    "pct_under15": 19.5,
+    "physicians_per1000": 0.3,
+    "population_total": 26498823.0,
+    "urban_share": 63.859
+  },
+  "PRT": {
+    "death_rate": 11.1,
+    "gdp_per_capita": 29292.242,
+    "gdp_total_usd": 313271185085.102,
+    "life_expectancy": 82.383,
+    "pct_over65": 23.5,
+    "pct_under15": 13.5,
+    "physicians_per1000": 0.3,
+    "population_total": 10694681.0,
+    "urban_share": 61.328
+  },
+  "PRY": {
+    "death_rate": 5.697,
+    "gdp_per_capita": 6416.097,
+    "gdp_total_usd": 44458118397.445,
+    "life_expectancy": 73.982,
+    "pct_over65": 7.5,
+    "pct_under15": 28.0,
+    "physicians_per1000": 0.3,
+    "population_total": 6929153.0,
+    "urban_share": 69.862
+  },
+  "PSE": {
+    "death_rate": 5.87,
+    "gdp_per_capita": 2592.306,
+    "gdp_total_usd": 13711100000.0,
+    "life_expectancy": 69.213,
+    "pct_over65": 3.0,
+    "pct_under15": 38.5,
+    "physicians_per1000": 0.3,
+    "population_total": 5289152.0,
+    "urban_share": 87.12
+  },
+  "PSS": {
+    "death_rate": 7.028,
+    "gdp_per_capita": 4453.586,
+    "gdp_total_usd": 12124739862.53,
+    "life_expectancy": 69.44,
+    "pct_over65": 5.0,
+    "pct_under15": 34.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2722467.0,
+    "urban_share": 40.563
+  },
+  "PST": {
+    "death_rate": 10.032,
+    "gdp_per_capita": 55644.315,
+    "gdp_total_usd": 62787810951925.4,
+    "life_expectancy": 81.112,
+    "pct_over65": 19.5,
+    "pct_under15": 16.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1128377826.0,
+    "urban_share": 81.155
+  },
+  "PYF": {
+    "death_rate": 3.808,
+    "gdp_per_capita": 22439.884,
+    "gdp_total_usd": 6323716355.05,
+    "life_expectancy": 84.192,
+    "pct_over65": 9.0,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 281807.0,
+    "urban_share": 61.719
+  },
+  "QAT": {
+    "death_rate": 1.051,
+    "gdp_per_capita": 76688.694,
+    "gdp_total_usd": 219162637362.637,
+    "life_expectancy": 82.522,
+    "pct_over65": 1.5,
+    "pct_under15": 13.5,
+    "physicians_per1000": 0.3,
+    "population_total": 2857822.0,
+    "urban_share": 99.322
+  },
+  "ROU": {
+    "death_rate": 12.8,
+    "gdp_per_capita": 20080.21,
+    "gdp_total_usd": 382564217988.866,
+    "life_expectancy": 76.459,
+    "pct_over65": 19.5,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 19051804.0,
+    "urban_share": 52.167
+  },
+  "RUS": {
+    "death_rate": 12.4,
+    "gdp_per_capita": 14889.019,
+    "gdp_total_usd": 2173835806671.66,
+    "life_expectancy": 73.44,
+    "pct_over65": 16.0,
+    "pct_under15": 18.0,
+    "physicians_per1000": 0.3,
+    "population_total": 143533851.0,
+    "urban_share": 75.112
+  },
+  "RWA": {
+    "death_rate": 5.895,
+    "gdp_per_capita": 999.655,
+    "gdp_total_usd": 14251642235.097,
+    "life_expectancy": 68.017,
+    "pct_over65": 3.0,
+    "pct_under15": 39.5,
+    "physicians_per1000": 0.3,
+    "population_total": 14256567.0,
+    "urban_share": 29.885
+  },
+  "SAS": {
+    "death_rate": 6.455,
+    "gdp_per_capita": 2690.079,
+    "gdp_total_usd": 4512296631866.32,
+    "life_expectancy": 72.56,
+    "pct_over65": 7.0,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1677384532.0,
+    "urban_share": 35.463
+  },
+  "SAU": {
+    "death_rate": 2.337,
+    "gdp_per_capita": 35121.663,
+    "gdp_total_usd": 1239804533333.33,
+    "life_expectancy": 78.982,
+    "pct_over65": 3.5,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 35300280.0,
+    "urban_share": 84.455
+  },
+  "SDN": {
+    "death_rate": 6.335,
+    "gdp_per_capita": 984.608,
+    "gdp_total_usd": 49672435513.113,
+    "life_expectancy": 66.521,
+    "pct_over65": 3.5,
+    "pct_under15": 40.5,
+    "physicians_per1000": 0.3,
+    "population_total": 50448963.0,
+    "urban_share": 34.867
+  },
+  "SEN": {
+    "death_rate": 5.505,
+    "gdp_per_capita": 1773.218,
+    "gdp_total_usd": 32808056600.944,
+    "life_expectancy": 68.924,
+    "pct_over65": 3.0,
+    "pct_under15": 42.0,
+    "physicians_per1000": 0.3,
+    "population_total": 18501984.0,
+    "urban_share": 55.237
+  },
+  "SGP": {
+    "death_rate": 6.0,
+    "gdp_per_capita": 90674.067,
+    "gdp_total_usd": 547386645891.847,
+    "life_expectancy": 83.346,
+    "pct_over65": 17.0,
+    "pct_under15": 12.0,
+    "physicians_per1000": 0.3,
+    "population_total": 6036860.0,
+    "urban_share": 100.0
+  },
+  "SLB": {
+    "death_rate": 5.083,
+    "gdp_per_capita": 1933.555,
+    "gdp_total_usd": 1583964703.751,
+    "life_expectancy": 70.694,
+    "pct_over65": 3.5,
+    "pct_under15": 39.0,
+    "physicians_per1000": 0.3,
+    "population_total": 819198.0,
+    "urban_share": 30.662
+  },
+  "SLE": {
+    "death_rate": 8.211,
+    "gdp_per_capita": 806.655,
+    "gdp_total_usd": 6971127235.312,
+    "life_expectancy": 61.964,
+    "pct_over65": 2.8,
+    "pct_under15": 41.0,
+    "physicians_per1000": 0.3,
+    "population_total": 8642022.0,
+    "urban_share": 45.363
+  },
+  "SLV": {
+    "death_rate": 7.47,
+    "gdp_per_capita": 5579.66,
+    "gdp_total_usd": 35364960000.0,
+    "life_expectancy": 72.302,
+    "pct_over65": 9.0,
+    "pct_under15": 25.0,
+    "physicians_per1000": 0.3,
+    "population_total": 6338193.0,
+    "urban_share": 75.067
+  },
+  "SMR": {
+    "death_rate": 7.5,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 2027527227.831,
+    "life_expectancy": 85.817,
+    "pct_over65": 19.5,
+    "pct_under15": 14.0,
+    "physicians_per1000": 0.3,
+    "population_total": 33977.0,
+    "urban_share": 97.156
+  },
+  "SOM": {
+    "death_rate": 9.741,
+    "gdp_per_capita": 629.539,
+    "gdp_total_usd": 11967000000.0,
+    "life_expectancy": 58.967,
+    "pct_over65": 2.6,
+    "pct_under15": 46.0,
+    "physicians_per1000": 0.3,
+    "population_total": 19009151.0,
+    "urban_share": 54.618
+  },
+  "SRB": {
+    "death_rate": 14.9,
+    "gdp_per_capita": 13679.207,
+    "gdp_total_usd": 90097765959.111,
+    "life_expectancy": 75.968,
+    "pct_over65": 21.5,
+    "pct_under15": 14.5,
+    "physicians_per1000": 0.3,
+    "population_total": 6586476.0,
+    "urban_share": 62.383
+  },
+  "SSA": {
+    "death_rate": 8.229,
+    "gdp_per_capita": 1576.692,
+    "gdp_total_usd": 1827170966475.93,
+    "life_expectancy": 62.255,
+    "pct_over65": 3.0,
+    "pct_under15": 42.5,
+    "physicians_per1000": 0.3,
+    "population_total": 1158863843.0,
+    "urban_share": 46.488
+  },
+  "SSD": {
+    "death_rate": 9.821,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 11997800760.224,
+    "life_expectancy": 57.738,
+    "pct_over65": 2.8,
+    "pct_under15": 44.0,
+    "physicians_per1000": 0.3,
+    "population_total": 11943408.0,
+    "urban_share": 21.377
+  },
+  "SSF": {
+    "death_rate": 7.989,
+    "gdp_per_capita": 1532.928,
+    "gdp_total_usd": 1979078503991.37,
+    "life_expectancy": 62.804,
+    "pct_over65": 3.0,
+    "pct_under15": 42.5,
+    "physicians_per1000": 0.3,
+    "population_total": 1291044964.0,
+    "urban_share": 44.149
+  },
+  "SST": {
+    "death_rate": 7.676,
+    "gdp_per_capita": 15383.343,
+    "gdp_total_usd": 310642066645.913,
+    "life_expectancy": 73.112,
+    "pct_over65": 8.5,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 20193405.0,
+    "urban_share": 51.928
+  },
+  "STP": {
+    "death_rate": 5.53,
+    "gdp_per_capita": 3490.569,
+    "gdp_total_usd": 822154621.089,
+    "life_expectancy": 69.905,
+    "pct_over65": 3.2,
+    "pct_under15": 41.0,
+    "physicians_per1000": 0.3,
+    "population_total": 235536.0,
+    "urban_share": 68.871
+  },
+  "SUR": {
+    "death_rate": 6.841,
+    "gdp_per_capita": 6961.79,
+    "gdp_total_usd": 4416775112.096,
+    "life_expectancy": 73.757,
+    "pct_over65": 8.0,
+    "pct_under15": 25.0,
+    "physicians_per1000": 0.3,
+    "population_total": 634431.0,
+    "urban_share": 65.764
+  },
+  "SVK": {
+    "death_rate": 9.9,
+    "gdp_per_capita": 25992.675,
+    "gdp_total_usd": 140934076532.375,
+    "life_expectancy": 78.371,
+    "pct_over65": 17.5,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 5422069.0,
+    "urban_share": 53.192
+  },
+  "SVN": {
+    "death_rate": 10.1,
+    "gdp_per_capita": 34301.032,
+    "gdp_total_usd": 72972015197.386,
+    "life_expectancy": 82.285,
+    "pct_over65": 21.5,
+    "pct_under15": 15.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2127400.0,
+    "urban_share": 55.758
+  },
+  "SWE": {
+    "death_rate": 8.6,
+    "gdp_per_capita": 57117.488,
+    "gdp_total_usd": 603715224265.798,
+    "life_expectancy": 84.063,
+    "pct_over65": 20.5,
+    "pct_under15": 17.5,
+    "physicians_per1000": 0.3,
+    "population_total": 10569709.0,
+    "urban_share": 88.856
+  },
+  "SWZ": {
+    "death_rate": 7.731,
+    "gdp_per_capita": 3909.559,
+    "gdp_total_usd": 4858885840.772,
+    "life_expectancy": 64.264,
+    "pct_over65": 3.8,
+    "pct_under15": 35.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1242822.0,
+    "urban_share": 26.25
+  },
+  "SXM": {
+    "death_rate": 8.303,
+    "gdp_per_capita": 41472.587,
+    "gdp_total_usd": 1797836665.951,
+    "life_expectancy": 76.528,
+    "pct_over65": 10.0,
+    "pct_under15": 18.0,
+    "physicians_per1000": 0.3,
+    "population_total": 43350.0,
+    "urban_share": 100.0
+  },
+  "SYC": {
+    "death_rate": 7.0,
+    "gdp_per_capita": 17858.823,
+    "gdp_total_usd": 2167239562.46,
+    "life_expectancy": 76.295,
+    "pct_over65": 9.5,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 121354.0,
+    "urban_share": 45.29
+  },
+  "SYR": {
+    "death_rate": 4.932,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 23622827079.505,
+    "life_expectancy": 72.56,
+    "pct_over65": 4.5,
+    "pct_under15": 32.0,
+    "physicians_per1000": 0.3,
+    "population_total": 24672760.0,
+    "urban_share": 72.076
+  },
+  "TCA": {
+    "death_rate": 7.39,
+    "gdp_per_capita": 37506.78,
+    "gdp_total_usd": 1745378000.0,
+    "life_expectancy": 78.181,
+    "pct_over65": 6.5,
+    "pct_under15": 20.0,
+    "physicians_per1000": 0.3,
+    "population_total": 46535.0,
+    "urban_share": 94.167
+  },
+  "TCD": {
+    "death_rate": 11.08,
+    "gdp_per_capita": 961.56,
+    "gdp_total_usd": 19518819751.283,
+    "life_expectancy": 55.238,
+    "pct_over65": 2.5,
+    "pct_under15": 46.5,
+    "physicians_per1000": 0.3,
+    "population_total": 20299123.0,
+    "urban_share": 26.932
+  },
+  "TEA": {
+    "death_rate": 7.621,
+    "gdp_per_capita": 10513.953,
+    "gdp_total_usd": 22233362919728.4,
+    "life_expectancy": 75.987,
+    "pct_over65": 10.5,
+    "pct_under15": 20.0,
+    "physicians_per1000": 0.3,
+    "population_total": 2114653077.0,
+    "urban_share": 61.585
+  },
+  "TEC": {
+    "death_rate": 9.891,
+    "gdp_per_capita": 13337.439,
+    "gdp_total_usd": 6131674441421.64,
+    "life_expectancy": 74.966,
+    "pct_over65": 12.0,
+    "pct_under15": 20.0,
+    "physicians_per1000": 0.3,
+    "population_total": 459734030.0,
+    "urban_share": 69.07
+  },
+  "TGO": {
+    "death_rate": 8.486,
+    "gdp_per_capita": 1119.382,
+    "gdp_total_usd": 10651180146.531,
+    "life_expectancy": 62.935,
+    "pct_over65": 3.0,
+    "pct_under15": 41.5,
+    "physicians_per1000": 0.3,
+    "population_total": 9515236.0,
+    "urban_share": 43.815
+  },
+  "THA": {
+    "death_rate": 9.033,
+    "gdp_per_capita": 7346.62,
+    "gdp_total_usd": 526517658841.684,
+    "life_expectancy": 76.564,
+    "pct_over65": 14.0,
+    "pct_under15": 16.0,
+    "physicians_per1000": 0.3,
+    "population_total": 71668011.0,
+    "urban_share": 61.869
+  },
+  "TJK": {
+    "death_rate": 4.591,
+    "gdp_per_capita": 1341.202,
+    "gdp_total_usd": 14204575548.554,
+    "life_expectancy": 71.927,
+    "pct_over65": 3.5,
+    "pct_under15": 35.0,
+    "physicians_per1000": 0.3,
+    "population_total": 10590927.0,
+    "urban_share": 26.179
+  },
+  "TKM": {
+    "death_rate": 5.836,
+    "gdp_per_capita": 6856.658,
+    "gdp_total_usd": 51387209872.299,
+    "life_expectancy": 70.201,
+    "pct_over65": 4.5,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 7494498.0,
+    "urban_share": 47.088
+  },
+  "TLA": {
+    "death_rate": 6.552,
+    "gdp_per_capita": 10474.281,
+    "gdp_total_usd": 6776899040059.78,
+    "life_expectancy": 75.745,
+    "pct_over65": 9.0,
+    "pct_under15": 24.5,
+    "physicians_per1000": 0.3,
+    "population_total": 647003746.0,
+    "urban_share": 81.272
+  },
+  "TLS": {
+    "death_rate": 7.219,
+    "gdp_per_capita": 1331.971,
+    "gdp_total_usd": 1865608515.413,
+    "life_expectancy": 67.904,
+    "pct_over65": 3.5,
+    "pct_under15": 37.5,
+    "physicians_per1000": 0.3,
+    "population_total": 1400638.0,
+    "urban_share": 28.664
+  },
+  "TMN": {
+    "death_rate": 5.544,
+    "gdp_per_capita": 2973.775,
+    "gdp_total_usd": 2189893127426.38,
+    "life_expectancy": 71.504,
+    "pct_over65": 5.0,
+    "pct_under15": 31.0,
+    "physicians_per1000": 0.3,
+    "population_total": 736401764.0,
+    "urban_share": 52.394
+  },
+  "TON": {
+    "death_rate": 6.442,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 591139749.443,
+    "life_expectancy": 73.07,
+    "pct_over65": 7.5,
+    "pct_under15": 34.0,
+    "physicians_per1000": 0.3,
+    "population_total": 104175.0,
+    "urban_share": 21.151
+  },
+  "TSA": {
+    "death_rate": 6.455,
+    "gdp_per_capita": 2690.079,
+    "gdp_total_usd": 4512296631866.31,
+    "life_expectancy": 72.56,
+    "pct_over65": 7.0,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1677384532.0,
+    "urban_share": 35.463
+  },
+  "TSS": {
+    "death_rate": 7.989,
+    "gdp_per_capita": 1532.928,
+    "gdp_total_usd": 1979078503991.37,
+    "life_expectancy": 62.804,
+    "pct_over65": 3.0,
+    "pct_under15": 42.5,
+    "physicians_per1000": 0.3,
+    "population_total": 1291044964.0,
+    "urban_share": 44.149
+  },
+  "TTO": {
+    "death_rate": 8.739,
+    "gdp_per_capita": 18733.411,
+    "gdp_total_usd": 25633544529.485,
+    "life_expectancy": 73.617,
+    "pct_over65": 11.5,
+    "pct_under15": 20.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1368333.0,
+    "urban_share": 53.961
+  },
+  "TUN": {
+    "death_rate": 6.128,
+    "gdp_per_capita": 4181.138,
+    "gdp_total_usd": 51332285656.542,
+    "life_expectancy": 76.711,
+    "pct_over65": 9.0,
+    "pct_under15": 24.0,
+    "physicians_per1000": 0.3,
+    "population_total": 12277109.0,
+    "urban_share": 70.359
+  },
+  "TUR": {
+    "death_rate": 5.7,
+    "gdp_per_capita": 15892.716,
+    "gdp_total_usd": 1359123768774.12,
+    "life_expectancy": 77.421,
+    "pct_over65": 9.5,
+    "pct_under15": 23.0,
+    "physicians_per1000": 0.3,
+    "population_total": 85518661.0,
+    "urban_share": 89.344
+  },
+  "TUV": {
+    "death_rate": 9.268,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 62280311.585,
+    "life_expectancy": 67.259,
+    "pct_over65": 6.0,
+    "pct_under15": 30.0,
+    "physicians_per1000": 0.3,
+    "population_total": 9646.0,
+    "urban_share": 64.725
+  },
+  "TZA": {
+    "death_rate": 5.721,
+    "gdp_per_capita": 1186.717,
+    "gdp_total_usd": 78844405385.219,
+    "life_expectancy": 67.212,
+    "pct_over65": 3.0,
+    "pct_under15": 43.0,
+    "physicians_per1000": 0.3,
+    "population_total": 68560157.0,
+    "urban_share": 36.168
+  },
+  "UGA": {
+    "death_rate": 4.767,
+    "gdp_per_capita": 1077.913,
+    "gdp_total_usd": 53911907086.152,
+    "life_expectancy": 68.487,
+    "pct_over65": 2.2,
+    "pct_under15": 46.0,
+    "physicians_per1000": 0.3,
+    "population_total": 50015092.0,
+    "urban_share": 31.278
+  },
+  "UKR": {
+    "death_rate": 13.603,
+    "gdp_per_capita": 5389.473,
+    "gdp_total_usd": 190741262414.705,
+    "life_expectancy": 74.692,
+    "pct_over65": 17.0,
+    "pct_under15": 15.5,
+    "physicians_per1000": 0.3,
+    "population_total": 37860221.0,
+    "urban_share": 69.532
+  },
+  "UMC": {
+    "death_rate": 7.383,
+    "gdp_per_capita": 10996.102,
+    "life_expectancy": 76.323,
+    "pct_over65": 10.0,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "urban_share": 69.65
+  },
+  "URY": {
+    "death_rate": 9.933,
+    "gdp_per_capita": 23906.513,
+    "gdp_total_usd": 80961511073.58,
+    "life_expectancy": 78.287,
+    "pct_over65": 15.5,
+    "pct_under15": 20.0,
+    "physicians_per1000": 0.3,
+    "population_total": 3386588.0,
+    "urban_share": 95.598
+  },
+  "USA": {
+    "death_rate": 9.0,
+    "gdp_per_capita": 84534.041,
+    "gdp_total_usd": 28750956130731.2,
+    "life_expectancy": 78.89,
+    "pct_over65": 17.0,
+    "pct_under15": 18.0,
+    "physicians_per1000": 2.6,
+    "population_total": 340110988.0,
+    "urban_share": 80.125
+  },
+  "UZB": {
+    "death_rate": 6.034,
+    "gdp_per_capita": 3161.7,
+    "gdp_total_usd": 114965293466.611,
+    "life_expectancy": 72.528,
+    "pct_over65": 5.0,
+    "pct_under15": 28.0,
+    "physicians_per1000": 0.3,
+    "population_total": 36361859.0,
+    "urban_share": 50.999
+  },
+  "VCT": {
+    "death_rate": 11.536,
+    "gdp_per_capita": 11501.227,
+    "gdp_total_usd": 1157207407.407,
+    "life_expectancy": 71.382,
+    "pct_over65": 9.5,
+    "pct_under15": 23.0,
+    "physicians_per1000": 0.3,
+    "population_total": 100616.0,
+    "urban_share": 47.849
+  },
+  "VEN": {
+    "death_rate": 7.678,
+    "gdp_per_capita": 4217.591,
+    "gdp_total_usd": 119802963257.783,
+    "life_expectancy": 72.673,
+    "pct_over65": 7.5,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.3,
+    "population_total": 28405543.0,
+    "urban_share": 89.286
+  },
+  "VGB": {
+    "death_rate": 6.049,
+    "gdp_per_capita": null,
+    "life_expectancy": 77.431,
+    "pct_over65": 9.5,
+    "pct_under15": 17.5,
+    "physicians_per1000": 0.3,
+    "population_total": 39471.0,
+    "urban_share": 56.507
+  },
+  "VIR": {
+    "death_rate": 9.2,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 4672000000.0,
+    "life_expectancy": 80.771,
+    "pct_over65": 17.0,
+    "pct_under15": 17.5,
+    "physicians_per1000": 0.3,
+    "population_total": 104377.0,
+    "urban_share": 95.331
+  },
+  "VNM": {
+    "death_rate": 6.646,
+    "gdp_per_capita": 4717.29,
+    "gdp_total_usd": 476388230307.175,
+    "life_expectancy": 74.736,
+    "pct_over65": 8.5,
+    "pct_under15": 23.0,
+    "physicians_per1000": 0.3,
+    "population_total": 100987686.0,
+    "urban_share": 38.49
+  },
+  "VUT": {
+    "death_rate": 5.018,
+    "gdp_per_capita": 3410.77,
+    "gdp_total_usd": 1117972034.226,
+    "life_expectancy": 71.654,
+    "pct_over65": 4.5,
+    "pct_under15": 36.0,
+    "physicians_per1000": 0.3,
+    "population_total": 327777.0,
+    "urban_share": 22.287
+  },
+  "WLD": {
+    "death_rate": 7.551,
+    "gdp_per_capita": 13631.204,
+    "gdp_total_usd": 110982661180013.0,
+    "life_expectancy": 73.48,
+    "pct_over65": 10.0,
+    "pct_under15": 26.0,
+    "physicians_per1000": 0.3,
+    "population_total": 8141808945.0,
+    "urban_share": 57.563
+  },
+  "WSM": {
+    "death_rate": 6.16,
+    "gdp_per_capita": 5392.878,
+    "gdp_total_usd": 1175749785.651,
+    "life_expectancy": 71.826,
+    "pct_over65": 5.5,
+    "pct_under15": 33.5,
+    "physicians_per1000": 0.3,
+    "population_total": 218019.0,
+    "urban_share": 17.503
+  },
+  "XKX": {
+    "death_rate": 5.973,
+    "gdp_per_capita": 7023.066,
+    "gdp_total_usd": 11197246322.588,
+    "life_expectancy": 78.222,
+    "pct_over65": 8.5,
+    "pct_under15": 22.0,
+    "physicians_per1000": 0.3,
+    "population_total": 1594353.0,
+    "urban_share": 50.321
+  },
+  "YEM": {
+    "death_rate": 4.734,
+    "gdp_per_capita": null,
+    "gdp_total_usd": 21606160663.032,
+    "life_expectancy": 69.439,
+    "pct_over65": 2.8,
+    "pct_under15": 39.5,
+    "physicians_per1000": 0.3,
+    "population_total": 40583164.0,
+    "urban_share": 36.808
+  },
+  "ZAF": {
+    "death_rate": 9.237,
+    "gdp_per_capita": 6267.187,
+    "gdp_total_usd": 401144998373.585,
+    "life_expectancy": 66.312,
+    "pct_over65": 5.5,
+    "pct_under15": 28.5,
+    "physicians_per1000": 0.3,
+    "population_total": 64007187.0,
+    "urban_share": 63.692
+  },
+  "ZMB": {
+    "death_rate": 5.165,
+    "gdp_per_capita": 1187.109,
+    "gdp_total_usd": 25303185342.251,
+    "life_expectancy": 66.528,
+    "pct_over65": 2.6,
+    "pct_under15": 44.0,
+    "physicians_per1000": 0.3,
+    "population_total": 21314956.0,
+    "urban_share": 45.47
+  },
+  "ZWE": {
+    "death_rate": 7.498,
+    "gdp_per_capita": 2497.203,
+    "gdp_total_usd": 41539411516.445,
+    "life_expectancy": 63.064,
+    "pct_over65": 3.2,
+    "pct_under15": 41.0,
+    "physicians_per1000": 0.3,
+    "population_total": 16634373.0,
+    "urban_share": 39.893
+  }
 }

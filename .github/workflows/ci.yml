@@ -35,6 +35,9 @@ jobs:
       - name: Run unit tests
         run: pytest tests/ -q
 
+      - name: Global accuracy harness (offline fixture, §6)
+        run: pytest tests/test_global_accuracy.py -q
+
       - name: Pin scientific formulas (regression guard)
         run: pytest tests/test_science_formulas.py -v
 

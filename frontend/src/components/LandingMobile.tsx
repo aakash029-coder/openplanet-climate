@@ -158,7 +158,7 @@ export default function LandingMobile() {
           <button
             onClick={handleCTA}
             style={{ touchAction: 'manipulation' }}
-            className="w-full btn-primary inline-flex items-center justify-center gap-2.5 bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-all duration-150 hover:bg-zinc-100 min-h-[52px]"
+            className="btn-primary flex w-full max-w-[320px] mx-auto items-center justify-center gap-2.5 bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider px-8 py-4 transition-all duration-150 hover:bg-zinc-100 min-h-[52px]"
           >
             Analyse a City
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -406,7 +406,7 @@ export default function LandingMobile() {
           <button
             onClick={handleCTA}
             style={{ touchAction: 'manipulation' }}
-            className="w-full btn-primary relative z-10 inline-flex items-center justify-center gap-2.5 bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider transition-all duration-150 hover:bg-zinc-50 min-h-[52px]"
+            className="btn-primary relative z-10 flex w-full max-w-[320px] mx-auto items-center justify-center gap-2.5 bg-white text-black font-sans font-semibold text-xs uppercase tracking-wider px-8 py-4 transition-all duration-150 hover:bg-zinc-50 min-h-[52px]"
           >
             Analyse a City
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>

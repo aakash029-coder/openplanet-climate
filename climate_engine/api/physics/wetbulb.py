@@ -41,79 +41,37 @@ async def _fetch_era5_humidity_p95(lat: float, lng: float) -> float:
     if cached is not None:
         return cached
 
-    url = (
-        f"https://archive-api.open-meteo.com/v1/archive"
-        f"?latitude={lat}&longitude={lng}"
-        f"&start_date=2011-01-01&end_date=2020-12-31"
-        f"&daily=relative_humidity_2m_mean"
-        f"&timezone=auto"
-    )
+    # Read RH from the shared, disk-cached ERA5 bundle (one archive call per city)
+    # instead of a dedicated request — keeps the engine under the Open-Meteo rate
+    # limit on Hugging Face's shared free-tier IP. Falls back to a latitude model
+    # so a rate-limit or data gap never crashes the request.
+    try:
+        from climate_engine.services.cmip6_service import fetch_era5_bundle
 
-    max_attempts = 3
-    last_exc: Optional[Exception] = None
+        daily = await fetch_era5_bundle(lat, lng)
+        times = daily.get("time", [])
+        rh_vals = daily.get("relative_humidity_2m_mean", [])
 
-    for attempt in range(1, max_attempts + 1):
-        try:
-            async with rate_limit_lock:
-                async with httpx.AsyncClient(timeout=30.0, trust_env=False) as client:
-                    resp = await client.get(url)
-                    if resp.status_code == 429:
-                        wait = 2 ** attempt
-                        logger.warning(
-                            "ERA5 RH rate limited (attempt %d/%d), waiting %ds",
-                            attempt, max_attempts, wait,
-                        )
-                        await asyncio.sleep(wait)
-                        continue
-                    resp.raise_for_status()
-                    daily = resp.json().get("daily", {})
-                    times = daily.get("time", [])
-                    rh_vals = daily.get("relative_humidity_2m_mean", [])
+        summer_months = {6, 7, 8} if lat >= 0 else {12, 1, 2}
+        summer_rh = [
+            float(rh)
+            for t, rh in zip(times, rh_vals)
+            if rh is not None and t and int(t[5:7]) in summer_months
+        ]
 
-            target_years = {2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020}
-            summer_rh: list[float] = []
-
-            for t, rh in zip(times, rh_vals):
-                if rh is None:
-                    continue
-                year = int(t[0:4])
-                month = int(t[5:7])
-                if year not in target_years:
-                    continue
-                if lat >= 0 and month in {6, 7, 8}:
-                    summer_rh.append(float(rh))
-                elif lat < 0 and month in {12, 1, 2}:
-                    summer_rh.append(float(rh))
-
-            if len(summer_rh) < 10:
-                raise ValueError(
-                    f"Insufficient ERA5 summer-RH data for ({lat:.2f}, {lng:.2f}). "
-                    f"Only {len(summer_rh)} valid days."
-                )
-
+        if len(summer_rh) >= 10:
             sorted_rh = sorted(summer_rh)
             p95_idx = min(int(len(sorted_rh) * 0.95), len(sorted_rh) - 1)
             p95_rh = round(sorted_rh[p95_idx], 1)
-
             _cache_set(_ERA5_CACHE, cache_key, p95_rh)
             logger.info("ERA5 P95 RH for (%.2f, %.2f): %.1f%%", lat, lng, p95_rh)
             return p95_rh
+    except Exception as exc:
+        logger.warning(
+            "ERA5 P95 RH via bundle failed for (%.2f, %.2f): %s — latitude fallback.",
+            lat, lng, exc,
+        )
 
-        except Exception as exc:
-            last_exc = exc
-            if attempt < max_attempts:
-                wait = 2 ** attempt
-                logger.warning(
-                    "ERA5 RH attempt %d/%d failed: %s — retrying in %ds",
-                    attempt, max_attempts, exc, wait,
-                )
-                await asyncio.sleep(wait)
-
-    logger.error(
-        "ERA5 P95 RH completely failed for (%.2f, %.2f) after %d attempts: %s. "
-        "Activating latitude-model fallback.",
-        lat, lng, max_attempts, last_exc,
-    )
     fallback = _latitude_p95_humidity_fallback(lat)
     _cache_set(_ERA5_CACHE, cache_key, fallback)
     return fallback

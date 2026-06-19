@@ -272,7 +272,7 @@ export const LeftPanel = ({
           <div className="px-3 py-2.5 border animate-fadeIn"
                style={{ background: 'rgba(176,141,87,0.05)', borderColor: 'rgba(176,141,87,0.2)' }}>
             <p className="font-mono text-[8px] leading-relaxed" style={{ color: 'var(--copper)' }}>
-              Taking longer than usual — the HuggingFace engine is warming up after idle.
+              Taking longer than usual — the engine is warming up.
               First requests can take up to 60 s. Hang tight, real ERA5 + CMIP6 data is loading.
             </p>
           </div>

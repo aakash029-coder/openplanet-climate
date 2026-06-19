@@ -22,7 +22,12 @@ import httpx
 from .fallback import _CITY_VAULT, _OFFLINE_VAULT, COUNTRY_TO_TIER, DEFAULT_TIER, get_tier_for_country
 from .worldbank import BoundedTTLCache, _country_cache, fetch_country_indicators, iso2_to_iso3
 from .population import _metro_pop_lookup, validate_census_data, compute_metro_population, _fetch_openmeteo_population
-from .vulnerability import compute_median_age, compute_urban_productivity_ratio, compute_vulnerability_multiplier
+from .vulnerability import (
+    compute_median_age,
+    compute_urban_productivity_ratio,
+    compute_vulnerability_multiplier,
+    apply_metro_gdp_cap,
+)
 from .geocoding import (
     geocode_city,
     search_geocode_candidates,
@@ -107,12 +112,20 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
             pct_u15 = country_data.get("pct_under15") or tier.pct_under15
             pct_o65 = country_data.get("pct_over65") or tier.pct_over65
             median_age = compute_median_age(pct_u15, pct_o65)
-            urban_ratio = compute_urban_productivity_ratio(gdp_pc)
-            city_gdp = raw_pop * gdp_pc * urban_ratio
+            # The verified city-vault gdp_pc is ALREADY a metro-level per-capita
+            # figure, so the national→metro productivity premium must NOT be applied
+            # again (doing so double-counted and inflated metro GDP, e.g. London).
+            national_gdp_total = country_data.get("gdp_total_usd")
+            city_gdp = raw_pop * gdp_pc
+            city_gdp, gdp_capped = apply_metro_gdp_cap(city_gdp, national_gdp_total)
             vulnerability = compute_vulnerability_multiplier(gdp_pc, median_age, physicians)
             result: Dict[str, Any] = {
                 "population": raw_pop,
                 "city_gdp_usd": city_gdp,
+                "gdp_basis": "nominal_usd",
+                "gdp_productivity_premium": 1.0,
+                "gdp_capped_at_national": gdp_capped,
+                "national_gdp_usd": national_gdp_total,
                 "country_code": iso2,
                 "vulnerability_multiplier": vulnerability,
                 "gdp_per_capita": gdp_pc,
@@ -194,12 +207,17 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
         indicators["pct_over65"],
     )
 
+    national_gdp_total = indicators.get("gdp_total_usd")
+    gdp_capped = False
     if metro_pop > 0:
         urban_ratio = compute_urban_productivity_ratio(indicators["gdp_per_capita"])
         city_gdp = metro_pop * indicators["gdp_per_capita"] * urban_ratio
+        city_gdp, gdp_capped = apply_metro_gdp_cap(city_gdp, national_gdp_total)
     else:
         tier = get_tier_for_country(iso2)
+        urban_ratio = compute_urban_productivity_ratio(tier.gdp_per_capita)
         city_gdp = tier.gdp_per_capita * 500_000
+        city_gdp, gdp_capped = apply_metro_gdp_cap(city_gdp, national_gdp_total)
         logger.warning(
             "Missing accurate population data for '%s'; applying baseline regional GDP estimate: $%.1fM",
             city, city_gdp / 1e6,
@@ -214,6 +232,10 @@ async def fetch_live_socioeconomics(city: str) -> Dict[str, Any]:
     result: Dict[str, Any] = {
         "population": metro_pop,
         "city_gdp_usd": city_gdp,
+        "gdp_basis": "nominal_usd",
+        "gdp_productivity_premium": urban_ratio,
+        "gdp_capped_at_national": gdp_capped,
+        "national_gdp_usd": national_gdp_total,
         "country_code": iso2,
         "vulnerability_multiplier": vulnerability,
         "gdp_per_capita": indicators["gdp_per_capita"],
