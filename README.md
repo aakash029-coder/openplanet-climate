@@ -24,7 +24,7 @@ The system is designed for climate risk researchers, portfolio screening teams, 
 The primary interface presents an H3 hex-grid thermal risk map overlaid on a MapLibre vector basemap. Risk intensity is computed from the CMIP6 ensemble projection for the selected SSP and target year. The left panel provides:
 
 - **Location search** with strict `"City, Country"` dropdown enforcement — the Generate Projection button is locked until an explicit dropdown selection is made, preventing free-text coordinate guessing.
-- **Target year selector** (2030 · 2050 · 2070 · 2100).
+- **Target year selector** (2030 · 2050). Projections are strictly capped at the validated CMIP6 horizon of 2050 — we do not extrapolate to 2075 or 2100.
 - **Emission scenario selector** (SSP2-4.5 · SSP5-8.5).
 - **Theoretical Mitigation Simulator** — directional canopy expansion and albedo (cool-roof) sliders that apply deterministic cooling offsets derived from Bowler et al. (2010) urban greening studies.
 
@@ -39,7 +39,7 @@ The right panel displays live risk metrics drawn exclusively from `ClimateDataCo
 
 ### 2. Deep Dive Research Tab
 
-Full projection breakdown across all four CMIP6/IPCC AR6 time horizons (2030, 2050, 2075, 2100) for the active city. Surfaces:
+Full projection breakdown across the validated CMIP6 horizons (2030 and 2050) for the active city. Surfaces:
 
 - Year-by-year projection table with survivability status classification (STABLE / DANGER / CRITICAL).
 - Wet-bulb temperature trajectory with Sherwood & Huber (2010) 35 °C physiological ceiling annotation.
@@ -84,10 +84,8 @@ From the 2011–2020 ERA5 series the engine computes:
 
 | Horizon | Model | Resolution | Method |
 |---------|-------|-----------|--------|
-| 2030 | MRI-AGCM3-2-S | ~20 km | Direct CMIP6 API extraction |
-| 2050 | MPI-ESM1-2-XR | ~50 km | Direct CMIP6 API extraction |
-| 2075 | IPCC AR6 WG1 | Regional | Published decadal delta-rate extrapolation |
-| 2100 | IPCC AR6 WG1 | Regional | Published decadal delta-rate extrapolation |
+| 2030 | MRI-AGCM3-2-S + MPI-ESM1-2-XR | ~20–50 km | Bias-corrected CMIP6 delta downscaling |
+| 2050 | MRI-AGCM3-2-S + MPI-ESM1-2-XR | ~20–50 km | Bias-corrected CMIP6 delta downscaling |
 
 The two-model ensemble weight is equal (0.5 / 0.5). MRI-AGCM3-2-S is selected for its superior resolution in tropical and monsoon-affected urban biomes. MPI-ESM1-2-XR provides the broader ensemble anchor for mid-latitude regions.
 
