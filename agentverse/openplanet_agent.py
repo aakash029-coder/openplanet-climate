@@ -34,6 +34,11 @@ from uagents_core.contrib.protocols.chat import (
     chat_protocol_spec,
 )
 
+# To KEEP your existing agent address (agent1qdc29…69k6y) and its profile/handle/
+# ratings, paste your existing AGENT_SEED_PHRASE below and FIRST stop/delete the old
+# mailbox agent (two live agents can't share one address):
+#     agent = Agent(seed="your-existing-agent-seed-phrase")
+# Otherwise a fresh hosted identity is created automatically.
 agent = Agent()
 
 # ── Tiny stats helpers (no numpy in the sandbox) ──────────────────────────────
